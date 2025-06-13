@@ -1,3 +1,5 @@
+import asyncio
+from threading import Thread
 import traceback
 from typing import *
 
@@ -17,7 +19,8 @@ from .command_handlers.CommandHandler import CommandHandler
 #
 class LatexMathClient:
     def __init__(self):
-        self.handlers: dict[str, CommandHandler] = {}
+        self.handlers: dict[str, CommandHandler] = { }
+        self.handler_threads: dict[str, Thread] = { }
         self.connection = None
 
     # Connect to a Latex Math plugin currently hosting on the local host at the given port.
@@ -29,28 +32,37 @@ class LatexMathClient:
         self.handlers[handler_key] = handler_factory
 
     # Send the given json dumpable object back to the plugin.
-    async def send(self, handler_key: str, message: dict):
-        await self.connection.send(f"{handler_key}|{jsonpickle.encode(message)}")
+    async def send(self, status: str, uid: str, message: dict):
+        await self.connection.send(jsonpickle.encode(dict(status=status, uid=uid, response=message)))
 
     # Start the message loop, this is required to run, before any handlers will be called.
     async def run_message_loop(self):
         while True:
-            message = await self.connection.recv()
-            handler_key, payload = message.split("|", 1)
+            message = jsonpickle.decode(await self.connection.recv())
+            uid = message['uid']
 
-            if handler_key == "exit":
-                await self.send("exit", {})
-                break
-
-            if handler_key in self.handlers:
-                try:
-                    loaded_payload = jsonpickle.decode(payload)
-                    command_result = self.handlers[handler_key].handle(loaded_payload)
-                    await self.send('result', command_result.getPayload())
-                except Exception as e:
-                    await self.send("error", dict(usr_message=str(e), dev_message=str(e) + "\n" + traceback.format_exc()))
-            else:
-                # If we get here in a release build, then either the sympy client or the plugin source is not the same version.
-                # A plugin reinstall should (hopefully) install a sympy client and plugin source with the same version.
-                await self.send("error", dict(usr_message="Command is not supported, please try reinstalling the plugin.",
-                                              dev_message=f"Unsupported command: {handler_key}"))
+            match message.type:
+                case "exit":
+                    await self.send("exit", uid, {})
+                    break
+                case "start":
+                    if message['command'] not in self.handlers:
+                        await self.send('error', uid, dict(message=message['command']))
+                    
+                    # TODO: this should be a thread
+                    try:
+                        self.handler_threads[uid] = Thread(target=asyncio.run, args=(self.handleAndRespond(message['command'], uid, message['payload']),))
+                        self.handler_threads[uid].start()
+                    except Exception as e:
+                        await self.send('error', uid, dict(message=str(e) + "\n" + traceback.format_exc()))
+                            
+                    break
+                case _:
+                    # If we get here in a release build, then either the sympy client or the plugin source is not the same version.
+                    # A plugin reinstall should (hopefully) install a sympy client and plugin source with the same version.
+                    await self.send("error", dict(usr_message="Message type is not supported, please try reinstalling the plugin.",
+                        dev_message=f"Unsupported message type: {message.type}"))
+    
+    async def handleAndRespond(self, command: str, uid: str, payload: dict):
+        command_result = self.handlers[command].handle(payload)
+        await self.send('result', uid, command_result.getPayload())
