@@ -79,10 +79,15 @@ export class LmatEnvironment {
 
     // regex for extracting the contents of an lmat code block.
     private static readonly LMAT_BLOCK_REGEX = /^```lmat\s*(?:\r\n|\r|\n)([\s\S]*?)```$/;
+
+    // TODO: this should ideally be handled by the sympy client's parser, as this regex e.g. would not match any expression containing '$',
+    // even if it may be a valid expression containing '$'
+    // This exact scenario rarely happens so it can stay for now.
+    
     private static readonly LMAT_VARIABLE_REGEX = /\s*(?:\\math\w*{(?<symbol_math_encapsulated>[^=\s$]*)}|(?<symbol>[^=\s$]*))\s*/;
     // regex for finding variable definitions in markdown code.
-    private static readonly LMAT_VARIABLE_DEF_REGEX = new RegExp(String.raw`\$${this.LMAT_VARIABLE_REGEX.source}:=\s*(?<value>[^=$]*?)\s*\$`, 'g');
-    private static readonly LMAT_FUNCTION_DEF_REGEX = new RegExp(String.raw`\$${this.LMAT_VARIABLE_REGEX.source}\((?<args>(?:[^=$]*?\s*))\)\s*:=\s*(?<expr>[^=$]*?)\s*\$`, 'g');
+    private static readonly LMAT_VARIABLE_DEF_REGEX = new RegExp(String.raw`\$${this.LMAT_VARIABLE_REGEX.source}:=\s*(?<value>[^$]*?)\s*\$`, 'g');
+    private static readonly LMAT_FUNCTION_DEF_REGEX = new RegExp(String.raw`\$${this.LMAT_VARIABLE_REGEX.source}\((?<args>(?:[^$]*?\s*))\)\s*:=\s*(?<expr>[^$]*?)\s*\$`, 'g');
 
     private constructor(
         /**
