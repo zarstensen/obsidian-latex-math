@@ -393,7 +393,7 @@ _LR_FORMAT: "\\left" | "\\right"
 
 // TODO: find a better placement for this.
 BRACE_SURROUNDED_TEXT:/(?:{(?:[^{}]+|(?0))*})/ 
-_CMD_TEXT: /\\text(?!perthousand)(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
+_CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
 
 _TEXT: _CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
 
