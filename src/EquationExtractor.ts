@@ -50,6 +50,12 @@ export class EquationExtractor {
             from++;
         }
 
+        // check if contents are surrounded by {}, as this is commonly used as a trick to prevent flickering in single line math blocks.
+        if(/{} .* {}/s.test(editor.getRange(editor.offsetToPos(from), editor.offsetToPos(to)))) {
+            from += 3;
+            to -= 3;
+        }
+
         return {
             from: from,
             to: to,
