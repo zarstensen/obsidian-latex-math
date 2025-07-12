@@ -48,6 +48,9 @@ class LatexMathClient:
                     command_result = self.handlers[handler_key].handle(loaded_payload)
                     await self.send('result', command_result.getPayload())
                 except Exception as e:
-                    await self.send("error", dict(message=str(e) + "\n" + traceback.format_exc()))
+                    await self.send("error", dict(usr_message=str(e), dev_message=str(e) + "\n" + traceback.format_exc()))
             else:
-                await self.send("error", dict(message=f"Unsupported command: {handler_key}"))
+                # If we get here in a release build, then either the sympy client or the plugin source is not the same version.
+                # A plugin reinstall should (hopefully) install a sympy client and plugin source with the same version.
+                await self.send("error", dict(usr_message="Command is not supported, please try reinstalling the plugin.",
+                                              dev_message=f"Unsupported command: {handler_key}"))

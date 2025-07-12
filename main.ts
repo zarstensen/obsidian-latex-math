@@ -37,7 +37,8 @@ export default class LatexMathPlugin extends Plugin {
 
         this.sympy_evaluator = new SympyServer();
 
-        this.sympy_evaluator.onError((error) => {
+        // forward python errors directly to the user.
+        this.sympy_evaluator.onError((usr_error, _dev_error) => {
             if(this.prev_err_notice !== null) {
                 this.prev_err_notice.hide();
             }
@@ -45,8 +46,12 @@ export default class LatexMathPlugin extends Plugin {
             // limit error message to 4 lines,
             // need to check the developer console to see the full message.
 
-            const errorLines = error.split('\n');
-            const truncatedError = errorLines.slice(0, LatexMathPlugin.ERR_NOTICE_LINE_COUNT).join('\n') + (errorLines.length > LatexMathPlugin.ERR_NOTICE_LINE_COUNT ? '\n...' : '');
+            const errorLines = usr_error.split('\n');
+            const truncatedError = errorLines
+                .slice(0, LatexMathPlugin.ERR_NOTICE_LINE_COUNT)
+                .join('\n') +
+                (errorLines.length > LatexMathPlugin.ERR_NOTICE_LINE_COUNT ? '\n...' : '') +
+                "\n\nOpen the dev console for more info (ctrl + shift + i).";
             
             const err_notice = new Notice("Latex Math Error\n", LatexMathPlugin.ERR_NOTICE_TIMEOUT);
             
