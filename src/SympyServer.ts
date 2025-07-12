@@ -51,7 +51,10 @@ export class SympyServer {
 
     // Assign an error callback handler.
     // This callback is called any time an error message is received from the SympyClient process.
-    public onError(callback: (error: string) => void): void {
+    // It is passed the following two strings:
+    //      usr_error: A user friendly(ish) string describing the error.
+    //      dev_error: A full stack trace of the python exception.
+    public onError(callback: (usr_error: string, dev_error: string) => void): void {
         this.error_callback = callback;
     }
 
@@ -75,10 +78,10 @@ export class SympyServer {
                 if (status === "error") {
                     
                     if(this.error_callback) {
-                        this.error_callback(payload.message);
+                        this.error_callback(payload.usr_message, payload.dev_message);
                     }
 
-                    reject(payload.message);
+                    reject(payload.dev_message);
                 } else if(status === "exit") {
                     resolve("exit");
                 } else {
@@ -92,7 +95,7 @@ export class SympyServer {
     private python_process: ChildProcessWithoutNullStreams;
     private ws_python: WebSocket;
     private ws_python_server: WebSocketServer;
-    private error_callback: (error: string) => void;
+    private error_callback: (usr_error: string, dev_error: string) => void;
 
     private resolveConnection(resolve: (value: WebSocket) => void, reject: (reason: string) => void) {
         this.ws_python_server.once('connection', (ws) => {
