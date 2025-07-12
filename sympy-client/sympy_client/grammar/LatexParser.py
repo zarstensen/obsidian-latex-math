@@ -232,6 +232,7 @@ class LatexParser(SympyParser):
             cache=True,
             propagate_positions=True,
             maybe_placeholders=True,
+            regex=True,
             postlex=post_lexer
         )
 
