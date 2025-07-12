@@ -1,8 +1,9 @@
+import pytest
 from sympy import *
 from sympy import Expr
 from sympy.logic.boolalg import *
 from sympy_client.grammar.LatexMatrix import LatexMatrix
-from sympy_client.grammar.LatexParser import LatexParser
+from sympy_client.grammar.LatexParser import LatexParser, PrettyLarkError
 from sympy_client.grammar.LmatEnvDefStore import LmatEnvDefStore
 from sympy_client.grammar.SystemOfExpr import SystemOfExpr
 from sympy_client.LmatEnvironment import LmatEnvironment
@@ -383,3 +384,12 @@ i & 2 i
         assert isinstance(result, LatexMatrix)
         assert result.env_begin == r'\left\{ \begin{array}{r | c : l}'
         assert result.env_end == r'\end{array} \right]'
+
+    def test_exception_types(self):
+        # unexpected EOF
+        with pytest.raises(PrettyLarkError):
+            self._parse_expr(r"\frac{25}{")
+
+        # unexpected token
+        with pytest.raises(PrettyLarkError):
+            self._parse_expr(r"\sum_{n}^{5} n")
