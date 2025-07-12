@@ -10,6 +10,7 @@ import { SympyConvertCommand } from 'src/commands/SympyConvertCommand';
 import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
 import { SympyClientExtractor } from 'src/SympyClientExtractor';
 import path from 'path';
+import { TruthTableCommand, TruthTableFormat } from 'src/commands/TruthTableCommand';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -36,16 +37,21 @@ export default class LatexMathPlugin extends Plugin {
 
         this.sympy_evaluator = new SympyServer();
 
-        this.sympy_evaluator.onError((error) => {
+        // forward python errors directly to the user.
+        this.sympy_evaluator.onError((usr_error, _dev_error) => {
             if(this.prev_err_notice !== null) {
                 this.prev_err_notice.hide();
             }
 
-            // limit error message to 4 lines,
+            // limit error message to ERR_NOTICE_LINE_COUNT lines,
             // need to check the developer console to see the full message.
 
-            const errorLines = error.split('\n');
-            const truncatedError = errorLines.slice(0, LatexMathPlugin.ERR_NOTICE_LINE_COUNT).join('\n') + (errorLines.length > LatexMathPlugin.ERR_NOTICE_LINE_COUNT ? '\n...' : '');
+            const errorLines = usr_error.split('\n');
+            const truncatedError = errorLines
+                .slice(0, LatexMathPlugin.ERR_NOTICE_LINE_COUNT)
+                .join('\n') +
+                (errorLines.length > LatexMathPlugin.ERR_NOTICE_LINE_COUNT ? '\n...' : '') +
+                "\n\nOpen the dev console for more info (ctrl + shift + i).";
             
             const err_notice = new Notice("Latex Math Error\n", LatexMathPlugin.ERR_NOTICE_TIMEOUT);
             
@@ -68,7 +74,9 @@ export default class LatexMathPlugin extends Plugin {
             [ new EvaluateCommand("apart"), 'Partial fraction decompose LaTeX expression' ],
             [ new SolveCommand(), 'Solve LaTeX expression' ],
             [ new SympyConvertCommand(), 'Convert LaTeX expression to Sympy' ],
-            [ new UnitConvertCommand(), 'Convert units in LaTeX expression' ]
+            [ new UnitConvertCommand(), 'Convert units in LaTeX expression' ],
+            [ new TruthTableCommand(TruthTableFormat.MARKDOWN), 'Create truth table from LaTeX expression (Markdown)' ],
+            [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY), 'Create truth table from LaTeX expression (LaTeX)' ],
         ]));
 
         // spawn sympy client
