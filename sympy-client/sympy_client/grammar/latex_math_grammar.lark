@@ -391,12 +391,6 @@ _LR_FORMAT: "\\left" | "\\right"
 %ignore "\\limits" | "\\nolimits"
 %ignore "\\displaystyle"
 
-// TODO: find a better placement for this.
-BRACE_SURROUNDED_TEXT:/(?:{(?:[^{}]+|(?0))*})/ 
-_CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
-
-_TEXT: _CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
-
 // basic binary operators
 ADD: "+"
 SUB: "-"
@@ -433,6 +427,24 @@ _L_DOUBLE_BAR: _DOUBLE_BAR
 
 _L_DELIMITER: _DOT | _L_ANGLE | L_BRACE_LITERAL | _L_BRACKET | _L_CEIL | _L_FLOOR | _L_PAREN
 _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOOR | _R_PAREN
+
+
+// This terminal matches any piece of text surrounded with {...}, IF its contents contain balanced braces.
+// Due to lalr's limited 1 lookahead, this needs to be a single terminal with a rather conveluted regex,
+// Below is a breakdown of it:
+//
+//  (?:         :
+//    {         : Initial left brace
+//    (?:       : 
+//      [^{}]+  : Match any text up till a { or }
+//      |       : OR
+//      (?0)    : recursively match the entire regex
+//    )*        : Do this as much as needed 
+//    }         : Final right brace
+//  )           :
+//
+BRACE_SURROUNDED_TEXT:/(?:{(?:[^{}]+|(?0))*})/ 
+
 
 // limit, integral, sum, and product symbols
 _FUNC_LIMIT:  "\\lim"
@@ -537,10 +549,16 @@ CONST_EULER: "e"
 CONST_IMAGINARY: "i"
 CONST_INFINITY: "\\infty"
 
+// Text formatting
+
 CMD_MATH: /\\math\w+/
 CMD_BOLD_FORMAT: "\\pmb"
 
 CMD_FORMAT: CMD_MATH | CMD_BOLD_FORMAT
+CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
+
+_TEXT: _CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
+
 
 // mathrm is also included here so operatorname does not have to be used everywhere.
 CMD_OPERATOR: "\\operatorname" | "\\mathrm"
