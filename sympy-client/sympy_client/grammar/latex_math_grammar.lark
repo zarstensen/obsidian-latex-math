@@ -6,7 +6,7 @@
 ?latex_string: relation | system_of_relations | proposition_chain
 
 _rel_op: EQUAL | NOT_EQUAL | LT | LTE | GT | GTE
-_align: _ALIGN | _LATEX_NEWLINE | _TEXT
+_align: _ALIGN | _LATEX_NEWLINE
 relation: (_align* _rel_op)? expression (_rel_op expression)* (_rel_op _align*)?
 
 // an expression is a sum of terms
@@ -391,6 +391,8 @@ _LR_FORMAT: "\\left" | "\\right"
 %ignore "\\limits" | "\\nolimits"
 %ignore "\\displaystyle"
 
+%ignore _TEXT
+
 // basic binary operators
 ADD: "+"
 SUB: "-"
@@ -433,17 +435,20 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 // Due to lalr's limited 1 lookahead, this needs to be a single terminal with a rather conveluted regex,
 // Below is a breakdown of it:
 //
-//  (?:         :
-//    {         : Initial left brace
-//    (?:       : 
-//      [^{}]+  : Match any text up till a { or }
-//      |       : OR
-//      (?0)    : recursively match the entire regex
-//    )*        : Do this as much as needed 
-//    }         : Final right brace
-//  )           :
+//  (?<brace_text>      :
+//    {                 : Initial left brace
+//    (?:               : 
+//      [^{}]+          : Match any text up till a { or }
+//      |               : OR
+//      (?&brace_text)  : recursively match the entire regex
+//    )*                : Do this as much as needed 
+//    }                 : Final right brace
+//  )                   :
 //
-BRACE_SURROUNDED_TEXT:/(?:{(?:[^{}]+|(?0))*})/ 
+// it is important that the brace_text group is named, so we can reference it later for the recursive match.
+// this recursive match does not work with (?0), as lark places this regex in a larger regex,
+// so the (?0) would refer to an incorrect capturing group, leading to unexpected matches.
+BRACE_SURROUNDED_TEXT:/(?<brace_text>{(?:[^{}]+|(?&brace_text))*})/ 
 
 
 // limit, integral, sum, and product symbols
@@ -557,7 +562,8 @@ CMD_BOLD_FORMAT: "\\pmb"
 CMD_FORMAT: CMD_MATH | CMD_BOLD_FORMAT
 CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
 
-_TEXT: _CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
+// this regex is identical to BRACE_SURROUNDED_TEXT, except the capture group name is different to avoid a collision.
+_TEXT: CMD_TEXT _WS? /(?|(?<text_contents>{(?:[^{}]+|(?&text_contents))*}))/
 
 
 // mathrm is also included here so operatorname does not have to be used everywhere.

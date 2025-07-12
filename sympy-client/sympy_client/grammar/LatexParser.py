@@ -284,14 +284,19 @@ class LatexParser(SympyParser):
         pretty_terminals = []
 
         for term_name in terminal_names:
-            term = self.parser.get_terminal(term_name)
-            term_pattern = term.pattern
+            try:
+                term = self.parser.get_terminal(term_name)
+                term_pattern = term.pattern
 
-            unescaped_value = regex.sub(r'\\(.)', r'\1', term_pattern.value)
+                unescaped_value = regex.sub(r'\\(.)', r'\1', term_pattern.value)
 
-            if regex.fullmatch(term_pattern.to_regexp(), unescaped_value):
-                pretty_terminals.append(f"'{unescaped_value}'")
-            else:
-                pretty_terminals.append(term_name.replace('_', ' ').capitalize().strip())
+                if regex.fullmatch(term_pattern.to_regexp(), unescaped_value):
+                    pretty_terminals.append(f"'{unescaped_value}'")
+                    continue
+            except KeyError:
+                # this happens if the terminal is a %declare terminal
+                continue
+
+            pretty_terminals.append(term_name.replace('_', ' ').capitalize().strip())
 
         return pretty_terminals

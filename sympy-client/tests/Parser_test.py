@@ -393,3 +393,24 @@ i & 2 i
         # unexpected token
         with pytest.raises(PrettyLarkError):
             self._parse_expr(r"\sum_{n}^{5} n")
+
+    def test_text(self):
+        result = self._parse_expr(r"a + \text{some text} b")
+
+        a, b = symbols('a b')
+        assert result == a + b
+
+        result = self._parse_expr(r"""
+            \begin{bmatrix}
+            1 & 2 \text{123} \\
+            3 & 4
+            \end{bmatrix}
+            """)
+        assert result == Matrix([[1, 2], [3, 4]])
+
+        result = self._parse_expr(r"""
+            \sum_{n = 0 \text{some \textbf{nested \textit{text}}} and some not nested \text{text}}^1 n
+            """)
+
+        n = symbols('n')
+        assert result == Sum(n, (n, 0, 1))
