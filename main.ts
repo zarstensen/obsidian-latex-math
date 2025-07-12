@@ -43,7 +43,7 @@ export default class LatexMathPlugin extends Plugin {
                 this.prev_err_notice.hide();
             }
 
-            // limit error message to 4 lines,
+            // limit error message to ERR_NOTICE_LINE_COUNT lines,
             // need to check the developer console to see the full message.
 
             const errorLines = usr_error.split('\n');
