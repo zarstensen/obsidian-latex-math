@@ -38,7 +38,7 @@ Take a look at the [command list](#command-list) a brief overview of what this p
   - [Logical Propositions](#logical-propositions)
   - [Convert To Sympy Code](#convert-to-sympy-code)
 - [Installing](#installing)
-- [Developing](#developing)
+- [Contributing](#contributing)
   - [Developing the Sympy Client](#developing-the-sympy-client)
   - [Developing the Obsidian Plugin](#developing-the-obsidian-plugin)
 - [License](#license)
@@ -96,7 +96,7 @@ To undefine a symbol or function, leave the right-hand side of the `:=` operator
 ### Units and Physical Constants
 
 Denote units or physical constants in equations by surrounding them with braces `{}`.
-LaTeX Math automatically handles conversions between units, constants and their various prefixes. See the [syntax](SYNTAX.md#unit-list) document for a list of supported units and physical constants.
+LaTeX Math automatically handles conversions between units, constants and their various prefixes. See the [syntax](SYNTAX.MD#supported-units) document for a list of supported units and physical constants.
 
 ### Symbol Assumptions
 
@@ -143,9 +143,17 @@ OR
 
 Download the plugin zip file from the [latest release](https://github.com/zarstensen/obsidian-latex-math/releases/latest), and extract it to your vault's plugin folder, commonly located at `.obsidian/plugins`, relative to your vault's path.
 
-## Developing
+## Contributing
 
-This section describes how to set up a development environment for **LaTeX Math**.
+Planning to make a contribution to this plugin? If so, please make sure to check-out and make PR's to the `dev` branch.
+
+The only exception to this are hotfixes, which should be merged into `main`.
+
+Want to make changes to UI / UX? Checkout the `src` folder for the obsidian plugin.
+
+Want to expand upon the CAS features of this plugin? Checkout the `sympy-client` folder for the Sympy clients source code.
+
+The following sections describe how to set up a development environment for **LaTeX Math**.
 Make sure to have python (for Sympy client development) and / or NPM (for obsidian plugin development) installed before continuing.
 
 ### Developing the Sympy Client
