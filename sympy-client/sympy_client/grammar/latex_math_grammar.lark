@@ -304,7 +304,7 @@ gradient: _func_template{_FUNC_GRADIENT}
 hessian: _func_template{_FUNC_HESSIAN}
 jacobian: _func_template{_FUNC_JACOBIAN}
 
-taylor: _FUNC_TAYLOR expression _COMMA expression _COMMA expression _R_BRACE _L_PAREN expression _R_PAREN
+taylor: _FUNC_TAYLOR _UNDERSCORE _L_BRACE expression _COMMA expression (_COMMA expression)? _R_BRACE _L_PAREN expression (_COMMA expression)* _R_PAREN
 
 // ======== Combinatorial functions ========
 
@@ -450,7 +450,7 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 // it is important that the brace_text group is named, so we can reference it later for the recursive match.
 // this recursive match does not work with (?0), as lark places this regex in a larger regex,
 // so the (?0) would refer to an incorrect capturing group, leading to unexpected matches.
-BRACE_SURROUNDED_TEXT:/(?<brace_text>{(?:[^{}]+|(?&brace_text))*})/ 
+BRACE_SURROUNDED_TEXT: /(?<brace_text>{(?:[^{}]+|(?&brace_text))*})/ 
 
 
 // limit, integral, sum, and product symbols
@@ -527,7 +527,15 @@ _FUNC_MATRIX_RREF: CMD_OPERATOR _WS? _L_BRACE _WS? "rref" _WS? _R_BRACE
 _FUNC_GRADIENT: "\\nabla"
 _FUNC_HESSIAN: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "H" _WS? _R_BRACE
 _FUNC_JACOBIAN: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
-_FUNC_TAYLOR: "T" _WS? _UNDERSCORE _WS? _L_BRACE
+
+// Match any "T" which has at least 1 comma in its index string and is followed by parenthesees.
+// The lookahead "(?=...)" ensures we do not match the index string itself,
+// as the transformer needs these as individual tokens.
+//
+// Technically this means some indexed "T" symbols may rarely be incorrectly matched to this terminal,
+// e.g. "T_{x_{1,1}}(y)" would be matched by this, but these scenarios are very obscure anyways, so it should not be an issue.
+//
+_FUNC_TAYLOR.1: /T(?=\s*_\s*{(?:[^,]+?,)+.+?}\(.+?\))/
 
 // combinatorial functions.
 
