@@ -11,6 +11,7 @@ Whilst this document should provide a good overview of the parser, one can alway
 - [Expression Structure](#expression-structure)
   - [Expression](#expression)
   - [Logical Proposition](#logical-proposition)
+- [Ignored Tokens](#ignored-tokens)
 - [Numbers](#numbers)
 - [Symbols](#symbols)
 - [Mathematical Functions](#mathematical-functions)
@@ -54,6 +55,12 @@ Expressions and logical propositions cannot be mixed. The only exception to this
 
 *e.g. `x^2 \implies 2 y`, `(x \wedge y) + 2` is NOT allowed, but `x \iff \sqrt{x^2}` is allowed, and checks if `x` is symbolically equal to `\sqrt{x^2}` upon evaluation*
 
+## Ignored Tokens
+
+Alignment tokens (`&` and `\\`), as well as any text command (`\text{...}`, `\textbf{...}`, `\textcolor{...}{...}`, ...), can be placed between other tokens anywhere in a latex string.
+
+The parser will simply ignore these tokens and act as if they are not present.
+
 ## Numbers
 
 Numbers can be notated in 1 of the following 4 ways.
@@ -77,8 +84,9 @@ The parser understands various ways of notating symbols. The below table gives s
 | formatted | `\mathrm{x}` / `\pmb{vector}` / `\mathit{whitespace symbol}` / ... |
 | indexed   | `x_y` / `\alpha_\gamma` / `\pmb{M}_{1;2}` / ...                    |
 
-Note that Latin symbols spelling out Greek letters will be converted to Greek symbols upon evaluation e.g. the Latin symbol `alpha` will be output as `\alpha` upon evaluation.
-This is a side effect of how Sympy handles symbols internally.
+> [!CAUTION]
+> Note that Latin symbols spelling out Greek letters will be converted to Greek symbols upon evaluation e.g. the Latin symbol `alpha` will be output as `\alpha` upon evaluation.
+> This is a side effect of how Sympy handles symbols internally.
 
 ## Mathematical Functions
 
