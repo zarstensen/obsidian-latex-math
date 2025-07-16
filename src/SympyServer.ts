@@ -39,19 +39,45 @@ export class SympyServer {
         this.ws_python = await new Promise(this.resolveConnection.bind(this));
     }
 
-    public async shutdown(): Promise<void> {
-        await this.send("exit", {});
-        const result = await this.receive();
+    // Close server / client connection, and shutdown client process.
+    // If [timeout] seconds passes without the client shutting down gracefully, it is forcefully killed.
+    public async shutdown(timeout: number): Promise<void> {
+        let shutdown_timeout: NodeJS.Timeout | undefined;
 
-        assert(result === "exit");
+        const timeout_promise = new Promise<void>((_, reject) => {
+            shutdown_timeout = setTimeout(() => reject(new Error("Timeout")), timeout * 1000);
+        });
 
+        const shutdown_promise = (async () => {
+            await this.send("exit", {});
+            const result = await this.receive();
+            assert(result === "exit");
+        })();
+
+        let shutdown_error: Error | undefined = undefined;
+
+        try {
+            await Promise.race([shutdown_promise, timeout_promise]);
+        } catch (error) {
+            shutdown_error = Error("Shutdown failed or timedout", { cause: error });
+            this.python_process.kill();
+        }
+
+        clearTimeout(shutdown_timeout);
         this.ws_python.close();
         this.ws_python_server.close();
+
+        if(shutdown_error !== undefined) {
+            throw shutdown_error;
+        }
     }
 
     // Assign an error callback handler.
     // This callback is called any time an error message is received from the SympyClient process.
-    public onError(callback: (error: string) => void): void {
+    // It is passed the following two strings:
+    //      usr_error: A user friendly(ish) string describing the error.
+    //      dev_error: A full stack trace of the python exception.
+    public onError(callback: (usr_error: string, dev_error: string) => void): void {
         this.error_callback = callback;
     }
 
@@ -75,10 +101,10 @@ export class SympyServer {
                 if (status === "error") {
                     
                     if(this.error_callback) {
-                        this.error_callback(payload.message);
+                        this.error_callback(payload.usr_message, payload.dev_message);
                     }
 
-                    reject(payload.message);
+                    reject(payload.dev_message);
                 } else if(status === "exit") {
                     resolve("exit");
                 } else {
@@ -92,7 +118,7 @@ export class SympyServer {
     private python_process: ChildProcessWithoutNullStreams;
     private ws_python: WebSocket;
     private ws_python_server: WebSocketServer;
-    private error_callback: (error: string) => void;
+    private error_callback: (usr_error: string, dev_error: string) => void;
 
     private resolveConnection(resolve: (value: WebSocket) => void, reject: (reason: string) => void) {
         this.ws_python_server.once('connection', (ws) => {

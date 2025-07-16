@@ -1,10 +1,11 @@
-from .command_handlers.CommandHandler import CommandHandler
-
-from typing import *
-import websockets
 import traceback
+from typing import *
 
 import jsonpickle
+import websockets
+
+from .command_handlers.CommandHandler import CommandHandler
+
 
 #
 # The LatexMathClient class manages a connection and message parsing + encoding between an active Latex Math plugin.
@@ -26,7 +27,7 @@ class LatexMathClient:
     # Register a message handler.
     def register_handler(self, handler_key: str, handler_factory: CommandHandler):
         self.handlers[handler_key] = handler_factory
-    
+
     # Send the given json dumpable object back to the plugin.
     async def send(self, handler_key: str, message: dict):
         await self.connection.send(f"{handler_key}|{jsonpickle.encode(message)}")
@@ -40,13 +41,16 @@ class LatexMathClient:
             if handler_key == "exit":
                 await self.send("exit", {})
                 break
-            
+
             if handler_key in self.handlers:
                 try:
                     loaded_payload = jsonpickle.decode(payload)
                     command_result = self.handlers[handler_key].handle(loaded_payload)
                     await self.send('result', command_result.getPayload())
                 except Exception as e:
-                    await self.send("error", dict(message=str(e) + "\n" + traceback.format_exc()))
+                    await self.send("error", dict(usr_message=str(e), dev_message=str(e) + "\n" + traceback.format_exc()))
             else:
-                await self.send("error", dict(message=handler_key))
+                # If we get here in a release build, then either the sympy client or the plugin source is not the same version.
+                # A plugin reinstall should (hopefully) install a sympy client and plugin source with the same version.
+                await self.send("error", dict(usr_message="Command is not supported, please try reinstalling the plugin.",
+                                              dev_message=f"Unsupported command: {handler_key}"))
