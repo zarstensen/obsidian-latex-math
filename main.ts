@@ -103,7 +103,7 @@ export default class LatexMathPlugin extends Plugin {
     }
 
     onunload() {
-        this.sympy_evaluator.shutdown();
+        this.sympy_evaluator.shutdown(LatexMathPlugin.SYMPY_CLIENT_SHUTDOWN_TIMEOUT);
     }
 
     async loadSettings() {
@@ -116,6 +116,7 @@ export default class LatexMathPlugin extends Plugin {
 
     private static readonly ERR_NOTICE_TIMEOUT = 30 * 1000;
     private static readonly ERR_NOTICE_LINE_COUNT = 8;
+    private static readonly SYMPY_CLIENT_SHUTDOWN_TIMEOUT = 30;
 
     private sympy_evaluator: SympyServer;
     private spawn_sympy_client_promise: Promise<void>;

@@ -39,14 +39,37 @@ export class SympyServer {
         this.ws_python = await new Promise(this.resolveConnection.bind(this));
     }
 
-    public async shutdown(): Promise<void> {
-        await this.send("exit", {});
-        const result = await this.receive();
+    // Close server / client connection, and shutdown client process.
+    // If [timeout] seconds passes without the client shutting down gracefully, it is forcefully killed.
+    public async shutdown(timeout: number): Promise<void> {
+        let shutdown_timeout: NodeJS.Timeout | undefined;
 
-        assert(result === "exit");
+        const timeout_promise = new Promise<void>((_, reject) => {
+            shutdown_timeout = setTimeout(() => reject(new Error("Timeout")), timeout * 1000);
+        });
 
+        const shutdown_promise = (async () => {
+            await this.send("exit", {});
+            const result = await this.receive();
+            assert(result === "exit");
+        })();
+
+        let shutdown_error: Error | undefined = undefined;
+
+        try {
+            await Promise.race([shutdown_promise, timeout_promise]);
+        } catch (error) {
+            shutdown_error = Error("Shutdown failed or timedout", { cause: error });
+            this.python_process.kill();
+        }
+
+        clearTimeout(shutdown_timeout);
         this.ws_python.close();
         this.ws_python_server.close();
+
+        if(shutdown_error !== undefined) {
+            throw shutdown_error;
+        }
     }
 
     // Assign an error callback handler.
