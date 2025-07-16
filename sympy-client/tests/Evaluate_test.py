@@ -426,4 +426,33 @@ class TestEvaluate:
 
         assert result.sympy_expr == -1
 
+    def test_taylor(self):
+        handler = EvalHandler(self.parser)
+        x, y, z = symbols('x y z')
+
+        result = handler.handle({
+            'expression': r"T_{2,\sin{x},1}(x)",
+            "environment": {}
+        })
+
+
+        assert result.sympy_expr == sin(1) + (x - 1) * cos(1) - Rational(1, 2) *(x - 1)**2 * sin(1)
+
+        result = handler.handle({
+            'expression': r"T_{3,\sin{x} + \cos{y} + \tan{z}}(x, y, z)",
+            "environment": {}
+        })
+
+        assert result.sympy_expr == 1 + x - Rational(1, 2) * y **2 + z - Rational(1, 6) * x ** 3 + Rational(1, 3) * z ** 3
+
+        expr = sin(x) * cos(z) - tan(z) * sec(y)
+
+        result = handler.handle({
+            'expression': r"T_{2,\sin{x} \cos{z} - \tan{z} \sec{y},\begin{bmatrix} 1 \\ 2 \\ 3 \end{bmatrix}}(1, 2, 3)",
+            "environment": {}
+        })
+
+        assert result.sympy_expr == expr.subs({x: 1, y: 2, z: 3})
+
+
     # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)
