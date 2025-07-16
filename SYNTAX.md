@@ -158,6 +158,7 @@ Note that a *mathematical function* also encompasses concepts not normally thoug
 | greatest common divisor    | `\gcd( ... ,  ... )`                                                                   |
 | least common multiple      | `\mathrm{lcm}( ... ,  ... )` / `\operatorname{lcm}( ... ,  ... )`                      |
 | modulo                     | `. \mod .`                                                                             |
+| Taylor polynomial          | `T_{[degree], [index], [expansion point (0 by default)]}(...)`                         |
 
 ## Mathematical Constants
 

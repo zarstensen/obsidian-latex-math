@@ -1,9 +1,10 @@
 from typing import Iterator
 
+import regex
 import sympy
 from lark import Token, Transformer, v_args
 from sympy import *
-from sympy.core.function import AppliedUndef
+from sympy.core.numbers import int_valued
 from sympy.tensor.array import derive_by_array
 
 from sympy_client.grammar.SympyParser import DefinitionStore
@@ -16,6 +17,13 @@ class FunctionsTransformer(Transformer):
 
     def __init__(self, definitions_store: DefinitionStore):
         self.__definitions_store = definitions_store
+
+        self._symbols_priority = [
+            FunctionsTransformer.__FORMATTED_SYMBOL_REGEX % ("[xyz]",),
+            FunctionsTransformer.__FORMATTED_SYMBOL_REGEX % ("[ut]",)
+        ]
+
+
 
     def trig_function(self, func_token: Token, exponent: Expr | None, arg: Expr) -> Expr:
         func_type = func_token.type.replace('FUNC_', '').lower()
@@ -109,7 +117,7 @@ class FunctionsTransformer(Transformer):
 
     def abs(self, arg: Expr) -> Expr:
         # if arg is a matrix, this notation actually means taking its determinant.
-        if isinstance(arg, MatrixBase):
+        if self._is_matrix(arg):
             return arg.det()
 
         return Abs(arg)
@@ -140,19 +148,12 @@ class FunctionsTransformer(Transformer):
 
     def derivative_prime(self, expr: Expr, primes: Token):
 
-        symbols = expr.free_symbols
+        body, variables = self._expr_as_function(expr, range(0, 2))
 
-        if isinstance(expr, AppliedUndef):
-            func_def = self.__definitions_store.get_function_definition(expr.func)
-
-            if func_def is not None:
-                symbols = func_def.args
-                expr = func_def.get_body()
-
-        if len(symbols) == 0:
+        if len(variables) == 0:
             return S.Zero
         else:
-            return diff(expr, sorted(symbols, key=str)[0], primes.value.count("'"), evaluate=False)
+            return diff(body, variables[0], primes.value.count("'"), evaluate=False)
 
     def integral_no_bounds(self, expr: Expr | None, symbol: Expr):
         expr = 1 if expr is None else expr
@@ -217,40 +218,16 @@ class FunctionsTransformer(Transformer):
     # Linear Alg Specific Implementations
 
     def gradient(self, exponent: Expr | None, expr: Expr) -> Expr:
-        symbols = list(sorted(expr.free_symbols, key=str))
-
-        if isinstance(expr, Symbol):
-            func_def = self.__definitions_store.get_function_definition(self.__definitions_store.deserialize_function(str(expr)))
-
-            if func_def is not None:
-                symbols = func_def.args
-                expr = func_def.get_body()
-
-        return self._try_raise_exponent(Matrix(derive_by_array(expr, symbols)), exponent)
+        body, variables = self._expr_as_function(expr)
+        return self._try_raise_exponent(Matrix(derive_by_array(body, variables)), exponent)
 
     def hessian(self, exponent: Expr | None, expr: Expr) -> Expr:
-        symbols = list(sorted(expr.free_symbols, key=str))
+        body, variables = self._expr_as_function(expr)
+        return self._try_raise_exponent(hessian(body, variables), exponent)
 
-        if isinstance(expr, Symbol):
-            func_def = self.__definitions_store.get_function_definition(self.__definitions_store.deserialize_function(str(expr)))
-
-            if func_def is not None:
-                symbols = func_def.args
-                expr = func_def.get_body()
-
-        return self._try_raise_exponent(hessian(expr, symbols), exponent)
-
-    def jacobian(self, exponent: Expr | None, matrix: Expr) -> Expr:
-        symbols = list(sorted(matrix.free_symbols, key=str))
-
-        if isinstance(matrix, Symbol):
-            func_def = self.__definitions_store.get_function_definition(self.__definitions_store.deserialize_function(str(matrix)))
-
-            if func_def is not None:
-                symbols = func_def.args
-                matrix = func_def.get_body()
-
-        matrix = self._ensure_matrix(matrix)
+    def jacobian(self, exponent: Expr | None, expr: Expr) -> Expr:
+        body, variables = self._expr_as_function(expr)
+        matrix = self._ensure_matrix(body)
 
         if not matrix.rows == 1 and not matrix.cols == 1:
             raise ShapeError("Jacobian expects a single row or column vector")
@@ -261,9 +238,111 @@ class FunctionsTransformer(Transformer):
         gradients = []
 
         for item in matrix:
-            gradients.append(Matrix([derive_by_array(item, symbols)]))
+            gradients.append(Matrix([derive_by_array(item, variables)]))
 
         return self._try_raise_exponent(Matrix.vstack(*gradients), exponent)
+
+    def taylor(self, degree: Expr, expr: Expr, exp_point: Expr | None, *args: Expr):
+        # degree must be a positive natural number.
+        degree = simplify(degree)
+
+        if not int_valued(degree) or degree < 0:
+            raise RuntimeError(
+                "Degree of taylor series must be a natural number.\n"
+                f"Was [{degree}]"
+                )
+
+        # make sure expansion point is a vector of length len(args)
+        exp_point = 0 if exp_point is None else simplify(exp_point)
+
+        if not self._is_matrix(exp_point):
+            exp_point = (exp_point,) * len(args)
+        elif exp_point.shape[0] != 1 and exp_point.shape[1] != 1:
+            raise RuntimeError(
+                "Expansion point must be a n-dimentional vector.\n"
+                f"Was a {exp_point.shape} matrix."
+                )
+        else:
+            exp_point = tuple(exp_point)
+
+        # Make sure all arguments are scalars, or the first argument is a vector
+        args = tuple(map(simplify, args))
+
+        if len(args) == 1 and self._is_matrix(args[0]):
+            args_mat: MatrixBase = args[0]
+
+            if args_mat.shape[0] != 1 and args_mat.shape[1] != 1:
+                raise RuntimeError(
+                    "Variables matrix must be a n-dimensional vector.\n"
+                    f"Was a {args_mat.shape} matrix."
+                )
+
+            args = tuple(map(simplify, args_mat))
+
+        for arg in args:
+            if self._is_matrix(arg):
+                raise RuntimeError(
+                    "All arguments must be scalars.\n"
+                    f"Argument [{i}] was [{type(arg)}]"
+                    )
+
+        # Make sure dimensions are consistent
+        if len(exp_point) != len(args):
+            raise RuntimeError(
+                "Expansion point and variable count must be equal.\n"
+                f"Expansion point dimension: {len(exp_point)}\n"
+                f"Variable count: {len(args)}"
+                )
+
+        # Now the taylor polynomial is actually computed.
+        # See here for reference: https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables
+        expr, variables = self._expr_as_function(expr, len(args))
+
+        exp_point_subs = dict()
+
+        for variable, exp_scalar in zip(variables, exp_point):
+            exp_point_subs[variable] = exp_scalar
+
+        # start out with building a list of directional derivatives from expr,
+        # idx 0 represents derivative order, and idx 1 represents a specific unique derivative of that order.
+
+        taylor_pol_terms: list[list[Expr]] = [ [ expr ] ]
+
+        for _ in range(degree):
+            taylor_pol_terms.append([])
+
+            for prev_derivative in taylor_pol_terms[-2]:
+                for arg in variables:
+                    new_derivative = prev_derivative.diff(arg)
+                    taylor_pol_terms[-1].append(new_derivative)
+
+        # now substitute the expansion point into all derivates.
+        for diff in taylor_pol_terms:
+            for i, d in enumerate(diff):
+                diff[i] = d.subs(exp_point_subs)
+
+
+        # multiply the (x - x_d)^n terms onto the derivatives.
+        for i in range(0, degree):
+            for j in range(i, degree):
+                for k, arg in enumerate(variables):
+                    step = len(variables) ** j
+                    for l in range(step):
+                        taylor_pol_terms[j + 1][k * step + l] *= (arg - exp_point_subs[arg])
+
+        # construct taylor polynomial by scaling each sum row by 1/n! and adding them together.
+        taylor_polynomial = taylor_pol_terms[0][0]
+
+        for d in range(degree):
+            taylor_polynomial += Rational(1, factorial(d + 1)) * sum(taylor_pol_terms[d + 1])
+
+        # finally substitute the args into the computed taylor polynomial
+        args_subs = dict()
+
+        for variable, arg in zip(variables, args):
+            args_subs[variable] = arg
+
+        return taylor_polynomial.subs(args_subs)
 
     # Combinatorial Functions
 
@@ -302,9 +381,72 @@ class FunctionsTransformer(Transformer):
         else:
             return arg
 
+    def _is_matrix(self, obj: Basic) -> bool:
+        return hasattr(obj, "is_Matrix") and obj.is_Matrix
+
     # If the given object is not a matrix, try to construct a 0d Matrix containing the given value.
     # If it is already a matrix, returns the matrix without modifying it in any way.
     def _ensure_matrix(self, obj: Basic) -> MatrixBase:
-        if not hasattr(obj, "is_Matrix") or not obj.is_Matrix:
+        if not self._is_matrix(obj):
             return Matrix([obj])
         return obj
+
+    # Convert the given symbol into a sortable key, prioritizing first the _symbols_priority list, and second Lexicographical ordering.
+    def _symbols_key(self, symb: Symbol):
+        priority = len(self._symbols_priority)
+
+        symbol_str = str(symb)
+        compare_key = symbol_str
+
+        for new_priority, priority_check in enumerate(reversed(self._symbols_priority)):
+            match = regex.match(priority_check, symbol_str)
+
+            if match:
+                priority = new_priority
+                # only the regex groups are used for the compare key,
+                # this allwos us to ignore certain irrelevant aspects of the symbol str,
+                # such as formatting.
+                compare_key = "".join(filter(None, match.groups()))
+
+        return (priority, compare_key)
+
+    # from the given expression, return a function body expression, and a tuple of variables the function body expects.
+    # the target_variables parameter can be set to hint the function how many variables should be expected from the expression.
+    #
+    # If the expression has an entry in the definition store, its function definition body and variables is used.
+    # Otherwise the expression itself is used as the body, and the variables are extracted from its free symbols.
+    def _expr_as_function(self, expr: Expr, target_variables: int | Range | None = None) -> tuple[Expr, tuple[Symbol]]:
+
+        variables = list(sorted(expr.free_symbols, key=self._symbols_key))
+
+        match target_variables:
+            case Range() as target_variable_range:
+                variables = variables[:max(target_variable_range)]
+            case int() as target_variable_count:
+                variables = variables[:target_variable_count]
+
+        body = expr
+
+        if isinstance(expr, Symbol):
+            func_def = self.__definitions_store.get_function_definition(
+                self.__definitions_store.deserialize_function(
+                    str(expr)
+                    )
+                )
+
+            if func_def is not None:
+                variables = func_def.args
+                body = func_def.get_body()
+
+        match target_variables:
+            case int() as target_variable_count:
+                if len(variables) != target_variables:
+                    raise RuntimeError(f"Expected {target_variable_count} variables, but only found {len(variables)} ({", ".join(map(str, variables))})")
+            case Range() as target_variable_range:
+                if len(variables) not in target_variable_range:
+                    raise RuntimeError(f"Expected {min(target_variable_range)} - {max(target_variable_range)} variables, but only found {len(variables)} ({", ".join(map(str, variables))})")
+
+
+        return body, variables
+
+    __FORMATTED_SYMBOL_REGEX = r"(?:\\[^{]*{\s*)?(%s)(?:\s*})?(\s*_{.*})?"
