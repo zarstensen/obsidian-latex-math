@@ -454,5 +454,19 @@ class TestEvaluate:
 
         assert result.sympy_expr == expr.subs({x: 1, y: 2, z: 3})
 
+        result = handler.handle({
+            "expression": "T_{2,f}(x, y)",
+            "environment": {
+                "functions": {
+                    "f": {
+                        "args": ["a", "b"],
+                        "expr": r"e^a + \sin b"
+                    }
+                }
+            }
+        })
+
+        assert result.sympy_expr == 1 + x + y + x**2 / 2
+
 
     # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)
