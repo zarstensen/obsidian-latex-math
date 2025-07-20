@@ -3,29 +3,74 @@ import getPort from 'get-port';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { SympyClientSpawner } from './SympyClientSpawner';
 import { assert } from 'console';
+import { LmatEnvironment } from './LmatEnvironment';
 
-interface ServerMessage {
-    type: string;
-    uid: string;
-    payload: Record<string, unknown>;
+enum MessageType {
+    EXIT = "exit",
+    START = "start",
+    COMM = "comm",
+    INTERRUPT = "interrupt"
 }
 
-interface ClientMessage {
+type ServerPayload = Record<string, unknown>;
+
+interface ServerMessage {
+    readonly type: MessageType;
+    readonly payload: ServerPayload;
+}
+
+interface ServerMessageUID extends ServerMessage {
+    uid: string;
+}
+
+const EXIT_MESSAGE: ServerMessage = {
+    type: MessageType.EXIT,
+    payload: {}
+};
+
+interface StartPayload extends ServerPayload {
+    command: string;
+    expression: string;
+    environment: LmatEnvironment
+}
+
+export class StartMessage implements ServerMessage {
+    public readonly type: MessageType = MessageType.START;
+
+    constructor(public readonly payload: StartPayload) { }
+}
+
+interface InterruptPayload extends ServerPayload {
+    target_uid: string
+}
+
+export class InterruptMessage implements ServerMessage {
+    public type: MessageType = MessageType.INTERRUPT;
+
+    constructor(public payload: InterruptPayload) { }
+}
+
+interface ClientResponse {
     status: string;
     uid: string;
     result: Record<string, unknown>;
 }
 
-interface ClientErrorMessage {
+interface ClientError {
     status: "error";
     uid: string;
-    result: { message: string };
+    result: { 
+        usr_message: string;
+        dev_message: string;
+    };
 }
 
 interface MessagePromiseEntry {
-    resolve: (value: ClientMessage | PromiseLike<ClientMessage>) => void;
-    reject: (reason?: any) => void;
+    resolve: (value: ClientResponse | PromiseLike<ClientResponse>) => void;
+    reject: (reason?: unknown) => void;
 }
+
+// so in here all of the different communications are ASYNC, where as in the sympy process, each communication is on a new thread i guess?
 
 // The SympyServer class manages a connection as well as message encoding and handling, with an SympyClient script instance.
 // Also manages the python process itself.
@@ -44,13 +89,34 @@ export class SympyServer {
         // now start the python process
         this.python_process = await sympy_client_spawner.spawnClient(server_port);
         
+        
         // setup output to be logged in the developer console
+        let stdout_buffer = "";
+        let stderr_buffer = "";
+
         this.python_process.stdout.on('data', (data) => {
-            console.log(`stdout: ${data}`);
+            console.log(data.toString());
+            stdout_buffer += data.toString();
         });
 
+        this.python_process.stdout.on('end', () => {
+            if(stdout_buffer) {
+                console.log(`stdout: \n${stdout_buffer}`);
+                stdout_buffer = '';
+            }
+        });
+
+
         this.python_process.stderr.on('data', (data) => {
-            console.error(`stderr: ${data}`);
+            console.error(data.toString());
+            stderr_buffer += data.toString();
+        });
+
+        this.python_process.stderr.on('end', () => {
+            if(stderr_buffer) {
+                console.error(`stderr: \n${stderr_buffer}`);
+                stderr_buffer = '';
+            }
         });
 
         this.python_process.on('close', (code) => {
@@ -72,8 +138,7 @@ export class SympyServer {
         });
 
         const shutdown_promise = (async () => {
-            await this.send("exit", {});
-            const result = await this.receive();
+            const result = await this.send(EXIT_MESSAGE);
             assert(result.status === "exit");
         })();
 
@@ -105,15 +170,18 @@ export class SympyServer {
     }
 
     // Send a message to the SympyClient process.
-    public async send(type: string, data: Record<string, unknown>): Promise<ClientMessage> {
-        const server_message: ServerMessage = {
-            type: type,
-            uid: crypto.randomUUID(),
-            payload: data,
+    public async send(message: ServerMessage): Promise<ClientResponse> {
+        return await this.reply(message, crypto.randomUUID());
+    }
+
+    public async reply(message: ServerMessage, communication_uid: string) {
+        const server_message: ServerMessageUID = {
+            type: message.type,
+            uid: communication_uid,
+            payload: message.payload
         };
-        
-        
-        const result_promise =  new Promise<ClientMessage>((resolve, reject) => {
+
+        const result_promise =  new Promise<ClientResponse>((resolve, reject) => {
             this.message_promises[server_message.uid] = {
                 resolve: resolve,
                 reject: reject,
@@ -130,7 +198,7 @@ export class SympyServer {
     public async receive(): Promise<void> {
         return new Promise((resolve, _reject) => {
             this.ws_python.once('message', (result_buffer) => {
-                const result: ClientMessage = JSON.parse(result_buffer.toString());
+                const result: ClientResponse = JSON.parse(result_buffer.toString());
                 
                 // first retreive the message promise to resolve (if present).
 
@@ -145,14 +213,13 @@ export class SympyServer {
 
                 if (result.status === "error") {
                     
-                    const err = result as ClientErrorMessage;
+                    const err = result as ClientError;
 
                     if(this.error_callback) {
                         this.error_callback(err.result.usr_message, err.result.dev_message);
                     }
                     
                     message_promise?.reject(err.result.dev_message);
-                    
                     resolve();
                 } else {
                     message_promise?.resolve(result);

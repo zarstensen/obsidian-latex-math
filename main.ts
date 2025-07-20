@@ -85,6 +85,24 @@ export default class LatexMathPlugin extends Plugin {
             new Notice(`Latex Math could not start the Sympy client, aborting load.\n${err.message}`);
             throw err;
         });
+
+        // Start a background thread to repeatedly await receive
+        const receiveLoop = async () => {
+            await this.spawn_sympy_client_promise;
+            while (true) {
+            try {
+                console.log("TRY RECEIVE");
+                const response = await this.sympy_evaluator.receive();
+                console.log("Received response from Sympy evaluator:", response);
+            } catch (err) {
+                console.error("Error in receive loop:", err);
+                break; // Exit the loop on error
+            }
+            }
+        };
+
+        // Start the loop
+        receiveLoop();
     }
 
     // sets up the given map of commands as obsidian commands.

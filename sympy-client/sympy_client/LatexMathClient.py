@@ -1,6 +1,6 @@
 import asyncio
-from threading import Thread
 import traceback
+from threading import Thread
 from typing import *
 
 import jsonpickle
@@ -38,31 +38,40 @@ class LatexMathClient:
     # Start the message loop, this is required to run, before any handlers will be called.
     async def run_message_loop(self):
         while True:
-            message = jsonpickle.decode(await self.connection.recv())
+            message_str = await self.connection.recv()
+            print("MESSAGE: ", message_str, flush=True)
+            message = jsonpickle.decode(message_str)
             uid = message['uid']
+            message_type = message['type']
+            payload = message['payload']
+            
 
-            match message.type:
+            match message_type:
                 case "exit":
                     await self.send("exit", uid, {})
                     break
                 case "start":
-                    if message['command'] not in self.handlers:
-                        await self.send('error', uid, dict(message=message['command']))
-                    
+                    if payload['command'] not in self.handlers:
+                        await self.send('error', uid, dict(message=payload['command']))
+
                     # TODO: this should be a thread
                     try:
-                        self.handler_threads[uid] = Thread(target=asyncio.run, args=(self.handleAndRespond(message['command'], uid, message['payload']),))
+                        self.handler_threads[uid] = Thread(target=self.thread_target, args=(self.handleAndRespond, payload['command'], uid, dict(expression=payload['expression'], environment=payload['environment'])))
                         self.handler_threads[uid].start()
                     except Exception as e:
                         await self.send('error', uid, dict(message=str(e) + "\n" + traceback.format_exc()))
-                            
-                    break
                 case _:
                     # If we get here in a release build, then either the sympy client or the plugin source is not the same version.
                     # A plugin reinstall should (hopefully) install a sympy client and plugin source with the same version.
                     await self.send("error", dict(usr_message="Message type is not supported, please try reinstalling the plugin.",
                         dev_message=f"Unsupported message type: {message.type}"))
-    
+            
+        print("I guess we done now???", flush=True)
+        print(running, flush=True)
+
     async def handleAndRespond(self, command: str, uid: str, payload: dict):
         command_result = self.handlers[command].handle(payload)
         await self.send('result', uid, command_result.getPayload())
+
+    def thread_target(self, coro, *args, **kwargs):
+        return asyncio.run(coro(*args, **kwargs))

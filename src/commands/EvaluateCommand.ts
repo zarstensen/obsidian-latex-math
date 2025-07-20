@@ -1,5 +1,5 @@
 import { App, Editor, EditorPosition, MarkdownView, Notice } from "obsidian";
-import { SympyServer } from "src/SympyServer";
+import { SympyServer, StartMessage } from "src/SympyServer";
 import { ILatexMathCommand } from "./ILatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
@@ -13,7 +13,7 @@ export class EvaluateCommand implements ILatexMathCommand {
         this.evaluate_mode = evaluate_mode;
     }
     
-    public async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView, message: Record<string, any> = {}): Promise<void> {
+    public async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
                 
         let equation: { from: number, to: number, contents: string, is_multiline: boolean } | null
                         = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
@@ -32,12 +32,15 @@ export class EvaluateCommand implements ILatexMathCommand {
             return;
         }
 
-        message.expression = equation.contents;
-        message.environment = LmatEnvironment.fromMarkdownView(app, view);
-
         // send it to python and wait for response.
-        await evaluator.send(this.evaluate_mode, message);
-        const response = await evaluator.receive();
+        const response = (await evaluator.send(new StartMessage({
+            command: this.evaluate_mode,
+            expression: equation.contents,
+            environment: LmatEnvironment.fromMarkdownView(app, view)
+        }))).response;
+
+        console.log("GOT RESPONSE: " + response.toString());
+        console.log(response);
 
         const insert_pos: EditorPosition = editor.offsetToPos(equation.to);
         let insert_content = ` ${response.metadata.separator} ` + await formatLatex(response.result);
