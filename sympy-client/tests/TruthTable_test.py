@@ -13,7 +13,7 @@ class TestTruthTable:
 
         result = self.handler.handle({ 'expression': r"P \wedge Q",
                              'environment': {},
-                             'table_format': "md"
+                             'truth_table_format': "md"
                              })
 
         assert result.columns == [p, q]

@@ -3,37 +3,21 @@ from typing import Any, TypedDict, override
 from sympy import *
 from sympy.solvers.solveset import NonlinearError
 
-from sympy_client import UnitsUtils
 from sympy_client.grammar.LmatEnvDefStore import LmatEnvDefStore
 from sympy_client.grammar.SympyParser import SympyParser
 from sympy_client.grammar.SystemOfExpr import SystemOfExpr
 from sympy_client.LmatEnvironment import LmatEnvironment
 from sympy_client.LmatLatexPrinter import lmat_latex
+from sympy_client.math_lib import UnitsUtils
+from sympy_client.math_lib.SymbolUtils import symbols_variable_order
 
 from .CommandHandler import *
 
 
 class SolveModeMessage(TypedDict):
     expression: str
-    symbol: str | None
+    symbols: list[str]
     environment: LmatEnvironment
-
-class MultivariateResult(CommandResult):
-
-    def __init__(self, symbols, equation_count: int):
-        super().__init__()
-        self.symbols = symbols
-        self.equation_count = equation_count
-
-    @override
-    def getPayload(self) -> dict:
-
-        result = dict(
-            equation_count=self.equation_count,
-            symbols=[ dict(sympy_symbol=str(s), latex_symbol=lmat_latex(s)) for s in self.symbols ]
-        )
-
-        return CommandResult.result(result, status='multivariate_equation')
 
 class SolveResult(CommandResult):
 
@@ -57,12 +41,15 @@ class SolveResult(CommandResult):
             symbols = tuple(self.symbols)
 
         if isinstance(solutions_set, FiniteSet) and len(solutions_set) <= SolveResult.MAX_RELATIONAL_FINITE_SOLUTIONS:
-            return CommandResult.result(lmat_latex(solutions_set.as_relational(symbols)))
+            return CommandResult.result(dict(solution_set=lmat_latex(solutions_set.as_relational(symbols))))
         else:
-            return CommandResult.result(
-                f"{lmat_latex(symbols)} \\in {lmat_latex(solutions_set)}"
-            )
+            return CommandResult.result(dict(
+                solution_set=f"{lmat_latex(symbols)} \\in {lmat_latex(solutions_set)}"
+            ))
 
+class SolveInfoMessage(TypedDict):
+    expression: str
+    environment: LmatEnvironment
 
 # tries to solve the given latex expression.
 # if a symbol is not given, and the expression is multivariate, this mode sends a response with status multivariate_equation,
@@ -75,7 +62,7 @@ class SolveHandler(CommandHandler):
         self._parser = parser
 
     @override
-    def handle(self, message: SolveModeMessage) -> SolveResult | MultivariateResult | ErrorResult:
+    def handle(self, message: SolveInfoMessage) -> SolveResult | ErrorResult:
         equations = self._parser.parse(message['expression'],
                                          LmatEnvDefStore(self._parser, message['environment'])
                                          )
@@ -88,43 +75,28 @@ class SolveHandler(CommandHandler):
             equations = (equations,)
 
         # get a list of free symbols, by combining all the equations individual free symbols.
-        free_symbols = set()
-
-        for equation in equations:
-            free_symbols.update(equation.free_symbols)
+        free_symbols = set(symbol for equation in equations for symbol in equation.free_symbols)
 
         if len(free_symbols) == 0:
             return ErrorResult("Cannot solve equation if no free symbols are present.")
-
-        free_symbols = sorted(list(free_symbols), key=str)
 
         domain = S.Complexes
 
         if 'domain' in message['environment'] and message['environment']['domain'].strip() != "":
             domain = sympify(message['environment']['domain'])
 
-        # determine what symbols to solve for
-        if 'symbols' not in message and len(free_symbols) > len(equations):
-            return MultivariateResult(free_symbols, len(equations))
+        symbols = [ None ] * len(message['symbols'])
 
-        if 'symbols' in message and len(message['symbols']) != len(equations):
+        if len(message['symbols']) != len(equations):
             return ErrorResult("Incorrect number of symbols provided.")
 
-        symbols = []
+        for free_symbol in free_symbols:
+            if str(free_symbol) in message['symbols']:
+                symbol_index = message['symbols'].index(str(free_symbol))
+                symbols[symbol_index] = free_symbol
 
-        if 'symbols' in message:
-            for free_symbol in free_symbols:
-                if str(free_symbol) in message['symbols']:
-                    symbols.append(free_symbol)
-
-            if len(symbols) != len(equations):
-                return ErrorResult(f"No such symbols: {message['symbols']}")
-        else:
-            symbols = list(free_symbols)
-
-
-        # TODO: is there another way to do this?
-        # it is sortof a mess having to distinguish between strictly 1 equation and multiple equations.
+        if None in symbols:
+            return ErrorResult(f"No such symbols: {message['symbols']}")
 
         if len(equations) == 1 and len(symbols) == 1: # these two should always have equal lenth.
             solution_set = solveset(equations[0], symbols[0], domain=domain)
@@ -150,3 +122,49 @@ class SolveHandler(CommandHandler):
                     )
 
         return SolveResult(solution_set, symbols)
+
+class SolveInfoMessage(TypedDict):
+    expression: str
+    environment: LmatEnvironment
+
+class SolveInfoResult(CommandResult):
+
+    def __init__(self, symbols, equation_count: int):
+        super().__init__()
+        self.symbols = symbols
+        self.equation_count = equation_count
+
+    @override
+    def getPayload(self) -> dict:
+
+        return CommandResult.result(dict(
+            required_symbols = self.equation_count,
+            available_symbols = [ dict(sympy_symbol=str(s), latex_symbol=lmat_latex(s)) for s in self.symbols ]
+        ))
+
+# EquationInfo? handler
+class SolveInfoHandler(CommandHandler):
+    def __init__(self, parser: SympyParser):
+            super().__init__()
+            self._parser = parser
+
+    @override
+    def handle(self, message: SolveInfoMessage) -> SolveInfoResult:
+        equations = self._parser.parse(
+                                    message['expression'],
+                                    LmatEnvDefStore(self._parser, message['environment'])
+                                )
+
+        # ok this is the number of expressions
+        if isinstance(equations, SystemOfExpr):
+            equations = equations.get_all_expr()
+        else:
+            equations = (equations,)
+
+        # time for a full symbols list, and a default symbols list maybe?
+        # or it should be ordered such that the first n symbols are the default symbols.
+
+        symbols = set(symbol for equation in equations for symbol in equation.free_symbols)
+        ordered_symbols = symbols_variable_order(symbols)
+
+        return SolveInfoResult(symbols=ordered_symbols, equation_count=len(equations))

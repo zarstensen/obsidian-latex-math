@@ -104,12 +104,12 @@ class TruthTableHandler(CommandHandler):
         result_cls = None
 
         # Select result class dependant on requested table format
-        match message['table_format']:
+        match message['truth_table_format']:
             case TruthTableFormat.MARKDOWN.value:
                 result_cls = TruthTableResultMarkdown
             case TruthTableFormat.LATEX_ARRAY.value:
                 result_cls = TruthTableResultLatex
             case _:
-                return ErrorResult(f"Unknown table format: {message['table_format']}")
+                return ErrorResult(f"Unknown table format: {message['truth_table_format']}")
 
         return result_cls(columns, message['expression'], truth_table_data)

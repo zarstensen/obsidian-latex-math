@@ -8,11 +8,17 @@ import { LmatEnvironment } from './LmatEnvironment';
 enum MessageType {
     EXIT = "exit",
     START = "start",
-    COMM = "comm",
     INTERRUPT = "interrupt"
 }
 
-type ServerPayload = Record<string, unknown>;
+enum MessageStatus {
+    SUCCESS = "success",
+    ERROR = "error",
+    INTERRUPTED = "interrupted"
+}
+
+export type GenericPayload = Record<string, unknown>;
+type ServerPayload = GenericPayload;
 
 interface ServerMessage {
     readonly type: MessageType;
@@ -28,41 +34,55 @@ const EXIT_MESSAGE: ServerMessage = {
     payload: {}
 };
 
-interface StartPayload extends ServerPayload {
-    command: string;
-    expression: string;
-    environment: LmatEnvironment
+export interface StartCommandPayload extends ServerPayload {
+    command_type: string;
+    start_args: GenericPayload;
 }
 
-export class StartMessage implements ServerMessage {
+export class StartCommandMessage implements ServerMessage {
     public readonly type: MessageType = MessageType.START;
 
-    constructor(public readonly payload: StartPayload) { }
+    constructor(public readonly payload: StartCommandPayload) { }
 }
 
-interface InterruptPayload extends ServerPayload {
+export interface InterruptHandlePayload extends ServerPayload {
     target_uid: string
 }
 
-export class InterruptMessage implements ServerMessage {
+export class InterruptHandleMessage implements ServerMessage {
     public type: MessageType = MessageType.INTERRUPT;
 
-    constructor(public payload: InterruptPayload) { }
+    constructor(public payload: InterruptHandlePayload) { }
 }
 
-interface ClientResponse {
-    status: string;
+export interface ClientResponse {
+    status: MessageStatus;
     uid: string;
-    result: Record<string, unknown>;
+    payload: GenericPayload;
 }
 
-interface ClientError {
-    status: "error";
+export interface ErrorResponse extends ClientResponse {
+    status: MessageStatus.ERROR;
     uid: string;
-    result: { 
+    payload: { 
         usr_message: string;
         dev_message: string;
     };
+}
+
+export interface SuccessResponse extends ClientResponse {
+    status: MessageStatus.SUCCESS;
+    uid: string;
+    payload: {
+        type: string
+        value: GenericPayload
+    };
+}
+
+export interface InterrutpedResposne extends ClientResponse {
+    status: MessageStatus.INTERRUPTED;
+    uid: string;
+    payload: Record<string, never>;
 }
 
 interface MessagePromiseEntry {
@@ -91,32 +111,13 @@ export class SympyServer {
         
         
         // setup output to be logged in the developer console
-        let stdout_buffer = "";
-        let stderr_buffer = "";
-
         this.python_process.stdout.on('data', (data) => {
             console.log(data.toString());
-            stdout_buffer += data.toString();
-        });
-
-        this.python_process.stdout.on('end', () => {
-            if(stdout_buffer) {
-                console.log(`stdout: \n${stdout_buffer}`);
-                stdout_buffer = '';
-            }
         });
 
 
         this.python_process.stderr.on('data', (data) => {
             console.error(data.toString());
-            stderr_buffer += data.toString();
-        });
-
-        this.python_process.stderr.on('end', () => {
-            if(stderr_buffer) {
-                console.error(`stderr: \n${stderr_buffer}`);
-                stderr_buffer = '';
-            }
         });
 
         this.python_process.on('close', (code) => {
@@ -139,7 +140,7 @@ export class SympyServer {
 
         const shutdown_promise = (async () => {
             const result = await this.send(EXIT_MESSAGE);
-            assert(result.status === "exit");
+            assert(result.status === MessageStatus.SUCCESS);
         })();
 
         let shutdown_error: Error | undefined = undefined;
@@ -165,23 +166,19 @@ export class SympyServer {
     // It is passed the following two strings:
     //      usr_error: A user friendly(ish) string describing the error.
     //      dev_error: A full stack trace of the python exception.
-    public onError(callback: (usr_error: string, dev_error: string) => void): void {
+    public on_error(callback: (usr_error: string, dev_error: string) => void): void {
         this.error_callback = callback;
     }
 
     // Send a message to the SympyClient process.
-    public async send(message: ServerMessage): Promise<ClientResponse> {
-        return await this.reply(message, crypto.randomUUID());
-    }
-
-    public async reply(message: ServerMessage, communication_uid: string) {
-        const server_message: ServerMessageUID = {
+    public async send(message: ServerMessage): Promise<SuccessResponse> {
+         const server_message: ServerMessageUID = {
             type: message.type,
-            uid: communication_uid,
+            uid: crypto.randomUUID(),
             payload: message.payload
         };
 
-        const result_promise =  new Promise<ClientResponse>((resolve, reject) => {
+        const result_promise =  new Promise<SuccessResponse>((resolve, reject) => {
             this.message_promises[server_message.uid] = {
                 resolve: resolve,
                 reject: reject,
@@ -193,38 +190,54 @@ export class SympyServer {
         return await result_promise;
     }
 
+
+
     // Receive a result from the SympyClient process.
     // Returns a promise that resolves to the result object, parsed from the received json payload.
     public async receive(): Promise<void> {
         return new Promise((resolve, _reject) => {
             this.ws_python.once('message', (result_buffer) => {
-                const result: ClientResponse = JSON.parse(result_buffer.toString());
+                const response: ClientResponse = JSON.parse(result_buffer.toString());
                 
                 // first retreive the message promise to resolve (if present).
 
                 let message_promise: MessagePromiseEntry | null = null;
                 
-                if (this.message_promises[result.uid] !== undefined) {
-                    message_promise = this.message_promises[result.uid];
-                    delete this.message_promises[result.uid];
+                if (this.message_promises[response.uid] !== undefined) {
+                    message_promise = this.message_promises[response.uid];
+                    delete this.message_promises[response.uid];
                 }
                 
-                // first some special cases.
+                console.log(response);
 
-                if (result.status === "error") {
-                    
-                    const err = result as ClientError;
+                // now handle the response depending on its status.
+                
+                switch (response.status) {
+                    case MessageStatus.ERROR: {
+                        const err = response as ErrorResponse;
 
-                    if(this.error_callback) {
-                        this.error_callback(err.result.usr_message, err.result.dev_message);
+                        if(this.error_callback) {
+                            this.error_callback(err.payload.usr_message, err.payload.dev_message);
+                        }
+                        
+                        message_promise?.reject(err.payload.dev_message);
+                        break;
                     }
-                    
-                    message_promise?.reject(err.result.dev_message);
-                    resolve();
-                } else {
-                    message_promise?.resolve(result);
-                    resolve();
+                    case MessageStatus.INTERRUPTED: {
+                        // Just ignore for now, maybe a message in the future?
+                        message_promise?.reject();
+                        break;
+                    }
+                    case MessageStatus.SUCCESS: {
+                        message_promise?.resolve(response);
+                        break;
+                    }
+                    default: {
+                        throw new Error("Unknown response status");
+                    }
                 }
+                
+                resolve();
             });
         });
     }

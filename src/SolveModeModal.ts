@@ -1,6 +1,6 @@
 import { App, finishRenderMath, Modal, Notice, renderMath, Setting } from "obsidian";
 
-type LatexMathSymbol = { sympy_symbol: string, latex_symbol: string };
+export type LatexMathSymbol = { sympy_symbol: string, latex_symbol: string };
 type SolveConfig = { domain: string, symbols: LatexMathSymbol[] };
 
 // The SymbolSelectorModal provides a modal dialog to select a single symbol from a list of symbols.

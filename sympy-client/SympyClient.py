@@ -8,7 +8,7 @@ from sympy_client.command_handlers.EvalfHandler import EvalfHandler
 from sympy_client.command_handlers.EvalHandler import EvalHandler
 from sympy_client.command_handlers.ExpandHandler import ExpandHandler
 from sympy_client.command_handlers.FactorHandler import FactorHandler
-from sympy_client.command_handlers.SolveHandler import SolveHandler
+from sympy_client.command_handlers.SolveHandler import SolveHandler, SolveInfoHandler
 from sympy_client.command_handlers.SymbolSetHandler import SymbolSetHandler
 from sympy_client.command_handlers.TruthTableHandler import TruthTableHandler
 from sympy_client.grammar.LatexParser import LatexParser
@@ -30,6 +30,7 @@ client.register_handler("expand", ExpandHandler(latex_parser))
 client.register_handler("factor", FactorHandler(latex_parser))
 client.register_handler("apart", ApartHandler(latex_parser))
 client.register_handler("solve", SolveHandler(latex_parser))
+client.register_handler("solve-info", SolveInfoHandler(latex_parser))
 client.register_handler("symbolsets", SymbolSetHandler(latex_parser))
 client.register_handler("convert-sympy", ConvertSympyHandler(latex_parser))
 client.register_handler("convert-units", ConvertUnitsHandler(latex_parser))

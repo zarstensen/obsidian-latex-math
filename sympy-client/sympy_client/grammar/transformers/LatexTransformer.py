@@ -9,7 +9,7 @@ from sympy.core.numbers import Float, Integer
 from sympy.logic.boolalg import *
 from sympy.physics.units import Quantity
 
-import sympy_client.UnitsUtils as UnitUtils
+import sympy_client.math_lib.UnitsUtils as UnitUtils
 from sympy_client.grammar.SympyParser import DefinitionStore
 from sympy_client.grammar.SystemOfExpr import SystemOfExpr
 

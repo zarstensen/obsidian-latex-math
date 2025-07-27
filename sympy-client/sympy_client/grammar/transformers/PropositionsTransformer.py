@@ -2,8 +2,8 @@ from lark import Token, Transformer, v_args
 from sympy import *
 from sympy.logic.boolalg import *
 
-from sympy_client.grammar.SymbolicIff import SymbolicIff
 from sympy_client.grammar.SystemOfExpr import SystemOfExpr
+from sympy_client.math_lib import Functions
 
 
 # return type for the PropositionsTransformer.
@@ -37,7 +37,7 @@ class PropositionsTransformer(Transformer):
             return PropositionExpr(props[0])
 
     def prop_iff(self, *args: tuple[Expr]) -> Expr:
-        return SymbolicIff(*args)
+        return Functions.SymbolicIff(*args)
 
     def prop_implies(self, *args: tuple[Expr|Token]) -> Expr:
 

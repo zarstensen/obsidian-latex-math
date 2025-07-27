@@ -1,7 +1,7 @@
 from sympy import *
 from sympy.physics.units import convert_to
 
-import sympy_client.UnitsUtils as UnitsUtils
+import sympy_client.math_lib.UnitsUtils as UnitsUtils
 
 from .EvalHandlerBase import EvalHandlerBase, EvalResult, EvaluateMessage
 

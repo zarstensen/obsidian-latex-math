@@ -1,9 +1,9 @@
 import { FileSystemAdapter, finishRenderMath, MarkdownPostProcessorContext, MarkdownView, Notice, Plugin, renderMath } from 'obsidian';
-import { SympyServer } from 'src/SympyServer';
+import { ClientResponse, SympyServer } from 'src/SympyServer';
 import { LmatEnvironment } from 'src/LmatEnvironment';
 import { ExecutableSpawner, SourceCodeSpawner } from 'src/SympyClientSpawner';
 import { LatexMathSettingsTab } from 'src/LatexMathSettingsTab';
-import { ILatexMathCommand } from 'src/commands/ILatexMathCommand';
+import { LatexMathCommand } from 'src/commands/LatexMathCommand';
 import { EvaluateCommand } from 'src/commands/EvaluateCommand';
 import { SolveCommand } from 'src/commands/SolveCommand';
 import { SympyConvertCommand } from 'src/commands/SympyConvertCommand';
@@ -38,7 +38,7 @@ export default class LatexMathPlugin extends Plugin {
         this.sympy_evaluator = new SympyServer();
 
         // forward python errors directly to the user.
-        this.sympy_evaluator.onError((usr_error, _dev_error) => {
+        this.sympy_evaluator.on_error((usr_error, _dev_error) => {
             if(this.prev_err_notice !== null) {
                 this.prev_err_notice.hide();
             }
@@ -89,6 +89,7 @@ export default class LatexMathPlugin extends Plugin {
         // Start a background thread to repeatedly await receive
         const receiveLoop = async () => {
             await this.spawn_sympy_client_promise;
+            // TODO: exit this on exit, also this should be its own function,a sl 
             while (true) {
             try {
                 console.log("TRY RECEIVE");
@@ -107,16 +108,19 @@ export default class LatexMathPlugin extends Plugin {
 
     // sets up the given map of commands as obsidian commands.
     // the provided values for each command will be set as the command description.
-    addCommands(commands: Map<ILatexMathCommand, string>) {
+    addCommands(commands: Map<LatexMathCommand, string>) {
         commands.forEach((description, cmd) => {
-          this.addCommand({
-            id: cmd.id,
-            name: description,
-            editorCallback: async (e, v) => { 
-                await this.spawn_sympy_client_promise;
-                cmd.functionCallback(this.sympy_evaluator, this.app, e, v as MarkdownView, {});
-            }
-        });
+          
+            this.addCommand({
+                id: cmd.id,
+                name: description,
+                editorCallback: async (e, v) => { 
+                    await this.spawn_sympy_client_promise;
+                    cmd.functionCallback(this.sympy_evaluator, this.app, e, v as MarkdownView);
+                }
+            });
+
+            cmd.onVerifyFailure(this.onCommandFailed);
         });
     }
 
@@ -153,6 +157,7 @@ export default class LatexMathPlugin extends Plugin {
         el.appendChild(div);
 
         // retreive to be rendered latex from python.
+        // TODO: make compatible with threaded stuff. also generally just clean this main file up please...
         await this.sympy_evaluator.send("symbolsets", { environment: LmatEnvironment.fromCodeBlock(source, {}, {}) });
         const response = await this.sympy_evaluator.receive();
 
@@ -174,5 +179,17 @@ export default class LatexMathPlugin extends Plugin {
         const sympy_client_spawner = this.settings.dev_mode ? new SourceCodeSpawner(full_plugin_dir) : new ExecutableSpawner(asset_extractor);
 
         await this.sympy_evaluator.initializeAsync(sympy_client_spawner);
+    }
+
+    private onCommandFailed(failed_command: LatexMathCommand, unexpected_response: ClientResponse, expected_statuses: Set<string>) {
+        console.error("Command Failed!\nCommand:\t\t\t",
+            failed_command,
+            "\nExpected value types:\t",
+            expected_statuses,
+            "\nResponse:\t\t\t",
+            unexpected_response
+        );
+
+        new Notice("An unexpected error occured whilst handling command.\nPlease see the dev console for more info\n(ctrl + shift + i)");
     }
 }

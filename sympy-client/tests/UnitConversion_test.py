@@ -40,7 +40,7 @@ class TestUnitConversion:
 
     def test_solve_conversion(self):
         handler = SolveHandler(self.parser)
-        result = handler.handle({"expression": "2 x = 50 {kg}", "environment": { }})
+        result = handler.handle({"expression": "2 x = 50 {kg}", "environment": { }, "symbols": [ "x" ]})
 
         assert result.solution == FiniteSet(25 * units.kilogram)
 

@@ -1,13 +1,13 @@
 from typing import Iterator
 
-import regex
 import sympy
 from lark import Token, Transformer, v_args
 from sympy import *
-from sympy.core.numbers import int_valued
 from sympy.tensor.array import derive_by_array
 
 from sympy_client.grammar.SympyParser import DefinitionStore
+from sympy_client.math_lib import Functions, MatrixUtils
+from sympy_client.math_lib.SymbolUtils import symbols_variable_order
 
 
 # The FucntionsTransformer holds the implementation of various mathematical function rules,
@@ -17,13 +17,6 @@ class FunctionsTransformer(Transformer):
 
     def __init__(self, definitions_store: DefinitionStore):
         self.__definitions_store = definitions_store
-
-        self._symbols_priority = [
-            FunctionsTransformer.__FORMATTED_SYMBOL_REGEX % ("[xyz]",),
-            FunctionsTransformer.__FORMATTED_SYMBOL_REGEX % ("[ut]",)
-        ]
-
-
 
     def trig_function(self, func_token: Token, exponent: Expr | None, arg: Expr) -> Expr:
         func_type = func_token.type.replace('FUNC_', '').lower()
@@ -117,7 +110,7 @@ class FunctionsTransformer(Transformer):
 
     def abs(self, arg: Expr) -> Expr:
         # if arg is a matrix, this notation actually means taking its determinant.
-        if self._is_matrix(arg):
+        if MatrixUtils.is_matrix(arg):
             return arg.det()
 
         return Abs(arg)
@@ -184,22 +177,22 @@ class FunctionsTransformer(Transformer):
     # Matrix Specific Implementations
 
     def norm(self, arg: Expr) -> Expr:
-        return self._ensure_matrix(arg).norm()
+        return MatrixUtils.ensure_matrix(arg).norm()
 
     def inner_product(self, lhs: Expr, rhs: Expr) -> Expr:
-        return self._ensure_matrix(lhs).dot(self._ensure_matrix(rhs), conjugate_convention='right')
+        return MatrixUtils.ensure_matrix(lhs).dot(MatrixUtils.ensure_matrix(rhs), conjugate_convention='right')
 
     def determinant(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(self._ensure_matrix(mat).det(), exponent)
+        return self._try_raise_exponent(MatrixUtils.ensure_matrix(mat).det(), exponent)
 
     def trace(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(self._ensure_matrix(mat).trace(), exponent)
+        return self._try_raise_exponent(MatrixUtils.ensure_matrix(mat).trace(), exponent)
 
     def adjugate(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(self._ensure_matrix(mat).adjugate(), exponent)
+        return self._try_raise_exponent(MatrixUtils.ensure_matrix(mat).adjugate(), exponent)
 
     def rref(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(self._ensure_matrix(mat).rref()[0], exponent)
+        return self._try_raise_exponent(MatrixUtils.ensure_matrix(mat).rref()[0], exponent)
 
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
         exponents_str = exponent.value
@@ -227,7 +220,7 @@ class FunctionsTransformer(Transformer):
 
     def jacobian(self, exponent: Expr | None, expr: Expr) -> Expr:
         body, variables = self._expr_as_function(expr)
-        matrix = self._ensure_matrix(body)
+        matrix = MatrixUtils.ensure_matrix(body)
 
         if not matrix.rows == 1 and not matrix.cols == 1:
             raise ShapeError("Jacobian expects a single row or column vector")
@@ -243,32 +236,20 @@ class FunctionsTransformer(Transformer):
         return self._try_raise_exponent(Matrix.vstack(*gradients), exponent)
 
     def taylor(self, degree: Expr, expr: Expr, exp_point: Expr | None, *args: Expr):
-        # degree must be a positive natural number.
         degree = simplify(degree)
 
-        if not int_valued(degree) or degree < 0:
-            raise RuntimeError(
-                "Degree of taylor series must be a natural number.\n"
-                f"Was [{degree}]"
-                )
-
-        # make sure expansion point is a vector of length len(args)
+        # make sure expansion point is a tuple
         exp_point = 0 if exp_point is None else simplify(exp_point)
 
-        if not self._is_matrix(exp_point):
+        if not MatrixUtils.is_matrix(exp_point):
             exp_point = (exp_point,) * len(args)
-        elif exp_point.shape[0] != 1 and exp_point.shape[1] != 1:
-            raise RuntimeError(
-                "Expansion point must be a n-dimentional vector.\n"
-                f"Was a {exp_point.shape} matrix."
-                )
         else:
             exp_point = tuple(exp_point)
 
         # Make sure all arguments are scalars, or the first argument is a vector
         args = tuple(map(simplify, args))
 
-        if len(args) == 1 and self._is_matrix(args[0]):
+        if len(args) == 1 and MatrixUtils.is_matrix(args[0]):
             args_mat: MatrixBase = args[0]
 
             if args_mat.shape[0] != 1 and args_mat.shape[1] != 1:
@@ -279,81 +260,27 @@ class FunctionsTransformer(Transformer):
 
             args = tuple(map(simplify, args_mat))
 
-        for arg in args:
-            if self._is_matrix(arg):
+        for i, arg in enumerate(args):
+            if MatrixUtils.is_matrix(arg):
                 raise RuntimeError(
                     "All arguments must be scalars.\n"
                     f"Argument [{i}] was [{type(arg)}]"
                     )
 
-        # Make sure dimensions are consistent
-        if len(exp_point) != len(args):
-            raise RuntimeError(
-                "Expansion point and variable count must be equal.\n"
-                f"Expansion point dimension: {len(exp_point)}\n"
-                f"Variable count: {len(args)}"
-                )
-
-        # Now the taylor polynomial is actually computed.
-        # See here for reference: https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables
         expr, variables = self._expr_as_function(expr, len(args))
 
-        exp_point_subs = dict()
-
-        for variable, exp_scalar in zip(variables, exp_point):
-            exp_point_subs[variable] = exp_scalar
-
-        # start out with building a list of directional derivatives from expr,
-        # idx 0 represents derivative order, and idx 1 represents a specific unique derivative of that order.
-
-        taylor_pol_terms: list[list[Expr]] = [ [ expr ] ]
-
-        for _ in range(degree):
-            taylor_pol_terms.append([])
-
-            for prev_derivative in taylor_pol_terms[-2]:
-                for arg in variables:
-                    new_derivative = prev_derivative.diff(arg)
-                    taylor_pol_terms[-1].append(new_derivative)
-
-        # now substitute the expansion point into all derivates.
-        for diff in taylor_pol_terms:
-            for i, d in enumerate(diff):
-                diff[i] = d.subs(exp_point_subs)
-
-
-        # multiply the (x - x_d)^n terms onto the derivatives.
-        for i in range(0, degree):
-            for j in range(i, degree):
-                for k, arg in enumerate(variables):
-                    step = len(variables) ** j
-                    for l in range(step):
-                        taylor_pol_terms[j + 1][k * step + l] *= (arg - exp_point_subs[arg])
-
-        # construct taylor polynomial by scaling each sum row by 1/n! and adding them together.
-        taylor_polynomial = taylor_pol_terms[0][0]
-
-        for d in range(degree):
-            taylor_polynomial += Rational(1, factorial(d + 1)) * sum(taylor_pol_terms[d + 1])
-
-        # finally substitute the args into the computed taylor polynomial
-        args_subs = dict()
-
-        for variable, arg in zip(variables, args):
-            args_subs[variable] = arg
-
-        return taylor_polynomial.subs(args_subs)
+        return Functions.taylor(expr, degree, variables, args, exp_point)
 
     # Combinatorial Functions
 
     def permutations(self, n: Expr, k: Expr):
-        return Mul(factorial(n), factorial((n - k)) ** S.NegativeOne)
+        return Functions.permutations(n, k)
 
     def combinations(self, n: Expr, k: Expr):
         return binomial(n, k)
 
     def derangements(self, n: Expr):
-        return (factorial(n) - lowergamma(n + 1, -1)) / E
+        return Functions.derangements(n)
 
     # Divisibility Functions
 
@@ -381,35 +308,6 @@ class FunctionsTransformer(Transformer):
         else:
             return arg
 
-    def _is_matrix(self, obj: Basic) -> bool:
-        return hasattr(obj, "is_Matrix") and obj.is_Matrix
-
-    # If the given object is not a matrix, try to construct a 0d Matrix containing the given value.
-    # If it is already a matrix, returns the matrix without modifying it in any way.
-    def _ensure_matrix(self, obj: Basic) -> MatrixBase:
-        if not self._is_matrix(obj):
-            return Matrix([obj])
-        return obj
-
-    # Convert the given symbol into a sortable key, prioritizing first the _symbols_priority list, and second Lexicographical ordering.
-    def _symbols_key(self, symb: Symbol):
-        priority = len(self._symbols_priority)
-
-        symbol_str = str(symb)
-        compare_key = symbol_str
-
-        for new_priority, priority_check in enumerate(reversed(self._symbols_priority)):
-            match = regex.match(priority_check, symbol_str)
-
-            if match:
-                priority = new_priority
-                # only the regex groups are used for the compare key,
-                # this allwos us to ignore certain irrelevant aspects of the symbol str,
-                # such as formatting.
-                compare_key = "".join(filter(None, match.groups()))
-
-        return (priority, compare_key)
-
     # from the given expression, return a function body expression, and a tuple of variables the function body expects.
     # the target_variables parameter can be set to hint the function how many variables should be expected from the expression.
     #
@@ -417,7 +315,7 @@ class FunctionsTransformer(Transformer):
     # Otherwise the expression itself is used as the body, and the variables are extracted from its free symbols.
     def _expr_as_function(self, expr: Expr, target_variables: int | Range | None = None) -> tuple[Expr, tuple[Symbol]]:
 
-        variables = list(sorted(expr.free_symbols, key=self._symbols_key))
+        variables = symbols_variable_order(expr.free_symbols)
 
         match target_variables:
             case Range() as target_variable_range:
@@ -448,5 +346,3 @@ class FunctionsTransformer(Transformer):
 
 
         return body, variables
-
-    __FORMATTED_SYMBOL_REGEX = r"(?:\\[^{]*{\s*)?(%s)(?:\s*})?(\s*_{.*})?"

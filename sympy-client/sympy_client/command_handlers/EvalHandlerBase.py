@@ -5,7 +5,7 @@ from sympy import *
 from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
-import sympy_client.UnitsUtils as UnitsUtils
+import sympy_client.math_lib.UnitsUtils as UnitsUtils
 from sympy_client.grammar.LmatEnvDefStore import LmatEnvDefStore
 from sympy_client.grammar.SympyParser import SympyParser
 from sympy_client.grammar.SystemOfExpr import SystemOfExpr
@@ -34,7 +34,7 @@ class EvalResult(CommandResult, ABC):
                 end_line = self.expr_lines[1]
             )
 
-        return CommandResult.result(lmat_latex(self.sympy_expr), metadata=metadata)
+        return CommandResult.result(dict(evaluated_expression = lmat_latex(self.sympy_expr), metadata=metadata))
 
 class EvaluateMessage(TypedDict):
     expression: str

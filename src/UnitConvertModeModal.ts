@@ -34,7 +34,7 @@ export class UnitConvertModeModal extends Modal {
             });
     }
 
-    public getTargetUnits(): Promise<string[]> {
+    public get_target_units(): Promise<string[]> {
         return this.target_units_promise;
     }
 

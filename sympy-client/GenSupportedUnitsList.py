@@ -1,6 +1,6 @@
 import pandas as pd
 from sympy.physics.units.quantities import PhysicalConstant, Quantity
-from sympy_client.UnitsUtils import UNIT_ALIAS_MAP
+from sympy_client.math_lib.UnitsUtils import UNIT_ALIAS_MAP
 
 unit_aliases: dict[Quantity, set[str]] = dict()
 constant_aliases: dict[Quantity, set[str]] = dict()

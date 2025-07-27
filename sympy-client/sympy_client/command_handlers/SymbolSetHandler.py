@@ -54,7 +54,7 @@ class SymbolSetResult(CommandResult):
         return CommandResult.result(f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}")
 
 
-class SymbolSetModeMessage(TypedDict):
+class SymbolSetMessage(TypedDict):
     environment: LmatEnvironment
 
 class SymbolSetHandler(CommandHandler):
@@ -63,7 +63,7 @@ class SymbolSetHandler(CommandHandler):
         super().__init__()
         self._parser = parser
 
-    def handle(self, message: SymbolSetModeMessage) -> SymbolSetResult:
+    def handle(self, message: SymbolSetMessage) -> SymbolSetResult:
         environment: LmatEnvironment = message['environment']
         definition_store = LmatEnvDefStore(self._parser, environment)
 
