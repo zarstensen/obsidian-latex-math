@@ -31,8 +31,8 @@ export enum TruthTableFormat {
 export class TruthTableCommand extends LatexMathCommand {
     readonly id: string;
 
-    constructor(public format: TruthTableFormat) {
-        super();
+    constructor(public format: TruthTableFormat, ...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+        super(...base_args);
         this.truth_table_format = format;
         this.id = `generate-${this.truth_table_format}-truth-table`;
     }
@@ -54,7 +54,7 @@ export class TruthTableCommand extends LatexMathCommand {
             start_args: new TruthTablePayload(equation.contents, lmat_env, this.truth_table_format)
         }));
 
-        const result = this.verifyResponse<TruthTableResponse>(response);
+        const result = this.response_verifier.verifyResponse<TruthTableResponse>(response);
 
         // Insert truth table right after the current math block.
         let insert_content: string = "\n\n" + result.truth_table;

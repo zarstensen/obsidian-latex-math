@@ -51,7 +51,7 @@ class SymbolSetResult(CommandResult):
             if len(symbols) > 0:
                 latex_sets.append(f"{', '.join(symbols)} & \\in & {SET_TO_LATEX[set]}")
 
-        return CommandResult.result(f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}")
+        return CommandResult.result(dict(symbol_set_latex=f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}"))
 
 
 class SymbolSetMessage(TypedDict):

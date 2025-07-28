@@ -1,5 +1,5 @@
 import { App, Editor, EditorPosition, MarkdownView, Notice } from "obsidian";
-import { SympyServer, StartCommandMessage, GenericPayload, ClientResponse, SuccessResponse } from "src/SympyServer";
+import { SympyServer, StartCommandMessage, GenericPayload } from "src/SympyServer";
 import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
@@ -26,8 +26,8 @@ export type Expression = { from: number, to: number, contents: string, is_multil
 export class EvaluateCommand extends LatexMathCommand {
     readonly id: string;
 
-    constructor(evaluate_mode: string) {
-        super();
+    constructor(evaluate_mode: string, ...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+        super(...base_args);
         this.id = `${evaluate_mode}-latex-expression`;
         this.evaluate_mode = evaluate_mode;
     }
@@ -47,7 +47,7 @@ export class EvaluateCommand extends LatexMathCommand {
             start_args: await this.create_args_payload(expression, app, view)
         }));
 
-        const result = this.verifyResponse<EvaluateResponse>(response);
+        const result = this.response_verifier.verifyResponse<EvaluateResponse>(response);
 
         await this.insert_response(result, expression, editor);
     }

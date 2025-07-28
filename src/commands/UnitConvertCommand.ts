@@ -2,6 +2,7 @@ import { App, MarkdownView } from "obsidian";
 import { EvalArgsPayload, EvaluateCommand, Expression } from "./EvaluateCommand";
 import { UnitConvertModeModal } from "src/UnitConvertModeModal";
 import { LmatEnvironment } from "src/LmatEnvironment";
+import { LatexMathCommand } from "./LatexMathCommand";
 
 class UnitConvertArgsPayload extends EvalArgsPayload {
     public constructor(
@@ -12,8 +13,8 @@ class UnitConvertArgsPayload extends EvalArgsPayload {
 }
 
 export class UnitConvertCommand extends EvaluateCommand {
-    constructor() {
-        super('convert-units');
+    public constructor(...args: ConstructorParameters<typeof LatexMathCommand>) {
+        super('convert-units', ...args);
     }
     
     protected override async create_args_payload(expression: Expression, app: App, view: MarkdownView): Promise<EvalArgsPayload> {

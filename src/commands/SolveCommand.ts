@@ -37,6 +37,10 @@ interface SolveInfoResult {
 export class SolveCommand extends LatexMathCommand {
     readonly id: string = 'solve-latex-expression';
 
+    public constructor(...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+        super(...base_args);
+    }
+
     async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         // Extract the equation to solve
         const equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
@@ -55,7 +59,7 @@ export class SolveCommand extends LatexMathCommand {
             start_args: new SolveInfoPayload(equation.contents, lmat_env)
         }));
 
-        const solve_info_result = this.verifyResponse<SolveInfoResult>(solve_info_response);
+        const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResult>(solve_info_response);
 
         console.log(solve_info_result);
 
@@ -83,7 +87,7 @@ export class SolveCommand extends LatexMathCommand {
             start_args: new SolveArgsPayload(equation.contents, lmat_env, [...symbols].map((symbol) => symbol.sympy_symbol)),
         }));
 
-        const solve_result = this.verifyResponse<SolveResult>(solve_response);
+        const solve_result = this.response_verifier.verifyResponse<SolveResult>(solve_response);
 
         // Insert solution as a new math block, right after the current one.
         editor.replaceRange("\n$$" + await formatLatex(solve_result.solution_set) + "$$", editor.offsetToPos(equation.block_to));

@@ -19,6 +19,10 @@ interface SympyConvertResult {
 export class SympyConvertCommand extends LatexMathCommand {
     readonly id: string = 'convert-to-sympy';
 
+    public constructor(...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+        super(...base_args);
+    }
+
     async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         let equation: { from: number, to: number, block_to: number, contents: string } | null = null;
         
@@ -44,7 +48,7 @@ export class SympyConvertCommand extends LatexMathCommand {
             start_args: new SympyConvertPayload(equation.contents, LmatEnvironment.fromMarkdownView(app, view))
         }))) as SuccessResponse;
 
-        const result = this.verifyResponse<SympyConvertResult>(response);
+        const result = this.response_verifier.verifyResponse<SympyConvertResult>(response);
 
         // place the convertet python code into a code block right below the math block.
 

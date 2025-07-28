@@ -11,6 +11,8 @@ import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
 import { SympyClientExtractor } from 'src/SympyClientExtractor';
 import path from 'path';
 import { TruthTableCommand, TruthTableFormat } from 'src/commands/TruthTableCommand';
+import { SuccessResponseVerifier } from 'src/ResponseVerifier';
+import { LmatCodeBlockRenderer } from 'src/LmatCodeBlockRenderer';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -24,11 +26,10 @@ export default class LatexMathPlugin extends Plugin {
     settings: LatexMathPluginSettings;
 
     async onload() {
-        console.log(`Loading Latex Math (${this.manifest.version})`);
+        console.log(`Loading Latex Math (v${this.manifest.version})`);
 
         await this.loadSettings();
         this.addSettingTab(new LatexMathSettingsTab(this.app, this));
-
         
         if(!this.manifest.dir) {
             new Notice("Latex Math could not determine its plugin directory, aborting load.");
@@ -61,22 +62,24 @@ export default class LatexMathPlugin extends Plugin {
 
             this.prev_err_notice = err_notice;
         });
-        
-        this.registerMarkdownCodeBlockProcessor("lmat", this.renderLmatCodeBlock.bind(this));
 
         // Add commands
 
+        const response_verifier = new SuccessResponseVerifier();
+
+        response_verifier.onVerifyFailure(this.onCommandFailed);
+
         this.addCommands(new Map([
-            [ new EvaluateCommand("eval"), 'Evaluate LaTeX expression' ],
-            [ new EvaluateCommand("evalf"), 'Evalf LaTeX expression' ],
-            [ new EvaluateCommand("expand"), 'Expand LaTeX expression' ],
-            [ new EvaluateCommand("factor"), 'Factor LaTeX expression' ],
-            [ new EvaluateCommand("apart"), 'Partial fraction decompose LaTeX expression' ],
-            [ new SolveCommand(), 'Solve LaTeX expression' ],
-            [ new SympyConvertCommand(), 'Convert LaTeX expression to Sympy' ],
-            [ new UnitConvertCommand(), 'Convert units in LaTeX expression' ],
-            [ new TruthTableCommand(TruthTableFormat.MARKDOWN), 'Create truth table from LaTeX expression (Markdown)' ],
-            [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY), 'Create truth table from LaTeX expression (LaTeX)' ],
+            [ new EvaluateCommand("eval", response_verifier), 'Evaluate LaTeX expression' ],
+            [ new EvaluateCommand("evalf", response_verifier), 'Evalf LaTeX expression' ],
+            [ new EvaluateCommand("expand", response_verifier), 'Expand LaTeX expression' ],
+            [ new EvaluateCommand("factor", response_verifier), 'Factor LaTeX expression' ],
+            [ new EvaluateCommand("apart", response_verifier), 'Partial fraction decompose LaTeX expression' ],
+            [ new SolveCommand(response_verifier), 'Solve LaTeX expression' ],
+            [ new SympyConvertCommand(response_verifier), 'Convert LaTeX expression to Sympy' ],
+            [ new UnitConvertCommand(response_verifier), 'Convert units in LaTeX expression' ],
+            [ new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)' ],
+            [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)' ],
         ]));
 
         // spawn sympy client
@@ -85,6 +88,16 @@ export default class LatexMathPlugin extends Plugin {
             new Notice(`Latex Math could not start the Sympy client, aborting load.\n${err.message}`);
             throw err;
         });
+        
+        (async() => {
+            await this.spawn_sympy_client_promise;
+
+            console.log(this.sympy_evaluator);
+
+            const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.sympy_evaluator, response_verifier);
+
+            this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
+        })();
 
         // Start a background thread to repeatedly await receive
         const receiveLoop = async () => {
@@ -119,8 +132,6 @@ export default class LatexMathPlugin extends Plugin {
                     cmd.functionCallback(this.sympy_evaluator, this.app, e, v as MarkdownView);
                 }
             });
-
-            cmd.onVerifyFailure(this.onCommandFailed);
         });
     }
 
@@ -143,28 +154,6 @@ export default class LatexMathPlugin extends Plugin {
     private sympy_evaluator: SympyServer;
     private spawn_sympy_client_promise: Promise<void>;
     private prev_err_notice: Notice | null = null;
-
-    private async renderLmatCodeBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> {
-        await this.spawn_sympy_client_promise;
-        // Add the standard code block background div,
-        // to ensure a consistent look with other code blocks.
-        const div = el.createDiv("HyperMD-codeblock HyperMD-codeblock-bg lmat-block-container-flair");
-        // same goes with the code block flair
-        const flair = div.createSpan("code-block-flair lmat-block-flair");
-        flair.innerText = "Latex Math";
-        div.appendChild(flair);
-
-        el.appendChild(div);
-
-        // retreive to be rendered latex from python.
-        // TODO: make compatible with threaded stuff. also generally just clean this main file up please...
-        await this.sympy_evaluator.send("symbolsets", { environment: LmatEnvironment.fromCodeBlock(source, {}, {}) });
-        const response = await this.sympy_evaluator.receive();
-
-        // render the latex.
-        div.appendChild(renderMath(response.result, true));
-        finishRenderMath();
-    }
 
     private async spawnSympyClient(plugin_dir: string) {
         if(!(this.app.vault.adapter instanceof FileSystemAdapter)) {
