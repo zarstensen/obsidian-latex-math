@@ -26,6 +26,6 @@ export class ExecutableSpawner implements SympyClientSpawner{
             await this.asset_extractor.extractClients();
         }
 
-        return spawn(this.asset_extractor.getClientPath(), [port.toString()]);
+        return spawn(this.asset_extractor.getCurrentOsClientPath(), [port.toString()]);
     }   
 }

@@ -31,8 +31,17 @@ export class SympyClientExtractor {
     }
 
     // retreive the location of the client relevant for the current platform.
-    public getClientPath(): string {
+    public getCurrentOsClientPath(): string {
         return this.getPlatformClientPath(this.getPlatformStr());
+    }
+
+    public getClientDir(): string {
+        return path.join(this.asset_dir, "bin");
+    }
+
+    // TODO: only do this per OS, not the whole BIN file.
+    private async removeOldClients(): Promise<void> {
+        await fs.rm(this.getClientDir(), { recursive: true, force: true });
     }
 
     private getPlatformStr(): "win" | "macos" | "linux" {
