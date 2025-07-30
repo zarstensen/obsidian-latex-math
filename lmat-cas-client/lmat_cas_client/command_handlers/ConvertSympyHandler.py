@@ -16,7 +16,7 @@ class ConvertSympyResult(CommandResult):
         self.sympy_expr = sympy_expr
 
     @override
-    def getPayload(self) -> dict:
+    def getResponsePayload(self) -> dict:
         return CommandResult.result(dict(code=str(sympify(self.sympy_expr))))
 
 class ConvertSympyModeMessage(TypedDict):

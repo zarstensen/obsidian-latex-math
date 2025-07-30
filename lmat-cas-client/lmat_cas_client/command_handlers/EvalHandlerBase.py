@@ -16,6 +16,10 @@ from lmat_cas_client.LmatLatexPrinter import lmat_latex
 from .CommandHandler import CommandHandler, CommandResult
 
 
+class EvaluateMessage(TypedDict):
+    expression: str
+    environment: LmatEnvironment
+
 class EvalResult(CommandResult, ABC):
     def __init__(self, sympy_expr: Expr, expr_separator: str, expr_lines: list[int] | None):
         super().__init__()
@@ -24,7 +28,7 @@ class EvalResult(CommandResult, ABC):
         self.expr_lines = expr_lines
 
     @override
-    def getPayload(self):
+    def getResponsePayload(self):
         metadata = dict(separator = self.expr_separator)
 
         if self.expr_lines is not None and self.expr_lines[0] != self.expr_lines[1]:
@@ -35,10 +39,6 @@ class EvalResult(CommandResult, ABC):
             )
 
         return CommandResult.result(dict(evaluated_expression = lmat_latex(self.sympy_expr), metadata=metadata))
-
-class EvaluateMessage(TypedDict):
-    expression: str
-    environment: LmatEnvironment
 
 class EvalHandlerBase(CommandHandler, ABC):
 

@@ -5,6 +5,7 @@ from sympy import *
 from sympy.logic.boolalg import Boolean, as_Boolean, truth_table
 from tabulate import tabulate
 
+from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
 from lmat_cas_client.grammar.SympyParser import SympyParser
 from lmat_cas_client.grammar.transformers.PropositionsTransformer import PropositionExpr
@@ -37,7 +38,7 @@ class TruthTableResult(CommandResult):
 # implementation for MARKDOWN
 class TruthTableResultMarkdown(TruthTableResult):
 
-    def getPayload(self) -> dict:
+    def getResponsePayload(self) -> dict:
         markdown_table_contents = []
 
         # create true false strings, last column are bold to make it visually distinguishable.
@@ -58,7 +59,7 @@ class TruthTableResultMarkdown(TruthTableResult):
 # implementation for LATEX_ARRAY
 class TruthTableResultLatex(TruthTableResult):
 
-    def getPayload(self) -> dict:
+    def getResponsePayload(self) -> dict:
         array_contents = []
 
         for row in self.truth_table:
@@ -83,12 +84,12 @@ class TruthTableHandler(CommandHandler):
         self._parser = parser
 
     @override
-    def handle(self, message: TruthTableMessage) -> TruthTableResult | ErrorResult:
+    def handle(self, message: TruthTableMessage) -> TruthTableResult:
         definitions_store = LmatEnvDefStore(self._parser, message['environment'])
         sympy_expr = self._parser.parse(message['expression'], definitions_store)
 
         if not isinstance(sympy_expr, PropositionExpr):
-            return ErrorResult(f"Expression must be a proposition, was {type(sympy_expr)}")
+            raise HandlerError(f"Expression must be a proposition, was {type(sympy_expr)}")
 
         sympy_expr = sympify(sympy_expr)
 
@@ -110,6 +111,6 @@ class TruthTableHandler(CommandHandler):
             case TruthTableFormat.LATEX_ARRAY.value:
                 result_cls = TruthTableResultLatex
             case _:
-                return ErrorResult(f"Unknown table format: {message['truth_table_format']}")
+                raise HandlerError(f"Unknown table format: {message['truth_table_format']}")
 
         return result_cls(columns, message['expression'], truth_table_data)

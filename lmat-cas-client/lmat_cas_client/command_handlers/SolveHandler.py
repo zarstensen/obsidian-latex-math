@@ -3,6 +3,7 @@ from typing import Any, TypedDict, override
 from sympy import *
 from sympy.solvers.solveset import NonlinearError
 
+from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
 from lmat_cas_client.grammar.SympyParser import SympyParser
 from lmat_cas_client.grammar.SystemOfExpr import SystemOfExpr
@@ -32,7 +33,7 @@ class SolveResult(CommandResult):
         self.symbols = symbols
 
     @override
-    def getPayload(self) -> dict:
+    def getResponsePayload(self) -> dict:
         solutions_set = self.solution
 
         if len(self.symbols) == 1:
@@ -47,10 +48,6 @@ class SolveResult(CommandResult):
                 solution_set=f"{lmat_latex(symbols)} \\in {lmat_latex(solutions_set)}"
             ))
 
-class SolveInfoMessage(TypedDict):
-    expression: str
-    environment: LmatEnvironment
-
 # tries to solve the given latex expression.
 # if a symbol is not given, and the expression is multivariate, this mode sends a response with status multivariate_equation,
 # along with a list of possible symbols to solve for in its symbols key.
@@ -62,7 +59,7 @@ class SolveHandler(CommandHandler):
         self._parser = parser
 
     @override
-    def handle(self, message: SolveInfoMessage) -> SolveResult | ErrorResult:
+    def handle(self, message: SolveModeMessage) -> SolveResult:
         equations = self._parser.parse(message['expression'],
                                          LmatEnvDefStore(self._parser, message['environment'])
                                          )
@@ -78,7 +75,7 @@ class SolveHandler(CommandHandler):
         free_symbols = set(symbol for equation in equations for symbol in equation.free_symbols)
 
         if len(free_symbols) == 0:
-            return ErrorResult("Cannot solve equation if no free symbols are present.")
+            raise HandlerError("Cannot solve equation if no free symbols are present.")
 
         domain = S.Complexes
 
@@ -88,7 +85,7 @@ class SolveHandler(CommandHandler):
         symbols = [ None ] * len(message['symbols'])
 
         if len(message['symbols']) != len(equations):
-            return ErrorResult("Incorrect number of symbols provided.")
+            raise HandlerError("Incorrect number of symbols provided.")
 
         for free_symbol in free_symbols:
             if str(free_symbol) in message['symbols']:
@@ -96,7 +93,7 @@ class SolveHandler(CommandHandler):
                 symbols[symbol_index] = free_symbol
 
         if None in symbols:
-            return ErrorResult(f"No such symbols: {message['symbols']}")
+            raise HandlerError(f"No such symbols: {message['symbols']}")
 
         if len(equations) == 1 and len(symbols) == 1: # these two should always have equal lenth.
             solution_set = solveset(equations[0], symbols[0], domain=domain)
@@ -135,7 +132,7 @@ class SolveInfoResult(CommandResult):
         self.equation_count = equation_count
 
     @override
-    def getPayload(self) -> dict:
+    def getResponsePayload(self) -> dict:
 
         return CommandResult.result(dict(
             required_symbols = self.equation_count,

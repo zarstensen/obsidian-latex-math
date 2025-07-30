@@ -25,6 +25,9 @@ class KillableThread(Thread):
     def kill(self):
         ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self.ident), ctypes.py_object(ThreadKill))
 
+class HandlerError(Exception):
+    pass
+
 #
 # The LmatCasClient class manages a connection and message parsing + encoding between an active Latex Math plugin.
 # The connection works based on 'handle keys', which act like message types.
@@ -108,7 +111,7 @@ class LmatCasClient:
 
     async def _handle_command(self, command: str, uid: str, payload: dict):
         command_response = self.command_handlers[command].handle(payload)
-        response_type, response_value = command_response.getPayload()
+        response_type, response_value = command_response.getResponsePayload()
         await self._send_success(uid, response_type, response_value)
 
     async def _interrupt_handler(self, target_uid: str, uid: str):

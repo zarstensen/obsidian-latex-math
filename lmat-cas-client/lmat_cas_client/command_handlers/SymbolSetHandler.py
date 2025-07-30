@@ -44,7 +44,7 @@ class SymbolSetResult(CommandResult):
         self.set_symbols = set_symbols
 
     @override
-    def getPayload(self) -> dict:
+    def getResponsePayload(self) -> dict:
         latex_sets = []
 
         for set, symbols in self.set_symbols.items():
