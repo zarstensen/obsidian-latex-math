@@ -20,7 +20,7 @@ export class CasClientExtractor {
 
     // extract all the bundled clients.
     public async extractClients() {
-        console.log("Extracting clients");
+
         await this.removeOldClients();
         
         const client_dir = this.getClientDir();

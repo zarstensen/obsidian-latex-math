@@ -26,43 +26,36 @@ export default class LatexMathPlugin extends Plugin {
 
     async onload() {
         console.log(`Loading Latex Math (v${this.manifest.version})`);
-
-        await this.loadSettings();
-        this.addSettingTab(new LmatSettingsTab(this.app, this));
         
         if(!this.manifest.dir) {
             new Notice("Latex Math could not determine its plugin directory, aborting load.");
             return;
         }
+        
+        await this.loadSettings();
+        this.addSettingTab(new LmatSettingsTab(this.app, this));
 
+        // setup cas server <-> client connection.
         this.cas_server = new CasServer();
+        this.cas_server.onError(this.handleCasError.bind(this));
 
-        // forward python errors directly to the user.
-        this.cas_server.onError((usr_error, _dev_error) => {
-            if(this.prev_err_notice !== null) {
-                this.prev_err_notice.hide();
-            }
-
-            // limit error message to ERR_NOTICE_LINE_COUNT lines,
-            // need to check the developer console to see the full message.
-
-            const errorLines = usr_error.split('\n');
-            const truncatedError = errorLines
-                .slice(0, LatexMathPlugin.ERR_NOTICE_LINE_COUNT)
-                .join('\n') +
-                (errorLines.length > LatexMathPlugin.ERR_NOTICE_LINE_COUNT ? '\n...' : '') +
-                "\n\nOpen the dev console for more info (ctrl + shift + i).";
-            
-            const err_notice = new Notice("Latex Math Error\n", LatexMathPlugin.ERR_NOTICE_TIMEOUT);
-            
-            const err_elem = err_notice.messageEl.createEl('code');
-            err_elem.innerText = truncatedError;
-            err_notice.messageEl.appendChild(err_elem);
-
-            this.prev_err_notice = err_notice;
+        this.spawn_cas_client_promise = this.spawnCasClient(this.manifest.dir);
+        this.spawn_cas_client_promise.catch((err) => {
+            new Notice(`Latex Math could not start the cas client, aborting load.\n${err.message}`);
+            throw err;
         });
 
-        // Add commands
+        // Start the cas server <-> client message loop
+        this.cas_server.receiveLoop().catch((err) => {
+            new Notice(`Latex Math experienced an unexpected error.\n${err.message}`);
+            throw err;
+        });
+
+        // add code block renderer
+        const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);
+        this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
+
+        // add commands
 
         const response_verifier = new SuccessResponseVerifier();
 
@@ -80,42 +73,6 @@ export default class LatexMathPlugin extends Plugin {
             [ new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)' ],
             [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)' ],
         ]));
-
-        // spawn cas client
-        this.spawn_cas_client_promise = this.spawnCasClient(this.manifest.dir);
-        this.spawn_cas_client_promise.catch((err) => {
-            new Notice(`Latex Math could not start the cas client, aborting load.\n${err.message}`);
-            throw err;
-        });
-        
-        (async() => {
-            await this.spawn_cas_client_promise;
-
-            console.log(this.cas_server);
-
-            const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, response_verifier);
-
-            this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
-        })();
-
-        // Start a background thread to repeatedly await receive
-        const receiveLoop = async () => {
-            await this.spawn_cas_client_promise;
-            // TODO: exit this on exit, also this should be its own function,a sl 
-            while (true) {
-            try {
-                console.log("TRY RECEIVE");
-                const response = await this.cas_server.receive();
-                console.log("Received response from Sympy evaluator:", response);
-            } catch (err) {
-                console.error("Error in receive loop:", err);
-                break; // Exit the loop on error
-            }
-            }
-        };
-
-        // Start the loop
-        receiveLoop();
     }
 
     // sets up the given map of commands as obsidian commands.
@@ -178,5 +135,29 @@ export default class LatexMathPlugin extends Plugin {
         );
 
         new Notice("An unexpected error occured whilst handling command.\nPlease see the dev console for more info\n(ctrl + shift + i)");
+    }
+    
+    private handleCasError(usr_error: string, _dev_error: string): void {
+        if(this.prev_err_notice !== null) {
+            this.prev_err_notice.hide();
+        }
+
+        // limit error message to ERR_NOTICE_LINE_COUNT lines,
+        // need to check the developer console to see the full message.
+
+        const errorLines = usr_error.split('\n');
+        const truncatedError = errorLines
+            .slice(0, LatexMathPlugin.ERR_NOTICE_LINE_COUNT)
+            .join('\n') +
+            (errorLines.length > LatexMathPlugin.ERR_NOTICE_LINE_COUNT ? '\n...' : '') +
+            "\n\nOpen the dev console for more info (ctrl + shift + i).";
+        
+        const err_notice = new Notice("Latex Math Error\n", LatexMathPlugin.ERR_NOTICE_TIMEOUT);
+        
+        const err_elem = err_notice.messageEl.createEl('code');
+        err_elem.innerText = truncatedError;
+        err_notice.messageEl.appendChild(err_elem);
+
+        this.prev_err_notice = err_notice;
     }
 }

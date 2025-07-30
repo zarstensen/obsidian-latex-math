@@ -102,11 +102,11 @@ export class CasServer {
     public async initializeAsync(cas_client_spawner: CasClientSpawner): Promise<void> {
         // Start by setting up the web socket server, so we can get a port to give to the python program.
         const server_port = await getPort();
-
+        
         this.ws_cas_server = new WebSocketServer({ 
             port: server_port
         });
-
+        
         // now start the client process
         this.client_process = await cas_client_spawner.spawnClient(server_port);
         
@@ -114,11 +114,11 @@ export class CasServer {
         this.client_process.stdout.on('data', (data) => {
             console.log(data.toString());
         });
-
+        
         this.client_process.stderr.on('data', (data) => {
             console.error(data.toString());
         });
-
+        
         this.client_process.on('close', (code) => {
             console.log(`child process exited with code ${code}`);
             // TODO: do something here
@@ -126,11 +126,14 @@ export class CasServer {
 
         // wait for the process to establish a connection
         this.ws_cas_client = await new Promise(this.resolveConnection.bind(this));
+        this.is_running = true;
     }
 
     // Close server / client connection, and shutdown client process.
     // If [timeout] seconds passes without the client shutting down gracefully, it is forcefully killed.
     public async shutdown(timeout: number): Promise<void> {
+        this.is_running = false;
+
         let shutdown_timeout: NodeJS.Timeout | undefined;
 
         const timeout_promise = new Promise<void>((_, reject) => {
@@ -210,8 +213,6 @@ export class CasServer {
                     message_promise = this.message_promises[response.uid];
                     delete this.message_promises[response.uid];
                 }
-                
-                console.log(response);
 
                 // now handle the response depending on its status.
                 
@@ -245,10 +246,19 @@ export class CasServer {
         });
     }
 
+    public async receiveLoop(): Promise<void> {
+        while(this.is_running) {
+            await this.receive();
+        }
+    }
+
+    
     private client_process: ChildProcessWithoutNullStreams;
     private ws_cas_client: WebSocket;
     private ws_cas_server: WebSocketServer;
     private error_callback: (usr_error: string, dev_error: string) => void;
+    
+    private is_running = false;
 
     private message_promises: Record<string, MessagePromiseEntry> = { };
 

@@ -17,13 +17,15 @@ interface SymbolSetResponse {
 // LmatCodeBlockRenderer provides a render handler for the latex math codeblock type.
 export class LmatCodeBlockRenderer {
     
-    constructor(protected cas_server: CasServer, public response_verifier: SuccessResponseVerifier) { }
+    constructor(protected cas_server: CasServer, protected spawn_cas_client_promise: Promise<void>, public response_verifier: SuccessResponseVerifier) { }
 
     public getHandler(): (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void {
         return this.renderLmatCodeBlock.bind(this);
     }
 
     private async renderLmatCodeBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> {
+        await this.spawn_cas_client_promise;
+
         // Add the standard code block background div,
         // to ensure a consistent look with other code blocks.
         const div = el.createDiv("HyperMD-codeblock HyperMD-codeblock-bg lmat-block-container-flair");

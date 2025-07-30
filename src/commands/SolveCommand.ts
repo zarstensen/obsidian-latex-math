@@ -60,8 +60,6 @@ export class SolveCommand extends LatexMathCommand {
 
         const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResponse>(solve_info_response);
 
-        console.log(solve_info_result);
-
         let symbols: LatexMathSymbol[] = [ ];
 
         if(solve_info_result.available_symbols.length > solve_info_result.required_symbols) {
