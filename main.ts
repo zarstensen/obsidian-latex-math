@@ -51,16 +51,15 @@ export default class LatexMathPlugin extends Plugin {
             throw err;
         });
 
+        const response_verifier = new SuccessResponseVerifier();
+
+        response_verifier.onVerifyFailure(this.onCommandFailed);
+        
         // add code block renderer
         const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);
         this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
 
         // add commands
-
-        const response_verifier = new SuccessResponseVerifier();
-
-        response_verifier.onVerifyFailure(this.onCommandFailed);
-
         this.addCommands(new Map([
             [ new EvaluateCommand("eval", response_verifier), 'Evaluate LaTeX expression' ],
             [ new EvaluateCommand("evalf", response_verifier), 'Evalf LaTeX expression' ],
