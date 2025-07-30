@@ -8,6 +8,7 @@ from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import CommandHandler, CommandResult
 
+
 class ConvertSympyModeMessage(TypedDict):
     expression: str
     environment: LmatEnvironment

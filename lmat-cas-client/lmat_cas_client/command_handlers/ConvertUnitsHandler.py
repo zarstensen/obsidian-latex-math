@@ -3,7 +3,7 @@ from sympy.physics.units import convert_to
 
 import lmat_cas_client.math_lib.UnitsUtils as UnitsUtils
 
-from .EvalHandlerBase import EvalHandlerBase, EvaluateResult, EvaluateMessage
+from .EvalHandlerBase import EvalHandlerBase, EvaluateMessage, EvaluateResult
 
 
 class ConvertMessage(EvaluateMessage):
