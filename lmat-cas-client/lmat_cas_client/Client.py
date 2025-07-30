@@ -14,14 +14,6 @@ class ThreadKill(Exception):
     pass
 
 class KillableThread(Thread):
-
-    # ignore thread kill exceptions.
-    def run(self):
-        try:
-            super().run()
-        except ThreadKill:
-            pass
-
     def kill(self):
         ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self.ident), ctypes.py_object(ThreadKill))
 
@@ -90,24 +82,19 @@ class LmatCasClient:
             )
             return
 
-        try:
-            self.command_handler_threads[uid] = KillableThread(
-                target=self._async_target,
-                args=(
-                    self._handle_command,
-                    payload["command_type"],
-                    uid,
-                    payload["start_args"],
-                ),
-                daemon=True
-            )
-            self.command_handler_threads[uid].start()
-        except Exception as e:
-            await self._send_error(
+        self.command_handler_threads[uid] = KillableThread(
+            target=self._async_target,
+            args=(
                 uid,
-                dev_message=str(e) + "\n" + traceback.format_exc(),
-                usr_message=str(e)
-            )
+                self._handle_command,
+                payload["command_type"],
+                uid,
+                payload["start_args"],
+            ),
+            daemon=True
+        )
+
+        self.command_handler_threads[uid].start()
 
     async def _handle_command(self, command: str, uid: str, payload: dict):
         command_response = self.command_handlers[command].handle(payload)
@@ -121,8 +108,21 @@ class LmatCasClient:
 
         await self._send_interrupt(uid, {})
 
-    def _async_target(self, coro, *args, **kwargs):
-        return asyncio.run(coro(*args, **kwargs))
+    def _async_target(self, uid, coro, *args, **kwargs):
+        async def coroErrHandler():
+            try:
+                await coro(*args, **kwargs)
+            except ThreadKill:
+                # do not send ThreadKill exceptions to server, user does not need to see this error.
+                pass
+            except Exception as e:
+                await self._send_error(
+                    uid,
+                    dev_message=str(e) + "\n" + traceback.format_exc(),
+                    usr_message=str(e)
+                )
+
+        return asyncio.run(coroErrHandler())
 
     # Send the given json dumpable object back to the plugin.
     async def _send(self, status: str, uid: str, message: dict):
