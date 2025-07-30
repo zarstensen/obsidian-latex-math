@@ -35,22 +35,8 @@ export default class LatexMathPlugin extends Plugin {
         await this.loadSettings();
         this.addSettingTab(new LmatSettingsTab(this.app, this));
 
-        // setup cas server <-> client connection.
-        this.cas_server = new CasServer();
-        this.cas_server.onError(this.handleCasError.bind(this));
-
-        this.spawn_cas_client_promise = this.spawnCasClient(this.manifest.dir);
-        this.spawn_cas_client_promise.catch((err) => {
-            new Notice(`Latex Math could not start the cas client, aborting load.\n${err.message}`);
-            throw err;
-        });
-
-        // Start the cas server <-> client message loop
-        this.cas_server.receiveLoop().catch((err) => {
-            new Notice(`Latex Math experienced an unexpected error.\n${err.message}`);
-            throw err;
-        });
-
+        this.setupCasConnection();
+        
         const response_verifier = new SuccessResponseVerifier();
 
         response_verifier.onVerifyFailure(this.onCommandFailed);
@@ -109,6 +95,26 @@ export default class LatexMathPlugin extends Plugin {
     private cas_server: CasServer;
     private spawn_cas_client_promise: Promise<void>;
     private prev_err_notice: Notice | null = null;
+
+    private async setupCasConnection() {
+        this.cas_server = new CasServer();
+        this.cas_server.onError(this.handleCasError.bind(this));
+
+        this.spawn_cas_client_promise = this.spawnCasClient(this.manifest.dir as string);
+        this.spawn_cas_client_promise.catch((err) => {
+            new Notice(`Latex Math could not start the cas client, aborting load.\n${err.message}`);
+            throw err;
+        });
+
+        await this.spawn_cas_client_promise;
+
+        // Start the cas server <-> client message loop
+        this.cas_server.receiveLoop().catch((err) => {
+            new Notice(`Latex Math experienced an unexpected error.\n${err.message}`);
+            throw err;
+        });
+
+    }
 
     private async spawnCasClient(plugin_dir: string) {
         if(!(this.app.vault.adapter instanceof FileSystemAdapter)) {
