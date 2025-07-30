@@ -38,6 +38,9 @@ SET_TO_LATEX = {
     FiniteSet(0): "\\{0\\}",
 }
 
+class SymbolSetMessage(TypedDict):
+    environment: LmatEnvironment
+
 class SymbolSetResult(CommandResult):
     def __init__(self, set_symbols: dict[Set, list[Symbol]]):
         super().__init__()
@@ -51,11 +54,8 @@ class SymbolSetResult(CommandResult):
             if len(symbols) > 0:
                 latex_sets.append(f"{', '.join(symbols)} & \\in & {SET_TO_LATEX[set]}")
 
-        return CommandResult.result(dict(symbol_set_latex=f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}"))
+        return CommandResult.result(dict(symbol_sets=f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}"))
 
-
-class SymbolSetMessage(TypedDict):
-    environment: LmatEnvironment
 
 class SymbolSetHandler(CommandHandler):
 

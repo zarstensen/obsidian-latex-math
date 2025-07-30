@@ -1,6 +1,5 @@
-import { FileSystemAdapter, finishRenderMath, MarkdownPostProcessorContext, MarkdownView, Notice, Plugin, renderMath } from 'obsidian';
+import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
 import { ClientResponse, CasServer } from 'src/LmatCasServer';
-import { LmatEnvironment } from 'src/LmatEnvironment';
 import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
 import { LmatSettingsTab } from 'src/LmatSettingsTab';
 import { LatexMathCommand } from 'src/commands/LatexMathCommand';
@@ -36,10 +35,10 @@ export default class LatexMathPlugin extends Plugin {
             return;
         }
 
-        this.sympy_evaluator = new CasServer();
+        this.cas_server = new CasServer();
 
         // forward python errors directly to the user.
-        this.sympy_evaluator.on_error((usr_error, _dev_error) => {
+        this.cas_server.onError((usr_error, _dev_error) => {
             if(this.prev_err_notice !== null) {
                 this.prev_err_notice.hide();
             }
@@ -92,9 +91,9 @@ export default class LatexMathPlugin extends Plugin {
         (async() => {
             await this.spawn_cas_client_promise;
 
-            console.log(this.sympy_evaluator);
+            console.log(this.cas_server);
 
-            const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.sympy_evaluator, response_verifier);
+            const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, response_verifier);
 
             this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
         })();
@@ -106,7 +105,7 @@ export default class LatexMathPlugin extends Plugin {
             while (true) {
             try {
                 console.log("TRY RECEIVE");
-                const response = await this.sympy_evaluator.receive();
+                const response = await this.cas_server.receive();
                 console.log("Received response from Sympy evaluator:", response);
             } catch (err) {
                 console.error("Error in receive loop:", err);
@@ -129,14 +128,14 @@ export default class LatexMathPlugin extends Plugin {
                 name: description,
                 editorCallback: async (e, v) => { 
                     await this.spawn_cas_client_promise;
-                    cmd.functionCallback(this.sympy_evaluator, this.app, e, v as MarkdownView);
+                    cmd.functionCallback(this.cas_server, this.app, e, v as MarkdownView);
                 }
             });
         });
     }
 
     onunload() {
-        this.sympy_evaluator.shutdown(LatexMathPlugin.CAS_CLIENT_SHUTDOWN_TIMEOUT);
+        this.cas_server.shutdown(LatexMathPlugin.CAS_CLIENT_SHUTDOWN_TIMEOUT);
     }
 
     async loadSettings() {
@@ -151,7 +150,7 @@ export default class LatexMathPlugin extends Plugin {
     private static readonly ERR_NOTICE_LINE_COUNT = 8;
     private static readonly CAS_CLIENT_SHUTDOWN_TIMEOUT = 30;
 
-    private sympy_evaluator: CasServer;
+    private cas_server: CasServer;
     private spawn_cas_client_promise: Promise<void>;
     private prev_err_notice: Notice | null = null;
 
@@ -166,7 +165,7 @@ export default class LatexMathPlugin extends Plugin {
 
         const cas_client_spawner = this.settings.dev_mode ? new SourceCodeSpawner(full_plugin_dir) : new ExecutableSpawner(asset_extractor);
 
-        await this.sympy_evaluator.initializeAsync(cas_client_spawner);
+        await this.cas_server.initializeAsync(cas_client_spawner);
     }
 
     private onCommandFailed(failed_command: LatexMathCommand, unexpected_response: ClientResponse, expected_statuses: Set<string>) {

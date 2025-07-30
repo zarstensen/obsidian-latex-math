@@ -20,7 +20,7 @@ class EvaluateMessage(TypedDict):
     expression: str
     environment: LmatEnvironment
 
-class EvalResult(CommandResult, ABC):
+class EvaluateResult(CommandResult, ABC):
     def __init__(self, sympy_expr: Expr, expr_separator: str, expr_lines: list[int] | None):
         super().__init__()
         self.sympy_expr = sympy_expr
@@ -38,7 +38,7 @@ class EvalResult(CommandResult, ABC):
                 end_line = self.expr_lines[1]
             )
 
-        return CommandResult.result(dict(evaluated_expression = lmat_latex(self.sympy_expr), metadata=metadata))
+        return CommandResult.result(dict(evaluated_expression=lmat_latex(self.sympy_expr), metadata=metadata))
 
 class EvalHandlerBase(CommandHandler, ABC):
 
@@ -51,7 +51,7 @@ class EvalHandlerBase(CommandHandler, ABC):
         pass
 
     @override
-    def handle(self, message: EvaluateMessage) -> EvalResult:
+    def handle(self, message: EvaluateMessage) -> EvaluateResult:
         definitions_store = LmatEnvDefStore(self._parser, message['environment'])
         sympy_expr = self._parser.parse(message['expression'], definitions_store)
         expr_lines = None
@@ -86,4 +86,4 @@ class EvalHandlerBase(CommandHandler, ABC):
             sympy_expr = UnitsUtils.auto_convert(sympy_expr)
 
 
-        return EvalResult(sympy_expr, separator, expr_lines)
+        return EvaluateResult(sympy_expr, separator, expr_lines)

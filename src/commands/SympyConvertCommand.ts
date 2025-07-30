@@ -4,7 +4,7 @@ import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
 
-class SympyConvertPayload implements GenericPayload {
+class SympyConvertArgsPayload implements GenericPayload {
     public constructor(
         public expression: string,
         public environment: LmatEnvironment,
@@ -12,7 +12,7 @@ class SympyConvertPayload implements GenericPayload {
     [x: string]: unknown;
 }
 
-interface SympyConvertResult {
+interface SympyConvertResponse {
     code: string;
 }
 
@@ -23,7 +23,7 @@ export class SympyConvertCommand extends LatexMathCommand {
         super(...base_args);
     }
 
-    async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         let equation: { from: number, to: number, block_to: number, contents: string } | null = null;
         
         // Extract equation to evaluate
@@ -43,12 +43,12 @@ export class SympyConvertCommand extends LatexMathCommand {
             return;
         }
 
-        const response = (await evaluator.send(new StartCommandMessage({
+        const response = await cas_server.send(new StartCommandMessage({
             command_type: "convert-sympy",
-            start_args: new SympyConvertPayload(equation.contents, LmatEnvironment.fromMarkdownView(app, view))
-        }))) as SuccessResponse;
+            start_args: new SympyConvertArgsPayload(equation.contents, LmatEnvironment.fromMarkdownView(app, view))
+        }));
 
-        const result = this.response_verifier.verifyResponse<SympyConvertResult>(response);
+        const result = this.response_verifier.verifyResponse<SympyConvertResponse>(response);
 
         // place the convertet python code into a code block right below the math block.
 

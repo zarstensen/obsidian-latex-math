@@ -5,15 +5,9 @@ import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
 import { formatLatex } from "src/FormatLatex";
 
-interface EvaluateResponse {
-    metadata: {
-        separator: string,
-        end_line: number
-    },
-    evaluated_expression: string
-}
+export type Expression = { from: number, to: number, contents: string, is_multiline: boolean };
 
-export class EvalArgsPayload implements GenericPayload {
+export class EvaluateArgsPayload implements GenericPayload {
     public constructor(
         public expression: string,
         public environment: LmatEnvironment
@@ -21,7 +15,13 @@ export class EvalArgsPayload implements GenericPayload {
     [x: string]: unknown;
 }
 
-export type Expression = { from: number, to: number, contents: string, is_multiline: boolean };
+interface EvaluateResponse {
+    metadata: {
+        separator: string,
+        end_line: number
+    },
+    evaluated_expression: string
+}
 
 export class EvaluateCommand extends LatexMathCommand {
     readonly id: string;
@@ -32,9 +32,9 @@ export class EvaluateCommand extends LatexMathCommand {
         this.evaluate_mode = evaluate_mode;
     }
     
-    public async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    public async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
                 
-        const expression = this.get_expression(editor);
+        const expression = this.getExpression(editor);
 
         if (expression === null) {
             new Notice("You are not inside a math block");
@@ -42,17 +42,17 @@ export class EvaluateCommand extends LatexMathCommand {
         }
 
         // send it to python and wait for response.
-        const response = await evaluator.send(new StartCommandMessage({
+        const response = await cas_server.send(new StartCommandMessage({
             command_type: this.evaluate_mode,
-            start_args: await this.create_args_payload(expression, app, view)
+            start_args: await this.createArgsPayload(expression, app, view)
         }));
 
         const result = this.response_verifier.verifyResponse<EvaluateResponse>(response);
 
-        await this.insert_response(result, expression, editor);
+        await this.insertResponse(result, expression, editor);
     }
 
-    protected get_expression(editor: Editor): Expression | null {
+    protected getExpression(editor: Editor): Expression | null {
         let expression: Expression | null
                         = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 
@@ -68,7 +68,7 @@ export class EvaluateCommand extends LatexMathCommand {
         return expression;
     }
 
-    protected async insert_response(response: EvaluateResponse, expression: Expression, editor: Editor): Promise<void> {
+    protected async insertResponse(response: EvaluateResponse, expression: Expression, editor: Editor): Promise<void> {
 
         const insert_pos: EditorPosition = editor.offsetToPos(expression.to);
         let insert_content = ` ${response.metadata.separator} ` + await formatLatex(response.evaluated_expression);
@@ -90,8 +90,8 @@ export class EvaluateCommand extends LatexMathCommand {
         editor.setCursor(editor.offsetToPos(editor.posToOffset(insert_pos) + insert_content.length));
     }
 
-    protected async create_args_payload(expression: Expression, app: App, view: MarkdownView): Promise<EvalArgsPayload> {
-        return new EvalArgsPayload(expression.contents, LmatEnvironment.fromMarkdownView(app, view));
+    protected async createArgsPayload(expression: Expression, app: App, view: MarkdownView): Promise<EvaluateArgsPayload> {
+        return new EvaluateArgsPayload(expression.contents, LmatEnvironment.fromMarkdownView(app, view));
     }
     
     private evaluate_mode: string;

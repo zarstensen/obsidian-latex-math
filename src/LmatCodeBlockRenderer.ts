@@ -3,21 +3,21 @@ import { LmatEnvironment } from "./LmatEnvironment";
 import { StartCommandMessage, CasServer, GenericPayload } from "./LmatCasServer";
 import { SuccessResponseVerifier } from "./ResponseVerifier";
 
-interface SymbolSetResult {
-    symbol_set_latex: string
-}
-
-class SymbolSetPayload implements GenericPayload {
+class SymbolSetArgsPayload implements GenericPayload {
     public constructor(
         public environment: LmatEnvironment
     ) { }
     [x: string]: unknown;
 }
 
+interface SymbolSetResponse {
+    symbol_sets: string
+}
 
+// LmatCodeBlockRenderer provides a render handler for the latex math codeblock type.
 export class LmatCodeBlockRenderer {
     
-    constructor(protected sympy_server: CasServer, public response_verifier: SuccessResponseVerifier) { }
+    constructor(protected cas_server: CasServer, public response_verifier: SuccessResponseVerifier) { }
 
     public getHandler(): (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void {
         return this.renderLmatCodeBlock.bind(this);
@@ -36,15 +36,15 @@ export class LmatCodeBlockRenderer {
 
         // retreive to be rendered latex from python.
         // TODO: make compatible with threaded stuff. also generally just clean this main file up please...
-        const response = await this.sympy_server.send(new StartCommandMessage({
+        const response = await this.cas_server.send(new StartCommandMessage({
             command_type: "symbolsets",
-            start_args: new SymbolSetPayload(LmatEnvironment.fromCodeBlock(source, {}, {}))
+            start_args: new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, {}, {}))
         }));
 
-        const result = this.response_verifier.verifyResponse<SymbolSetResult>(response);
+        const result = this.response_verifier.verifyResponse<SymbolSetResponse>(response);
 
         // render the latex.
-        div.appendChild(renderMath(result.symbol_set_latex, true));
+        div.appendChild(renderMath(result.symbol_sets, true));
         finishRenderMath();
     }
 }

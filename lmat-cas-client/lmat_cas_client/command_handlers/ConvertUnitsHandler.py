@@ -3,7 +3,7 @@ from sympy.physics.units import convert_to
 
 import lmat_cas_client.math_lib.UnitsUtils as UnitsUtils
 
-from .EvalHandlerBase import EvalHandlerBase, EvalResult, EvaluateMessage
+from .EvalHandlerBase import EvalHandlerBase, EvaluateResult, EvaluateMessage
 
 
 class ConvertMessage(EvaluateMessage):
@@ -12,7 +12,7 @@ class ConvertMessage(EvaluateMessage):
 # Tries to convert the sympy expressions units to the provided units in message.target_units.
 class ConvertUnitsHandler(EvalHandlerBase):
 
-    def handle(self, message: ConvertMessage) -> EvalResult:
+    def handle(self, message: ConvertMessage) -> EvaluateResult:
         message['environment']['unit_system'] = "SI"
         return super().handle(message)
 

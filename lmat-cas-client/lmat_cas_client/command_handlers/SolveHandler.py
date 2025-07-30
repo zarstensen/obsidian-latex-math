@@ -15,7 +15,7 @@ from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from .CommandHandler import *
 
 
-class SolveModeMessage(TypedDict):
+class SolveMessage(TypedDict):
     expression: str
     symbols: list[str]
     environment: LmatEnvironment
@@ -59,7 +59,7 @@ class SolveHandler(CommandHandler):
         self._parser = parser
 
     @override
-    def handle(self, message: SolveModeMessage) -> SolveResult:
+    def handle(self, message: SolveMessage) -> SolveResult:
         equations = self._parser.parse(message['expression'],
                                          LmatEnvDefStore(self._parser, message['environment'])
                                          )
@@ -139,7 +139,8 @@ class SolveInfoResult(CommandResult):
             available_symbols = [ dict(sympy_symbol=str(s), latex_symbol=lmat_latex(s)) for s in self.symbols ]
         ))
 
-# EquationInfo? handler
+# retreive equation info needed for configuring a solution through the solve command.
+# returns number of required symbols, and a list of symbols to choose from.
 class SolveInfoHandler(CommandHandler):
     def __init__(self, parser: SympyParser):
             super().__init__()

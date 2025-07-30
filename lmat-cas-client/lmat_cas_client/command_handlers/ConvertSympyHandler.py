@@ -8,6 +8,9 @@ from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import CommandHandler, CommandResult
 
+class ConvertSympyModeMessage(TypedDict):
+    expression: str
+    environment: LmatEnvironment
 
 class ConvertSympyResult(CommandResult):
 
@@ -18,10 +21,6 @@ class ConvertSympyResult(CommandResult):
     @override
     def getResponsePayload(self) -> dict:
         return CommandResult.result(dict(code=str(sympify(self.sympy_expr))))
-
-class ConvertSympyModeMessage(TypedDict):
-    expression: str
-    environment: LmatEnvironment
 
 class ConvertSympyHandler(CommandHandler):
     def __init__(self, parser: SympyParser):

@@ -19,19 +19,21 @@ enum MessageStatus {
 export type GenericPayload = Record<string, unknown>;
 type ServerPayload = GenericPayload;
 
+// ======== server messages ========
+
 interface ServerMessage {
     readonly type: MessageType;
     readonly payload: ServerPayload;
-}
-
-interface ServerMessageUID extends ServerMessage {
-    uid: string;
 }
 
 const EXIT_MESSAGE: ServerMessage = {
     type: MessageType.EXIT,
     payload: {}
 };
+
+interface ServerMessageUID extends ServerMessage {
+    uid: string;
+}
 
 export interface StartCommandPayload extends ServerPayload {
     command_type: string;
@@ -44,29 +46,22 @@ export class StartCommandMessage implements ServerMessage {
     constructor(public readonly payload: StartCommandPayload) { }
 }
 
-export interface InterruptHandlePayload extends ServerPayload {
+export interface InterruptHandlerPayload extends ServerPayload {
     target_uid: string
 }
 
-export class InterruptHandleMessage implements ServerMessage {
+export class InterruptHandlerMessage implements ServerMessage {
     public type: MessageType = MessageType.INTERRUPT;
 
-    constructor(public payload: InterruptHandlePayload) { }
+    constructor(public payload: InterruptHandlerPayload) { }
 }
+
+// ======== client responses ========
 
 export interface ClientResponse {
     status: MessageStatus;
     uid: string;
     payload: GenericPayload;
-}
-
-export interface ErrorResponse extends ClientResponse {
-    status: MessageStatus.ERROR;
-    uid: string;
-    payload: { 
-        usr_message: string;
-        dev_message: string;
-    };
 }
 
 export interface SuccessResponse extends ClientResponse {
@@ -78,25 +73,32 @@ export interface SuccessResponse extends ClientResponse {
     };
 }
 
+export interface ErrorResponse extends ClientResponse {
+    status: MessageStatus.ERROR;
+    uid: string;
+    payload: { 
+        usr_message: string;
+        dev_message: string;
+    };
+}
+
 export interface InterrutpedResposne extends ClientResponse {
     status: MessageStatus.INTERRUPTED;
     uid: string;
     payload: Record<string, never>;
 }
 
+
 interface MessagePromiseEntry {
     resolve: (value: ClientResponse | PromiseLike<ClientResponse>) => void;
     reject: (reason?: unknown) => void;
 }
 
-// so in here all of the different communications are ASYNC, where as in the sympy process, each communication is on a new thread i guess?
-
 // The LmatCasServer class manages a connection as well as message encoding and handling, with an LmatCasClient script instance.
 // Also manages the python process itself.
 export class CasServer {
     // Start the LmatCasClient python process, and establish an connection to it.
-    // vault_dir: the directory of the vault, which thsi plugin is installed in.
-    // python_exec: the python executable to use to start the LmatCasClient process.
+    // cas_client_spawner: a CasClientSpawner instance, used to spawn a cas client and connect it to the constructed server.
     public async initializeAsync(cas_client_spawner: CasClientSpawner): Promise<void> {
         // Start by setting up the web socket server, so we can get a port to give to the python program.
         const server_port = await getPort();
@@ -105,15 +107,13 @@ export class CasServer {
             port: server_port
         });
 
-        // now start the python process
+        // now start the client process
         this.client_process = await cas_client_spawner.spawnClient(server_port);
-        
         
         // setup output to be logged in the developer console
         this.client_process.stdout.on('data', (data) => {
             console.log(data.toString());
         });
-
 
         this.client_process.stderr.on('data', (data) => {
             console.error(data.toString());
@@ -124,7 +124,7 @@ export class CasServer {
             // TODO: do something here
         });
 
-        // wait for the process to establish an connection
+        // wait for the process to establish a connection
         this.ws_cas_client = await new Promise(this.resolveConnection.bind(this));
     }
 
@@ -165,7 +165,7 @@ export class CasServer {
     // It is passed the following two strings:
     //      usr_error: A user friendly(ish) string describing the error.
     //      dev_error: A full stack trace of the python exception.
-    public on_error(callback: (usr_error: string, dev_error: string) => void): void {
+    public onError(callback: (usr_error: string, dev_error: string) => void): void {
         this.error_callback = callback;
     }
 
@@ -192,7 +192,11 @@ export class CasServer {
 
 
     // Receive a response from the cas client.
-    // Returns a promise that resolves to the result object, parsed from the received json payload.
+    // Returns a promise that is resolved when any message is received from the cas client.
+    // the contents of the client response is resolved through the promise returned from the corresponding send call.
+    // i.e.
+    // await send() -> message has uid 1 -> response with uid 1 is resolved.
+    // await receive() -> resolves to void, but makes sure that the send promise is resolved as well.
     public async receive(): Promise<void> {
         return new Promise((resolve, _reject) => {
             this.ws_cas_client.once('message', (response_buffer) => {

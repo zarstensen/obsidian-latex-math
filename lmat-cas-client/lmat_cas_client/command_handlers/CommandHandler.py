@@ -6,13 +6,14 @@ from typing import Any
 # It contains the result data and a method for converting this data into a message payload.
 class CommandResult(ABC):
 
+    # return response payload type as 1'st element, and serializable response dict payload as 2'nd element.
     @abstractmethod
     def getResponsePayload(self) -> tuple[str, dict]:
         pass
 
     # helper method for producing a common result payload.
     @staticmethod
-    def result(value) -> tuple[str, dict]:
+    def result(value: dict) -> tuple[str, dict]:
         return ("result", value)
 
 # CommandHandler should be inherited by objects wanting to implement a handler.

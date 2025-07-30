@@ -5,7 +5,7 @@ import LmatCasClientWin from "../bundle-bin/lmat-cas-client-win/lmat-cas-client-
 import LmatCasClientMacos from "../bundle-bin/lmat-cas-client-macos/lmat-cas-client-macos.bin";
 import LmatCasClientLinux from "../bundle-bin/lmat-cas-client-linux/lmat-cas-client-linux.bin";
 
-type PlatformStr = "win" | "macos" | "linux"
+type PlatformStr = "win" | "macos" | "linux";
 
 // AssetExtractor is responsible for extracting and detecting already extracted cas clients bundled with this plugin.. 
 export class CasClientExtractor {
@@ -20,16 +20,13 @@ export class CasClientExtractor {
 
     // extract all the bundled clients.
     public async extractClients() {
+        console.log("Extracting clients");
+        await this.removeOldClients();
+        
         const client_dir = this.getClientDir();
         
         await fs.mkdir(client_dir, { recursive: true });
 
-        const entries = await fs.readdir(client_dir, { withFileTypes: true });
-
-        if (entries.length > 0) {
-            await this.removeOldClients();
-        }
-        
         await this.extractClient(LmatCasClientWin, this.getPlatformClientPath("win"));
         await this.extractClient(LmatCasClientMacos, this.getPlatformClientPath("macos"));
         await this.extractClient(LmatCasClientLinux, this.getPlatformClientPath("linux"));
@@ -55,8 +52,8 @@ export class CasClientExtractor {
         const entries = await fs.readdir(client_dir);
         await Promise.all(
             entries.map(async (entry) => {
-            const entryPath = path.join(client_dir, entry);
-            await fs.rm(entryPath, { recursive: true, force: true });
+            const entry_path = path.join(client_dir, entry);
+            await fs.rm(entry_path, { recursive: true, force: true });
             })
         );
     }

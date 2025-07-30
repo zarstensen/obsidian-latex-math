@@ -43,9 +43,6 @@ class DefinitionStore(ABC):
         return Symbol(serialized_symbol)
 
 # Interface for classes implementing sympy parsing functionality in the context of a DefinitionsStore.
-# This should be flipped no?
-# So this should be LatexParser and the implementation should be with sympy / lark?
-# but the issue with this is that i need to know the output, is this even needed here?
 class SympyParser(ABC):
     @abstractmethod
     def parse(self, serialized: str, definitions_store: DefinitionStore) -> Expr:

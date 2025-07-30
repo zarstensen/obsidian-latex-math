@@ -1,10 +1,10 @@
 import { App, MarkdownView } from "obsidian";
-import { EvalArgsPayload, EvaluateCommand, Expression } from "./EvaluateCommand";
+import { EvaluateArgsPayload, EvaluateCommand, Expression } from "./EvaluateCommand";
 import { UnitConvertModeModal } from "src/UnitConvertModeModal";
 import { LmatEnvironment } from "src/LmatEnvironment";
 import { LatexMathCommand } from "./LatexMathCommand";
 
-class UnitConvertArgsPayload extends EvalArgsPayload {
+class UnitConvertArgsPayload extends EvaluateArgsPayload {
     public constructor(
         expression: string,
         environment: LmatEnvironment,
@@ -17,10 +17,10 @@ export class UnitConvertCommand extends EvaluateCommand {
         super('convert-units', ...args);
     }
     
-    protected override async create_args_payload(expression: Expression, app: App, view: MarkdownView): Promise<EvalArgsPayload> {
+    protected override async createArgsPayload(expression: Expression, app: App, view: MarkdownView): Promise<EvaluateArgsPayload> {
         const modal = new UnitConvertModeModal(app);
         modal.open();
-        const target_units = await modal.get_target_units();
+        const target_units = await modal.getTargetUnits();
 
         return new UnitConvertArgsPayload(expression.contents, LmatEnvironment.fromMarkdownView(app, view), target_units);
     }

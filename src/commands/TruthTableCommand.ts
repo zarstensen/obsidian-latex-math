@@ -5,7 +5,7 @@ import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
 import { formatLatex } from "src/FormatLatex";
 
-class TruthTablePayload implements GenericPayload {
+class TruthTableArgsPayload implements GenericPayload {
     public constructor(
         public expression: string,
         public environment: LmatEnvironment,
@@ -37,7 +37,7 @@ export class TruthTableCommand extends LatexMathCommand {
         this.id = `generate-${this.truth_table_format}-truth-table`;
     }
 
-    async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         // Extract the proposition to generate truth table for
         const equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 
@@ -49,9 +49,9 @@ export class TruthTableCommand extends LatexMathCommand {
         const lmat_env = LmatEnvironment.fromMarkdownView(app, view);
 
         // Send it to python.
-        const response = await evaluator.send(new StartCommandMessage({
+        const response = await cas_server.send(new StartCommandMessage({
             command_type: "truth-table",
-            start_args: new TruthTablePayload(equation.contents, lmat_env, this.truth_table_format)
+            start_args: new TruthTableArgsPayload(equation.contents, lmat_env, this.truth_table_format)
         }));
 
         const result = this.response_verifier.verifyResponse<TruthTableResponse>(response);

@@ -15,12 +15,11 @@ class SolveArgsPayload implements GenericPayload {
     [x: string]: unknown;
 }
 
-interface SolveResult {
+interface SolveResponse {
     solution_set: string
 }
 
-
-class SolveInfoPayload implements GenericPayload {
+class SolveInfoArgsPayload implements GenericPayload {
         public constructor(
         public expression: string,
         public environment: LmatEnvironment
@@ -29,7 +28,7 @@ class SolveInfoPayload implements GenericPayload {
 }
 
 
-interface SolveInfoResult {
+interface SolveInfoResponse {
     required_symbols: number
     available_symbols: LatexMathSymbol[],
 }
@@ -41,7 +40,7 @@ export class SolveCommand extends LatexMathCommand {
         super(...base_args);
     }
 
-    async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         // Extract the equation to solve
         const equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 
@@ -52,14 +51,14 @@ export class SolveCommand extends LatexMathCommand {
 
         const lmat_env = LmatEnvironment.fromMarkdownView(app, view);
 
-        // Send it to python to get some information about it.
+        // Send expression to cas server to get some information about it.
 
-        const solve_info_response = await evaluator.send(new StartCommandMessage({
+        const solve_info_response = await cas_server.send(new StartCommandMessage({
             command_type: "solve-info",
-            start_args: new SolveInfoPayload(equation.contents, lmat_env)
+            start_args: new SolveInfoArgsPayload(equation.contents, lmat_env)
         }));
 
-        const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResult>(solve_info_response);
+        const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResponse>(solve_info_response);
 
         console.log(solve_info_result);
 
@@ -82,14 +81,16 @@ export class SolveCommand extends LatexMathCommand {
             symbols = solve_info_result.available_symbols.slice(0, solve_info_result.required_symbols);
         }
 
-        const solve_response = await evaluator.send(new StartCommandMessage({
+        // actually solve the equation now, with the symbols configured automatically or by the user.
+
+        const solve_response = await cas_server.send(new StartCommandMessage({
             command_type: "solve",
             start_args: new SolveArgsPayload(equation.contents, lmat_env, [...symbols].map((symbol) => symbol.sympy_symbol)),
         }));
 
-        const solve_result = this.response_verifier.verifyResponse<SolveResult>(solve_response);
+        const solve_result = this.response_verifier.verifyResponse<SolveResponse>(solve_response);
 
-        // Insert solution as a new math block, right after the current one.
+        // insert solution as a new math block, right after the current one.
         editor.replaceRange("\n$$" + await formatLatex(solve_result.solution_set) + "$$", editor.offsetToPos(equation.block_to));
         editor.setCursor(editor.offsetToPos(equation.to + solve_result.solution_set.length + 3));
 
