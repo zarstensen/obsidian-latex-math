@@ -1,4 +1,4 @@
-name: Sympy Client Code Quality Check
+name: Cas Client Code Quality Check
 
 on:
   - workflow_call

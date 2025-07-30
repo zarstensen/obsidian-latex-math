@@ -1,4 +1,4 @@
-import { SuccessResponse } from "./SympyServer";
+import { SuccessResponse } from "./LmatCasServer";
 
 export class SuccessResponseVerifier {
     public verifyResponse<T>(response: SuccessResponse, expected_types: Set<string> = new Set(['result'])): T {

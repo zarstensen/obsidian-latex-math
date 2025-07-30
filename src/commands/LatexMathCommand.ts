@@ -1,6 +1,6 @@
 import { App, Editor, MarkdownView } from "obsidian";
 import { SuccessResponseVerifier } from "src/ResponseVerifier";
-import { SympyServer } from "src/SympyServer";
+import { CasServer } from "src/LmatCasServer";
 
 // Interface for a latex math command
 // The id will be used to set the resulting obsidian command id.
@@ -10,5 +10,5 @@ export abstract class LatexMathCommand {
 
     constructor(public response_verifier: SuccessResponseVerifier) { }
 
-    abstract functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void>; // Method to execute the command
+    abstract functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void>; // Method to execute the command
 }

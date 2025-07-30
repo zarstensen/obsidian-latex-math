@@ -1,5 +1,5 @@
 import { App, Editor, EditorPosition, MarkdownView, Notice } from "obsidian";
-import { SympyServer, StartCommandMessage, GenericPayload } from "src/SympyServer";
+import { CasServer, StartCommandMessage, GenericPayload } from "src/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
@@ -32,7 +32,7 @@ export class EvaluateCommand extends LatexMathCommand {
         this.evaluate_mode = evaluate_mode;
     }
     
-    public async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    public async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
                 
         const expression = this.get_expression(editor);
 
@@ -78,7 +78,7 @@ export class EvaluateCommand extends LatexMathCommand {
             insert_content = insert_content.replaceAll('\n', ' ');
         }
 
-        // check if we have gotten a preferred insert position from SympyClient,
+        // check if we have gotten a preferred insert position from the cas client,
         // if not just place it at the end of the expression.
         if (response.metadata.end_line !== undefined) {
             insert_pos.line = editor.offsetToPos(expression.from).line + response.metadata.end_line - 1;

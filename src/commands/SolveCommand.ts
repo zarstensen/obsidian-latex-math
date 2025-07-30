@@ -1,5 +1,5 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { GenericPayload, StartCommandMessage, SympyServer } from "src/SympyServer";
+import { GenericPayload, StartCommandMessage, CasServer } from "src/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
@@ -41,7 +41,7 @@ export class SolveCommand extends LatexMathCommand {
         super(...base_args);
     }
 
-    async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         // Extract the equation to solve
         const equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 

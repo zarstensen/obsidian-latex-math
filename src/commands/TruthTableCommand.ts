@@ -1,5 +1,5 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { GenericPayload, StartCommandMessage, SympyServer } from "src/SympyServer";
+import { GenericPayload, StartCommandMessage, CasServer } from "src/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
@@ -18,7 +18,7 @@ interface TruthTableResponse {
     truth_table: string
 }
 
-// Enum of all possible truth table formats returned by the sympy client
+// Enum of all possible truth table formats returned by the cas client
 export enum TruthTableFormat {
     // truth table contents is formatted as a markdown table with latex entries.
     MARKDOWN = "md",
@@ -37,7 +37,7 @@ export class TruthTableCommand extends LatexMathCommand {
         this.id = `generate-${this.truth_table_format}-truth-table`;
     }
 
-    async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         // Extract the proposition to generate truth table for
         const equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 

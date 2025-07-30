@@ -1,6 +1,6 @@
 import { finishRenderMath, MarkdownPostProcessorContext, renderMath } from "obsidian";
 import { LmatEnvironment } from "./LmatEnvironment";
-import { StartCommandMessage, SympyServer } from "./SympyServer";
+import { StartCommandMessage, CasServer, GenericPayload } from "./LmatCasServer";
 import { SuccessResponseVerifier } from "./ResponseVerifier";
 
 interface SymbolSetResult {
@@ -17,15 +17,13 @@ class SymbolSetPayload implements GenericPayload {
 
 export class LmatCodeBlockRenderer {
     
-    constructor(protected sympy_server: SympyServer, public response_verifier: SuccessResponseVerifier) { }
+    constructor(protected sympy_server: CasServer, public response_verifier: SuccessResponseVerifier) { }
 
     public getHandler(): (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void {
         return this.renderLmatCodeBlock.bind(this);
     }
 
     private async renderLmatCodeBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> {
-        console.log(this);
-        // await this.spawn_sympy_client_promise;
         // Add the standard code block background div,
         // to ensure a consistent look with other code blocks.
         const div = el.createDiv("HyperMD-codeblock HyperMD-codeblock-bg lmat-block-container-flair");

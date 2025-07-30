@@ -1,9 +1,8 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import getPort from 'get-port';
 import { ChildProcessWithoutNullStreams } from 'child_process';
-import { SympyClientSpawner } from './SympyClientSpawner';
+import { CasClientSpawner } from './LmatCasClientSpawner';
 import { assert } from 'console';
-import { LmatEnvironment } from './LmatEnvironment';
 
 enum MessageType {
     EXIT = "exit",
@@ -92,41 +91,41 @@ interface MessagePromiseEntry {
 
 // so in here all of the different communications are ASYNC, where as in the sympy process, each communication is on a new thread i guess?
 
-// The SympyServer class manages a connection as well as message encoding and handling, with an SympyClient script instance.
+// The LmatCasServer class manages a connection as well as message encoding and handling, with an LmatCasClient script instance.
 // Also manages the python process itself.
-export class SympyServer {
-    // Start the SympyClient python process, and establish an connection to it.
+export class CasServer {
+    // Start the LmatCasClient python process, and establish an connection to it.
     // vault_dir: the directory of the vault, which thsi plugin is installed in.
-    // python_exec: the python executable to use to start the SympyClient process.
-    public async initializeAsync(sympy_client_spawner: SympyClientSpawner): Promise<void> {
+    // python_exec: the python executable to use to start the LmatCasClient process.
+    public async initializeAsync(cas_client_spawner: CasClientSpawner): Promise<void> {
         // Start by setting up the web socket server, so we can get a port to give to the python program.
         const server_port = await getPort();
 
-        this.ws_python_server = new WebSocketServer({ 
+        this.ws_cas_server = new WebSocketServer({ 
             port: server_port
         });
 
         // now start the python process
-        this.python_process = await sympy_client_spawner.spawnClient(server_port);
+        this.client_process = await cas_client_spawner.spawnClient(server_port);
         
         
         // setup output to be logged in the developer console
-        this.python_process.stdout.on('data', (data) => {
+        this.client_process.stdout.on('data', (data) => {
             console.log(data.toString());
         });
 
 
-        this.python_process.stderr.on('data', (data) => {
+        this.client_process.stderr.on('data', (data) => {
             console.error(data.toString());
         });
 
-        this.python_process.on('close', (code) => {
+        this.client_process.on('close', (code) => {
             console.log(`child process exited with code ${code}`);
             // TODO: do something here
         });
 
         // wait for the process to establish an connection
-        this.ws_python = await new Promise(this.resolveConnection.bind(this));
+        this.ws_cas_client = await new Promise(this.resolveConnection.bind(this));
     }
 
     // Close server / client connection, and shutdown client process.
@@ -149,12 +148,12 @@ export class SympyServer {
             await Promise.race([shutdown_promise, timeout_promise]);
         } catch (error) {
             shutdown_error = Error("Shutdown failed or timedout", { cause: error });
-            this.python_process.kill();
+            this.client_process.kill();
         }
 
         clearTimeout(shutdown_timeout);
-        this.ws_python.close();
-        this.ws_python_server.close();
+        this.ws_cas_client.close();
+        this.ws_cas_server.close();
 
         if(shutdown_error !== undefined) {
             throw shutdown_error;
@@ -162,7 +161,7 @@ export class SympyServer {
     }
 
     // Assign an error callback handler.
-    // This callback is called any time an error message is received from the SympyClient process.
+    // This callback is called any time an error message is received from the cas client process.
     // It is passed the following two strings:
     //      usr_error: A user friendly(ish) string describing the error.
     //      dev_error: A full stack trace of the python exception.
@@ -170,7 +169,7 @@ export class SympyServer {
         this.error_callback = callback;
     }
 
-    // Send a message to the SympyClient process.
+    // Send a message to the cas client.
     public async send(message: ServerMessage): Promise<SuccessResponse> {
          const server_message: ServerMessageUID = {
             type: message.type,
@@ -185,19 +184,19 @@ export class SympyServer {
             };
         });
 
-        this.ws_python.send(JSON.stringify(server_message));
+        this.ws_cas_client.send(JSON.stringify(server_message));
         
         return await result_promise;
     }
 
 
 
-    // Receive a result from the SympyClient process.
+    // Receive a response from the cas client.
     // Returns a promise that resolves to the result object, parsed from the received json payload.
     public async receive(): Promise<void> {
         return new Promise((resolve, _reject) => {
-            this.ws_python.once('message', (result_buffer) => {
-                const response: ClientResponse = JSON.parse(result_buffer.toString());
+            this.ws_cas_client.once('message', (response_buffer) => {
+                const response: ClientResponse = JSON.parse(response_buffer.toString());
                 
                 // first retreive the message promise to resolve (if present).
 
@@ -242,15 +241,15 @@ export class SympyServer {
         });
     }
 
-    private python_process: ChildProcessWithoutNullStreams;
-    private ws_python: WebSocket;
-    private ws_python_server: WebSocketServer;
+    private client_process: ChildProcessWithoutNullStreams;
+    private ws_cas_client: WebSocket;
+    private ws_cas_server: WebSocketServer;
     private error_callback: (usr_error: string, dev_error: string) => void;
 
     private message_promises: Record<string, MessagePromiseEntry> = { };
 
-    private resolveConnection(resolve: (value: WebSocket) => void, reject: (reason: string) => void) {
-        this.ws_python_server.once('connection', (ws) => {
+    private resolveConnection(resolve: (value: WebSocket) => void, _reject: (reason: string) => void) {
+        this.ws_cas_server.once('connection', (ws) => {
             resolve(ws);
         });
     }

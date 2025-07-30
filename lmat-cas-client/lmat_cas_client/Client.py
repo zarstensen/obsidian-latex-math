@@ -70,8 +70,8 @@ class LmatCasClient:
                 case "interrupt":
                     await self._interrupt_handler(payload["target_uid"], uid)
                 case _:
-                    # If we get here in a release build, then either the sympy client or the plugin source is not the same version.
-                    # A plugin reinstall should (hopefully) install a sympy client and plugin source with the same version.
+                    # If we get here in a release build, then either the cas client or the plugin source is not the same version.
+                    # A plugin reinstall should (hopefully) install a cas client and plugin source with the same version.
                     await self._send_error(
                         uid,
                         dev_message=f"Unsupported message type: {message.type}",

@@ -39,7 +39,7 @@ Take a look at the [command list](#command-list) a brief overview of what this p
   - [Convert To Sympy Code](#convert-to-sympy-code)
 - [Installing](#installing)
 - [Contributing](#contributing)
-  - [Developing the Sympy Client](#developing-the-sympy-client)
+  - [Developing the Cas Client](#developing-the-cas-client)
   - [Developing the Obsidian Plugin](#developing-the-obsidian-plugin)
 - [License](#license)
 
@@ -151,12 +151,12 @@ The only exception to this are hotfixes, which should be merged into `main`.
 
 Want to make changes to UI / UX? Checkout the `src` folder for the obsidian plugin.
 
-Want to expand upon the CAS features of this plugin? Checkout the `sympy-client` folder for the Sympy clients source code.
+Want to expand upon the CAS features of this plugin? Checkout the `lmat-cas-client` folder for the cas clients source code.
 
 The following sections describe how to set up a development environment for **LaTeX Math**.
-Make sure to have python (for Sympy client development) and / or NPM (for obsidian plugin development) installed before continuing.
+Make sure to have python (for cas client development) and / or NPM (for obsidian plugin development) installed before continuing.
 
-### Developing the Sympy Client
+### Developing the Cas Client
 
 Start of with running the `setup-dev-env` python script from the root directory.
 
@@ -168,7 +168,7 @@ This creates a virtual environment named `.venv` installed with all required dep
 
 To use this development environment in Obsidian, go to the **LaTeX Math** settings in the vault this repo has been cloned to, and toggle the `Developer Mode` switch to on. Make sure to reload the vault after doing this.
 
-The plugin should now use the python source files and the created virtual environment, instead of the auto installed `SympyClient` binary.
+The plugin should now use the python source files and the created virtual environment, instead of the auto installed `lmat-cas-client` binary.
 
 Any changes to the python source code requires reloading Obsidian to have any effect.
 

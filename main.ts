@@ -1,14 +1,14 @@
 import { FileSystemAdapter, finishRenderMath, MarkdownPostProcessorContext, MarkdownView, Notice, Plugin, renderMath } from 'obsidian';
-import { ClientResponse, SympyServer } from 'src/SympyServer';
+import { ClientResponse, CasServer } from 'src/LmatCasServer';
 import { LmatEnvironment } from 'src/LmatEnvironment';
-import { ExecutableSpawner, SourceCodeSpawner } from 'src/SympyClientSpawner';
-import { LatexMathSettingsTab } from 'src/LatexMathSettingsTab';
+import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
+import { LmatSettingsTab } from 'src/LmatSettingsTab';
 import { LatexMathCommand } from 'src/commands/LatexMathCommand';
 import { EvaluateCommand } from 'src/commands/EvaluateCommand';
 import { SolveCommand } from 'src/commands/SolveCommand';
 import { SympyConvertCommand } from 'src/commands/SympyConvertCommand';
 import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
-import { SympyClientExtractor } from 'src/SympyClientExtractor';
+import { CasClientExtractor } from 'src/LmatCasClientExtractor';
 import path from 'path';
 import { TruthTableCommand, TruthTableFormat } from 'src/commands/TruthTableCommand';
 import { SuccessResponseVerifier } from 'src/ResponseVerifier';
@@ -29,14 +29,14 @@ export default class LatexMathPlugin extends Plugin {
         console.log(`Loading Latex Math (v${this.manifest.version})`);
 
         await this.loadSettings();
-        this.addSettingTab(new LatexMathSettingsTab(this.app, this));
+        this.addSettingTab(new LmatSettingsTab(this.app, this));
         
         if(!this.manifest.dir) {
             new Notice("Latex Math could not determine its plugin directory, aborting load.");
             return;
         }
 
-        this.sympy_evaluator = new SympyServer();
+        this.sympy_evaluator = new CasServer();
 
         // forward python errors directly to the user.
         this.sympy_evaluator.on_error((usr_error, _dev_error) => {
@@ -82,15 +82,15 @@ export default class LatexMathPlugin extends Plugin {
             [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)' ],
         ]));
 
-        // spawn sympy client
-        this.spawn_sympy_client_promise = this.spawnSympyClient(this.manifest.dir);
-        this.spawn_sympy_client_promise.catch((err) => {
-            new Notice(`Latex Math could not start the Sympy client, aborting load.\n${err.message}`);
+        // spawn cas client
+        this.spawn_cas_client_promise = this.spawnCasClient(this.manifest.dir);
+        this.spawn_cas_client_promise.catch((err) => {
+            new Notice(`Latex Math could not start the cas client, aborting load.\n${err.message}`);
             throw err;
         });
         
         (async() => {
-            await this.spawn_sympy_client_promise;
+            await this.spawn_cas_client_promise;
 
             console.log(this.sympy_evaluator);
 
@@ -101,7 +101,7 @@ export default class LatexMathPlugin extends Plugin {
 
         // Start a background thread to repeatedly await receive
         const receiveLoop = async () => {
-            await this.spawn_sympy_client_promise;
+            await this.spawn_cas_client_promise;
             // TODO: exit this on exit, also this should be its own function,a sl 
             while (true) {
             try {
@@ -128,7 +128,7 @@ export default class LatexMathPlugin extends Plugin {
                 id: cmd.id,
                 name: description,
                 editorCallback: async (e, v) => { 
-                    await this.spawn_sympy_client_promise;
+                    await this.spawn_cas_client_promise;
                     cmd.functionCallback(this.sympy_evaluator, this.app, e, v as MarkdownView);
                 }
             });
@@ -136,7 +136,7 @@ export default class LatexMathPlugin extends Plugin {
     }
 
     onunload() {
-        this.sympy_evaluator.shutdown(LatexMathPlugin.SYMPY_CLIENT_SHUTDOWN_TIMEOUT);
+        this.sympy_evaluator.shutdown(LatexMathPlugin.CAS_CLIENT_SHUTDOWN_TIMEOUT);
     }
 
     async loadSettings() {
@@ -149,25 +149,24 @@ export default class LatexMathPlugin extends Plugin {
 
     private static readonly ERR_NOTICE_TIMEOUT = 30 * 1000;
     private static readonly ERR_NOTICE_LINE_COUNT = 8;
-    private static readonly SYMPY_CLIENT_SHUTDOWN_TIMEOUT = 30;
+    private static readonly CAS_CLIENT_SHUTDOWN_TIMEOUT = 30;
 
-    private sympy_evaluator: SympyServer;
-    private spawn_sympy_client_promise: Promise<void>;
+    private sympy_evaluator: CasServer;
+    private spawn_cas_client_promise: Promise<void>;
     private prev_err_notice: Notice | null = null;
 
-    private async spawnSympyClient(plugin_dir: string) {
+    private async spawnCasClient(plugin_dir: string) {
         if(!(this.app.vault.adapter instanceof FileSystemAdapter)) {
             throw new Error(`Expected FileSystemAdapter, got ${this.app.vault.adapter}`);
         }
         const file_system_adapter: FileSystemAdapter = this.app.vault.adapter;
 
         const full_plugin_dir = path.join(file_system_adapter.getBasePath(), plugin_dir);
-        const asset_extractor = new SympyClientExtractor(full_plugin_dir);
+        const asset_extractor = new CasClientExtractor(full_plugin_dir);
 
-        // spawn sympy client process.
-        const sympy_client_spawner = this.settings.dev_mode ? new SourceCodeSpawner(full_plugin_dir) : new ExecutableSpawner(asset_extractor);
+        const cas_client_spawner = this.settings.dev_mode ? new SourceCodeSpawner(full_plugin_dir) : new ExecutableSpawner(asset_extractor);
 
-        await this.sympy_evaluator.initializeAsync(sympy_client_spawner);
+        await this.sympy_evaluator.initializeAsync(cas_client_spawner);
     }
 
     private onCommandFailed(failed_command: LatexMathCommand, unexpected_response: ClientResponse, expected_statuses: Set<string>) {

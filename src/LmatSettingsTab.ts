@@ -2,7 +2,7 @@ import LatexMathPlugin from 'main';
 import { App, PluginSettingTab, Setting} from 'obsidian';
 
 // Settings tab for Latex Math plugin.
-export class LatexMathSettingsTab extends PluginSettingTab {
+export class LmatSettingsTab extends PluginSettingTab {
     plugin: LatexMathPlugin;
 
     constructor(app: App, plugin: LatexMathPlugin) {

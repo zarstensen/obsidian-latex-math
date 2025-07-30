@@ -18,7 +18,7 @@ from lmat_cas_client.grammar.LatexParser import LatexParser
 if len(sys.argv) < 2:
     print("Usage:"
             f"\npython {os.path.basename(__file__)} [port]"
-            "\n\tport - port number on local host the server is listening at.")
+            "\n\tport - port number on local host the plugin server is listening at.")
     sys.exit(1)
 
 port = int(sys.argv[1])

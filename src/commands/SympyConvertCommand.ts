@@ -1,5 +1,5 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { GenericPayload, StartCommandMessage, SuccessResponse, SympyServer } from "src/SympyServer";
+import { GenericPayload, StartCommandMessage, SuccessResponse, CasServer } from "src/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
@@ -23,7 +23,7 @@ export class SympyConvertCommand extends LatexMathCommand {
         super(...base_args);
     }
 
-    async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
+    async functionCallback(evaluator: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         let equation: { from: number, to: number, block_to: number, contents: string } | null = null;
         
         // Extract equation to evaluate
