@@ -90,6 +90,7 @@ export interface InterrutpedResposne extends ClientResponse {
 
 
 interface MessagePromiseEntry {
+    sent_time: number; // unix timestamp
     resolve: (value: ClientResponse | PromiseLike<ClientResponse>) => void;
     reject: (reason?: unknown) => void;
 }
@@ -182,6 +183,7 @@ export class CasServer {
 
         const result_promise =  new Promise<SuccessResponse>((resolve, reject) => {
             this.message_promises[server_message.uid] = {
+                sent_time: this.getTime(),
                 resolve: resolve,
                 reject: reject,
             };
@@ -192,7 +194,18 @@ export class CasServer {
         return await result_promise;
     }
 
+    public getHangingMessages(options: { min_hang_time: number }): string[] {
+        const current_time = this.getTime();
 
+        return Object.keys(this.message_promises).filter((key) => {
+            const entry = this.message_promises[key];
+            return current_time - entry.sent_time > options.min_hang_time;
+        });
+    }
+
+    public getCurrentMessages(): string[] {
+        return this.getHangingMessages({ min_hang_time: 0 });
+    }
 
     // Receive a response from the cas client.
     // Returns a promise that is resolved when any message is received from the cas client.
@@ -266,5 +279,9 @@ export class CasServer {
         this.ws_cas_server.once('connection', (ws) => {
             resolve(ws);
         });
+    }
+
+    private getTime(): number {
+        return Date.now() / 1000;
     }
 }

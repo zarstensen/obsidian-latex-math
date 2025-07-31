@@ -1,5 +1,5 @@
-import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
-import { ClientResponse, CasServer } from 'src/LmatCasServer';
+import { FileSystemAdapter, MarkdownView, Notice, Plugin, setIcon, setTooltip } from 'obsidian';
+import { ClientResponse, CasServer, SuccessResponse, InterruptHandlerMessage } from 'src/LmatCasServer';
 import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
 import { LmatSettingsTab } from 'src/LmatSettingsTab';
 import { LatexMathCommand } from 'src/commands/LatexMathCommand';
@@ -12,6 +12,9 @@ import path from 'path';
 import { TruthTableCommand, TruthTableFormat } from 'src/commands/TruthTableCommand';
 import { SuccessResponseVerifier } from 'src/ResponseVerifier';
 import { LmatCodeBlockRenderer } from 'src/LmatCodeBlockRenderer';
+import { EvaluateStatusBar } from 'src/LmatStatusBar';
+import { ConfirmModal } from 'src/modals/ConfirmModal';
+import { InterruptCommand } from 'src/commands/InterruptCommand';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -36,10 +39,39 @@ export default class LatexMathPlugin extends Plugin {
         this.addSettingTab(new LmatSettingsTab(this.app, this));
 
         this.setupCasConnection();
-        
         const response_verifier = new SuccessResponseVerifier();
 
         response_verifier.onVerifyFailure(this.onCommandFailed);
+
+        const status_bar = new EvaluateStatusBar(await this.addStatusBarItem());
+        status_bar.onStatusBarClicked((_) => { new ConfirmModal(this.app, "Interrupt Evaluations", `Do you want to interrupt the ${this.cas_server.getCurrentMessages().length} hanging expression evaluation(s?)`, async () => { 
+                    
+            const interrupt_promises: Promise<SuccessResponse>[] = [];
+    
+            // go through all currently registered handlers and try to interrupt them.
+            for(const handler_uid of this.cas_server.getCurrentMessages()) {
+                interrupt_promises.push(this.cas_server.send(new InterruptHandlerMessage({
+                    target_uid: handler_uid
+                })));
+            }
+    
+            for(const interrupt_promise of interrupt_promises) {
+                response_verifier.verifyResponse(await interrupt_promise);
+            }
+    
+            new Notice("Successfully Interrupted Hanging Evaluations");
+         }).open(); });
+        status_bar.show(false);
+
+        // Run a function every 500 ms
+        window.setInterval(() => {
+            status_bar.updateData({
+                running_command_handlers: this.cas_server.getCurrentMessages().length
+            });
+
+            status_bar.show(this.cas_server.getHangingMessages({min_hang_time: 1}).length > 0);
+        }, 500);
+        
         
         // add code block renderer
         const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);

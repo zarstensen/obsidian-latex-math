@@ -3,7 +3,7 @@ import { GenericPayload, StartCommandMessage, CasServer } from "src/LmatCasServe
 import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
-import { LatexMathSymbol, SolveModeModal } from "src/SolveModeModal";
+import { LatexMathSymbol, SolveModeModal } from "src/modals/SolveModeModal";
 import { formatLatex } from "src/FormatLatex";
 
 class SolveArgsPayload implements GenericPayload {

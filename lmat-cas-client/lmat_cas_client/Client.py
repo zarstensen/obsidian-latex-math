@@ -5,6 +5,7 @@ from threading import Thread
 from typing import *
 
 import jsonpickle
+from sympy import true
 import websockets
 
 from .command_handlers.CommandHandler import CommandHandler
@@ -106,7 +107,11 @@ class LmatCasClient:
             self.command_handler_threads[target_uid].kill()
             del self.command_handler_threads[target_uid]
 
-        await self._send_interrupt(uid, {})
+            await self._send_interrupt(target_uid)
+
+            await self._send_success(uid, 'result', dict(handler_existed=True))
+        else:
+            await self._send_success(uid, 'result', dict(handler_existed=False))
 
     def _async_target(self, uid, coro, *args, **kwargs):
         async def coroErrHandler():
