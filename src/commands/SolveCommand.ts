@@ -1,15 +1,46 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { SympyServer } from "src/SympyServer";
-import { ILatexMathCommand } from "./ILatexMathCommand";
+import { GenericPayload, StartCommandMessage, CasServer } from "src/LmatCasServer";
+import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
-import { SolveModeModal } from "src/SolveModeModal";
+import { LatexMathSymbol, SolveModeModal } from "src/SolveModeModal";
 import { formatLatex } from "src/FormatLatex";
 
-export class SolveCommand implements ILatexMathCommand {
+class SolveArgsPayload implements GenericPayload {
+    public constructor(
+        public expression: string,
+        public environment: LmatEnvironment,
+        public symbols: string[]
+    ) { }
+    [x: string]: unknown;
+}
+
+interface SolveResponse {
+    solution_set: string
+}
+
+class SolveInfoArgsPayload implements GenericPayload {
+        public constructor(
+        public expression: string,
+        public environment: LmatEnvironment
+    ) { }
+    [x: string]: unknown;
+}
+
+
+interface SolveInfoResponse {
+    required_symbols: number
+    available_symbols: LatexMathSymbol[],
+}
+
+export class SolveCommand extends LatexMathCommand {
     readonly id: string = 'solve-latex-expression';
 
-    async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView, message: Record<string, any> = {}): Promise<void> {
+    public constructor(...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+        super(...base_args);
+    }
+
+    async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         // Extract the equation to solve
         const equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 
@@ -20,44 +51,47 @@ export class SolveCommand implements ILatexMathCommand {
 
         const lmat_env = LmatEnvironment.fromMarkdownView(app, view);
 
-        // Send it to python.
-        await evaluator.send("solve", {
-            expression: equation.contents,
-            environment: lmat_env
-        });
+        // Send expression to cas server to get some information about it.
 
-        let response = await evaluator.receive();
+        const solve_info_response = await cas_server.send(new StartCommandMessage({
+            command_type: "solve-info",
+            start_args: new SolveInfoArgsPayload(equation.contents, lmat_env)
+        }));
 
-        // response may have different statuses depending on the equation.
-        // if the equation is multivariate, then we need to prompt the user for which symbols should be solved for.
+        const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResponse>(solve_info_response);
 
-        if (response.status === "multivariate_equation") {
+        let symbols: LatexMathSymbol[] = [ ];
+
+        if(solve_info_result.available_symbols.length > solve_info_result.required_symbols) {
             const symbol_selector = new SolveModeModal(
-                response.result['symbols'],
-                response.result['equation_count'],
+                solve_info_result.available_symbols,
+                solve_info_result.required_symbols,
                 lmat_env.domain ?? "",
                 app);
+
             symbol_selector.open();
-            
-            // wait for the solve configuration.
+
             const config = await symbol_selector.getSolveConfig();
             lmat_env.domain = config.domain;
 
-            await evaluator.send("solve", { expression: equation.contents, environment: lmat_env, symbols: [...config.symbols].map((symbol) => symbol.sympy_symbol) });
-
-            response = await evaluator.receive();
-        }
-
-        // at this point we should have a response that is solved.
-        // if not, something has gone wrong somewhere.
-        if (response.status === "success") {
-            // Insert solution as a new math block, right after the current one.
-            editor.replaceRange("\n$$" + await formatLatex(response.result) + "$$", editor.offsetToPos(equation.block_to));
-            editor.setCursor(editor.offsetToPos(equation.to + response.result.length + 3));
+            symbols = config.symbols;
         } else {
-            console.error(response);
-            new Notice("Unable to solve equation, unknown error");
+            symbols = solve_info_result.available_symbols.slice(0, solve_info_result.required_symbols);
         }
+
+        // actually solve the equation now, with the symbols configured automatically or by the user.
+
+        const solve_response = await cas_server.send(new StartCommandMessage({
+            command_type: "solve",
+            start_args: new SolveArgsPayload(equation.contents, lmat_env, [...symbols].map((symbol) => symbol.sympy_symbol)),
+        }));
+
+        const solve_result = this.response_verifier.verifyResponse<SolveResponse>(solve_response);
+
+        // insert solution as a new math block, right after the current one.
+        editor.replaceRange("\n$$" + await formatLatex(solve_result.solution_set) + "$$", editor.offsetToPos(equation.block_to));
+        editor.setCursor(editor.offsetToPos(equation.to + solve_result.solution_set.length + 3));
+
     }
     
 }
