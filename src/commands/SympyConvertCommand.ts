@@ -1,13 +1,29 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { SympyServer } from "src/SympyServer";
-import { ILatexMathCommand } from "./ILatexMathCommand";
+import { GenericPayload, StartCommandMessage, SuccessResponse, CasServer } from "src/LmatCasServer";
+import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
 
-export class SympyConvertCommand implements ILatexMathCommand {
+class SympyConvertArgsPayload implements GenericPayload {
+    public constructor(
+        public expression: string,
+        public environment: LmatEnvironment,
+    ) { }
+    [x: string]: unknown;
+}
+
+interface SympyConvertResponse {
+    code: string;
+}
+
+export class SympyConvertCommand extends LatexMathCommand {
     readonly id: string = 'convert-to-sympy';
 
-    async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView, message: Record<string, any> = {}): Promise<void> {
+    public constructor(...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+        super(...base_args);
+    }
+
+    async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         let equation: { from: number, to: number, block_to: number, contents: string } | null = null;
         
         // Extract equation to evaluate
@@ -27,16 +43,16 @@ export class SympyConvertCommand implements ILatexMathCommand {
             return;
         }
 
-        await evaluator.send("convert-sympy", {
-            expression: equation.contents,
-            environment: LmatEnvironment.fromMarkdownView(app, view)
-        });
+        const response = await cas_server.send(new StartCommandMessage({
+            command_type: "convert-sympy",
+            start_args: new SympyConvertArgsPayload(equation.contents, LmatEnvironment.fromMarkdownView(app, view))
+        }));
 
-        const response = await evaluator.receive();
+        const result = this.response_verifier.verifyResponse<SympyConvertResponse>(response);
 
         // place the convertet python code into a code block right below the math block.
 
-        const sympy_code_block = "\n```python\n" + response.result + "\n```\n";
+        const sympy_code_block = "\n```python\n" + result.code + "\n```\n";
 
         editor.replaceRange(sympy_code_block, editor.offsetToPos(equation.block_to));
         editor.setCursor(editor.offsetToPos(equation.to + sympy_code_block.length));

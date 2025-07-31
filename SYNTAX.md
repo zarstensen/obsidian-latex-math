@@ -3,7 +3,7 @@
 
 This document aims to provide an overview of the latex parsing capabilities of this plugin. As a general note, the parser was designed with standard latex notation in mind, so as long as no complex formatting or esoteric math functions are used, it should be pretty straight forward to write latex formulas parsable by this plugin.
 
-Whilst this document should provide a good overview of the parser, one can always look at the [grammar files](sympy-client/sympy_client/grammar/latex_math_grammar.lark) for the concrete implementation.
+Whilst this document should provide a good overview of the parser, one can always look at the [grammar files](lmat-cas-client/lmat_cas_client/grammar/latex_math_grammar.lark) for the concrete implementation.
 
 <!-- omit in toc -->
 ## Table of Contents

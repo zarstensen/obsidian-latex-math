@@ -80,7 +80,7 @@ export class LmatEnvironment {
     // regex for extracting the contents of an lmat code block.
     private static readonly LMAT_BLOCK_REGEX = /^```lmat\s*(?:\r\n|\r|\n)([\s\S]*?)```$/;
 
-    // TODO: this should ideally be handled by the sympy client's parser, as this regex e.g. would not match any expression containing '$',
+    // TODO: this should ideally be handled by the cas client's parser, as this regex e.g. would not match any expression containing '$',
     // even if it may be a valid expression containing '$'
     // This exact scenario rarely happens so it can stay for now.
     

@@ -1,4 +1,4 @@
-name: Test Sympy Client
+name: Test Cas Client
 
 on:
   - workflow_call

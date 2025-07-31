@@ -1,11 +1,24 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { SympyServer } from "src/SympyServer";
-import { ILatexMathCommand } from "./ILatexMathCommand";
+import { GenericPayload, StartCommandMessage, CasServer } from "src/LmatCasServer";
+import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
 import { LmatEnvironment } from "src/LmatEnvironment";
 import { formatLatex } from "src/FormatLatex";
 
-// Enum of all possible truth table formats returned by the sympy client
+class TruthTableArgsPayload implements GenericPayload {
+    public constructor(
+        public expression: string,
+        public environment: LmatEnvironment,
+        public truth_table_format: TruthTableFormat
+    ) { }
+    [x: string]: unknown;
+}
+
+interface TruthTableResponse {
+    truth_table: string
+}
+
+// Enum of all possible truth table formats returned by the cas client
 export enum TruthTableFormat {
     // truth table contents is formatted as a markdown table with latex entries.
     MARKDOWN = "md",
@@ -15,15 +28,16 @@ export enum TruthTableFormat {
     // this is not supported by mathjax, but could be usefull for real latex documents?
 }
 
-export class TruthTableCommand implements ILatexMathCommand {
+export class TruthTableCommand extends LatexMathCommand {
     readonly id: string;
 
-    constructor(public format: TruthTableFormat) {
+    constructor(public format: TruthTableFormat, ...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+        super(...base_args);
         this.truth_table_format = format;
         this.id = `generate-${this.truth_table_format}-truth-table`;
     }
 
-    async functionCallback(evaluator: SympyServer, app: App, editor: Editor, view: MarkdownView, message: Record<string, any> = {}): Promise<void> {
+    async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         // Extract the proposition to generate truth table for
         const equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 
@@ -35,22 +49,15 @@ export class TruthTableCommand implements ILatexMathCommand {
         const lmat_env = LmatEnvironment.fromMarkdownView(app, view);
 
         // Send it to python.
-        await evaluator.send("truth-table", {
-            expression: equation.contents,
-            environment: lmat_env,
-            table_format: this.truth_table_format
-        });
+        const response = await cas_server.send(new StartCommandMessage({
+            command_type: "truth-table",
+            start_args: new TruthTableArgsPayload(equation.contents, lmat_env, this.truth_table_format)
+        }));
 
-        const response = await evaluator.receive();
-
-        if (response.status !== "success") {
-            console.error(response);
-            new Notice("Unable to generate truth table, unknown error");
-            return;
-        }
+        const result = this.response_verifier.verifyResponse<TruthTableResponse>(response);
 
         // Insert truth table right after the current math block.
-        let insert_content: string = "\n\n" + response.result.truth_table;
+        let insert_content: string = "\n\n" + result.truth_table;
 
         if(this.format == TruthTableFormat.LATEX_ARRAY) {
             insert_content = "\n$$\n" + await formatLatex(insert_content) + "\n$$";
