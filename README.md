@@ -47,16 +47,17 @@ Take a look at the [command list](#command-list) a brief overview of what this p
 
 Below is a table of all the commands this plugin provides, along with a brief description of what it does and optionally a recommended hotkey.
 
-| Command                                     | Recommended Hotkey | Usage                                                                                                                       |
-| ------------------------------------------- | :----------------: | --------------------------------------------------------------------------------------------------------------------------- |
-| Evaluate LaTeX expression                   |     `Alt + B`      | Evaluate the right most expression (if in a relation) and simplify the result.                                              |
-| Evalf LaTeX expression                      |     `Alt + F`      | Evaluate expression and output decimal numbers instead of fractions in the result.                                          |
-| Expand LaTeX expression                     |     `Alt + E`      | Evaluate expression and expand the result as much as possible.                                                              |
-| Factor LaTeX expression                     |                    | Evaluate expression and factorize the result as much as possible.                                                           |
-| Partial fraction decompose LaTeX expression |                    | Evaluate expression and perform partial fraction decomposition on the result.                                               |
-| Solve LaTeX expression                      |     `Alt + L`      | Solve a single equation or a system of equations. Output the result in a new math block below the current one.              |
-| Convert units in LaTeX expression           |     `Alt + U`      | Try to convert the units in the right most expression to the user supplied one.                                             |
-| Convert LaTeX expression to Sympy.          |                    | Convert entire expression to its equivalent Sympy code, and insert the result in a code block below the current math block. |
+| Command                                     | Recommended Hotkey | Usage                                                                                                                                 |
+| ------------------------------------------- | :----------------: | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Evaluate LaTeX expression                   |     `Alt + B`      | Evaluate the right most expression (if in a relation) and simplify the result.                                                        |
+| Evalf LaTeX expression                      |     `Alt + F`      | Evaluate expression and output decimal numbers instead of fractions in the result.                                                    |
+| Expand LaTeX expression                     |     `Alt + E`      | Evaluate expression and expand the result as much as possible.                                                                        |
+| Factor LaTeX expression                     |                    | Evaluate expression and factorize the result as much as possible.                                                                     |
+| Partial fraction decompose LaTeX expression |                    | Evaluate expression and perform partial fraction decomposition on the result.                                                         |
+| Solve LaTeX expression                      |     `Alt + L`      | Solve a single equation or a system of equations. Output the result in a new math block below the current one.                        |
+| Convert units in LaTeX expression           |     `Alt + U`      | Try to convert the units in the right most expression to the user supplied one.                                                       |
+| Create truth table from LaTeX expression    |                    | If selected expression is a proposition, inserts a truth table generated from the proposition. Table can either be latex or markdown. | 
+| Convert LaTeX expression to Sympy           |                    | Convert entire expression to its equivalent Sympy code, and insert the result in a code block below the current math block.           |
 
 ## Features
 
