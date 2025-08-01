@@ -37,9 +37,9 @@ class LmatCasClient:
     def __init__(self):
         self.command_handlers: dict[str, CommandHandler] = {}
         self.command_handler_threads: dict[str, Thread] = {}
-        
+
         self.pending_message_responses: set[str] = set()
-        
+
         self.connection = None
 
     # Connect to a Latex Math plugin currently hosting on the local host at the given port.
@@ -110,14 +110,14 @@ class LmatCasClient:
         for target_uid in target_uids:
             if target_uid in self.command_handler_threads:
                 handler_to_kill = self.command_handler_threads[target_uid]
-                
+
                 # we make sure to send the interrupt response before the
                 # target handler has an opportunity to respond with an error
                 # from us interrupting it.
                 await self._respond_interrupt(target_uid)
-                
+
                 del self.command_handler_threads[target_uid]
-                
+
                 handler_to_kill.kill()
 
         await self._respond_success(uid, 'result', dict())
@@ -147,7 +147,7 @@ class LmatCasClient:
             raise ValueError(f"Response not pending for message with uid '{uid}'")
 
         self.pending_message_responses.remove(uid)
-        
+
         await self.connection.send(
             jsonpickle.encode(dict(status=status, uid=uid, payload=message))
         )
