@@ -1,10 +1,10 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { GenericPayload, StartCommandMessage, CasServer } from "src/LmatCasServer";
-import { LatexMathCommand } from "./LatexMathCommand";
 import { EquationExtractor } from "src/EquationExtractor";
-import { LmatEnvironment } from "src/LmatEnvironment";
-import { LatexMathSymbol, SolveModeModal } from "src/SolveModeModal";
 import { formatLatex } from "src/FormatLatex";
+import { CasServer, GenericPayload, StartCommandMessage } from "src/LmatCasServer";
+import { LmatEnvironment } from "src/LmatEnvironment";
+import { LatexMathSymbol, SolveModeModal } from "src/modals/SolveModeModal";
+import { LatexMathCommand } from "./LatexMathCommand";
 
 class SolveArgsPayload implements GenericPayload {
     public constructor(

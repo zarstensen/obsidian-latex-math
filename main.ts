@@ -1,17 +1,20 @@
 import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
-import { ClientResponse, CasServer } from 'src/LmatCasServer';
-import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
-import { LmatSettingsTab } from 'src/LmatSettingsTab';
-import { LatexMathCommand } from 'src/commands/LatexMathCommand';
+import path from 'path';
 import { EvaluateCommand } from 'src/commands/EvaluateCommand';
+import { LatexMathCommand } from 'src/commands/LatexMathCommand';
 import { SolveCommand } from 'src/commands/SolveCommand';
 import { SympyConvertCommand } from 'src/commands/SympyConvertCommand';
-import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
-import { CasClientExtractor } from 'src/LmatCasClientExtractor';
-import path from 'path';
 import { TruthTableCommand, TruthTableFormat } from 'src/commands/TruthTableCommand';
-import { SuccessResponseVerifier } from 'src/ResponseVerifier';
+import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
+import { HandlerInterrupter } from 'src/HandlerInterrupter';
+import { CasClientExtractor } from 'src/LmatCasClientExtractor';
+import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
+import { CasServer, ClientResponse, UnixTimestampMillis } from 'src/LmatCasServer';
 import { LmatCodeBlockRenderer } from 'src/LmatCodeBlockRenderer';
+import { LmatSettingsTab } from 'src/LmatSettingsTab';
+import { EvaluateStatusBar } from 'src/LmatStatusBar';
+import { ConfirmModal } from 'src/modals/ConfirmModal';
+import { SuccessResponseVerifier } from 'src/ResponseVerifier';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -36,10 +39,13 @@ export default class LatexMathPlugin extends Plugin {
         this.addSettingTab(new LmatSettingsTab(this.app, this));
 
         this.setupCasConnection();
-        
+
         const response_verifier = new SuccessResponseVerifier();
 
         response_verifier.onVerifyFailure(this.onCommandFailed);
+
+        await this.setupStatusBar(new HandlerInterrupter(this.cas_server, response_verifier));
+
         
         // add code block renderer
         const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);
@@ -91,6 +97,8 @@ export default class LatexMathPlugin extends Plugin {
     private static readonly ERR_NOTICE_TIMEOUT = 30 * 1000;
     private static readonly ERR_NOTICE_LINE_COUNT = 8;
     private static readonly CAS_CLIENT_SHUTDOWN_TIMEOUT = 30;
+    private static readonly STATUS_BAR_UPDATE_FREQ: UnixTimestampMillis = 500;
+    private static readonly STATUS_BAR_MESSAGE_HANG_TIME: UnixTimestampMillis = 1000;
 
     private cas_server: CasServer;
     private spawn_cas_client_promise: Promise<void>;
@@ -114,6 +122,35 @@ export default class LatexMathPlugin extends Plugin {
             throw err;
         });
 
+    }
+
+    
+    private async setupStatusBar(handler_interrupter: HandlerInterrupter): Promise<EvaluateStatusBar> {
+        const status_bar = new EvaluateStatusBar(await this.addStatusBarItem());
+
+        status_bar.show(false);
+
+        window.setInterval(() => {
+            status_bar.updateData({
+                running_command_handlers: this.cas_server.getCurrentMessages().length
+            });
+
+            status_bar.show(this.cas_server.getHangingMessages({min_hang_time: LatexMathPlugin.STATUS_BAR_MESSAGE_HANG_TIME}).length > 0);
+        }, LatexMathPlugin.STATUS_BAR_UPDATE_FREQ);
+
+        status_bar.onStatusBarClicked((_) => {
+            new ConfirmModal(
+                this.app,
+                "Interrupt Evaluations",
+                `Do you want to interrupt the ${this.cas_server.getCurrentMessages().length} hanging expression evaluation(s?)`,
+                async () => {
+                    await handler_interrupter.interruptAllHandlers();
+                    new Notice("Successfully Interrupted Hanging Evaluations");
+                }
+            ).open();
+        });
+
+        return status_bar;
     }
 
     private async spawnCasClient(plugin_dir: string) {
