@@ -36,7 +36,7 @@ Terms consists of a series of factors separated by a multiplication sign (`*`, `
 - [Unit / Constant](#units-and-physical-constants)
 - Matrix
 - Exponentiation
-- [Funtion](#mathematical-functions)
+- [Function](#mathematical-functions)
 - Expression delimited by `()`, `{}` or `[]`
 
 If no multiplication or division sign is present, multiplication is implicitly assumed.
