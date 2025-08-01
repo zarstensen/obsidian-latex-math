@@ -37,6 +37,9 @@ class LmatCasClient:
     def __init__(self):
         self.command_handlers: dict[str, CommandHandler] = {}
         self.command_handler_threads: dict[str, Thread] = {}
+
+        self.pending_message_responses: set[str] = set()
+
         self.connection = None
 
     # Connect to a Latex Math plugin currently hosting on the local host at the given port.
@@ -56,18 +59,20 @@ class LmatCasClient:
             message_type = message["type"]
             payload = message["payload"]
 
+            self.pending_message_responses.add(uid)
+
             match message_type:
                 case "exit":
-                    await self._send("exit", uid, {})
+                    await self._respond("exit", uid, {})
                     break
                 case "start":
                     await self._start_handler(payload, uid)
                 case "interrupt":
-                    await self._interrupt_handler(payload["target_uid"], uid)
+                    await self._interrupt_handler(payload["target_uids"], uid)
                 case _:
                     # If we get here in a release build, then either the cas client or the plugin source is not the same version.
                     # A plugin reinstall should (hopefully) install a cas client and plugin source with the same version.
-                    await self._send_error(
+                    await self._respond_error(
                         uid,
                         dev_message=f"Unsupported message type: {message.type}",
                         usr_message="Message type is not supported, please try reinstalling the plugin."
@@ -75,7 +80,7 @@ class LmatCasClient:
 
     async def _start_handler(self, payload: dict, uid: str):
         if payload["command_type"] not in self.command_handlers:
-            await self._send_error(
+            await self._respond_error(
                 uid,
                 dev_message=f"Unsupported command type: {payload["command_type"]}",
                 usr_message="Command type is not supported, please try reinstalling the plugin."
@@ -99,47 +104,64 @@ class LmatCasClient:
     async def _handle_command(self, command: str, uid: str, payload: dict):
         command_response = self.command_handlers[command].handle(payload)
         response_type, response_value = command_response.getResponsePayload()
-        await self._send_success(uid, response_type, response_value)
+        await self._respond_success(uid, response_type, response_value)
 
-    async def _interrupt_handler(self, target_uid: str, uid: str):
-        if target_uid in self.command_handler_threads:
-            self.command_handler_threads[target_uid].kill()
-            del self.command_handler_threads[target_uid]
+    async def _interrupt_handler(self, target_uids: list[str], uid: str):
+        for target_uid in target_uids:
+            if target_uid in self.command_handler_threads:
+                handler_to_kill = self.command_handler_threads[target_uid]
 
-        await self._send_interrupt(uid, {})
+                # we make sure to send the interrupt response before the
+                # target handler has an opportunity to respond with an error
+                # from us interrupting it.
+                await self._respond_interrupt(target_uid)
+
+                del self.command_handler_threads[target_uid]
+
+                handler_to_kill.kill()
+
+        await self._respond_success(uid, 'result', dict())
 
     def _async_target(self, uid, coro, *args, **kwargs):
         async def coroErrHandler():
             try:
                 await coro(*args, **kwargs)
-            except ThreadKill:
-                # do not send ThreadKill exceptions to server, user does not need to see this error.
-                pass
             except Exception as e:
-                await self._send_error(
-                    uid,
-                    dev_message=str(e) + "\n" + traceback.format_exc(),
-                    usr_message=str(e)
-                )
+                try:
+                    await self._respond_error(
+                        uid,
+                        dev_message=str(e) + "\n" + traceback.format_exc(),
+                        usr_message=str(e)
+                    )
+                except ValueError:
+                    # This error means the thread was intentionally interrupted,
+                    # so just do nothing instead of reporting back an error.
+                    pass
 
         return asyncio.run(coroErrHandler())
 
     # Send the given json dumpable object back to the plugin.
-    async def _send(self, status: str, uid: str, message: dict):
+    async def _respond(self, status: str, uid: str, message: dict):
+
+        if uid not in self.pending_message_responses:
+            raise ValueError(f"Response not pending for message with uid '{uid}'")
+
+        self.pending_message_responses.remove(uid)
+
         await self.connection.send(
             jsonpickle.encode(dict(status=status, uid=uid, payload=message))
         )
 
-    async def _send_success(self, uid: str, type: str, value: dict):
-        await self._send(self.SUCCESS_STATUS, uid, dict(type=type, value=value))
+    async def _respond_success(self, uid: str, type: str, value: dict):
+        await self._respond(self.SUCCESS_STATUS, uid, dict(type=type, value=value))
 
-    async def _send_interrupt(self, uid):
-        await self._send(self.INTERRUPT_STATUS, uid, { })
+    async def _respond_interrupt(self, uid):
+        await self._respond(self.INTERRUPT_STATUS, uid, { })
 
-    async def _send_error(self, uid: str, dev_message: str, usr_message: str | None = None):
+    async def _respond_error(self, uid: str, dev_message: str, usr_message: str | None = None):
         usr_message = dev_message if usr_message is None else usr_message
 
-        await self._send(self.ERR_STATUS, uid, dict(
+        await self._respond(self.ERR_STATUS, uid, dict(
             dev_message = dev_message,
             usr_message = usr_message
         ))
