@@ -1,5 +1,5 @@
-import { FileSystemAdapter, MarkdownView, Notice, Plugin, setIcon, setTooltip } from 'obsidian';
-import { ClientResponse, CasServer, SuccessResponse, InterruptHandlerMessage } from 'src/LmatCasServer';
+import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
+import { ClientResponse, CasServer, UnixTimestampMillis } from 'src/LmatCasServer';
 import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
 import { LmatSettingsTab } from 'src/LmatSettingsTab';
 import { LatexMathCommand } from 'src/commands/LatexMathCommand';
@@ -14,7 +14,7 @@ import { SuccessResponseVerifier } from 'src/ResponseVerifier';
 import { LmatCodeBlockRenderer } from 'src/LmatCodeBlockRenderer';
 import { EvaluateStatusBar } from 'src/LmatStatusBar';
 import { ConfirmModal } from 'src/modals/ConfirmModal';
-import { InterruptCommand } from 'src/commands/InterruptCommand';
+import { HandlerInterrupter } from 'src/HandlerInterrupter';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -39,39 +39,13 @@ export default class LatexMathPlugin extends Plugin {
         this.addSettingTab(new LmatSettingsTab(this.app, this));
 
         this.setupCasConnection();
+
         const response_verifier = new SuccessResponseVerifier();
 
         response_verifier.onVerifyFailure(this.onCommandFailed);
 
-        const status_bar = new EvaluateStatusBar(await this.addStatusBarItem());
-        status_bar.onStatusBarClicked((_) => { new ConfirmModal(this.app, "Interrupt Evaluations", `Do you want to interrupt the ${this.cas_server.getCurrentMessages().length} hanging expression evaluation(s?)`, async () => { 
-                    
-            const interrupt_promises: Promise<SuccessResponse>[] = [];
-    
-            // go through all currently registered handlers and try to interrupt them.
-            for(const handler_uid of this.cas_server.getCurrentMessages()) {
-                interrupt_promises.push(this.cas_server.send(new InterruptHandlerMessage({
-                    target_uid: handler_uid
-                })));
-            }
-    
-            for(const interrupt_promise of interrupt_promises) {
-                response_verifier.verifyResponse(await interrupt_promise);
-            }
-    
-            new Notice("Successfully Interrupted Hanging Evaluations");
-         }).open(); });
-        status_bar.show(false);
+        await this.setupStatusBar(new HandlerInterrupter(this.cas_server, response_verifier));
 
-        // Run a function every 500 ms
-        window.setInterval(() => {
-            status_bar.updateData({
-                running_command_handlers: this.cas_server.getCurrentMessages().length
-            });
-
-            status_bar.show(this.cas_server.getHangingMessages({min_hang_time: 1}).length > 0);
-        }, 500);
-        
         
         // add code block renderer
         const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);
@@ -123,6 +97,8 @@ export default class LatexMathPlugin extends Plugin {
     private static readonly ERR_NOTICE_TIMEOUT = 30 * 1000;
     private static readonly ERR_NOTICE_LINE_COUNT = 8;
     private static readonly CAS_CLIENT_SHUTDOWN_TIMEOUT = 30;
+    private static readonly STATUS_BAR_UPDATE_FREQ: UnixTimestampMillis = 500;
+    private static readonly STATUS_BAR_MESSAGE_HANG_TIME: UnixTimestampMillis = 1000;
 
     private cas_server: CasServer;
     private spawn_cas_client_promise: Promise<void>;
@@ -146,6 +122,35 @@ export default class LatexMathPlugin extends Plugin {
             throw err;
         });
 
+    }
+
+    
+    private async setupStatusBar(handler_interrupter: HandlerInterrupter): Promise<EvaluateStatusBar> {
+        const status_bar = new EvaluateStatusBar(await this.addStatusBarItem());
+
+        status_bar.show(false);
+
+        window.setInterval(() => {
+            status_bar.updateData({
+                running_command_handlers: this.cas_server.getCurrentMessages().length
+            });
+
+            status_bar.show(this.cas_server.getHangingMessages({min_hang_time: LatexMathPlugin.STATUS_BAR_MESSAGE_HANG_TIME}).length > 0);
+        }, LatexMathPlugin.STATUS_BAR_UPDATE_FREQ);
+
+        status_bar.onStatusBarClicked((_) => {
+            new ConfirmModal(
+                this.app,
+                "Interrupt Evaluations",
+                `Do you want to interrupt the ${this.cas_server.getCurrentMessages().length} hanging expression evaluation(s?)`,
+                async () => {
+                    await handler_interrupter.interruptAllHandlers();
+                    new Notice("Successfully Interrupted Hanging Evaluations");
+                }
+            ).open();
+        });
+
+        return status_bar;
     }
 
     private async spawnCasClient(plugin_dir: string) {

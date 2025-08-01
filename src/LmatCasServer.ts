@@ -47,7 +47,7 @@ export class StartCommandMessage implements ServerMessage {
 }
 
 export interface InterruptHandlerPayload extends ServerPayload {
-    target_uid: string
+    target_uids: string[]
 }
 
 export class InterruptHandlerMessage implements ServerMessage {
@@ -88,9 +88,10 @@ export interface InterrutpedResposne extends ClientResponse {
     payload: Record<string, never>;
 }
 
+export type UnixTimestampMillis = number;
 
 interface MessagePromiseEntry {
-    sent_time: number; // unix timestamp
+    sent_time: UnixTimestampMillis;
     resolve: (value: ClientResponse | PromiseLike<ClientResponse>) => void;
     reject: (reason?: unknown) => void;
 }
@@ -113,11 +114,11 @@ export class CasServer {
         
         // setup output to be logged in the developer console
         this.client_process.stdout.on('data', (data) => {
-            console.log(data.toString());
+            console.log('lmat-cas-client stdout:\n' + data.toString());
         });
         
         this.client_process.stderr.on('data', (data) => {
-            console.error(data.toString());
+            console.error('lmat-cas-client stderr:\n' + data.toString());
         });
         
         this.client_process.on('close', (code) => {
@@ -194,15 +195,17 @@ export class CasServer {
         return await result_promise;
     }
 
-    public getHangingMessages(options: { min_hang_time: number }): string[] {
+    // retreive a list of UID's of messages who has not responded for more than min_hang_time ms.
+    public getHangingMessages(options: { min_hang_time: UnixTimestampMillis }): string[] {
         const current_time = this.getTime();
 
         return Object.keys(this.message_promises).filter((key) => {
             const entry = this.message_promises[key];
-            return current_time - entry.sent_time > options.min_hang_time;
+            return current_time - entry.sent_time >= options.min_hang_time;
         });
     }
 
+    // retreive a list of all message UID's who are currently missing a response.
     public getCurrentMessages(): string[] {
         return this.getHangingMessages({ min_hang_time: 0 });
     }
@@ -217,7 +220,7 @@ export class CasServer {
         return new Promise((resolve, _reject) => {
             this.ws_cas_client.once('message', (response_buffer) => {
                 const response: ClientResponse = JSON.parse(response_buffer.toString());
-                
+
                 // first retreive the message promise to resolve (if present).
 
                 let message_promise: MessagePromiseEntry | null = null;
@@ -241,8 +244,7 @@ export class CasServer {
                         break;
                     }
                     case MessageStatus.INTERRUPTED: {
-                        // Just ignore for now, maybe a message in the future?
-                        message_promise?.reject();
+                        message_promise?.reject("Interrupted");
                         break;
                     }
                     case MessageStatus.SUCCESS: {
@@ -281,7 +283,7 @@ export class CasServer {
         });
     }
 
-    private getTime(): number {
-        return Date.now() / 1000;
+    private getTime(): UnixTimestampMillis {
+        return Date.now();
     }
 }

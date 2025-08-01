@@ -1,12 +1,13 @@
 import { setIcon, setTooltip } from "obsidian";
+import { EventEmitter } from "events";
 
 export interface EvaluateStatusBarData {
     running_command_handlers: number
 }
 
-import { EventEmitter } from "events";
-
-export class EvaluateStatusBar {
+// EvaluateStatusBar manages an HTMLElement added with addStatusBarElement,
+// which displays the current cas client evaluation status to the user.
+export class EvaluateStatusBar  {
 
     constructor(
         protected status_bar_el: HTMLElement
@@ -24,12 +25,15 @@ export class EvaluateStatusBar {
         this.show(false);
     }
 
+    // provide updated evaluate status data to the status bar.
+    // this updates the visuals of the status bar from the new data.
     public updateData(new_data: EvaluateStatusBarData) {
         this.data = new_data;
 
         setTooltip(this.status_bar_el, `LaTeX Math is currently\nevaluating ${this.data.running_command_handlers} expression(s)`, { placement: 'top' });
     }
 
+    // visually show or hide the status bar.
     public show(show: boolean) {
         if(show) {
             this.status_bar_el.style.display = '';
