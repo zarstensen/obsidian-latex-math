@@ -1,5 +1,5 @@
-import { setIcon, setTooltip } from "obsidian";
 import { EventEmitter } from "events";
+import { setIcon, setTooltip } from "obsidian";
 
 export interface EvaluateStatusBarData {
     running_command_handlers: number

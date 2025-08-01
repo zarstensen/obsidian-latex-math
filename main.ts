@@ -1,20 +1,20 @@
 import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
-import { ClientResponse, CasServer, UnixTimestampMillis } from 'src/LmatCasServer';
-import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
-import { LmatSettingsTab } from 'src/LmatSettingsTab';
-import { LatexMathCommand } from 'src/commands/LatexMathCommand';
+import path from 'path';
 import { EvaluateCommand } from 'src/commands/EvaluateCommand';
+import { LatexMathCommand } from 'src/commands/LatexMathCommand';
 import { SolveCommand } from 'src/commands/SolveCommand';
 import { SympyConvertCommand } from 'src/commands/SympyConvertCommand';
-import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
-import { CasClientExtractor } from 'src/LmatCasClientExtractor';
-import path from 'path';
 import { TruthTableCommand, TruthTableFormat } from 'src/commands/TruthTableCommand';
-import { SuccessResponseVerifier } from 'src/ResponseVerifier';
+import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
+import { HandlerInterrupter } from 'src/HandlerInterrupter';
+import { CasClientExtractor } from 'src/LmatCasClientExtractor';
+import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
+import { CasServer, ClientResponse, UnixTimestampMillis } from 'src/LmatCasServer';
 import { LmatCodeBlockRenderer } from 'src/LmatCodeBlockRenderer';
+import { LmatSettingsTab } from 'src/LmatSettingsTab';
 import { EvaluateStatusBar } from 'src/LmatStatusBar';
 import { ConfirmModal } from 'src/modals/ConfirmModal';
-import { HandlerInterrupter } from 'src/HandlerInterrupter';
+import { SuccessResponseVerifier } from 'src/ResponseVerifier';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;

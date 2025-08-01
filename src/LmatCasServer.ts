@@ -1,8 +1,8 @@
-import { WebSocket, WebSocketServer } from 'ws';
-import getPort from 'get-port';
 import { ChildProcessWithoutNullStreams } from 'child_process';
-import { CasClientSpawner } from './LmatCasClientSpawner';
 import { assert } from 'console';
+import getPort from 'get-port';
+import { WebSocket, WebSocketServer } from 'ws';
+import { CasClientSpawner } from './LmatCasClientSpawner';
 
 enum MessageType {
     EXIT = "exit",
