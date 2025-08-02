@@ -5,7 +5,7 @@
   LaTeX Math
   </br>
 
-  [<img src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" alt="Install Plugin" width="150">][install-url]
+  [<img src="https://img.shields.io/badge/Install%20Plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" alt="Install Plugin" width="150">][install-url]
 
   <a> [![GitHub Release][github-latest-release-badge]][github-latest-release-url]
   [![GitHub Beta Release][github-beta-release-badge]][github-all-releases-url] ![GitHub Actions Workflow Status][test-status-badge]
@@ -229,6 +229,6 @@ See [LICENSE](LICENSE)
 
 [install-badge]: https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
 
-[install-alt-badge]: https://img.shields.io/badge/install%20plugin%20by%20clicking%20here-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
+[install-alt-badge]: https://img.shields.io/badge/Install%20plugin%20by%20clicking%20here-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
 
 [install-url]: https://obsidian.md/plugins?id=latex-math
