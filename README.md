@@ -1,12 +1,17 @@
 <div align="center">
   
   <h1 align="center">
-  LaTeX Math
+  
+  <a style="font-size: 3rem; font-weight: bold;">
+    LaTeX Math
+  </a>
+  
+  </br>
 
-  <img alt="Static Badge" src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" height="25px">
+  [<img src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" alt="Install Plugin" width="200">][install-url]
 
-  <a> ![GitHub Release](https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?style=flat-square&label=stable%20release&labelColor=2e3440&color=%235e81ac&cacheSeconds=https%3A%2F%2Fgithub.com%2Fzarstensen%2Fobsidian-latex-math%2Freleases%2Flatest)
-  ![GitHub Beta Release](https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?include_prereleases&style=flat-square&label=beta%20release&labelColor=2e3440&color=7e1dfb&link=https%3A%2F%2Fgithub.com%2Fzarstensen%2Fobsidian-latex-math%2Freleases) ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/zarstensen/obsidian-latex-math/push.yml?style=flat-square&label=feature%20tests&labelColor=2e3440)
+  <a> [![GitHub Release][github-latest-release-badge]][github-latest-release-url]
+  [![GitHub Beta Release][github-beta-release-badge]][github-all-releases-url] ![GitHub Actions Workflow Status][test-status-badge]
 
   </a>
 
@@ -143,6 +148,14 @@ This will insert a python code block containing the equivalent Sympy code of the
 
 ## Installing
 
+<div style="display: flex; align-items: center;">
+  <span>Press this button →</span>
+  <img alt="Static Badge" src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" style="margin-left: 8px;">
+</div>
+</br>
+
+or
+
 Press `Browse` in obsidians `Options > Community plugins` menu and search for `LaTeX Math`.
 
 ### Installing a Specific Version
@@ -210,3 +223,17 @@ To perform a one-time production ready build, run `npm run build`.
 ## License
 
 See [LICENSE](LICENSE)
+
+[github-latest-release-badge]: https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?style=flat-square&label=stable%20release&labelColor=2e3440&color=%235e81ac
+
+[github-latest-release-url]: https://github.com/zarstensen/obsidian-latex-math/releases/latest
+
+[github-beta-release-badge]: https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?include_prereleases&style=flat-square&label=beta%20release&labelColor=2e3440&color=7e1dfb
+
+[github-all-releases-url]: https://github.com/zarstensen/obsidian-latex-math/releases
+
+[test-status-badge]: https://img.shields.io/github/actions/workflow/status/zarstensen/obsidian-latex-math/push.yml?style=flat-square&label=feature%20tests&labelColor=2e3440
+
+[install-badge]: https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math
+
+[install-url]: https://obsidian.md/plugins?id=latex-math
