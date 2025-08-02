@@ -145,7 +145,7 @@ This will insert a python code block containing the equivalent Sympy code of the
 
 ## Installing
 
-[![Install Link][install-alt-badge]][install-url]
+[![Install Link][install-badge]][install-url]
 
 or
 
@@ -227,8 +227,6 @@ See [LICENSE](LICENSE)
 
 [test-status-badge]: https://img.shields.io/github/actions/workflow/status/zarstensen/obsidian-latex-math/push.yml?style=flat-square&label=feature%20tests&labelColor=2e3440
 
-[install-badge]: https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
-
-[install-alt-badge]: https://img.shields.io/badge/Install%20plugin%20by%20clicking%20here-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
+[install-badge]: https://img.shields.io/badge/Install%20plugin%20by%20clicking%20here-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
 
 [install-url]: https://obsidian.md/plugins?id=latex-math
