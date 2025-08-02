@@ -229,6 +229,6 @@ See [LICENSE](LICENSE)
 
 [install-badge]: https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
 
-[install-alt-badge]: https://img.shields.io/badge/install%20here-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
+[install-alt-badge]: https://img.shields.io/badge/install%20plugin%20by%20clicking%20here-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
 
 [install-url]: https://obsidian.md/plugins?id=latex-math
