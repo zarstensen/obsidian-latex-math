@@ -3,7 +3,11 @@
   <h1 align="center">
   LaTeX Math
 
-  <a>[![GitHub Release](https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?style=flat-square&color=blue)](https://github.com/zarstensen/obsidian-latex-math/releases/latest) ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/zarstensen/obsidian-latex-math/push.yml?style=flat-square&label=tests)
+  <img alt="Static Badge" src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" height="25px">
+
+  <a> ![GitHub Release](https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?style=flat-square&label=stable%20release&labelColor=2e3440&color=%235e81ac&cacheSeconds=https%3A%2F%2Fgithub.com%2Fzarstensen%2Fobsidian-latex-math%2Freleases%2Flatest)
+  ![GitHub Beta Release](https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?include_prereleases&style=flat-square&label=beta%20release&labelColor=2e3440&color=7e1dfb&link=https%3A%2F%2Fgithub.com%2Fzarstensen%2Fobsidian-latex-math%2Freleases) ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/zarstensen/obsidian-latex-math/push.yml?style=flat-square&label=feature%20tests&labelColor=2e3440)
+
   </a>
 
   </h1>
@@ -38,6 +42,7 @@ Take a look at the [command list](#command-list) a brief overview of what this p
   - [Logical Propositions](#logical-propositions)
   - [Convert To Sympy Code](#convert-to-sympy-code)
 - [Installing](#installing)
+  - [Installing a Specific Version](#installing-a-specific-version)
 - [Contributing](#contributing)
   - [Developing the Cas Client](#developing-the-cas-client)
   - [Developing the Obsidian Plugin](#developing-the-obsidian-plugin)
@@ -56,7 +61,7 @@ Below is a table of all the commands this plugin provides, along with a brief de
 | Partial fraction decompose LaTeX expression |                    | Evaluate expression and perform partial fraction decomposition on the result.                                                                     |
 | Solve LaTeX expression                      |     `Alt + L`      | Solve a single equation or a system of equations. Output the result in a new math block below the current one.                                    |
 | Convert units in LaTeX expression           |     `Alt + U`      | Try to convert the units in the right most expression to the user supplied one.                                                                   |
-| Create truth table from LaTeX expression    |                    | If selected expression is a proposition, inserts a truth table generated from the proposition. Table can be inserted as either latex or markdown. | 
+| Create truth table from LaTeX expression    |                    | If selected expression is a proposition, inserts a truth table generated from the proposition. Table can be inserted as either latex or markdown. |
 | Convert LaTeX expression to Sympy           |                    | Convert entire expression to its equivalent Sympy code, and insert the result in a code block below the current math block.                       |
 
 ## Features
@@ -140,9 +145,26 @@ This will insert a python code block containing the equivalent Sympy code of the
 
 Press `Browse` in obsidians `Options > Community plugins` menu and search for `LaTeX Math`.
 
-OR
+### Installing a Specific Version
 
-Download the plugin zip file from the [latest release](https://github.com/zarstensen/obsidian-latex-math/releases/latest), and extract it to your vault's plugin folder, commonly located at `.obsidian/plugins`, relative to your vault's path.
+An earlier or beta version of this plugin can be installed via. 2 methods.
+
+#### BRAT Installation (easy)
+
+- Make sure the [BRAT plugin](https://obsidian.md/plugins?id=obsidian42-brat) is installed in your obsidian vault.
+- Run the `BRAT: Plugins: Add a beta plugin for testing (with or without version)` command via. the command palette.
+- Paste the **LaTeX Math** repository link (https://github.com/zarstensen/obsidian-latex-math) in the `Repository` text field.
+- Select the desired version in the `version` dropdown.
+- Press the `Add plugin` button.
+
+The desired plugin version should now be installed in your vault.
+
+#### Manual Installation
+
+- Download the `plugin.zip` file from the [desired release version](https://github.com/zarstensen/obsidian-latex-math/releases).
+- Extract it to your vault's plugin folder, commonly located at `.obsidian/plugins`, relative to your vault's path.
+
+The desired plugin version should now be installed in your vault.
 
 ## Contributing
 
