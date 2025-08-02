@@ -2,13 +2,10 @@
   
   <h1 align="center">
   
-  <a style="font-size: 3rem; font-weight: bold;">
-    LaTeX Math
-  </a>
-  
+  LaTeX Math
   </br>
 
-  [<img src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" alt="Install Plugin" width="200">][install-url]
+  [<img src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" alt="Install Plugin" width="150">][install-url]
 
   <a> [![GitHub Release][github-latest-release-badge]][github-latest-release-url]
   [![GitHub Beta Release][github-beta-release-badge]][github-all-releases-url] ![GitHub Actions Workflow Status][test-status-badge]
@@ -148,11 +145,7 @@ This will insert a python code block containing the equivalent Sympy code of the
 
 ## Installing
 
-<div style="display: flex; align-items: center;">
-  <span>Press this button →</span>
-  <img alt="Static Badge" src="https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" style="margin-left: 8px;">
-</div>
-</br>
+[![Install Link][install-alt-badge]][install-url]
 
 or
 
@@ -234,6 +227,8 @@ See [LICENSE](LICENSE)
 
 [test-status-badge]: https://img.shields.io/github/actions/workflow/status/zarstensen/obsidian-latex-math/push.yml?style=flat-square&label=feature%20tests&labelColor=2e3440
 
-[install-badge]: https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math
+[install-badge]: https://img.shields.io/badge/install%20plugin-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
+
+[install-alt-badge]: https://img.shields.io/badge/install%20here-7e1dfb?style=flat-square&logo=obsidian&logoSize=white
 
 [install-url]: https://obsidian.md/plugins?id=latex-math
