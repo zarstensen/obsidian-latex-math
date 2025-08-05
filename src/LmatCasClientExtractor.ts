@@ -1,4 +1,5 @@
 import * as fs from "fs/promises";
+import * as fs_sync from "fs";
 import path from "path";
 import { platform } from "os";
 import LmatCasClientWin from "../bundle-bin/lmat-cas-client-win/lmat-cas-client-win.bin";
@@ -48,7 +49,12 @@ export class CasClientExtractor {
 
     private async removeOldClients(): Promise<void> {
         const client_dir = this.getClientDir();
-        
+
+        if (!fs_sync.existsSync(client_dir)) {
+            // directory does not exist, nothing to remove
+            return;
+        }
+
         const entries = await fs.readdir(client_dir);
         await Promise.all(
             entries.map(async (entry) => {
