@@ -1,9 +1,10 @@
-from typing import TypedDict, override
+from typing import override
 
+from pydantic import BaseModel
 from sympy import *
 
-from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
-from lmat_cas_client.grammar.SympyParser import SympyParser
+from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.Definitions import AssumptionDefinition
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import *
@@ -38,7 +39,7 @@ SET_TO_LATEX = {
     FiniteSet(0): "\\{0\\}",
 }
 
-class SymbolSetMessage(TypedDict):
+class SymbolSetMessage(BaseModel):
     environment: LmatEnvironment
 
 class SymbolSetResult(CommandResult):
@@ -59,19 +60,29 @@ class SymbolSetResult(CommandResult):
 
 class SymbolSetHandler(CommandHandler):
 
-    def __init__(self, parser: SympyParser):
+    def __init__(self, compiler: Compiler):
         super().__init__()
-        self._parser = parser
+        self._compiler = compiler
 
     def handle(self, message: SymbolSetMessage) -> SymbolSetResult:
-        environment: LmatEnvironment = message['environment']
-        definition_store = LmatEnvDefStore(self._parser, environment)
+        message = SymbolSetMessage.model_validate(message)
+
+        environment: LmatEnvironment = message.environment
+        definition_store = LmatEnvironment.create_definition_store(environment)
 
         set_symbols = {set: [] for set in SETS}
 
         # loop over sets and figure out which symbol belongs to which sets.
-        for symbol in environment.get('symbols', {}):
-            sympy_symbol = definition_store.deserialize_symbol(symbol)
+        for symbol in environment.symbols:
+            # all definitions should be guaranteed to be assumptions,
+            # but just in case we check it here.
+
+            symbol_definition = definition_store.get_definition(symbol)
+
+            if not isinstance(symbol_definition, AssumptionDefinition):
+                continue
+
+            sympy_symbol = symbol_definition.defined_value(definition_store)
 
             smallest_containing_set = None
 

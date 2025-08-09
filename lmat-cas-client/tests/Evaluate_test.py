@@ -3,23 +3,23 @@ from lmat_cas_client.command_handlers.EvalfHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
 from lmat_cas_client.command_handlers.ExpandHandler import *
 from lmat_cas_client.command_handlers.FactorHandler import *
-from lmat_cas_client.grammar.LatexParser import LatexParser
+from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
 from sympy import *
 
 
 ## Tests the evaluate mode.
 class TestEvaluate:
-    parser = LatexParser()
+    compiler = latex_to_sympy_compiler
 
     def test_simple_evaluate(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({"expression": "1+1", "environment": {}})
 
         assert result.sympy_expr == 2
 
     def test_escaped_spaces(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({"expression": r"1\ + \ 1", "environment": {}})
 
@@ -27,7 +27,7 @@ class TestEvaluate:
 
 
     def test_matrix_single_line(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({"expression": r"2 \cdot \begin{bmatrix} 1 \\ 1 \end{bmatrix}", "environment": {}})
 
@@ -35,7 +35,7 @@ class TestEvaluate:
 
 
     def test_matrix_multi_line(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         2
         \cdot
@@ -48,7 +48,7 @@ class TestEvaluate:
         assert result.sympy_expr == 2 * Matrix([[1, 2], [3, 4]])
 
     def test_matrix_normal(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         \Vert
         \begin{bmatrix}
@@ -63,7 +63,7 @@ class TestEvaluate:
         assert result.sympy_expr == sqrt(20**2 + 30**2 + 40**2 + 50**2)
 
     def test_matrix_inner_prodcut(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         \langle
         \begin{bmatrix}
@@ -84,7 +84,7 @@ class TestEvaluate:
     def test_relational_evaluation(self):
         a, b = symbols("a b")
 
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         5 + 5 + 5 + 5 = 10 + 10
         """, "environment": {}})
@@ -121,7 +121,7 @@ class TestEvaluate:
 
 
     def test_variable_substitution(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({
             "expression": r"a + b",
@@ -187,7 +187,7 @@ class TestEvaluate:
 
 
     def test_gradient(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({
             "expression": r"\nabla (x^2 y + y^2 x)",
@@ -198,36 +198,36 @@ class TestEvaluate:
         assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
 
     def test_evalf(self):
-        handler = EvalfHandler(self.parser)
+        handler = EvalfHandler(self.compiler)
         result = handler.handle({"expression": "5/2", "environment": {}})
         assert result.sympy_expr == 2.5
 
     def test_expand(self):
-        handler = ExpandHandler(self.parser)
+        handler = ExpandHandler(self.compiler)
         result = handler.handle({"expression": "(a + b)^2", "environment": {}})
         a, b = symbols("a b")
         assert result.sympy_expr == a**2 + 2 * a * b + b**2
 
     def test_factor(self):
-        handler = FactorHandler(self.parser)
+        handler = FactorHandler(self.compiler)
         result = handler.handle({"expression": "x^3 - 10x^2 + 3x + 54", "environment": {}})
         x = symbols("x")
         assert result.sympy_expr == (x - 9) * (x - 3) * (x + 2)
 
     def test_apart(self):
-        handler = ApartHandler(self.parser)
+        handler = ApartHandler(self.compiler)
         result = handler.handle({"expression": r"\frac{8x + 7}{x^2 + x - 2}", "environment": {}})
         x = symbols("x")
         assert result.sympy_expr == 3 / (x + 2) + 5 / (x - 1)
 
     def test_quick_derivative(self):
-        handler = ExpandHandler(self.parser)
+        handler = ExpandHandler(self.compiler)
         result = handler.handle({"expression": "(x^5 + 3x^4 + 2x + 5)'''", "environment": {}})
         x = symbols("x")
         assert result.sympy_expr == 60 * x**2 + 72 * x
 
     def test_function(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         # Standard function
         result = handler.handle({
@@ -279,7 +279,7 @@ class TestEvaluate:
         assert result.sympy_expr == Matrix([[125]])
 
     def test_hessian(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x, y = symbols('x y')
 
         # Standard function
@@ -312,7 +312,7 @@ class TestEvaluate:
 
 
     def test_jacobi(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x, y = symbols('x y')
 
         # Standard function
@@ -345,13 +345,13 @@ class TestEvaluate:
         ])
 
     def test_assumptions(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x = symbols('x', real=True)
         result = handler.handle({ 'expression': r"\bar x x", 'environment': { 'symbols': {'x': ['real']} }})
         assert result.sympy_expr == x**2
 
     def test_combinatorial(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"P(10, 5)", 'environment': { } })
 
@@ -380,7 +380,7 @@ class TestEvaluate:
         assert result.sympy_expr == 265
 
     def test_gamma(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"\frac{6!}{e} - \frac{\gamma\left(6 + 1, -1\right)}{e}", 'environment': { } })
 
@@ -394,7 +394,7 @@ class TestEvaluate:
         assert result.sympy_expr == 236 / exp(5)
 
     def test_divisibility(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"{3 + 5^2} \mod 2", 'environment': { } })
         assert result.sympy_expr == 0
@@ -411,7 +411,7 @@ class TestEvaluate:
         assert result.sympy_expr == 42
 
     def test_complex(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"\Re (5 + 7 i)", 'environment': { } })
         assert result.sympy_expr == 5
@@ -427,7 +427,7 @@ class TestEvaluate:
         assert result.sympy_expr == -1
 
     def test_taylor(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x, y, z = symbols('x y z')
 
         result = handler.handle({
@@ -468,5 +468,13 @@ class TestEvaluate:
 
         assert result.sympy_expr == 1 + x + y + x**2 / 2
 
+    # TODO: more variable and functions test
+    # TODO: test with symbol which contains defined function in body
+    # like f(x) := x^2
+    # y := f(z-3)
+    # z := 25 OR undefined.
+    # y should depend on z AND f the function.
+    # z depends on nothing
+    # we cannot know what f depends on (i think... maybe we can? wait we can!!! because it is the transformer step which fails on this, not the parser step!!!)
 
     # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)

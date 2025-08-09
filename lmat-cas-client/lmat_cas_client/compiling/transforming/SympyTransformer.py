@@ -7,28 +7,37 @@ from sympy import *
 from sympy import Expr
 from sympy.core.numbers import Float, Integer
 from sympy.logic.boolalg import *
-from sympy.physics.units import Quantity
 
-import lmat_cas_client.math_lib.UnitsUtils as UnitUtils
-from lmat_cas_client.grammar.SympyParser import DefinitionStore
-from lmat_cas_client.grammar.SystemOfExpr import SystemOfExpr
+from lmat_cas_client.compiling.DefinitionStore import (
+    DefinitionStore,
+)
+from lmat_cas_client.compiling.transforming.ConstantsTransformer import (
+    ConstantsTransformer,
+)
+from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
+    DefinitionsTransformer,
+)
+from lmat_cas_client.compiling.transforming.FunctionsTransformer import (
+    BuiltInFunctionsTransformer,
+)
+from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
+    PropositionsTransformer,
+)
 
-from ..LatexMatrix import LatexMatrix
-from .ConstantsTransformer import ConstantsTransformer
-from .FunctionsTransformer import FunctionsTransformer
-from .PropositionsTransformer import PropositionsTransformer
+from .LatexMatrix import LatexMatrix
+from .SystemOfExpr import SystemOfExpr
 
 
-# The LatexMathLarkTransofmer class provides functions for transforming
+# The SympyTransformer class provides functions for transforming
 # rules defined in latex_math_grammar.lark into sympy expressions.
-class LatexTransformer(ConstantsTransformer, FunctionsTransformer, PropositionsTransformer):
+class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, PropositionsTransformer):
 
     class Delim(Enum):
         MatDelim = 1
 
-    def __init__(self, definitions_store: DefinitionStore):
-        super().__init__(definitions_store)
-        self.__definitions_store = definitions_store
+    def __init__(self, definition_store: DefinitionStore):
+        DefinitionsTransformer.__init__(self, definition_store)
+        BuiltInFunctionsTransformer.__init__(self, definition_store)
 
     @v_args(inline=True)
     def NUMERIC_DIGIT(self, digit: Token):
@@ -60,6 +69,10 @@ class LatexTransformer(ConstantsTransformer, FunctionsTransformer, PropositionsT
         binary_number_str = str(number).replace("\\mathrm{", "").replace("}", "")
 
         return Integer(int(binary_number_str, 2))
+
+    @v_args(inline=True)
+    def latex_math_string(self, expr: Expr) -> Expr:
+        return expr
 
     def system_of_relations(self, relations: list[Expr]) -> SystemOfExpr:
         return SystemOfExpr([
@@ -178,60 +191,6 @@ class LatexTransformer(ConstantsTransformer, FunctionsTransformer, PropositionsT
                 return base.adjoint()
 
         return pow(base, exponent)
-
-    @v_args(inline=True)
-    def symbol(self, *symbol_strings: str) -> Symbol:
-        return self.__definitions_store.deserialize_symbol(''.join(map(str, symbol_strings)))
-
-    @v_args(inline=True)
-    def substitute_symbol(self, symbol: Symbol) -> Symbol | Expr:
-        substituted_value = self.__definitions_store.get_symbol_definition(symbol)
-
-        if substituted_value is not None:
-            return substituted_value
-        else:
-            return symbol
-
-    @v_args(inline=True)
-    def undefined_function(self, func_name: Token, func_args: Iterator[Expr]) -> Function | Expr:
-        func_name = func_name.value[:-1] # remove the suffixed parenthesees
-        func = self.__definitions_store.deserialize_function(func_name)
-
-        func_definition = self.__definitions_store.get_function_definition(func)
-
-        if func_definition:
-            return func_definition.call(*func_args)
-        else:
-            return func(*func_args)
-
-    @v_args(inline=True)
-    def indexed_symbol(self, symbol: Expr, index: Expr | str, primes: str | None) -> Symbol:
-        primes = '' if primes is None else primes
-        indexed_text = str(index)
-
-        if not indexed_text.startswith('{') or not indexed_text.endswith('}'):
-            indexed_text = f"{{{indexed_text}}}"
-
-        return self.symbol(f"{symbol}_{indexed_text}{primes}")
-
-    @v_args(inline=True)
-    def formatted_symbol(self, formatter: Token, text: str, primes: str | None) -> Symbol:
-        formatter_text = str(formatter)
-        primes = '' if primes is None else primes
-
-        return self.symbol(f"{formatter_text}{text}{primes}")
-
-    def brace_surrounded_text(self, tokens):
-        return ''.join(map(str, tokens))
-
-    @v_args(inline=True)
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol:
-        unit = UnitUtils.str_to_unit(str(unit_symbol))
-
-        if unit is not None:
-            return unit
-        else:
-            return self.symbol(unit_symbol)
 
     @v_args(inline=True)
     def matrix_body(self, *body: Expr | Token) -> list[list[Expr]]:

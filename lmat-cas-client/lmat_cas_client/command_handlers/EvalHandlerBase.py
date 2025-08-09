@@ -1,22 +1,24 @@
 from abc import ABC, abstractmethod
-from typing import TypedDict, override
+from typing import override
 
+from pydantic import BaseModel
 from sympy import *
 from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
 import lmat_cas_client.math_lib.UnitsUtils as UnitsUtils
-from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
-from lmat_cas_client.grammar.SympyParser import SympyParser
-from lmat_cas_client.grammar.SystemOfExpr import SystemOfExpr
-from lmat_cas_client.grammar.transformers.PropositionsTransformer import PropositionExpr
+from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
+    PropositionExpr,
+)
+from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
 from .CommandHandler import CommandHandler, CommandResult
 
 
-class EvaluateMessage(TypedDict):
+class EvaluateMessage(BaseModel):
     expression: str
     environment: LmatEnvironment
 
@@ -42,9 +44,9 @@ class EvaluateResult(CommandResult, ABC):
 
 class EvalHandlerBase(CommandHandler, ABC):
 
-    def __init__(self, parser: SympyParser):
+    def __init__(self, compiler: Compiler):
         super().__init__()
-        self._parser = parser
+        self._compiler = compiler
 
     @abstractmethod
     def evaluate(self, sympy_expr: Expr, message: EvaluateMessage) -> Expr:
@@ -52,8 +54,10 @@ class EvalHandlerBase(CommandHandler, ABC):
 
     @override
     def handle(self, message: EvaluateMessage) -> EvaluateResult:
-        definitions_store = LmatEnvDefStore(self._parser, message['environment'])
-        sympy_expr = self._parser.parse(message['expression'], definitions_store)
+        message = EvaluateMessage.model_validate(message)
+
+        definitions_store = LmatEnvironment.create_definition_store(message.environment)
+        sympy_expr = self._compiler.compile(message.expression, definitions_store)
         expr_lines = None
 
         # choose bottom / right most evaluatable expression.
@@ -63,7 +67,7 @@ class EvalHandlerBase(CommandHandler, ABC):
                 expr_lines = (sympy_expr.get_location(-1).line, sympy_expr.get_location(-1).end_line)
 
                 if expr_lines[1] is None:
-                    expr_lines = (expr_lines[0], len(message['expression'].splitlines()))
+                    expr_lines = (expr_lines[0], len(message.expression.splitlines()))
 
                 sympy_expr = sympy_expr.get_expr(-1)
 
@@ -78,7 +82,7 @@ class EvalHandlerBase(CommandHandler, ABC):
 
         sympy_expr = self.evaluate(sympify(sympy_expr), message)
 
-        unit_system = message['environment'].get('unit_system', None)
+        unit_system = message.environment.unit_system
 
         if unit_system is not None:
             sympy_expr = UnitsUtils.auto_convert(sympy_expr, UnitSystem.get_unit_system(unit_system))

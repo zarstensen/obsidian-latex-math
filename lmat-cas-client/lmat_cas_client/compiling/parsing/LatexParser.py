@@ -2,13 +2,10 @@ import os
 import re as regex
 from typing import Callable, Iterator
 
-from lark import Lark, LarkError, Token, UnexpectedInput, UnexpectedToken
+from lark import Lark, Token
 from lark.lark import PostLex
 from lark.lexer import TerminalDef
 from sympy import *
-
-from .SympyParser import DefinitionStore, SympyParser
-from .transformers.LatexTransformer import LatexTransformer
 
 
 # Represents a scope to be handled by the ScopePostLexer.
@@ -96,7 +93,7 @@ class PartialDiffScope(LexerScope):
             yield next_token
 
 
-# The ScopePostLexer aims to provide context to the lalr parser during tokenization.
+# The ScopePostLexer aims to provide scope based context to the lalr parser during tokenization.
 # It does this by recognizing pairs of terminals, which define a scope.
 # Inside this scope, terminals can be specified which should be replaced by other terminals,
 # or optionally a custom token handler can be given, for more complex operations.
@@ -208,95 +205,22 @@ class ScopePostLexer(PostLex):
                     continue
                 break
 
-class PrettyLarkError(LarkError):
-    pass
+GRAMMAR_FILE = "latex_math_grammar.lark"
 
-## The LmatLatexParser is responsible for parsing a latex string in the context of an LmatEnvironment.
-class LatexParser(SympyParser):
+__latex_parser_post_lexer = ScopePostLexer()
 
-    def __init__(self, grammar_file: str = None):
-        if grammar_file is None:
-            grammar_file = os.path.join(
-                os.path.dirname(__file__), "latex_math_grammar.lark"
-            )
+latex_parser = Lark.open(
+    os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
+    rel_to=os.path.dirname(__file__),
+    parser='lalr',
+    start='latex_math_string',
+    lexer='contextual',
+    debug=False,
+    cache=True,
+    propagate_positions=True,
+    maybe_placeholders=True,
+    regex=True,
+    postlex=__latex_parser_post_lexer
+)
 
-        post_lexer = ScopePostLexer()
-
-        self.parser = Lark.open(
-            grammar_file,
-            rel_to=os.path.dirname(grammar_file),
-            parser="lalr",
-            start="latex_string",
-            lexer="contextual",
-            debug=False,
-            cache=True,
-            propagate_positions=True,
-            maybe_placeholders=True,
-            regex=True,
-            postlex=post_lexer
-        )
-
-        post_lexer.initialize_scopes(self.parser)
-
-    # Parse the given latex expression into a sympy expression, substituting any information into the expression, present in the current environment.
-    def parse(self, latex_str: str, definitions_store: DefinitionStore):
-        transformer = LatexTransformer(definitions_store)
-
-        try:
-            parse_tree = self.parser.parse(latex_str)
-        except UnexpectedInput as e:
-            raise self._prettify_unexpected_input(e, latex_str) from e
-
-        expr = transformer.transform(parse_tree)
-
-        return expr
-
-    _PARSE_ERR_PRETTY_STR_SPAN = 30
-    # Maximum number of expected tokens to show to the user.
-    # If the number of expected tokens is greater, do not show any.
-    _PARSE_ERR_MAX_EXPECTED_TOKENS = 6
-
-    # Produce a LarkError with a user readable error message which contains the following info:
-    #   - A snippet of the problematic latex source, pinpointing exactly where the parse error occured.
-    #   - A list of expected strings or user readable* tokens (optional)
-    #
-    # *user readable as in NOT _CMD_SOME_TOKEN_YADA_YADA
-    #
-    def _prettify_unexpected_input(self, lark_error: UnexpectedInput, latex_src: str) -> PrettyLarkError:
-
-        # if lark did not figure out where the error occured,
-        # we just assume it was at the end of the string.
-        if lark_error.pos_in_stream is None:
-            lark_error.pos_in_stream = len(latex_src) - 1
-
-        pretty_err = f"{lark_error.get_context(latex_src, LatexParser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
-
-        if isinstance(lark_error, UnexpectedToken) and len(lark_error.expected) <= LatexParser._PARSE_ERR_MAX_EXPECTED_TOKENS:
-            pretty_terminals = self._prettify_terminals(lark_error.expected)
-            pretty_err += f"\nExpected one of the following:\n{'\n'.join(pretty_terminals)}"
-
-        return PrettyLarkError(pretty_err)
-
-    # Returns a list of user readable (pretty) strings derived from the given list of terminals.
-    # If the terminal pattern is simply a string equality check, this string is returned,
-    # otherwise the the terminal name is prettified and returned instead.
-    def _prettify_terminals(self, terminal_names: list[str]) -> list[str]:
-        pretty_terminals = []
-
-        for term_name in terminal_names:
-            try:
-                term = self.parser.get_terminal(term_name)
-                term_pattern = term.pattern
-
-                unescaped_value = regex.sub(r'\\(.)', r'\1', term_pattern.value)
-
-                if regex.fullmatch(term_pattern.to_regexp(), unescaped_value):
-                    pretty_terminals.append(f"'{unescaped_value}'")
-                    continue
-            except KeyError:
-                # this happens if the terminal is a %declare terminal
-                continue
-
-            pretty_terminals.append(term_name.replace('_', ' ').capitalize().strip())
-
-        return pretty_terminals
+__latex_parser_post_lexer.initialize_scopes(latex_parser)

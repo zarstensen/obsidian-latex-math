@@ -58,14 +58,14 @@ jobs:
       - name: Build Executable
         id: build-executable
         shell: bash
-        run: | 
+        run: |
           source .venv/bin/activate || . .venv/Scripts/activate
           pyinstaller \
           --onefile \
           --paths ./lmat-cas-client \
           --collect-data sympy \
-          --add-data "./lmat-cas-client/lmat_cas_client/grammar/greek_symbols.lark:lmat_cas_client/grammar" \
-          --add-data "./lmat-cas-client/lmat_cas_client/grammar/latex_math_grammar.lark:lmat_cas_client/grammar" \
+          --add-data "./lmat-cas-client/lmat_cas_client/compiling/parsing/greek_symbols.lark:lmat_cas_client/compiling/parsing" \
+          --add-data "./lmat-cas-client/lmat_cas_client/compiling/parsing/latex_math_grammar.lark:lmat_cas_client/compiling/parsing" \
           --add-data "./lmat-cas-client/lmat_cas_client/ggb_plot/geogebra.xml:lmat_cas_client/ggb_plot" \
           --name lmat-cas-client-${{ matrix.os.rel_name }} \
           lmat-cas-client/lmat-cas-client.py

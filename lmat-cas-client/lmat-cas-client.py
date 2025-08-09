@@ -13,7 +13,7 @@ from lmat_cas_client.command_handlers.FactorHandler import FactorHandler
 from lmat_cas_client.command_handlers.SolveHandler import SolveHandler, SolveInfoHandler
 from lmat_cas_client.command_handlers.SymbolSetHandler import SymbolSetHandler
 from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
-from lmat_cas_client.grammar.LatexParser import LatexParser
+from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
 
 if len(sys.argv) < 2:
     print("Usage:"
@@ -23,21 +23,19 @@ if len(sys.argv) < 2:
 
 port = int(sys.argv[1])
 
-latex_parser = LatexParser()
-
 client = LmatCasClient()
 
-client.register_handler("eval", EvalHandler(latex_parser))
-client.register_handler("evalf", EvalfHandler(latex_parser))
-client.register_handler("expand", ExpandHandler(latex_parser))
-client.register_handler("factor", FactorHandler(latex_parser))
-client.register_handler("apart", ApartHandler(latex_parser))
-client.register_handler("solve", SolveHandler(latex_parser))
-client.register_handler("solve-info", SolveInfoHandler(latex_parser))
-client.register_handler("symbolsets", SymbolSetHandler(latex_parser))
-client.register_handler("convert-sympy", ConvertSympyHandler(latex_parser))
-client.register_handler("convert-units", ConvertUnitsHandler(latex_parser))
-client.register_handler("truth-table", TruthTableHandler(latex_parser))
+client.register_handler("eval", EvalHandler(latex_to_sympy_compiler))
+client.register_handler("evalf", EvalfHandler(latex_to_sympy_compiler))
+client.register_handler("expand", ExpandHandler(latex_to_sympy_compiler))
+client.register_handler("factor", FactorHandler(latex_to_sympy_compiler))
+client.register_handler("apart", ApartHandler(latex_to_sympy_compiler))
+client.register_handler("solve", SolveHandler(latex_to_sympy_compiler))
+client.register_handler("solve-info", SolveInfoHandler(latex_to_sympy_compiler))
+client.register_handler("symbolsets", SymbolSetHandler(latex_to_sympy_compiler))
+client.register_handler("convert-sympy", ConvertSympyHandler(latex_to_sympy_compiler))
+client.register_handler("convert-units", ConvertUnitsHandler(latex_to_sympy_compiler))
+client.register_handler("truth-table", TruthTableHandler(latex_to_sympy_compiler))
 
 async def main():
     await client.connect(port)

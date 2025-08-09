@@ -3,10 +3,10 @@
 # test_latex.py: https://github.com/sympy/sympy/blob/da6d1f3cb324ad0bf74d123d85c390029be997ce/sympy/parsing/tests/test_latex.py
 #
 # This is here to ensure feature parity(ish) with their latex parser.
-# some tests have been slightly modified or diabled, due to fundamental differences in the parsers functionality (multi letter symbols is an exmaple of this)
+# some tests have been slightly modified or disabled, due to fundamental differences in the parsers functionality (multi letter symbols is an exmaple of this)
 
-from lmat_cas_client.grammar.LatexParser import LatexParser
-from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
+from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from sympy import (
     Add,
     Expr,
@@ -88,10 +88,8 @@ def _MatAdd(a, b):
 def _MatMul(a, b):
     return MatMul(a, b, evaluate=False)
 
-latex_parser = LatexParser()
-
 def parse_latex_lark(latex_str):
-    return latex_parser.parse(latex_str, LmatEnvDefStore(latex_parser, {}))
+    return latex_to_sympy_compiler.compile(latex_str, DefinitionStore({ }))
 
 # These LaTeX strings should parse to the corresponding SymPy expression
 SYMBOL_EXPRESSION_PAIRS = [

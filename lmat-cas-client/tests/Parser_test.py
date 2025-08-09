@@ -1,8 +1,9 @@
 import pytest
-from lmat_cas_client.grammar.LatexMatrix import LatexMatrix
-from lmat_cas_client.grammar.LatexParser import LatexParser, PrettyLarkError
-from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
-from lmat_cas_client.grammar.SystemOfExpr import SystemOfExpr
+from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
+from lmat_cas_client.compiling.CompilerCore import CompilerError
+from lmat_cas_client.compiling.DefinitionStore import CyclicDependencyError
+from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
+from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from sympy import *
 from sympy import Expr
@@ -10,10 +11,11 @@ from sympy.logic.boolalg import *
 
 
 class TestParse:
-    parser = LatexParser()
+    compiler = latex_to_sympy_compiler
 
     def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
-        return self.parser.parse(expr, LmatEnvDefStore(self.parser, environment))
+        environment = LmatEnvironment.model_validate(environment)
+        return self.compiler.compile(expr, LmatEnvironment.create_definition_store(environment))
 
     def test_basic(self):
         a, b, c = symbols('a b c')
@@ -233,7 +235,7 @@ i & 2 i
 
         assert result == s_a + s_b * s_c + sqrt(s_e**s_f) + s_d**-1
 
-    def test_symbol_definitions(self):
+    def test_definitions(self):
         result = self._parse_expr(r"x", { "symbols": { "x": [ "real" ] } })
         assert result == symbols("x", real=True)
 
@@ -250,6 +252,56 @@ i & 2 i
             })
 
         assert result == x + y + y
+
+        a, b, x, y = symbols('a b x y')
+
+        result = self._parse_expr("a + b + x + y", { "variables": {
+            'x': 'y^2 - z',
+            'y': '50',
+            'z': '2 y',
+            'A': 'B',
+            'B': 'A + z',
+        }})
+
+
+        assert result == a + b + 50**2 - 2 * 50 + 50
+
+        with pytest.raises(CyclicDependencyError):
+            result = self._parse_expr("A + B + x + y", { "variables": {
+                'x': 'y^2 - z',
+                'y': '50',
+                'z': '2 y',
+                'A': 'B',
+                'B': 'A + z',
+            }})
+
+        with pytest.raises(CyclicDependencyError):
+            result = self._parse_expr("f(1, x)", {
+                "variables": {
+                            'x': 'y',
+                            'y': 'x',
+                            },
+                "functions": {
+                    'f': {
+                        'args': [ 'x', 'y' ],
+                        'expr': 'x y'
+                    }
+                }
+                })
+
+        with pytest.raises(CyclicDependencyError):
+            result = self._parse_expr("f(10)", {
+                "functions": {
+                    'f': {
+                        'args': [ 'x' ],
+                        'expr': 'g(x)'
+                    },
+                    'g': {
+                        'args': [ 'x' ],
+                        'expr': 'f(x)'
+                    }
+                }
+                })
 
     def test_brace_units(self):
         import sympy.physics.units as u
@@ -387,11 +439,11 @@ i & 2 i
 
     def test_exception_types(self):
         # unexpected EOF
-        with pytest.raises(PrettyLarkError):
+        with pytest.raises(CompilerError):
             self._parse_expr(r"\frac{25}{")
 
         # unexpected token
-        with pytest.raises(PrettyLarkError):
+        with pytest.raises(CompilerError):
             self._parse_expr(r"\sum_{n}^{5} n")
 
     def test_text(self):

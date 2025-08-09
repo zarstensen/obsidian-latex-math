@@ -2,8 +2,9 @@ from lark import Token, Transformer, v_args
 from sympy import *
 from sympy.logic.boolalg import *
 
-from lmat_cas_client.grammar.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.math_lib import Functions
+
+from .SystemOfExpr import SystemOfExpr
 
 
 # return type for the PropositionsTransformer.
