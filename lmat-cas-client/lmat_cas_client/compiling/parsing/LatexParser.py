@@ -224,3 +224,18 @@ latex_parser = Lark.open(
 )
 
 __latex_parser_post_lexer.initialize_scopes(latex_parser)
+
+DEFINITION_GRAMMAR_FILE = "latex_math_definition_grammar.lark"
+
+latex_definition_parser = Lark.open(
+    os.path.join(os.path.dirname(__file__), DEFINITION_GRAMMAR_FILE),
+    rel_to=os.path.dirname(__file__),
+    parser='lalr',
+    start='latex_math_definition_string',
+    lexer='contextual',
+    debug=False,
+    cache=True,
+    propagate_positions=False,
+    maybe_placeholders=True,
+    regex=True
+)

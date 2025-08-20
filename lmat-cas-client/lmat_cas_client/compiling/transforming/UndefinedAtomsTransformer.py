@@ -10,8 +10,9 @@ from lmat_cas_client.math_lib import UnitsUtils
 
 
 # Handles transformation of rules relating to user defined (or undefined for that matter) symbols or functions.
+# TODO: diferent name, definetly
 @v_args(inline=True)
-class DefinitionsTransformer(Transformer):
+class UndefinedAtomsTransformer(Transformer):
 
     def __init__(self, definition_store: DefinitionStore):
         self.__definition_store = definition_store

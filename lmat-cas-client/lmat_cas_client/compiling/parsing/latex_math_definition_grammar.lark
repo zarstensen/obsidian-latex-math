@@ -1,0 +1,10 @@
+// TODO: add to assets in CI
+%import .latex_math_grammar.substitute_symbol
+%import .latex_math_grammar.undefined_function
+
+latex_math_definition_string: (substitute_symbol | undefined_function) _DEFINE DEFINITION_TEXT
+
+DEFINITION_TEXT: /.+/
+
+_DEFINE: ":=" | /\\vcentcolon\s*=/ | /\\coloneqq?/ | "\\triangleq"
+// | /\\(?:stackrel|overset)\s*{\s*\\(?:text|mathrm){def}\s*}\s*{\s*=\s*}/

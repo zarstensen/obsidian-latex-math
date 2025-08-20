@@ -49,7 +49,7 @@ class AssumptionDefinition(SympyDefinition):
 class SerializedDefinition(Definition):
     # compiler: compiler to use for compiling the defined value
     # dependencies_compiler: compiler to use for compiling a set of definitions from the serialized data
-    def __init__(self, compiler: Compiler[Expr], dependencies_compiler: Compiler[set[str]], serialized_definition: str):
+    def __init__(self, compiler: Compiler[Expr, [DefinitionStore]], dependencies_compiler: Compiler[set[str], []], serialized_definition: str):
         self._serialized_definition = serialized_definition
         self._compiler = compiler
         self._dependencies_compiler = dependencies_compiler
@@ -60,11 +60,11 @@ class SerializedDefinition(Definition):
 
     @override
     def dependencies(self) -> set[str]:
-        return self._dependencies_compiler.compile(self._serialized_definition, DefinitionStore())
+        return self._dependencies_compiler.compile(self._serialized_definition)
 
 # Like SerializedDefinition, but with FunctionDefinition as a base
 class SerializedFunctionDefinition(FunctionDefinition):
-    def __init__(self, compiler: Compiler[Expr], dependencies_compiler: Compiler[set[str]], func_name, serialized_body, variables: Iterable[str]):
+    def __init__(self, compiler: Compiler[Expr, [DefinitionStore]], dependencies_compiler: Compiler[set[str], []], func_name, serialized_body, variables: Iterable[str]):
         super().__init__(variables)
         self._func_name = func_name
         self._serialized_body = serialized_body
@@ -94,4 +94,4 @@ class SerializedFunctionDefinition(FunctionDefinition):
 
     @override
     def dependencies(self) -> set[str]:
-        return self._dependencies_compiler.compile(self._serialized_body, DefinitionStore()).difference(self._variables)
+        return self._dependencies_compiler.compile(self._serialized_body).difference(self._variables)

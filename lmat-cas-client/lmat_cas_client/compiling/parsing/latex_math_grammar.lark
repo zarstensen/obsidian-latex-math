@@ -3,6 +3,8 @@
 
 // ======== Core structure ========
 
+
+
 latex_math_string: relation | system_of_relations | proposition_chain
 
 _rel_op: EQUAL | NOT_EQUAL | LT | LTE | GT | GTE
@@ -440,7 +442,7 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 //  (?<brace_text>      :
 //    {                 : Initial left brace
 //    (?:               : 
-//      [^{}]+          : Match any text up till a { or }
+//      [^{}]+          : Match any text up till '{' or '}'
 //      |               : OR
 //      (?&brace_text)  : recursively match the entire regex
 //    )*                : Do this as much as needed 
@@ -450,6 +452,7 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 // it is important that the brace_text group is named, so we can reference it later for the recursive match.
 // this recursive match does not work with (?0), as lark places this regex in a larger regex,
 // so the (?0) would refer to an incorrect capturing group, leading to unexpected matches.
+// NOTE: this does not currently support escaped braces, it just treats them as they were unescaped.
 BRACE_SURROUNDED_TEXT: /(?<brace_text>{(?:[^{}]+|(?&brace_text))*})/ 
 
 

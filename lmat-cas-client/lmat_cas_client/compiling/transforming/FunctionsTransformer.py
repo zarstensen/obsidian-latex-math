@@ -11,8 +11,8 @@ from lmat_cas_client.compiling.DefinitionStore import (
     DefinitionStore,
     FunctionDefinition,
 )
-from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
-    DefinitionsTransformer,
+from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
+    UndefinedAtomsTransformer,
 )
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
@@ -21,7 +21,7 @@ from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 # The FucntionsTransformer holds the implementation of various mathematical function rules,
 # defined in the latex math grammar.
 @v_args(inline=True)
-class BuiltInFunctionsTransformer(DefinitionsTransformer):
+class BuiltInFunctionsTransformer(UndefinedAtomsTransformer):
 
     def __init__(self, definitions_store: DefinitionStore):
         self.__definition_store = definitions_store

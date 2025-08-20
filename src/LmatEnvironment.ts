@@ -1,24 +1,23 @@
 import { App, Editor, EditorPosition, MarkdownView } from "obsidian";
 import * as toml from "toml";
 
+type Definition = { name_expr: string, defined_expr: string };
+
 // The LmatEnvironment class represents an environment detailing how mathematical expressions,
 // should be evaluated.
 // it contains information about symbol assumptions, variable definitions, units, and solution domains.
 export class LmatEnvironment {
 
-    public static fromCodeBlock(code_block: string | undefined, variables: { [variable: string]: string }, functions: { [func: string]: { args: string[], expr: string } }) {
+    public static fromCodeBlock(code_block: string | undefined, definitions: Definition[]) {
         if(!code_block) {
-            return new LmatEnvironment({}, variables, functions);
+            return new LmatEnvironment({}, definitions);
         }
 
         const parsed_lmat_block = toml.parse(code_block);
 
-        // prioritize domain name over domain expression.
-
         return new LmatEnvironment(
             parsed_lmat_block.symbols,
-            variables,
-            functions,
+            definitions,
             parsed_lmat_block.units?.system,
             parsed_lmat_block.domain?.domain
         );
@@ -64,30 +63,22 @@ export class LmatEnvironment {
         }
 
         if(!closest_section) {
-            return new LmatEnvironment(undefined, this.parseVariables(editor.offsetToPos(0), position, editor), this.parseFunctions(editor.offsetToPos(0), position, editor));
+            return new LmatEnvironment(undefined, this.parseDefinitions(editor.offsetToPos(0), position, editor));
         }
 
         // now generate lmat environment based on section contents.
 
         const lmat_block = editor.getRange(editor.offsetToPos(closest_section.position.start.offset), editor.offsetToPos(closest_section.position.end.offset));
         const lmat_block_content = lmat_block.match(this.LMAT_BLOCK_REGEX)?.[1];
-        const lmat_functions = this.parseFunctions(editor.offsetToPos(closest_section.position.end.offset), position, editor);
-        const lmat_variables = this.parseVariables(editor.offsetToPos(closest_section.position.end.offset), position, editor);
+        const definitions = this.parseDefinitions(editor.offsetToPos(closest_section.position.end.offset), position, editor);
 
-        return LmatEnvironment.fromCodeBlock(lmat_block_content, lmat_variables, lmat_functions);
+        return LmatEnvironment.fromCodeBlock(lmat_block_content, definitions);
     }
 
     // regex for extracting the contents of an lmat code block.
     private static readonly LMAT_BLOCK_REGEX = /^```lmat\s*(?:\r\n|\r|\n)([\s\S]*?)```$/;
 
-    // TODO: this should ideally be handled by the cas client's parser, as this regex e.g. would not match any expression containing '$',
-    // even if it may be a valid expression containing '$'
-    // This exact scenario rarely happens so it can stay for now.
-    
-    private static readonly LMAT_VARIABLE_REGEX = /\s*(?:\\math\w*{(?<symbol_math_encapsulated>[^=\s$]*)}|(?<symbol>[^=\s$]*))\s*/;
-    // regex for finding variable definitions in markdown code.
-    private static readonly LMAT_VARIABLE_DEF_REGEX = new RegExp(String.raw`\$${this.LMAT_VARIABLE_REGEX.source}:=\s*(?<value>[^$]*?)\s*\$`, 'g');
-    private static readonly LMAT_FUNCTION_DEF_REGEX = new RegExp(String.raw`\$${this.LMAT_VARIABLE_REGEX.source}\((?<args>(?:[^$]*?\s*))\)\s*:=\s*(?<expr>[^$]*?)\s*\$`, 'g');
+    private static readonly LMAT_DEFINITION_REGEX = /(?<!\\)(?:\\{2})*\$(?<definition_name>.*?):=(?<definition_expr>.*?)(?<!\\)(?:\\{2})*\$/g; 
 
     private constructor(
         /**
@@ -95,12 +86,7 @@ export class LmatEnvironment {
          * which sympy will take into account when evaluating any expression, containing this symbol.
          */
         public symbols: { [symbol: string]: string[] } = {},
-        /**
-         * variables is a map of variable names and their corresponding substitutable values.
-         * these values should be substituted into any expression before evaluation.
-         */
-        public variables: { [variable: string]: string } = {},
-        public functions: { [func: string]: { args: string[], expr: string } } = {},
+        public definitions: Definition[] = [],
         /**
          * the unit system to use when converting between units.
          * if left undefined, SI is used as the default system.
@@ -112,64 +98,23 @@ export class LmatEnvironment {
         public domain: string | undefined = undefined
     ) { }
 
-    // find all variable definitions in the given document interval,
-    // and parse them into a variables map.
-    private static parseVariables(from: EditorPosition, to: EditorPosition, editor: Editor) {
-        const variables: { [variable: string]: string } = {};
-        
+    private static parseDefinitions(from: EditorPosition, to: EditorPosition, editor: Editor) {
+        const definitions: Definition[] = [ ];
+
         const search_range = editor.getRange(from, to);
-        const variable_definitions = search_range.matchAll(this.LMAT_VARIABLE_DEF_REGEX);
+        const definition_matches = search_range.matchAll(this.LMAT_DEFINITION_REGEX);
 
-        for(const var_def of variable_definitions) {
+        for(const def of definition_matches) {
+            const def_name = (def.groups?.definition_name ?? "").trim();
+            const def_expr = (def.groups?.definition_expr ?? "").trim();
 
-            const var_name = var_def.groups?.symbol ?? var_def.groups?.symbol_math_encapsulated;
-
-            if(var_name == undefined) {
-                continue;
-            }
-            
-            const value = var_def.groups?.value;
-
-            if(value == undefined || value?.trim() === "") {
-                delete variables[var_name];
+            if(def_name === "" || def_expr === "") {
                 continue;
             }
 
-            variables[var_name] = value;
+            definitions.push({ name_expr: def_name, defined_expr: def_expr });
         }
 
-        return variables;
-    }
-
-    private static parseFunctions(from: EditorPosition, to: EditorPosition, editor: Editor) {
-        const functions: { [func: string]: { args: string[], expr: string } } = {};
-        
-        const search_range = editor.getRange(from, to);
-        const function_definitions = search_range.matchAll(this.LMAT_FUNCTION_DEF_REGEX);
-
-        
-        for(const func_def of function_definitions) {
-            const func_name = func_def.groups?.symbol ?? func_def.groups?.symbol_math_encapsulated;
-            const func_args = func_def.groups?.args; 
-            
-            if(func_name == undefined || func_args == undefined) {
-                continue;
-            }
-            
-            const func_expr = func_def.groups?.expr;
-
-            if(func_expr == undefined || func_expr?.trim() === "") {
-                delete functions[func_name];
-                continue;
-            }
-
-
-            functions[func_name] = {
-                args: func_args.split(',').map(arg => arg.trim()),
-                expr: func_expr
-            };
-        }
-
-        return functions;
+        return definitions;
     }
 }

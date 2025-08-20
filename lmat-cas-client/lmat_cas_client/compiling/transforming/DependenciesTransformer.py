@@ -6,20 +6,20 @@ from lark import Discard, Token, v_args
 from sympy import Expr, Function, Symbol
 from sympy.physics.units import Quantity
 
-from lmat_cas_client.compiling import DefinitionStore
-from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
-    DefinitionsTransformer,
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
+    UndefinedAtomsTransformer,
 )
 
 
 @v_args(inline=True)
-class DependenciesTransformer(DefinitionsTransformer):
+class DependenciesTransformer(UndefinedAtomsTransformer):
     """
     Transforms an AST produced from latex_math_grammar.lark into a set of undefined symbol and function names.
     """
 
-    def __init__(self, definition_store: DefinitionStore):
-        DefinitionsTransformer.__init__(self, definition_store)
+    def __init__(self):
+        UndefinedAtomsTransformer.__init__(self, DefinitionStore())
 
     def latex_math_string(self, dependencies: list[Symbol|Function] = []) -> set[str]:
         return set(dependency.name for dependency in dependencies)

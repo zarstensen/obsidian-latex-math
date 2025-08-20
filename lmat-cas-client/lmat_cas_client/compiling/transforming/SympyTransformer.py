@@ -14,14 +14,14 @@ from lmat_cas_client.compiling.DefinitionStore import (
 from lmat_cas_client.compiling.transforming.ConstantsTransformer import (
     ConstantsTransformer,
 )
-from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
-    DefinitionsTransformer,
-)
 from lmat_cas_client.compiling.transforming.FunctionsTransformer import (
     BuiltInFunctionsTransformer,
 )
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
     PropositionsTransformer,
+)
+from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
+    UndefinedAtomsTransformer,
 )
 
 from .LatexMatrix import LatexMatrix
@@ -36,7 +36,7 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
         MatDelim = 1
 
     def __init__(self, definition_store: DefinitionStore):
-        DefinitionsTransformer.__init__(self, definition_store)
+        UndefinedAtomsTransformer.__init__(self, definition_store)
         BuiltInFunctionsTransformer.__init__(self, definition_store)
 
     @v_args(inline=True)

@@ -1,34 +1,30 @@
-from typing import Callable, Generic, TypeVar
+from typing import Callable
 
 import regex
 from lark import Lark, LarkError, Transformer, UnexpectedInput, UnexpectedToken
-
-from .DefinitionStore import DefinitionStore
 
 
 class CompilerError(LarkError):
     pass
 
-TOutput = TypeVar('TOutput')
-
 # The Compiler class combines a Lark parser with a Lark transformer into a complete compiling pipeline with DefinitionStore support.
 # As the transformer needs to be aware of the DefinitionStore passed during compile time, the Compiler takes a transformer factory,
 # which is given said DefinitionStore, and produces a corresponding Transformer from this DefinitionStore.
-class Compiler(Generic[TOutput]):
-    def __init__(self, parser: Lark, transformer_factory: Callable[[DefinitionStore], Transformer]):
+class Compiler[TOutput, **PTransformer]:
+    def __init__(self, parser: Lark, transformer_factory: Callable[PTransformer, Transformer]):
         self._parser = parser
         self._transformer_factory = transformer_factory
 
     # Compile the given source code into the relevant output type.
     # definitions not present in the input_str should be passed via. the definition_store.
-    def compile(self, input_str: str, definition_store: DefinitionStore) -> TOutput:
+    def compile(self, input_str: str, *args: PTransformer.args, **kwargs: PTransformer.kwargs) -> TOutput:
 
         try:
             parse_tree = self._parser.parse(input_str)
         except UnexpectedInput as e:
             raise self._prettify_unexpected_input(e, input_str) from e
 
-        return self._transformer_factory(definition_store).transform(parse_tree)
+        return self._transformer_factory(*args, **kwargs).transform(parse_tree)
 
 
     _PARSE_ERR_PRETTY_STR_SPAN = 30
