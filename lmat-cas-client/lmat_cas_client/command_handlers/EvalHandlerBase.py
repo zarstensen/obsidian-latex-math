@@ -7,7 +7,8 @@ from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
 import lmat_cas_client.math_lib.UnitsUtils as UnitsUtils
-from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.Compiler import Compiler
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
     PropositionExpr,
 )
@@ -44,7 +45,7 @@ class EvaluateResult(CommandResult, ABC):
 
 class EvalHandlerBase(CommandHandler, ABC):
 
-    def __init__(self, compiler: Compiler):
+    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
 

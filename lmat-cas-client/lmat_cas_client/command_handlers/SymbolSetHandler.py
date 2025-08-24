@@ -3,8 +3,9 @@ from typing import override
 from pydantic import BaseModel
 from sympy import *
 
-from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.Definitions import AssumptionDefinition
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import *
@@ -60,7 +61,7 @@ class SymbolSetResult(CommandResult):
 
 class SymbolSetHandler(CommandHandler):
 
-    def __init__(self, compiler: Compiler):
+    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
 

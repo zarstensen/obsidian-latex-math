@@ -3,7 +3,8 @@ from typing import override
 from pydantic import BaseModel
 from sympy import *
 
-from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.Compiler import Compiler
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import CommandHandler, CommandResult
@@ -24,7 +25,7 @@ class ConvertSympyResult(CommandResult):
         return CommandResult.result(dict(code=str(sympify(self.sympy_expr))))
 
 class ConvertSympyHandler(CommandHandler):
-    def __init__(self, compiler: Compiler):
+    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
 

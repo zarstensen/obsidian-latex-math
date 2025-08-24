@@ -20,6 +20,7 @@ from lmat_cas_client.compiling.transforming.FunctionsTransformer import (
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
     PropositionsTransformer,
 )
+from lmat_cas_client.compiling.transforming.TransformerCore import TransformerRunner
 from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
@@ -237,3 +238,10 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
                     return Ge(left, right)
                 case _:
                     raise RuntimeError(f"Unknown relation type '{relation_type}' between {left} and {right}")
+
+    def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
+        return list(filter(lambda x: not isinstance(x, Token) or x.type != 'COMMA', tokens))
+
+sympy_transformer_runner = TransformerRunner[[DefinitionStore], Expr](SympyTransformer)
+
+__all__ = [ "sympy_transformer_runner" ]

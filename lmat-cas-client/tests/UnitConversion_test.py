@@ -2,13 +2,13 @@ import sympy.physics.units as units
 from lmat_cas_client.command_handlers.ConvertUnitsHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
 from lmat_cas_client.command_handlers.SolveHandler import *
-from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
+from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
 from sympy import *
 
 
 ## Tests the unit conversions.
 class TestUnitConversion:
-    compiler = latex_to_sympy_compiler
+    compiler = LatexToSympyCompiler()
 
     def test_single_term_to_derived_unit(self):
         handler = EvalHandler(self.compiler)

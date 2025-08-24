@@ -5,7 +5,8 @@ from sympy import *
 from sympy.solvers.solveset import NonlinearError
 
 from lmat_cas_client.Client import HandlerError
-from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.Compiler import Compiler
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
@@ -54,7 +55,7 @@ class SolveResult(CommandResult):
 # if successfull its sends a message with status solved, and the result in the result key.
 class SolveHandler(CommandHandler):
 
-    def __init__(self, compiler: Compiler):
+    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
 
@@ -144,7 +145,7 @@ class SolveInfoResult(CommandResult):
 # retreive equation info needed for configuring a solution through the solve command.
 # returns number of required symbols, and a list of symbols to choose from.
 class SolveInfoHandler(CommandHandler):
-    def __init__(self, parser: Compiler):
+    def __init__(self, parser: Compiler[[DefinitionStore], Expr]):
             super().__init__()
             self._parser = parser
 

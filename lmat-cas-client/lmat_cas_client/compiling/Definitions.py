@@ -1,10 +1,11 @@
 
 from typing import Iterable, override
 
+from lark import Tree
 from sympy import Expr, Function, Symbol
 from sympy.core.function import AppliedUndef
 
-from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.transforming.TransformerCore import TransformerRunner
 
 from .DefinitionStore import (
     Definition,
@@ -46,30 +47,32 @@ class AssumptionDefinition(SympyDefinition):
         return set()
 
 # Definition holding a serialized form of data, which needs a Compiler for retreiving their defined value.
-class SerializedDefinition(Definition):
+# TODO: the parsing should definetly be cached in these, no reason not to, AND it should be lazy as well!
+# holdup can i do that? yeah, just pass the parser or make it a callable instead or smthn.
+class AstDefinition(Definition):
     # compiler: compiler to use for compiling the defined value
     # dependencies_compiler: compiler to use for compiling a set of definitions from the serialized data
-    def __init__(self, compiler: Compiler[Expr, [DefinitionStore]], dependencies_compiler: Compiler[set[str], []], serialized_definition: str):
-        self._serialized_definition = serialized_definition
-        self._compiler = compiler
-        self._dependencies_compiler = dependencies_compiler
+    def __init__(self, expr_transformer: TransformerRunner[[DefinitionStore], Expr], dependencies_transformer: TransformerRunner[[], set[str]], ast_definition: Tree):
+        self._ast_definition = ast_definition
+        self._transformer = expr_transformer
+        self._dependencies_transformer = dependencies_transformer
 
     @override
     def defined_value(self, definition_store: DefinitionStore):
-        return self._compiler.compile(self._serialized_definition, definition_store)
+        return self._transformer.transform(self._ast_definition, definition_store)
 
     @override
     def dependencies(self) -> set[str]:
-        return self._dependencies_compiler.compile(self._serialized_definition)
+        return self._dependencies_transformer.transform(self._ast_definition)
 
 # Like SerializedDefinition, but with FunctionDefinition as a base
-class SerializedFunctionDefinition(FunctionDefinition):
-    def __init__(self, compiler: Compiler[Expr, [DefinitionStore]], dependencies_compiler: Compiler[set[str], []], func_name, serialized_body, variables: Iterable[str]):
+class AstFunctionDefinition(FunctionDefinition):
+    def __init__(self, expr_transformer: TransformerRunner[[DefinitionStore], Expr], dependencies_transformer: TransformerRunner[[], set[str]], func_name: str, ast_body: Tree, variables: Iterable[str]):
         super().__init__(variables)
         self._func_name = func_name
-        self._serialized_body = serialized_body
-        self._compiler = compiler
-        self._dependencies_compiler = dependencies_compiler
+        self._ast_body = ast_body
+        self._transformer = expr_transformer
+        self._dependencies_transformer = dependencies_transformer
 
     @override
     def defined_value(self, _definition_store: DefinitionStore) -> Function:
@@ -90,8 +93,8 @@ class SerializedFunctionDefinition(FunctionDefinition):
         for variable_name, argument_definition in zip(self.variables, args):
             args_definitions[variable_name] = argument_definition
 
-        return self._compiler.compile(self._serialized_body, definition_store.override(args_definitions))
+        return self._transformer.transform(self._ast_body, definition_store.override(args_definitions))
 
     @override
     def dependencies(self) -> set[str]:
-        return self._dependencies_compiler.compile(self._serialized_body).difference(self._variables)
+        return self._dependencies_transformer.transform(self._ast_body).difference(self._variables)

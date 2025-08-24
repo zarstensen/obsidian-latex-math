@@ -1,7 +1,7 @@
 import { App, Editor, EditorPosition, MarkdownView } from "obsidian";
 import * as toml from "toml";
 
-type Definition = { name_expr: string, defined_expr: string };
+type Definition = { name_expr: string, value_expr: string };
 
 // The LmatEnvironment class represents an environment detailing how mathematical expressions,
 // should be evaluated.
@@ -78,7 +78,7 @@ export class LmatEnvironment {
     // regex for extracting the contents of an lmat code block.
     private static readonly LMAT_BLOCK_REGEX = /^```lmat\s*(?:\r\n|\r|\n)([\s\S]*?)```$/;
 
-    private static readonly LMAT_DEFINITION_REGEX = /(?<!\\)(?:\\{2})*\$(?<definition_name>.*?):=(?<definition_expr>.*?)(?<!\\)(?:\\{2})*\$/g; 
+    private static readonly LMAT_DEFINITION_REGEX = /(?<!\\)(?:\\{2})*\$(?<definition_name>(?:(?<!\\)\\(?:\\{2})*\$|[^$])*):=(?<definition_expr>.*?)(?<!\\)(?:\\{2})*\$/gs; 
 
     private constructor(
         /**
@@ -112,7 +112,7 @@ export class LmatEnvironment {
                 continue;
             }
 
-            definitions.push({ name_expr: def_name, defined_expr: def_expr });
+            definitions.push({ name_expr: def_name, value_expr: def_expr });
         }
 
         return definitions;

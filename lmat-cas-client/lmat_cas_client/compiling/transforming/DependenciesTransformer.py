@@ -7,6 +7,7 @@ from sympy import Expr, Function, Symbol
 from sympy.physics.units import Quantity
 
 from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.transforming.TransformerCore import TransformerRunner
 from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
@@ -57,3 +58,7 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     @v_args(inline=False)
     def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
         return list(chain.from_iterable(tokens))
+
+dependencies_transformer_runner = TransformerRunner[[], set[str]](DependenciesTransformer)
+
+__all__ = [ "dependencies_transformer_runner" ]

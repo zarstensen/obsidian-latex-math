@@ -1,11 +1,11 @@
 from lmat_cas_client.command_handlers.ConvertSympyHandler import *
-from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
+from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
 from sympy import *
 
 
 ## Tests the conver to sympy mode.
 class TestConvertSympy:
-    compiler = latex_to_sympy_compiler
+    compiler = LatexToSympyCompiler()
 
     def test_convert_simple(self):
         a, b = symbols("a b")

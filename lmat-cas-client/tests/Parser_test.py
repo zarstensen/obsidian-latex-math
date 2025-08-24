@@ -1,17 +1,17 @@
 import pytest
-from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
-from lmat_cas_client.compiling.CompilerCore import CompilerError
+from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
 from lmat_cas_client.compiling.DefinitionStore import CyclicDependencyError
+from lmat_cas_client.compiling.parsing import PrettyParserError
 from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
 from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
-from lmat_cas_client.LmatEnvironment import LmatEnvironment
+from lmat_cas_client.LmatEnvironment import EnvDefinition, LmatEnvironment
 from sympy import *
 from sympy import Expr
 from sympy.logic.boolalg import *
 
 
 class TestParse:
-    compiler = latex_to_sympy_compiler
+    compiler = LatexToSympyCompiler()
 
     def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
         environment = LmatEnvironment.model_validate(environment)
@@ -211,14 +211,17 @@ class TestParse:
     def test_matrix_operations(self):
         result = self._parse_expr(r"A A^\ast",
         {
-            "variables": {
-                "A": r"""
-\begin{bmatrix}
-1 & 2 \\
-i & 2 i
-\end{bmatrix}
-"""
-            }
+            "definitions": [
+                EnvDefinition(
+                    name_expr="A",
+                    value_expr=r"""
+                        \begin{bmatrix}
+                        1 & 2 \\
+                        i & 2 i
+                        \end{bmatrix}
+                        """
+                )
+            ]
         })
 
         assert result.doit() == Matrix([[5, - 5 * I], [5 * I, 5]])
@@ -243,65 +246,59 @@ i & 2 i
         y = symbols("y", positive=True)
         result = self._parse_expr(r"a + b", {
             "symbols": {
-                "x": [ "real" ], "y": ["positive"]
-                },
-            "variables": {
-                "a": "x + y",
-                "b": "y"
-            }
-            })
+            "x": ["real"],
+            "y": ["positive"]
+            },
+            "definitions": [
+                EnvDefinition(name_expr="a", value_expr="x + y"),
+                EnvDefinition(name_expr="b", value_expr="y"),
+            ]
+        })
 
         assert result == x + y + y
 
         a, b, x, y = symbols('a b x y')
 
-        result = self._parse_expr("a + b + x + y", { "variables": {
-            'x': 'y^2 - z',
-            'y': '50',
-            'z': '2 y',
-            'A': 'B',
-            'B': 'A + z',
-        }})
+        result = self._parse_expr("a + b + x + y", {
+            "definitions": [
+            EnvDefinition(name_expr="x", value_expr="y^2 - z"),
+            EnvDefinition(name_expr="y", value_expr="50"),
+            EnvDefinition(name_expr="z", value_expr="2 y"),
+            EnvDefinition(name_expr="A", value_expr="B"),
+            EnvDefinition(name_expr="B", value_expr="A + z"),
+            ]
+        })
 
 
         assert result == a + b + 50**2 - 2 * 50 + 50
 
         with pytest.raises(CyclicDependencyError):
-            result = self._parse_expr("A + B + x + y", { "variables": {
-                'x': 'y^2 - z',
-                'y': '50',
-                'z': '2 y',
-                'A': 'B',
-                'B': 'A + z',
-            }})
+            result = self._parse_expr("A + B + x + y", {
+                "definitions": [
+                    EnvDefinition(name_expr="x", value_expr="y^2 - z"),
+                    EnvDefinition(name_expr="y", value_expr="50"),
+                    EnvDefinition(name_expr="z", value_expr="2 y"),
+                    EnvDefinition(name_expr="A", value_expr="B"),
+                    EnvDefinition(name_expr="B", value_expr="A + z"),
+                ]
+            })
 
         with pytest.raises(CyclicDependencyError):
             result = self._parse_expr("f(1, x)", {
-                "variables": {
-                            'x': 'y',
-                            'y': 'x',
-                            },
-                "functions": {
-                    'f': {
-                        'args': [ 'x', 'y' ],
-                        'expr': 'x y'
-                    }
-                }
-                })
+                "definitions": [
+                    EnvDefinition(name_expr="x", value_expr="y"),
+                    EnvDefinition(name_expr="y", value_expr="x"),
+                    EnvDefinition(name_expr="f(x, y)", value_expr="x y"),
+                ]
+            })
 
         with pytest.raises(CyclicDependencyError):
             result = self._parse_expr("f(10)", {
-                "functions": {
-                    'f': {
-                        'args': [ 'x' ],
-                        'expr': 'g(x)'
-                    },
-                    'g': {
-                        'args': [ 'x' ],
-                        'expr': 'f(x)'
-                    }
-                }
-                })
+                "definitions": [
+                    EnvDefinition(name_expr="f(x)", value_expr="g(x)"),
+                    EnvDefinition(name_expr="g(x)", value_expr="f(x)")
+                ]
+            })
 
     def test_brace_units(self):
         import sympy.physics.units as u
@@ -389,10 +386,12 @@ i & 2 i
 
     def test_proposition_variables(self):
 
-        result = self._parse_expr(r"P \implies Q", { "variables": {
-                "P": r"A \wedge B",
-                "Q": r"B \vee A"
-            }})
+        result = self._parse_expr(r"P \implies Q", {
+            "definitions": [
+                EnvDefinition(name_expr="P", value_expr=r"A \wedge B"),
+                EnvDefinition(name_expr="Q", value_expr=r"B \vee A"),
+            ]
+        })
 
         a, b = symbols('A B')
 
@@ -439,11 +438,11 @@ i & 2 i
 
     def test_exception_types(self):
         # unexpected EOF
-        with pytest.raises(CompilerError):
+        with pytest.raises(PrettyParserError):
             self._parse_expr(r"\frac{25}{")
 
         # unexpected token
-        with pytest.raises(CompilerError):
+        with pytest.raises(PrettyParserError):
             self._parse_expr(r"\sum_{n}^{5} n")
 
     def test_text(self):

@@ -7,6 +7,8 @@ from lark.lark import PostLex
 from lark.lexer import TerminalDef
 from sympy import *
 
+from lmat_cas_client.compiling.parsing.ParsingCore import PrettyParser
+
 
 # Represents a scope to be handled by the ScopePostLexer.
 # This class provides a series of terminals pairs which define the start and end of this scope.
@@ -209,7 +211,7 @@ GRAMMAR_FILE = "latex_math_grammar.lark"
 
 __latex_parser_post_lexer = ScopePostLexer()
 
-latex_parser = Lark.open(
+latex_parser = PrettyParser(Lark.open(
     os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
     rel_to=os.path.dirname(__file__),
     parser='lalr',
@@ -221,21 +223,8 @@ latex_parser = Lark.open(
     maybe_placeholders=True,
     regex=True,
     postlex=__latex_parser_post_lexer
-)
+))
 
-__latex_parser_post_lexer.initialize_scopes(latex_parser)
+__latex_parser_post_lexer.initialize_scopes(latex_parser.parser)
 
-DEFINITION_GRAMMAR_FILE = "latex_math_definition_grammar.lark"
-
-latex_definition_parser = Lark.open(
-    os.path.join(os.path.dirname(__file__), DEFINITION_GRAMMAR_FILE),
-    rel_to=os.path.dirname(__file__),
-    parser='lalr',
-    start='latex_math_definition_string',
-    lexer='contextual',
-    debug=False,
-    cache=True,
-    propagate_positions=False,
-    maybe_placeholders=True,
-    regex=True
-)
+__all__ = [ "latex_parser" ]

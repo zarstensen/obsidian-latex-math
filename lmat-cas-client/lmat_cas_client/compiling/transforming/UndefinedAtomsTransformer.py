@@ -10,7 +10,6 @@ from lmat_cas_client.math_lib import UnitsUtils
 
 
 # Handles transformation of rules relating to user defined (or undefined for that matter) symbols or functions.
-# TODO: diferent name, definetly
 @v_args(inline=True)
 class UndefinedAtomsTransformer(Transformer):
 
@@ -60,7 +59,3 @@ class UndefinedAtomsTransformer(Transformer):
             return func_definition.applied_value(self.__definition_store, [ SympyDefinition(arg) for arg in func_args ])
         else:
             return Function(func_name)(*func_args)
-
-    @v_args(inline=False)
-    def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
-        return list(filter(lambda x: not isinstance(x, Token) or x.type != 'COMMA', tokens))

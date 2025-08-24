@@ -7,7 +7,8 @@ from sympy.logic.boolalg import Boolean, as_Boolean, truth_table
 from tabulate import tabulate
 
 from lmat_cas_client.Client import HandlerError
-from lmat_cas_client.compiling.CompilerCore import Compiler
+from lmat_cas_client.compiling.Compiler import Compiler
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
     PropositionExpr,
 )
@@ -81,7 +82,7 @@ class TruthTableResultLatex(TruthTableResult):
 # Expects a PropositionExpr so will fail if it is not.
 class TruthTableHandler(CommandHandler):
 
-    def __init__(self, compiler: Compiler):
+    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
 

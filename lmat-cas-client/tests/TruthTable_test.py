@@ -1,10 +1,10 @@
 from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
-from lmat_cas_client.compiling.Compiler import latex_to_sympy_compiler
+from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
 from sympy import *
 
 
 class TestTruthTable:
-    handler = TruthTableHandler(latex_to_sympy_compiler)
+    handler = TruthTableHandler(LatexToSympyCompiler())
 
     def test_truth_table(self):
         p, q, r = symbols('P Q R')

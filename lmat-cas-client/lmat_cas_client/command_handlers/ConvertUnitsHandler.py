@@ -18,7 +18,6 @@ class ConvertUnitsHandler(EvalHandlerBase):
         return super().handle(message)
 
     def evaluate(self, sympy_expr: Expr, message: ConvertMessage):
-
         target_units = []
 
         for target_unit_str in message.target_units:

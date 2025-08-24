@@ -5,40 +5,34 @@ from pydantic import BaseModel, Field
 from sympy import Symbol
 from sympy.core.function import AppliedUndef
 
-from lmat_cas_client.compiling.Compiler import (
-    latex_to_definition_compiler,
-    latex_to_dependencies_compiler,
-    latex_to_sympy_compiler_no_deps_assert,
-)
+from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
 from lmat_cas_client.compiling.Definitions import (
     AssumptionDefinition,
-    SerializedDefinition,
-    SerializedFunctionDefinition,
+    AstDefinition,
+    AstFunctionDefinition,
 )
 from lmat_cas_client.compiling.DefinitionStore import (
     DefinitionStore,
 )
+from lmat_cas_client.compiling.parsing.LatexParser import latex_parser
+from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
+    dependencies_transformer_runner,
+)
+from lmat_cas_client.compiling.transforming.SympyTransformer import (
+    sympy_transformer_runner,
+)
 
 
-class FunctionDef(BaseModel):
-    args: list[str]
-    expr: str
-
-class Definition(BaseModel):
+class EnvDefinition(BaseModel):
     name_expr: str
-    defined_expr: str
+    value_expr: str
 
 ## The LmatEnvironment type represents a dictionary
 ## parsed from a json encoded LmatEnvironment typescript class.
 class LmatEnvironment(BaseModel):
     symbols: dict[str, list[str]] = Field(default_factory=dict)
 
-    definitions: list[Definition] = Field(default_factory=list)
-
-    # Deprecated: this field is retained for backwards compatibility and will be removed in a future version.
-    variables: dict[str, str] = Field(default_factory=dict, deprecated=True)
-    # Deprecated: this field is retained for backwards compatibility and will be removed in a future version.
-    functions: dict[str, FunctionDef] = Field(default_factory=dict, deprecated=True)
+    definitions: list[EnvDefinition] = Field(default_factory=list)
 
     unit_system: Optional[str] = None
 
@@ -57,40 +51,26 @@ class LmatEnvironment(BaseModel):
                 **{ assumption: True for assumption in assumption_expr }
                 ))
 
-        for function_name, function_def in environment.functions.items():
-            definitions[function_name] = SerializedFunctionDefinition(
-                compiler = latex_to_sympy_compiler_no_deps_assert,
-                dependencies_compiler = latex_to_dependencies_compiler,
-                func_name = function_name,
-                serialized_body = function_def.expr,
-                variables = function_def.args
-                )
+        latex_to_sympy_compiler = LatexToSympyCompiler()
 
-        for variable_name, variable_def in environment.variables.items():
-            definitions[variable_name] = SerializedDefinition(
-                compiler = latex_to_sympy_compiler_no_deps_assert,
-                dependencies_compiler = latex_to_dependencies_compiler,
-                serialized_definition = variable_def
-                )
+        for definition in environment.definitions:
 
-        for definition_str in environment.definitions:
-            print(definition_str, flush=True)
-            lhs, rhs = latex_to_definition_compiler.compile(definition_str)
+            definition_id = latex_to_sympy_compiler.compile(definition.name_expr, DefinitionStore())
 
-            match lhs:
-                case Symbol() as lhs_symbol:
-                    definitions[lhs_symbol.name] = SerializedDefinition(
-                        compiler = latex_to_sympy_compiler_no_deps_assert,
-                        dependencies_compiler = latex_to_dependencies_compiler,
-                        serialized_definition = rhs.value
+            match definition_id:
+                case Symbol() as def_symbol:
+                    definitions[def_symbol.name] = AstDefinition(
+                        expr_transformer = sympy_transformer_runner,
+                        dependencies_transformer = dependencies_transformer_runner,
+                        ast_definition = latex_parser.parse(definition.value_expr)
                     )
-                case AppliedUndef() as lhs_function:
-                    definitions[lhs_function.name] = SerializedFunctionDefinition(
-                        compiler = latex_to_sympy_compiler_no_deps_assert,
-                        dependencies_compiler = latex_to_dependencies_compiler,
-                        func_name = lhs_function.name,
-                        serialized_body = rhs.value,
-                        variables = [ arg.name for arg in lhs_function.args ]
+                case AppliedUndef() as def_function:
+                    definitions[def_function.name] = AstFunctionDefinition(
+                        expr_transformer = sympy_transformer_runner,
+                        dependencies_transformer = dependencies_transformer_runner,
+                        func_name = def_function.name,
+                        ast_body = latex_parser.parse(definition.value_expr),
+                        variables = [ arg.name for arg in def_function.args ]
                     )
                 case _:
                     pass
