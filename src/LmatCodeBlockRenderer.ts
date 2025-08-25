@@ -40,7 +40,7 @@ export class LmatCodeBlockRenderer {
         // TODO: make compatible with threaded stuff. also generally just clean this main file up please...
         const response = await this.cas_server.send(new StartCommandMessage({
             command_type: "symbolsets",
-            start_args: new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, {}, {}))
+            start_args: new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, [ ]))
         }));
 
         const result = this.response_verifier.verifyResponse<SymbolSetResponse>(response);

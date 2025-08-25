@@ -3,8 +3,10 @@ from typing import Any, Callable
 from lark.tree import Meta
 
 
-# The SystemOfExpr class represents a list of sympy expressions and their original locations in some source text.
 class SystemOfExpr:
+    """
+    The SystemOfExpr class represents a list of sympy expressions and their original locations in some source text.
+    """
     def __init__(self, expressions: list[tuple[Any, Meta]]):
         self.__expressions: list[Any] = [ e[0] for e in expressions]
         self.__location_data: list[Meta] = [ e[1] for e in expressions ]

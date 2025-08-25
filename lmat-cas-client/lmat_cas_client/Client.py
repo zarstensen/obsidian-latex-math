@@ -123,7 +123,7 @@ class LmatCasClient:
         await self._respond_success(uid, 'result', dict())
 
     def _async_target(self, uid, coro, *args, **kwargs):
-        async def coroErrHandler():
+        async def coro_err_handler():
             try:
                 await coro(*args, **kwargs)
             except Exception as e:
@@ -138,7 +138,7 @@ class LmatCasClient:
                     # so just do nothing instead of reporting back an error.
                     pass
 
-        return asyncio.run(coroErrHandler())
+        return asyncio.run(coro_err_handler())
 
     # Send the given json dumpable object back to the plugin.
     async def _respond(self, status: str, uid: str, message: dict):

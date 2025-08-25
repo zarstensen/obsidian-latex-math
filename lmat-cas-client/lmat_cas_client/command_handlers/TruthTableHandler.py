@@ -1,14 +1,17 @@
 from enum import Enum
-from typing import TypedDict, override
+from typing import override
 
+from pydantic import BaseModel
 from sympy import *
 from sympy.logic.boolalg import Boolean, as_Boolean, truth_table
 from tabulate import tabulate
 
 from lmat_cas_client.Client import HandlerError
-from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
-from lmat_cas_client.grammar.SympyParser import SympyParser
-from lmat_cas_client.grammar.transformers.PropositionsTransformer import PropositionExpr
+from lmat_cas_client.compiling.Compiler import Compiler
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
+    PropositionExpr,
+)
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
@@ -20,11 +23,11 @@ class TruthTableFormat(Enum):
     MARKDOWN = "md"
     LATEX_ARRAY = "latex-array"
 
-class TruthTableMessage(TypedDict):
+class TruthTableMessage(BaseModel):
     expression: str
     environment: LmatEnvironment
     # requested table format
-    table_format: TruthTableFormat
+    truth_table_format: TruthTableFormat
 
 # base class for all truth table results.
 # each implementation is for a distinct TruthTableFormat
@@ -79,14 +82,16 @@ class TruthTableResultLatex(TruthTableResult):
 # Expects a PropositionExpr so will fail if it is not.
 class TruthTableHandler(CommandHandler):
 
-    def __init__(self, parser: SympyParser):
+    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
-        self._parser = parser
+        self._compiler = compiler
 
     @override
     def handle(self, message: TruthTableMessage) -> TruthTableResult:
-        definitions_store = LmatEnvDefStore(self._parser, message['environment'])
-        sympy_expr = self._parser.parse(message['expression'], definitions_store)
+        message = TruthTableMessage.model_validate(message)
+
+        definitions_store = LmatEnvironment.create_definition_store(message.environment)
+        sympy_expr = self._compiler.compile(message.expression, definitions_store)
 
         if not isinstance(sympy_expr, PropositionExpr):
             raise HandlerError(f"Expression must be a proposition, was {type(sympy_expr)}")
@@ -105,12 +110,12 @@ class TruthTableHandler(CommandHandler):
         result_cls = None
 
         # Select result class dependant on requested table format
-        match message['truth_table_format']:
-            case TruthTableFormat.MARKDOWN.value:
+        match message.truth_table_format:
+            case TruthTableFormat.MARKDOWN:
                 result_cls = TruthTableResultMarkdown
-            case TruthTableFormat.LATEX_ARRAY.value:
+            case TruthTableFormat.LATEX_ARRAY:
                 result_cls = TruthTableResultLatex
             case _:
-                raise HandlerError(f"Unknown table format: {message['truth_table_format']}")
+                raise HandlerError(f"Unknown table format: {message.truth_table_format}")
 
-        return result_cls(columns, message['expression'], truth_table_data)
+        return result_cls(columns, message.expression, truth_table_data)

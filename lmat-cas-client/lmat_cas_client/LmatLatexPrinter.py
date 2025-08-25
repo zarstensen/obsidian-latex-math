@@ -6,7 +6,7 @@ from sympy.logic.boolalg import BooleanFalse, BooleanTrue
 from sympy.physics.units import Quantity
 from sympy.printing.latex import LatexPrinter
 
-from lmat_cas_client.grammar.LatexMatrix import LatexMatrix
+from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
 
 
 # this is a bit scuffed, but since the Quantity class, and not the printer class, implements a _latex method,

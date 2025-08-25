@@ -1,5 +1,5 @@
 import sympy.physics.units as u
-from lmat_cas_client.grammar.LatexMatrix import LatexMatrix
+from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
 from lmat_cas_client.LmatLatexPrinter import LmatLatexPrinter
 from sympy import *
 

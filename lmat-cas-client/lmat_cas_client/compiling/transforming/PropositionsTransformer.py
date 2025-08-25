@@ -2,24 +2,29 @@ from lark import Token, Transformer, v_args
 from sympy import *
 from sympy.logic.boolalg import *
 
-from lmat_cas_client.grammar.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.math_lib import Functions
 
+from .SystemOfExpr import SystemOfExpr
 
-# return type for the PropositionsTransformer.
-# Simply wraps a propositional expression,
-# is primarily used to detect if an expression came from PropositionsTransformer.
+
 class PropositionExpr:
+    """
+    return type for the PropositionsTransformer.
+    Simply wraps a propositional expression,
+    is primarily used to detect if an expression came from PropositionsTransformer.
+    """
     def __init__(self, expr):
         self.expr = expr
 
     def _sympy_(self):
         return self.expr
 
-# The FucntionsTransformer holds the implementation of various mathematical function rules,
-# defined in the latex math grammar.
 @v_args(inline=True)
 class PropositionsTransformer(Transformer):
+    """
+    The FucntionsTransformer holds the implementation of various mathematical function rules,
+    defined in the latex math grammar.
+    """
 
     def CMD_TAUTOLOGY(self, _) -> Expr:
         return S.true

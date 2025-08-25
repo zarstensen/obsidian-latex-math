@@ -1,22 +1,31 @@
 from typing import Iterator
 
 import sympy
-from lark import Token, Transformer, v_args
+from lark import Token, v_args
 from sympy import *
+from sympy.core.function import UndefinedFunction
 from sympy.tensor.array import derive_by_array
 
-from lmat_cas_client.grammar.SympyParser import DefinitionStore
+from lmat_cas_client.compiling.Definitions import SympyDefinition
+from lmat_cas_client.compiling.DefinitionStore import (
+    DefinitionStore,
+    FunctionDefinition,
+)
+from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
+    UndefinedAtomsTransformer,
+)
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 
 
-# The FucntionsTransformer holds the implementation of various mathematical function rules,
-# defined in the latex math grammar.
 @v_args(inline=True)
-class FunctionsTransformer(Transformer):
-
+class BuiltInFunctionsTransformer(UndefinedAtomsTransformer):
+    """
+    The FucntionsTransformer holds the implementation of various mathematical function rules,
+    defined in the latex math grammar.
+    """
     def __init__(self, definitions_store: DefinitionStore):
-        self.__definitions_store = definitions_store
+        self.__definition_store = definitions_store
 
     def trig_function(self, func_token: Token, exponent: Expr | None, arg: Expr) -> Expr:
         func_type = func_token.type.replace('FUNC_', '').lower()
@@ -296,10 +305,6 @@ class FunctionsTransformer(Transformer):
 
     # Helper Methods
 
-    @v_args(inline=False)
-    def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
-        return list(filter(lambda x: not isinstance(x, Token) or x.type != 'COMMA', tokens))
-
     # tries to raise arg to the given exponent, exept if it is None,
     # or doing so results in no change to the resulting expression.
     def _try_raise_exponent(self, arg: Expr, exponent: Expr | None) -> Expr:
@@ -315,27 +320,34 @@ class FunctionsTransformer(Transformer):
     # Otherwise the expression itself is used as the body, and the variables are extracted from its free symbols.
     def _expr_as_function(self, expr: Expr, target_variables: int | Range | None = None) -> tuple[Expr, tuple[Symbol]]:
 
-        variables = symbols_variable_order(expr.free_symbols)
+        variables = None
+        body = None
 
-        match target_variables:
-            case Range() as target_variable_range:
-                variables = variables[:max(target_variable_range)]
-            case int() as target_variable_count:
-                variables = variables[:target_variable_count]
+        if isinstance(expr, UndefinedFunction):
+            func_def: FunctionDefinition = self.__definition_store.get_definition(expr.name)
 
-        body = expr
+            if isinstance(func_def, FunctionDefinition):
+                variables = [
+                                self.__definition_store.get_definition(
+                                        var_name,
+                                        default=SympyDefinition(Symbol(var_name))
+                                    ).defined_value(self.__definition_store)
+                                for var_name in func_def.variables
+                            ]
 
-        if isinstance(expr, Symbol):
-            func_def = self.__definitions_store.get_function_definition(
-                self.__definitions_store.deserialize_function(
-                    str(expr)
-                    )
-                )
+                body = func_def.applied_value(self.__definition_store)
 
-            if func_def is not None:
-                variables = func_def.args
-                body = func_def.get_body()
+        if variables is None or body is None:
+            variables = symbols_variable_order(expr.free_symbols)
+            body = expr
 
+            match target_variables:
+                case Range() as target_variable_range:
+                    variables = variables[:max(target_variable_range)]
+                case int() as target_variable_count:
+                    variables = variables[:target_variable_count]
+
+        # verify result
         match target_variables:
             case int() as target_variable_count:
                 if len(variables) != target_variables:
@@ -345,4 +357,5 @@ class FunctionsTransformer(Transformer):
                     raise RuntimeError(f"Expected {min(target_variable_range)} - {max(target_variable_range)} variables, but only found {len(variables)} ({", ".join(map(str, variables))})")
 
 
+        # return result
         return body, variables
