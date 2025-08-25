@@ -9,9 +9,11 @@ from lmat_cas_client.compiling.Definitions import SympyDefinition
 from lmat_cas_client.math_lib import UnitsUtils
 
 
-# Handles transformation of rules relating to user defined (or undefined for that matter) symbols or functions.
 @v_args(inline=True)
 class UndefinedAtomsTransformer(Transformer):
+    """
+    Handles transformation of rules relating to user defined (or undefined for that matter) symbols or functions.
+    """
 
     def __init__(self, definition_store: DefinitionStore):
         self.__definition_store = definition_store

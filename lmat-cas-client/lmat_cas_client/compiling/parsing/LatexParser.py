@@ -7,7 +7,7 @@ from lark.lark import PostLex
 from lark.lexer import TerminalDef
 from sympy import *
 
-from lmat_cas_client.compiling.parsing.ParsingCore import PrettyParser
+from lmat_cas_client.compiling.parsing.PrettyParser import PrettyParser
 
 
 # Represents a scope to be handled by the ScopePostLexer.
@@ -95,14 +95,20 @@ class PartialDiffScope(LexerScope):
             yield next_token
 
 
-# The ScopePostLexer aims to provide scope based context to the lalr parser during tokenization.
-# It does this by recognizing pairs of terminals, which define a scope.
-# Inside this scope, terminals can be specified which should be replaced by other terminals,
-# or optionally a custom token handler can be given, for more complex operations.
 class ScopePostLexer(PostLex):
+    """
+    The ScopePostLexer aims to provide scope based context to the lalr parser during tokenization.
+    It does this by recognizing pairs of terminals, which define a scope.
+    Inside this scope, terminals can be specified which should be replaced by other terminals,
+    or optionally a custom token handler can be given, for more complex operations.
+    """
 
-    # setup scopes using the terminals defined in the given parser.
     def initialize_scopes(self, parser: Lark):
+        """
+        setup scopes using the terminals defined in the given parser.
+        Args:
+            parser (Lark): lark parser to retreive terminals from.
+        """
         self.scopes = [
             # Scope for inner products,
             # is here so we dont go into the abs scope below.
@@ -185,7 +191,18 @@ class ScopePostLexer(PostLex):
     def process(self, stream: Iterator[Token]) -> Iterator[Token]:
         yield from self._process_scope(stream, LexerScope(), None, None)
 
-    def _process_scope(self, stream, scope: LexerScope, scope_begin_token: Token | None, scope_end_terminal: str | None):
+    def _process_scope(self, stream, scope: LexerScope, scope_begin_token: Token | None, scope_end_terminal: str | None) -> Token:
+        """
+        process scopes recursively, applying the scope specific replace_tokens to the input stream tokens.
+        Args:
+            stream (_type_): stream to process tokens from
+            scope (LexerScope): scope which the tokens should be processed in
+            scope_begin_token (Token | None): token used to begin the current scope
+            scope_end_terminal (str | None): token indicating this scope should end
+
+        Yields:
+            Token
+        """
         for token in scope.token_handler(stream, scope_begin_token):
             yield token
 
@@ -224,6 +241,9 @@ latex_parser = PrettyParser(Lark.open(
     regex=True,
     postlex=__latex_parser_post_lexer
 ))
+"""
+PrettyParser instance capable of parsing a latex math string.
+"""
 
 __latex_parser_post_lexer.initialize_scopes(latex_parser.parser)
 

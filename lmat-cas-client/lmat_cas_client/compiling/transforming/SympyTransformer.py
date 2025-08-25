@@ -20,7 +20,7 @@ from lmat_cas_client.compiling.transforming.FunctionsTransformer import (
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
     PropositionsTransformer,
 )
-from lmat_cas_client.compiling.transforming.TransformerCore import TransformerRunner
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
@@ -29,9 +29,11 @@ from .LatexMatrix import LatexMatrix
 from .SystemOfExpr import SystemOfExpr
 
 
-# The SympyTransformer class provides functions for transforming
-# rules defined in latex_math_grammar.lark into sympy expressions.
 class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, PropositionsTransformer):
+    """
+    The SympyTransformer class provides functions for transforming
+    rules defined in latex_math_grammar.lark into sympy expressions.
+    """
 
     class Delim(Enum):
         MatDelim = 1

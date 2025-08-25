@@ -1,3 +1,3 @@
-from .ParsingCore import PrettyParserError
+from .PrettyParser import PrettyParserError
 
 __all__ = [ "PrettyParserError" ]

@@ -7,7 +7,7 @@ from sympy import Expr, Function, Symbol
 from sympy.physics.units import Quantity
 
 from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.TransformerCore import TransformerRunner
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
@@ -16,7 +16,8 @@ from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
 @v_args(inline=True)
 class DependenciesTransformer(UndefinedAtomsTransformer):
     """
-    Transforms an AST produced from latex_math_grammar.lark into a set of undefined symbol and function names.
+    Transforms an AST produced from latex_math_grammar.lark into a set of undefined symbol and function names present in the AST.
+    This set of symbols and functions can be interpreted as the dependencies of the equation the AST represents.
     """
 
     def __init__(self):

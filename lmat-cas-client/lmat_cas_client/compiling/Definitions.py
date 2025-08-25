@@ -5,7 +5,7 @@ from lark import Tree
 from sympy import Expr, Function, Symbol
 from sympy.core.function import AppliedUndef
 
-from lmat_cas_client.compiling.transforming.TransformerCore import TransformerRunner
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 
 from .DefinitionStore import (
     Definition,
@@ -14,8 +14,11 @@ from .DefinitionStore import (
 )
 
 
-# SympyDefinition simply holds a sympy expression as its defined value.
 class SympyDefinition(Definition):
+    """
+    SympyDefinition simply holds a sympy expression as its defined value.
+    """
+
     def __init__(self, sympy_expr):
         self._sympy_expr = sympy_expr
 
@@ -35,8 +38,12 @@ class SympyDefinition(Definition):
                     )
                 )
 
-# Specialized SympyDefinition for sympy Symbols.
+
 class AssumptionDefinition(SympyDefinition):
+    """
+    Specialized SympyDefinition for sympy Symbols-
+    """
+
     def __init__(self, symbol_assumption: Symbol):
         super().__init__(symbol_assumption)
 
@@ -46,13 +53,19 @@ class AssumptionDefinition(SympyDefinition):
         # so we need to explicitly return an empty set here.
         return set()
 
-# Definition holding a serialized form of data, which needs a Compiler for retreiving their defined value.
-# TODO: the parsing should definetly be cached in these, no reason not to, AND it should be lazy as well!
-# holdup can i do that? yeah, just pass the parser or make it a callable instead or smthn.
 class AstDefinition(Definition):
+    """
+    Definition holding an abstract syntax tree (AST), which needs to be transformed in order to retreivieve its defined value.
+    """
     # compiler: compiler to use for compiling the defined value
     # dependencies_compiler: compiler to use for compiling a set of definitions from the serialized data
     def __init__(self, expr_transformer: TransformerRunner[[DefinitionStore], Expr], dependencies_transformer: TransformerRunner[[], set[str]], ast_definition: Tree):
+        """
+        Args:
+            expr_transformer (TransformerRunner[[DefinitionStore], Expr]): transformer for producing the defined value
+            dependencies_transformer (TransformerRunner[[], set[str]]): transformer for producing the dependencies of the AST
+            ast_definition (Tree): AST to transform
+        """
         self._ast_definition = ast_definition
         self._transformer = expr_transformer
         self._dependencies_transformer = dependencies_transformer
@@ -65,8 +78,12 @@ class AstDefinition(Definition):
     def dependencies(self) -> set[str]:
         return self._dependencies_transformer.transform(self._ast_definition)
 
-# Like SerializedDefinition, but with FunctionDefinition as a base
+#
 class AstFunctionDefinition(FunctionDefinition):
+    """
+    Like SerializedDefinition, but with FunctionDefinition as a base
+    """
+
     def __init__(self, expr_transformer: TransformerRunner[[DefinitionStore], Expr], dependencies_transformer: TransformerRunner[[], set[str]], func_name: str, ast_body: Tree, variables: Iterable[str]):
         super().__init__(variables)
         self._func_name = func_name
