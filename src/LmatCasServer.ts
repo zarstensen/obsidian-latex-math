@@ -144,6 +144,7 @@ export class CasServer {
         const shutdown_promise = (async () => {
             const result = await this.send(EXIT_MESSAGE);
             assert(result.status === MessageStatus.SUCCESS);
+            assert(result.payload.type === MessageType.EXIT);
         })();
 
         let shutdown_error: Error | undefined = undefined;
