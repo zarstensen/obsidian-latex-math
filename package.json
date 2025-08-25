@@ -4,7 +4,9 @@
 	"description": "Evaluate, solve and do much more with LaTeX blocks using Sympy.",
 	"main": "main.js",
 	"scripts": {
-		"dev": "node esbuild.config.mjs",
+		"watch:tsc": "tsc -noEmit -skipLibCheck --watch",
+		"watch:esbuild": "node esbuild.config.mjs",
+		"dev": "npm-run-all --parallel watch:*",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
@@ -22,6 +24,7 @@
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.25.0",
 		"get-port": "^7.1.0",
+		"npm-run-all": "^4.1.5",
 		"obsidian": "latest",
 		"prettier": "^3.5.3",
 		"prettier-plugin-latex": "^2.0.1",
