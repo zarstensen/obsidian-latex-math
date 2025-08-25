@@ -115,13 +115,6 @@ export default class LatexMathPlugin extends Plugin {
         });
 
         await this.spawn_cas_client_promise;
-
-        // Start the cas server <-> client message loop
-        this.cas_server.receiveLoop().catch((err) => {
-            new Notice(`Latex Math experienced an unexpected error.\n${err.message}`);
-            throw err;
-        });
-
     }
 
     
