@@ -35,7 +35,11 @@ jobs:
     
   code-quality-result:
     runs-on: ubuntu-latest
+    if: always()
     needs: [ cas-code-quality-check, plugin-code-quality-check ]
     steps:
-      - name: Success
-        run: echo "All code quality checks passed!"
+      - name: Failure
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: | 
+          echo "Code quality check failed!"
+          exit 1

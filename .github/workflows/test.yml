@@ -26,8 +26,12 @@ jobs:
   
   test-result:
     runs-on: ubuntu-latest
+    if: always()
     needs: [ test-sympy-client ]
     steps:
-      - name: Success
-        run: echo "All tests passed!"
+      - name: Failure
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: | 
+          echo "Test failed!"
+          exit 1
   
