@@ -129,13 +129,11 @@ export class CasServer {
         // wait for the process to establish a connection
         this.ws_cas_client = await new Promise(this.resolveConnection.bind(this));
         this.ws_cas_client.on('message', (buffer) => this.handleMessage(buffer));
-        this.is_running = true;
     }
 
     // Close server / client connection, and shutdown client process.
     // If [timeout] seconds passes without the client shutting down gracefully, it is forcefully killed.
     public async shutdown(timeout: number): Promise<void> {
-        this.is_running = false;
 
         let shutdown_timeout: NodeJS.Timeout | undefined;
 
