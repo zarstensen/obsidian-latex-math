@@ -1,7 +1,7 @@
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { assert } from 'console';
 import getPort from 'get-port';
-import { WebSocket, WebSocketServer } from 'ws';
+import { RawData, WebSocket, WebSocketServer } from 'ws';
 import { CasClientSpawner } from './LmatCasClientSpawner';
 
 enum MessageType {
@@ -128,6 +128,7 @@ export class CasServer {
 
         // wait for the process to establish a connection
         this.ws_cas_client = await new Promise(this.resolveConnection.bind(this));
+        this.ws_cas_client.on('message', (buffer) => this.handleMessage(buffer));
         this.is_running = true;
     }
 
@@ -210,77 +211,64 @@ export class CasServer {
         return this.getHangingMessages({ min_hang_time: 0 });
     }
 
-    // Receive a response from the cas client.
-    // Returns a promise that is resolved when any message is received from the cas client.
-    // the contents of the client response is resolved through the promise returned from the corresponding send call.
-    // i.e.
-    // await send() -> message has uid 1 -> response with uid 1 is resolved.
-    // await receive() -> resolves to void, but makes sure that the send promise is resolved as well.
-    public async receive(): Promise<void> {
-        return new Promise((resolve, _reject) => {
-            this.ws_cas_client.once('message', (response_buffer) => {
-                const response: ClientResponse = JSON.parse(response_buffer.toString());
-
-                // first retreive the message promise to resolve (if present).
-
-                let message_promise: MessagePromiseEntry | null = null;
-                
-                if (this.message_promises[response.uid] !== undefined) {
-                    message_promise = this.message_promises[response.uid];
-                    delete this.message_promises[response.uid];
-                }
-
-                // now handle the response depending on its status.
-                
-                switch (response.status) {
-                    case MessageStatus.ERROR: {
-                        const err = response as ErrorResponse;
-
-                        if(this.error_callback) {
-                            this.error_callback(err.payload.usr_message, err.payload.dev_message);
-                        }
-                        
-                        message_promise?.reject(err.payload.dev_message);
-                        break;
-                    }
-                    case MessageStatus.INTERRUPTED: {
-                        message_promise?.reject("Interrupted");
-                        break;
-                    }
-                    case MessageStatus.SUCCESS: {
-                        message_promise?.resolve(response);
-                        break;
-                    }
-                    default: {
-                        throw new Error("Unknown response status");
-                    }
-                }
-                
-                resolve();
-            });
-        });
-    }
-
-    public async receiveLoop(): Promise<void> {
-        while(this.is_running) {
-            await this.receive();
-        }
-    }
-
     
     private client_process: ChildProcessWithoutNullStreams;
     private ws_cas_client: WebSocket;
     private ws_cas_server: WebSocketServer;
     private error_callback: (usr_error: string, dev_error: string) => void;
-    
-    private is_running = false;
 
     private message_promises: Record<string, MessagePromiseEntry> = { };
+
 
     private resolveConnection(resolve: (value: WebSocket) => void, _reject: (reason: string) => void) {
         this.ws_cas_server.once('connection', (ws) => {
             resolve(ws);
         });
+    }
+
+    // Handle a response from the cas client.
+    // The contents of the client response is resolved through the promise returned from a corresponding send call.
+    // i.e.
+    // await send() -> message has uid 1 -> response with uid 1 is resolved.
+    // await handleMessage() -> makes sure that the send promise is resolved.
+    private handleMessage(response_buffer: RawData): void {
+        const response: ClientResponse = JSON.parse(response_buffer.toString());
+
+        // first retreive the message promise to resolve (if present).
+
+        let message_promise: MessagePromiseEntry | null = null;
+
+        if (this.message_promises[response.uid] !== undefined) {
+            message_promise = this.message_promises[response.uid];
+            delete this.message_promises[response.uid];
+        }
+
+        // now handle the response depending on its status.
+        
+        switch (response.status) {
+            case MessageStatus.ERROR: {
+                const err = response as ErrorResponse;
+
+                if(this.error_callback) {
+                    this.error_callback(err.payload.usr_message, err.payload.dev_message);
+                }
+                
+                message_promise?.reject(err.payload.dev_message);
+                break;
+            }
+            case MessageStatus.INTERRUPTED: {
+                message_promise?.reject("Interrupted");
+                break;
+            }
+            case MessageStatus.SUCCESS: {
+                message_promise?.resolve(response);
+                break;
+            }
+            default: {
+                const err_msg = `Unknown response status: ${response.status}`;
+                this.error_callback(err_msg, err_msg);
+            }
+        }
     }
 
     private getTime(): UnixTimestampMillis {

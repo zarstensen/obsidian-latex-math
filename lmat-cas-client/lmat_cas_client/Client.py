@@ -1,5 +1,6 @@
 import asyncio
 import ctypes
+import sys
 import traceback
 from threading import Thread
 from typing import *
@@ -7,7 +8,7 @@ from typing import *
 import jsonpickle
 import websockets
 
-from .command_handlers.CommandHandler import CommandHandler
+from lmat_cas_client.command_handlers.CommandHandler import CommandHandler
 
 
 class ThreadKill(Exception):
@@ -53,30 +54,33 @@ class LmatCasClient:
     # Start the message loop, this is required to run, before any handlers will be called.
     async def run_message_loop(self):
         while True:
-            message = jsonpickle.decode(await self.connection.recv())
+            try:
+                message = jsonpickle.decode(await self.connection.recv())
 
-            uid = message["uid"]
-            message_type = message["type"]
-            payload = message["payload"]
+                uid = message["uid"]
+                message_type = message["type"]
+                payload = message["payload"]
 
-            self.pending_message_responses.add(uid)
+                self.pending_message_responses.add(uid)
 
-            match message_type:
-                case "exit":
-                    await self._respond("exit", uid, {})
-                    break
-                case "start":
-                    await self._start_handler(payload, uid)
-                case "interrupt":
-                    await self._interrupt_handler(payload["target_uids"], uid)
-                case _:
-                    # If we get here in a release build, then either the cas client or the plugin source is not the same version.
-                    # A plugin reinstall should (hopefully) install a cas client and plugin source with the same version.
-                    await self._respond_error(
-                        uid,
-                        dev_message=f"Unsupported message type: {message.type}",
-                        usr_message="Message type is not supported, please try reinstalling the plugin."
-                    )
+                match message_type:
+                    case "exit":
+                        await self._respond("exit", uid, {})
+                        break
+                    case "start":
+                        await self._start_handler(payload, uid)
+                    case "interrupt":
+                        await self._interrupt_handler(payload["target_uids"], uid)
+                    case _:
+                        # If we get here in a release build, then either the cas client or the plugin source is not the same version.
+                        # A plugin reinstall should (hopefully) install a cas client and plugin source with the same version.
+                        await self._respond_error(
+                            uid,
+                            dev_message=f"Unsupported message type: {message.type}",
+                            usr_message="Message type is not supported, please try reinstalling the plugin."
+                        )
+            except Exception:
+                traceback.print_exc(file=sys.stderr)
 
     async def _start_handler(self, payload: dict, uid: str):
         if payload["command_type"] not in self.command_handlers:
@@ -109,16 +113,12 @@ class LmatCasClient:
     async def _interrupt_handler(self, target_uids: list[str], uid: str):
         for target_uid in target_uids:
             if target_uid in self.command_handler_threads:
-                handler_to_kill = self.command_handler_threads[target_uid]
-
                 # we make sure to send the interrupt response before the
                 # target handler has an opportunity to respond with an error
                 # from us interrupting it.
                 await self._respond_interrupt(target_uid)
 
-                del self.command_handler_threads[target_uid]
-
-                handler_to_kill.kill()
+                self.command_handler_threads[target_uid].kill()
 
         await self._respond_success(uid, 'result', dict())
 
@@ -137,6 +137,10 @@ class LmatCasClient:
                     # This error means the thread was intentionally interrupted,
                     # so just do nothing instead of reporting back an error.
                     pass
+
+            # remove thread from threads dict when handling has finished
+
+            del self.command_handler_threads[uid]
 
         return asyncio.run(coro_err_handler())
 
