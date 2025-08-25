@@ -13,16 +13,14 @@ class ConvertMessage(EvaluateMessage):
 class ConvertUnitsHandler(EvalHandlerBase):
 
     def handle(self, message: ConvertMessage) -> EvaluateResult:
-        message['environment']['unit_system'] = "SI"
+        message = ConvertMessage.model_validate(message)
+        message.environment.unit_system = "SI"
         return super().handle(message)
 
     def evaluate(self, sympy_expr: Expr, message: ConvertMessage):
-        if 'target_units' not in message:
-            return sympy_expr
-
         target_units = []
 
-        for target_unit_str in message['target_units']:
+        for target_unit_str in message.target_units:
             target_unit = UnitsUtils.str_to_unit(target_unit_str)
 
             if target_unit is not None:

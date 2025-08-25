@@ -3,23 +3,24 @@ from lmat_cas_client.command_handlers.EvalfHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
 from lmat_cas_client.command_handlers.ExpandHandler import *
 from lmat_cas_client.command_handlers.FactorHandler import *
-from lmat_cas_client.grammar.LatexParser import LatexParser
+from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.LmatEnvironment import EnvDefinition
 from sympy import *
 
 
 ## Tests the evaluate mode.
 class TestEvaluate:
-    parser = LatexParser()
+    compiler = LatexToSympyCompiler()
 
     def test_simple_evaluate(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({"expression": "1+1", "environment": {}})
 
         assert result.sympy_expr == 2
 
     def test_escaped_spaces(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({"expression": r"1\ + \ 1", "environment": {}})
 
@@ -27,7 +28,7 @@ class TestEvaluate:
 
 
     def test_matrix_single_line(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({"expression": r"2 \cdot \begin{bmatrix} 1 \\ 1 \end{bmatrix}", "environment": {}})
 
@@ -35,7 +36,7 @@ class TestEvaluate:
 
 
     def test_matrix_multi_line(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         2
         \cdot
@@ -48,7 +49,7 @@ class TestEvaluate:
         assert result.sympy_expr == 2 * Matrix([[1, 2], [3, 4]])
 
     def test_matrix_normal(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         \Vert
         \begin{bmatrix}
@@ -63,7 +64,7 @@ class TestEvaluate:
         assert result.sympy_expr == sqrt(20**2 + 30**2 + 40**2 + 50**2)
 
     def test_matrix_inner_prodcut(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         \langle
         \begin{bmatrix}
@@ -84,7 +85,7 @@ class TestEvaluate:
     def test_relational_evaluation(self):
         a, b = symbols("a b")
 
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"""
         5 + 5 + 5 + 5 = 10 + 10
         """, "environment": {}})
@@ -121,15 +122,15 @@ class TestEvaluate:
 
 
     def test_variable_substitution(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({
             "expression": r"a + b",
             "environment": {
-                "variables": {
-                    "a": "2",
-                    "b": "3"
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="a", value_expr="2"),
+                    EnvDefinition(name_expr="b", value_expr="3")
+                ]
             }
         })
         assert result.sympy_expr == 5
@@ -137,9 +138,9 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"\alpha",
             "environment": {
-                "variables": {
-                    "\\alpha": "2"
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="\\alpha", value_expr="2")
+                ]
             }
         })
         assert result.sympy_expr == 2
@@ -147,18 +148,18 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"A^T B",
             "environment": {
-                "variables": {
-                    "A": r"""
+                "definitions": [
+                    EnvDefinition(name_expr="A", value_expr=r"""
                     \begin{bmatrix}
                     1 \\ 2
                     \end{bmatrix}
-                    """,
-                    "B": r"""
+                    """),
+                    EnvDefinition(name_expr="B", value_expr=r"""
                     \begin{bmatrix}
                     3 \\ 4
                     \end{bmatrix}
-                    """
-                }
+                    """)
+                ]
             }
         })
         assert result.sympy_expr == Matrix([11])
@@ -166,9 +167,9 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"\sin{abc}",
             "environment": {
-                "variables": {
-                    "abc": "1"
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="abc", value_expr="1")
+                ]
             }
         })
         assert result.sympy_expr == sin(1)
@@ -176,18 +177,18 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"\sqrt{ val_{sub} + val_{2}^{val_{three}}}",
             "environment": {
-                "variables": {
-                    "val_{sub}": "7",
-                    "val_{2}": "3",
-                    "val_{three}": "2"
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="val_{sub}", value_expr="7"),
+                    EnvDefinition(name_expr="val_{2}", value_expr="3"),
+                    EnvDefinition(name_expr="val_{three}", value_expr="2")
+                ]
             }
         })
         assert result.sympy_expr == 4
 
 
     def test_gradient(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({
             "expression": r"\nabla (x^2 y + y^2 x)",
@@ -198,50 +199,45 @@ class TestEvaluate:
         assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
 
     def test_evalf(self):
-        handler = EvalfHandler(self.parser)
+        handler = EvalfHandler(self.compiler)
         result = handler.handle({"expression": "5/2", "environment": {}})
         assert result.sympy_expr == 2.5
 
     def test_expand(self):
-        handler = ExpandHandler(self.parser)
+        handler = ExpandHandler(self.compiler)
         result = handler.handle({"expression": "(a + b)^2", "environment": {}})
         a, b = symbols("a b")
         assert result.sympy_expr == a**2 + 2 * a * b + b**2
 
     def test_factor(self):
-        handler = FactorHandler(self.parser)
+        handler = FactorHandler(self.compiler)
         result = handler.handle({"expression": "x^3 - 10x^2 + 3x + 54", "environment": {}})
         x = symbols("x")
         assert result.sympy_expr == (x - 9) * (x - 3) * (x + 2)
 
     def test_apart(self):
-        handler = ApartHandler(self.parser)
+        handler = ApartHandler(self.compiler)
         result = handler.handle({"expression": r"\frac{8x + 7}{x^2 + x - 2}", "environment": {}})
         x = symbols("x")
         assert result.sympy_expr == 3 / (x + 2) + 5 / (x - 1)
 
     def test_quick_derivative(self):
-        handler = ExpandHandler(self.parser)
+        handler = ExpandHandler(self.compiler)
         result = handler.handle({"expression": "(x^5 + 3x^4 + 2x + 5)'''", "environment": {}})
         x = symbols("x")
         assert result.sympy_expr == 60 * x**2 + 72 * x
 
     def test_function(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         # Standard function
         result = handler.handle({
             "expression": "f(25, -2)",
             "environment": {
-                "functions": {
-                    "f": {
-                        "args": ["x", "y"],
-                        "expr": "2x + y^2 + C"
-                    },
-                },
-                "variables": {
-                    "C": "-4"
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="f(x, y)", value_expr="2x + y^2 + C"),
+                    EnvDefinition(name_expr="C", value_expr="-4")
+                ]
             }
         })
         assert result.sympy_expr == 50
@@ -250,16 +246,11 @@ class TestEvaluate:
         result = handler.handle({
             "expression": "f(y)",
             "environment": {
-                "functions": {
-                    "f": {
-                        "args": ["x"],
-                        "expr": "2x"
-                    }
-                },
-                "variables": {
-                    "x": "-1",
-                    "y": "99"
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="f(x)", value_expr="2x"),
+                    EnvDefinition(name_expr="x", value_expr="-1"),
+                    EnvDefinition(name_expr="y", value_expr="99")
+                ]
             }
         })
         assert result.sympy_expr == 198
@@ -268,18 +259,15 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"f(\begin{bmatrix} 5 & 10 \end{bmatrix})",
             "environment": {
-                "functions": {
-                    "f": {
-                        "args": ["x"],
-                        "expr": "x x^T"
-                    }
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="f(x)", value_expr="x x^T")
+                ]
             }
         })
         assert result.sympy_expr == Matrix([[125]])
 
     def test_hessian(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x, y = symbols('x y')
 
         # Standard function
@@ -295,12 +283,9 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"\mathbf{H}(f)",
             "environment": {
-                "functions": {
-                    "f": {
-                        "args": ["x", "y", "z"],
-                        "expr": r"\log(x) + e^y"
-                    }
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="f(x, y, z)", value_expr=r"\log(x) + e^y")
+                ]
             }
         })
 
@@ -312,7 +297,7 @@ class TestEvaluate:
 
 
     def test_jacobi(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x, y = symbols('x y')
 
         # Standard function
@@ -329,12 +314,12 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"\mathbf{J}(f)",
             "environment": {
-                "functions": {
-                    "f": {
-                        "args": ["x", "y", "z"],
-                        "expr": r"\begin{bmatrix}\log(x)\\ \sin(y) \\ \cos(x) * \sin(y) \end{bmatrix}"
-                    }
-                }
+                "definitions": [
+                    EnvDefinition(
+                    name_expr="f(x, y, z)",
+                    value_expr=r"\begin{bmatrix}\log(x)\\ \sin(y) \\ \cos(x) * \sin(y) \end{bmatrix}"
+                    )
+                ]
             }
         })
 
@@ -345,13 +330,13 @@ class TestEvaluate:
         ])
 
     def test_assumptions(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x = symbols('x', real=True)
         result = handler.handle({ 'expression': r"\bar x x", 'environment': { 'symbols': {'x': ['real']} }})
         assert result.sympy_expr == x**2
 
     def test_combinatorial(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"P(10, 5)", 'environment': { } })
 
@@ -380,7 +365,7 @@ class TestEvaluate:
         assert result.sympy_expr == 265
 
     def test_gamma(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"\frac{6!}{e} - \frac{\gamma\left(6 + 1, -1\right)}{e}", 'environment': { } })
 
@@ -394,7 +379,7 @@ class TestEvaluate:
         assert result.sympy_expr == 236 / exp(5)
 
     def test_divisibility(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"{3 + 5^2} \mod 2", 'environment': { } })
         assert result.sympy_expr == 0
@@ -411,7 +396,7 @@ class TestEvaluate:
         assert result.sympy_expr == 42
 
     def test_complex(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
 
         result = handler.handle({ 'expression': r"\Re (5 + 7 i)", 'environment': { } })
         assert result.sympy_expr == 5
@@ -427,7 +412,7 @@ class TestEvaluate:
         assert result.sympy_expr == -1
 
     def test_taylor(self):
-        handler = EvalHandler(self.parser)
+        handler = EvalHandler(self.compiler)
         x, y, z = symbols('x y z')
 
         result = handler.handle({
@@ -457,16 +442,12 @@ class TestEvaluate:
         result = handler.handle({
             "expression": "T_{2,f}(x, y)",
             "environment": {
-                "functions": {
-                    "f": {
-                        "args": ["a", "b"],
-                        "expr": r"e^a + \sin b"
-                    }
-                }
+                "definitions": [
+                    EnvDefinition(name_expr="f(a, b)", value_expr=r"e^a + \sin b")
+                ]
             }
         })
 
         assert result.sympy_expr == 1 + x + y + x**2 / 2
-
 
     # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)

@@ -3,7 +3,9 @@
 
 // ======== Core structure ========
 
-?latex_string: relation | system_of_relations | proposition_chain
+
+
+latex_math_string: relation | system_of_relations | proposition_chain
 
 _rel_op: EQUAL | NOT_EQUAL | LT | LTE | GT | GTE
 _align: _ALIGN | _LATEX_NEWLINE
@@ -62,11 +64,11 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
 
 // ======== Symbols ========
 
-substitute_symbol: symbol
-symbol: indexed_symbol | _non_indexed_symbol
+substitute_symbol: combine_symbol
+combine_symbol: indexed_symbol | _non_indexed_symbol
 
-single_letter_symbol: SINGLE_LETTER_SYMBOL -> symbol
-multi_letter_symbol: MULTI_LETTER_SYMBOL -> symbol
+single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
+multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
 // this could for example be \mathit
@@ -190,10 +192,10 @@ limit_direction: _L_BRACE (ADD|SUB) _R_BRACE
     | SUB
 
 _lim_approach_symbol: _PROP_OP_LR_IMPLICATION
-limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE symbol _lim_approach_symbol basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
+limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _lim_approach_symbol basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
-_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE symbol EQUAL expression _R_BRACE _CARET function_special_arg factor_func_arg
-_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE symbol EQUAL expression _R_BRACE factor_func_arg
+_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg factor_func_arg
+_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE factor_func_arg
 
 _series_function: sum | product
 
@@ -222,11 +224,11 @@ abs: _L_BAR expression _R_BAR
 norm: _L_DOUBLE_BAR expression _R_DOUBLE_BAR
 floor: _L_FLOOR expression _R_FLOOR
 ceil: _L_CEIL expression _R_CEIL
-sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|single_letter_symbol|_digit)
-conjugate: _FUNC_CONJUGATE (braces_expression|single_letter_symbol|_digit)
+sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|substitute_single_letter_symbol|_digit)
+conjugate: _FUNC_CONJUGATE (braces_expression|substitute_single_letter_symbol|_digit)
 
 // match a single argument in a list of latex style arguments (that is \command{arg1}{arg2}...{argN})
-_multiarg_func_arg: (braces_expression|single_letter_symbol|_digit)
+_multiarg_func_arg: (braces_expression|substitute_single_letter_symbol|_digit)
 // terminals signifying the delimiters and end of multiple arguments in a latex style argument list.
 // due to lalr's limited lookahead, a custom post lexer needs to insert this token when parsing.
 %declare _MULTIARG_DELIMITER
@@ -266,7 +268,7 @@ modulo: factor_func_arg _FUNC_MOD factor_func_arg
 frac: _FUNC_FRAC _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 binom: _FUNC_BINOM _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 
-diff_symbol_exponent: symbol [_CARET function_special_arg]
+diff_symbol_exponent: substitute_symbol [_CARET function_special_arg]
 diff_symbol_arg_list: (_DIFFERENTIAL_SYMBOL diff_symbol_exponent)+
 
 _DERIV_ARG_SEPARATOR.-1: _L_BRACE
@@ -274,9 +276,9 @@ _DERIV_ARG_SEPARATOR.-1: _L_BRACE
 derivative: _FUNC_DERIVATIVE expression _R_BRACE _DERIV_ARG_SEPARATOR diff_symbol_arg_list _R_BRACE -> derivative_func_first
     |   _FUNC_DERIVATIVE _R_BRACE _DERIV_ARG_SEPARATOR diff_symbol_arg_list _R_BRACE factor_func_arg -> derivative_symbols_first
 
-integral: _FUNC_INTEGRAL [expression] _DIFFERENTIAL_SYMBOL symbol -> integral_no_bounds
-    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] _DIFFERENTIAL_SYMBOL symbol -> integral_lower_bound_first
-    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] _DIFFERENTIAL_SYMBOL symbol -> integral_upper_bound_first
+integral: _FUNC_INTEGRAL [expression] _DIFFERENTIAL_SYMBOL substitute_symbol -> integral_no_bounds
+    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] _DIFFERENTIAL_SYMBOL substitute_symbol -> integral_lower_bound_first
+    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] _DIFFERENTIAL_SYMBOL substitute_symbol -> integral_upper_bound_first
 
 // ======== Matrices ========
 
@@ -440,7 +442,7 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 //  (?<brace_text>      :
 //    {                 : Initial left brace
 //    (?:               : 
-//      [^{}]+          : Match any text up till a { or }
+//      [^{}]+          : Match any text up till '{' or '}'
 //      |               : OR
 //      (?&brace_text)  : recursively match the entire regex
 //    )*                : Do this as much as needed 
@@ -450,6 +452,7 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 // it is important that the brace_text group is named, so we can reference it later for the recursive match.
 // this recursive match does not work with (?0), as lark places this regex in a larger regex,
 // so the (?0) would refer to an incorrect capturing group, leading to unexpected matches.
+// NOTE: this does not currently support escaped braces, it just treats them as they were unescaped.
 BRACE_SURROUNDED_TEXT: /(?<brace_text>{(?:[^{}]+|(?&brace_text))*})/ 
 
 

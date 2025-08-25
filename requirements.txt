@@ -6,3 +6,4 @@ regex~=2024.11
 jsonpickle~=4.0
 setuptools~=79.0
 tabulate~=0.9
+pydantic~=2.11

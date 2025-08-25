@@ -1,12 +1,13 @@
-from typing import Any, TypedDict, override
+from typing import Any, override
 
+from pydantic import BaseModel
 from sympy import *
 from sympy.solvers.solveset import NonlinearError
 
 from lmat_cas_client.Client import HandlerError
-from lmat_cas_client.grammar.LmatEnvDefStore import LmatEnvDefStore
-from lmat_cas_client.grammar.SympyParser import SympyParser
-from lmat_cas_client.grammar.SystemOfExpr import SystemOfExpr
+from lmat_cas_client.compiling.Compiler import Compiler
+from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 from lmat_cas_client.math_lib import UnitsUtils
@@ -15,7 +16,7 @@ from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from .CommandHandler import *
 
 
-class SolveMessage(TypedDict):
+class SolveMessage(BaseModel):
     expression: str
     symbols: list[str]
     environment: LmatEnvironment
@@ -54,14 +55,16 @@ class SolveResult(CommandResult):
 # if successfull its sends a message with status solved, and the result in the result key.
 class SolveHandler(CommandHandler):
 
-    def __init__(self, parser: SympyParser):
+    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
-        self._parser = parser
+        self._compiler = compiler
 
     @override
     def handle(self, message: SolveMessage) -> SolveResult:
-        equations = self._parser.parse(message['expression'],
-                                         LmatEnvDefStore(self._parser, message['environment'])
+        message = SolveMessage.model_validate(message)
+
+        equations = self._compiler.compile(message.expression,
+                                           LmatEnvironment.create_definition_store(message.environment)
                                          )
 
         # position information is not needed here,
@@ -79,21 +82,21 @@ class SolveHandler(CommandHandler):
 
         domain = S.Complexes
 
-        if 'domain' in message['environment'] and message['environment']['domain'].strip() != "":
-            domain = sympify(message['environment']['domain'])
+        if message.environment.domain is not None and message.environment.domain.strip() != "":
+            domain = sympify(message.environment.domain)
 
-        symbols = [ None ] * len(message['symbols'])
+        symbols = [ None ] * len(message.symbols)
 
-        if len(message['symbols']) != len(equations):
+        if len(message.symbols) != len(equations):
             raise HandlerError("Incorrect number of symbols provided.")
 
         for free_symbol in free_symbols:
-            if str(free_symbol) in message['symbols']:
-                symbol_index = message['symbols'].index(str(free_symbol))
+            if str(free_symbol) in message.symbols:
+                symbol_index = message.symbols.index(str(free_symbol))
                 symbols[symbol_index] = free_symbol
 
         if None in symbols:
-            raise HandlerError(f"No such symbols: {message['symbols']}")
+            raise HandlerError(f"No such symbols: {message.symbols}")
 
         if len(equations) == 1 and len(symbols) == 1: # these two should always have equal lenth.
             solution_set = solveset(equations[0], symbols[0], domain=domain)
@@ -103,7 +106,7 @@ class SolveHandler(CommandHandler):
             except NonlinearError:
                 solution_set = nonlinsolve(equations, symbols)
 
-        unit_system = message['environment'].get('unit_system', None)
+        unit_system = message.environment.unit_system
 
         # if there is a finite number of solutions, go through each solution, simplify it, and convert units in it.
         if isinstance(solution_set, FiniteSet):
@@ -120,7 +123,7 @@ class SolveHandler(CommandHandler):
 
         return SolveResult(solution_set, symbols)
 
-class SolveInfoMessage(TypedDict):
+class SolveInfoMessage(BaseModel):
     expression: str
     environment: LmatEnvironment
 
@@ -142,15 +145,16 @@ class SolveInfoResult(CommandResult):
 # retreive equation info needed for configuring a solution through the solve command.
 # returns number of required symbols, and a list of symbols to choose from.
 class SolveInfoHandler(CommandHandler):
-    def __init__(self, parser: SympyParser):
+    def __init__(self, parser: Compiler[[DefinitionStore], Expr]):
             super().__init__()
             self._parser = parser
 
     @override
     def handle(self, message: SolveInfoMessage) -> SolveInfoResult:
-        equations = self._parser.parse(
-                                    message['expression'],
-                                    LmatEnvDefStore(self._parser, message['environment'])
+        message = SolveInfoMessage.model_validate(message)
+        equations = self._parser.compile(
+                                    message.expression,
+                                    LmatEnvironment.create_definition_store(message.environment)
                                 )
 
         # ok this is the number of expressions
