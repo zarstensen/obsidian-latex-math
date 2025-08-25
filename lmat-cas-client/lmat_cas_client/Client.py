@@ -65,7 +65,7 @@ class LmatCasClient:
 
                 match message_type:
                     case "exit":
-                        await self._respond("exit", uid, {})
+                        await self._respond_success(uid, "exit", { })
                         break
                     case "start":
                         await self._start_handler(payload, uid)
