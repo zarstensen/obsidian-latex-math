@@ -4,7 +4,7 @@ on:
   - workflow_call
 
 jobs:
-  code-quality-check:
+  cas-code-quality-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,3 +18,28 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
       - name: Run Ruff Check
         run: ruff check --preview --output-format=github
+  
+  plugin-code-quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+      - name: Code Check
+        run: |
+          npm install
+          tsc -noEmit -skipLibCheck
+    
+  code-quality-result:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [ cas-code-quality-check, plugin-code-quality-check ]
+    steps:
+      - name: Failure
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: | 
+          echo "Code quality check failed!"
+          exit 1

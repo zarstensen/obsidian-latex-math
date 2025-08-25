@@ -24,3 +24,14 @@ jobs:
         run: |
           pytest
   
+  test-result:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [ test-sympy-client ]
+    steps:
+      - name: Failure
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: | 
+          echo "Test failed!"
+          exit 1
+  
