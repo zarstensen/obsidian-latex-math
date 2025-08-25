@@ -57,8 +57,6 @@ class AstDefinition(Definition):
     """
     Definition holding an abstract syntax tree (AST), which needs to be transformed in order to retreivieve its defined value.
     """
-    # compiler: compiler to use for compiling the defined value
-    # dependencies_compiler: compiler to use for compiling a set of definitions from the serialized data
     def __init__(self, expr_transformer: TransformerRunner[[DefinitionStore], Expr], dependencies_transformer: TransformerRunner[[], set[str]], ast_definition: Tree):
         """
         Args:
