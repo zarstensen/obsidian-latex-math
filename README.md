@@ -185,7 +185,7 @@ Want to expand upon the CAS features of this plugin? Checkout the `lmat-cas-clie
 The following sections describe how to set up a development environment for **LaTeX Math**.
 Make sure to have python (for cas client development) and / or NPM (for obsidian plugin development) installed before continuing.
 
-### Developing the Cas Client
+### Developing the CAS Client
 
 Start of with running the `setup-dev-env` python script from the root directory.
 
