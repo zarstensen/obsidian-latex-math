@@ -80,7 +80,7 @@ The entire evaluate suite consists of the following commands: `Evaluate LaTeX ex
 ### Solve
 
 Solve equations using the `Solve LaTeX expression` command.
-To solve a system of equations, place them in a `align` or `cases` environment, separated by latex newlines (`\\\\`).
+To solve a system of equations, place them in a `align` or `cases` environment, separated by latex newlines (`\\`).
 
 The solution domain can be restricted for single equations in the solve equation modal, see the [relevant Sympy documentation](https://docs.sympy.org/latest/modules/sets.html#module-sympy.sets.fancysets) for a list of possible values.[^lmat-solve-domain]
 Restrict the solution domain of a system of equations with [symbol assumptions](#symbol-assumptions) on the free symbols.
