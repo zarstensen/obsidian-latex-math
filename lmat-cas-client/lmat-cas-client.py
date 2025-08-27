@@ -12,13 +12,17 @@ from lmat_cas_client.command_handlers.ExpandHandler import ExpandHandler
 from lmat_cas_client.command_handlers.FactorHandler import FactorHandler
 from lmat_cas_client.command_handlers.SolveHandler import SolveHandler, SolveInfoHandler
 from lmat_cas_client.command_handlers.SymbolSetHandler import SymbolSetHandler
+from lmat_cas_client.command_handlers.test_handlers.TestHangHandler import (
+    TestHangHandler,
+)
 from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
 from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
 
-if len(sys.argv) < 2:
+if len(sys.argv) != 2:
     print("Usage:"
             f"\npython {os.path.basename(__file__)} [port]"
-            "\n\tport - port number on local host the plugin server is listening at.")
+            "\n\tport - port number on local host the plugin server is listening at."
+            )
     sys.exit(1)
 
 port = int(sys.argv[1])
@@ -37,6 +41,10 @@ client.register_handler("symbolsets", SymbolSetHandler(LatexToSympyCompiler()))
 client.register_handler("convert-sympy", ConvertSympyHandler(LatexToSympyCompiler()))
 client.register_handler("convert-units", ConvertUnitsHandler(LatexToSympyCompiler()))
 client.register_handler("truth-table", TruthTableHandler(LatexToSympyCompiler()))
+
+# test specific handlers
+
+client.register_handler("test-hang", TestHangHandler())
 
 async def main():
     await client.connect(port)

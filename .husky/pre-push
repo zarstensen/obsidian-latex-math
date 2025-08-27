@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 echo Activating Virtual Env
 
@@ -13,9 +13,11 @@ source .venv/${BIN_DIR}/activate
 echo Running Tests
 
 pytest -x
+npm run test
 
-echo Running Code Quality Checks
+echo Code Quality Checks
 
 ruff check --preview
+npx eslint ./src
 
 echo Pre Push Completed

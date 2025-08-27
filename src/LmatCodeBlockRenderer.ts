@@ -1,25 +1,15 @@
 import { finishRenderMath, MarkdownPostProcessorContext, renderMath } from "obsidian";
-import { LmatEnvironment } from "./LmatEnvironment";
-import { StartCommandMessage, CasServer, GenericPayload } from "./LmatCasServer";
-import { SuccessResponseVerifier } from "./ResponseVerifier";
-
-class SymbolSetArgsPayload implements GenericPayload {
-    public constructor(
-        public environment: LmatEnvironment
-    ) { }
-    [x: string]: unknown;
-}
-
-interface SymbolSetResponse {
-    symbol_sets: string
-}
+import { LmatEnvironment } from "./cas/LmatEnvironment";
+import { CasServer } from "./cas/LmatCasServer";
+import { SuccessResponseVerifier } from "./cas/ResponseVerifier";
+import { SymbolSetArgsPayload, SymbolSetMessage, SymbolSetResponse } from "./cas/messages/SymbolSetsMessage";
 
 // LmatCodeBlockRenderer provides a render handler for the latex math codeblock type.
 export class LmatCodeBlockRenderer {
     
     constructor(protected cas_server: CasServer, protected spawn_cas_client_promise: Promise<void>, public response_verifier: SuccessResponseVerifier) { }
 
-    public getHandler(): (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void {
+    public getHandler(): (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void> | void {
         return this.renderLmatCodeBlock.bind(this);
     }
 
@@ -38,10 +28,9 @@ export class LmatCodeBlockRenderer {
 
         // retreive to be rendered latex from python.
         // TODO: make compatible with threaded stuff. also generally just clean this main file up please...
-        const response = await this.cas_server.send(new StartCommandMessage({
-            command_type: "symbolsets",
-            start_args: new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, [ ]))
-        }));
+        const response = await this.cas_server.send(new SymbolSetMessage(
+            new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, [ ]))
+        )).response;
 
         const result = this.response_verifier.verifyResponse<SymbolSetResponse>(response);
 

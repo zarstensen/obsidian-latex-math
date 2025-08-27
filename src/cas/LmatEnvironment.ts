@@ -1,7 +1,7 @@
-import { App, Editor, EditorPosition, MarkdownView } from "obsidian";
+import { App, EditorPosition, MarkdownView } from "obsidian";
 import * as toml from "toml";
 
-type Definition = { name_expr: string, value_expr: string };
+export type Definition = { name_expr: string, value_expr: string };
 
 // The LmatEnvironment class represents an environment detailing how mathematical expressions,
 // should be evaluated.
@@ -63,24 +63,38 @@ export class LmatEnvironment {
         }
 
         if(!closest_section) {
-            return new LmatEnvironment(undefined, this.parseDefinitions(editor.offsetToPos(0), position, editor));
+            return new LmatEnvironment(undefined, this.parseDefinitions(editor.getRange(editor.offsetToPos(0), position)));
         }
 
         // now generate lmat environment based on section contents.
 
         const lmat_block = editor.getRange(editor.offsetToPos(closest_section.position.start.offset), editor.offsetToPos(closest_section.position.end.offset));
         const lmat_block_content = lmat_block.match(this.LMAT_BLOCK_REGEX)?.[1];
-        const definitions = this.parseDefinitions(editor.offsetToPos(closest_section.position.end.offset), position, editor);
+        const definitions = this.parseDefinitions(editor.getRange(editor.offsetToPos(closest_section.position.end.offset), position));
 
         return LmatEnvironment.fromCodeBlock(lmat_block_content, definitions);
     }
 
-    // regex for extracting the contents of an lmat code block.
-    private static readonly LMAT_BLOCK_REGEX = /^```lmat\s*(?:\r\n|\r|\n)([\s\S]*?)```$/;
+    public static parseDefinitions(search_string: string) {
+        const definitions: Definition[] = [ ];
 
-    private static readonly LMAT_DEFINITION_REGEX = /(?<!\\)(?:\\{2})*\$(?<definition_name>(?:(?<!\\)\\(?:\\{2})*\$|[^$])*):=(?<definition_expr>.*?)(?<!\\)(?:\\{2})*\$/gs; 
+        const definition_matches = search_string.matchAll(this.LMAT_DEFINITION_REGEX);
 
-    private constructor(
+        for(const def of definition_matches) {
+            const def_name = (def.groups?.definition_name ?? "").trim();
+            const def_expr = (def.groups?.definition_expr ?? "").trim();
+
+            if(def_name === "") {
+                continue;
+            }
+
+            definitions.push({ name_expr: def_name, value_expr: def_expr });
+        }
+
+        return definitions;
+    }
+
+    public constructor(
         /**
          * symbols is a map of a symbols name and a list of all the assumptions,
          * which sympy will take into account when evaluating any expression, containing this symbol.
@@ -98,23 +112,8 @@ export class LmatEnvironment {
         public domain: string | undefined = undefined
     ) { }
 
-    private static parseDefinitions(from: EditorPosition, to: EditorPosition, editor: Editor) {
-        const definitions: Definition[] = [ ];
+    // regex for extracting the contents of an lmat code block.
+    private static readonly LMAT_BLOCK_REGEX = /^```lmat\s*(?:\r\n|\r|\n)([\s\S]*?)```$/;
 
-        const search_range = editor.getRange(from, to);
-        const definition_matches = search_range.matchAll(this.LMAT_DEFINITION_REGEX);
-
-        for(const def of definition_matches) {
-            const def_name = (def.groups?.definition_name ?? "").trim();
-            const def_expr = (def.groups?.definition_expr ?? "").trim();
-
-            if(def_name === "" || def_expr === "") {
-                continue;
-            }
-
-            definitions.push({ name_expr: def_name, value_expr: def_expr });
-        }
-
-        return definitions;
-    }
+    private static readonly LMAT_DEFINITION_REGEX = /(?<!\\)(?:\\{2})*\$(?<definition_name>(?:(?<!\\)\\(?:\\{2})*\$|[^$])*):=(?<definition_expr>.*?)(?<!\\)(?:\\{2})*\$/gs; 
 }

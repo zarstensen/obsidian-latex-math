@@ -88,7 +88,14 @@ export interface InterrutpedResposne extends ClientResponse {
     payload: Record<string, never>;
 }
 
+// ======== CasServer Related ========
+
 export type UnixTimestampMillis = number;
+
+export interface SendResult {
+    uid: string;
+    response: Promise<SuccessResponse>;
+}
 
 interface MessagePromiseEntry {
     sent_time: UnixTimestampMillis;
@@ -142,7 +149,7 @@ export class CasServer {
         });
 
         const shutdown_promise = (async () => {
-            const result = await this.send(EXIT_MESSAGE);
+            const result = await this.send(EXIT_MESSAGE).response;
             assert(result.status === MessageStatus.SUCCESS);
             assert(result.payload.type === MessageType.EXIT);
         })();
@@ -175,10 +182,13 @@ export class CasServer {
     }
 
     // Send a message to the cas client.
-    public async send(message: ServerMessage): Promise<SuccessResponse> {
+    public send(message: ServerMessage): SendResult {
+
+        const message_uid = crypto.randomUUID();
+
          const server_message: ServerMessageUID = {
             type: message.type,
-            uid: crypto.randomUUID(),
+            uid: message_uid,
             payload: message.payload
         };
 
@@ -192,7 +202,7 @@ export class CasServer {
 
         this.ws_cas_client.send(JSON.stringify(server_message));
         
-        return await result_promise;
+        return { uid: message_uid, response: result_promise };
     }
 
     // retreive a list of UID's of messages who has not responded for more than min_hang_time ms.
@@ -252,11 +262,11 @@ export class CasServer {
                     this.error_callback(err.payload.usr_message, err.payload.dev_message);
                 }
                 
-                message_promise?.reject(err.payload.dev_message);
+                message_promise?.reject(new Error(err.payload.dev_message));
                 break;
             }
             case MessageStatus.INTERRUPTED: {
-                message_promise?.reject("Interrupted");
+                message_promise?.reject(new Error("Interrupted"));
                 break;
             }
             case MessageStatus.SUCCESS: {

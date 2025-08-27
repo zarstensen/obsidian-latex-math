@@ -1,20 +1,22 @@
 import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
 import path from 'path';
-import { EvaluateCommand } from 'src/commands/EvaluateCommand';
-import { LatexMathCommand } from 'src/commands/LatexMathCommand';
-import { SolveCommand } from 'src/commands/SolveCommand';
-import { SympyConvertCommand } from 'src/commands/SympyConvertCommand';
-import { TruthTableCommand, TruthTableFormat } from 'src/commands/TruthTableCommand';
-import { UnitConvertCommand } from 'src/commands/UnitConvertCommand';
-import { HandlerInterrupter } from 'src/HandlerInterrupter';
-import { CasClientExtractor } from 'src/LmatCasClientExtractor';
-import { ExecutableSpawner, SourceCodeSpawner } from 'src/LmatCasClientSpawner';
-import { CasServer, ClientResponse, UnixTimestampMillis } from 'src/LmatCasServer';
-import { LmatCodeBlockRenderer } from 'src/LmatCodeBlockRenderer';
-import { LmatSettingsTab } from 'src/LmatSettingsTab';
-import { EvaluateStatusBar } from 'src/LmatStatusBar';
-import { ConfirmModal } from 'src/modals/ConfirmModal';
-import { SuccessResponseVerifier } from 'src/ResponseVerifier';
+import { EvaluateCommand } from 'commands/EvaluateCommand';
+import { LatexMathCommand } from 'commands/LatexMathCommand';
+import { SolveCommand } from 'commands/SolveCommand';
+import { ConvertSympyCommand } from 'commands/ConvertSympyCommand';
+import { TruthTableCommand } from 'commands/TruthTableCommand';
+import { UnitConvertCommand } from 'commands/UnitConvertCommand';
+import { HandlerInterrupter } from 'HandlerInterrupter';
+import { CasClientExtractor } from 'cas/LmatCasClientExtractor';
+import { ExecutableSpawner, SourceCodeSpawner } from 'cas/LmatCasClientSpawner';
+import { CasServer, ClientResponse, UnixTimestampMillis } from 'cas/LmatCasServer';
+import { LmatCodeBlockRenderer } from 'LmatCodeBlockRenderer';
+import { LmatSettingsTab } from 'LmatSettingsTab';
+import { EvaluateStatusBar } from 'LmatStatusBar';
+import { ConfirmModal } from 'modals/ConfirmModal';
+import { SuccessResponseVerifier } from 'cas/ResponseVerifier';
+import { EvaluateMode } from 'cas/messages/EvaluateMessage';
+import { TruthTableFormat } from 'cas/messages/TruthTableMessage';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -53,13 +55,13 @@ export default class LatexMathPlugin extends Plugin {
 
         // add commands
         this.addCommands(new Map([
-            [ new EvaluateCommand("eval", response_verifier), 'Evaluate LaTeX expression' ],
-            [ new EvaluateCommand("evalf", response_verifier), 'Evalf LaTeX expression' ],
-            [ new EvaluateCommand("expand", response_verifier), 'Expand LaTeX expression' ],
-            [ new EvaluateCommand("factor", response_verifier), 'Factor LaTeX expression' ],
-            [ new EvaluateCommand("apart", response_verifier), 'Partial fraction decompose LaTeX expression' ],
+            [ new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate LaTeX expression' ],
+            [ new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf LaTeX expression' ],
+            [ new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand LaTeX expression' ],
+            [ new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor LaTeX expression' ],
+            [ new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Partial fraction decompose LaTeX expression' ],
             [ new SolveCommand(response_verifier), 'Solve LaTeX expression' ],
-            [ new SympyConvertCommand(response_verifier), 'Convert LaTeX expression to Sympy' ],
+            [ new ConvertSympyCommand(response_verifier), 'Convert LaTeX expression to Sympy' ],
             [ new UnitConvertCommand(response_verifier), 'Convert units in LaTeX expression' ],
             [ new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)' ],
             [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)' ],

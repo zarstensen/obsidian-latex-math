@@ -1,23 +1,13 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { GenericPayload, StartCommandMessage, SuccessResponse, CasServer } from "src/LmatCasServer";
+import { CasServer } from "cas/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "src/EquationExtractor";
-import { LmatEnvironment } from "src/LmatEnvironment";
+import { EquationExtractor } from "EquationExtractor";
+import { LmatEnvironment } from "cas/LmatEnvironment";
+import { ConvertSympyArgsPayload, ConvertSympyMessage, ConvertSympyResponse } from "cas/messages/ConvertSympyMessage";
 
-class SympyConvertArgsPayload implements GenericPayload {
-    public constructor(
-        public expression: string,
-        public environment: LmatEnvironment,
-    ) { }
-    [x: string]: unknown;
-}
 
-interface SympyConvertResponse {
-    code: string;
-}
-
-export class SympyConvertCommand extends LatexMathCommand {
-    readonly id: string = 'convert-to-sympy';
+export class ConvertSympyCommand extends LatexMathCommand {
+    readonly id: string = 'convert-sympy';
 
     public constructor(...base_args: ConstructorParameters<typeof LatexMathCommand>) {
         super(...base_args);
@@ -43,12 +33,11 @@ export class SympyConvertCommand extends LatexMathCommand {
             return;
         }
 
-        const response = await cas_server.send(new StartCommandMessage({
-            command_type: "convert-sympy",
-            start_args: new SympyConvertArgsPayload(equation.contents, LmatEnvironment.fromMarkdownView(app, view))
-        }));
+        const response = await cas_server.send(new ConvertSympyMessage(
+            new ConvertSympyArgsPayload(equation.contents, LmatEnvironment.fromMarkdownView(app, view))
+        )).response;
 
-        const result = this.response_verifier.verifyResponse<SympyConvertResponse>(response);
+        const result = this.response_verifier.verifyResponse<ConvertSympyResponse>(response);
 
         // place the convertet python code into a code block right below the math block.
 
