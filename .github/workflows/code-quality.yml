@@ -19,7 +19,7 @@ jobs:
       - name: Run Ruff Check
         run: ruff check --preview --output-format=github
   
-  plugin-code-quality-check:
+  plugin-code-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -27,16 +27,18 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
-      - name: Code Check
-        run: |
-          npm install
-          tsc -noEmit -skipLibCheck
+          node-version: "20.x"
+      - name: Npm Install
+        run: npm ci
+      - name: tsc Check
+        run: tsc -noEmit -skipLibCheck
+      - name: Eslint Check
+        run: npx eslint ./src
     
   code-quality-result:
     runs-on: ubuntu-latest
     if: always()
-    needs: [ cas-code-quality-check, plugin-code-quality-check ]
+    needs: [ cas-code-quality-check, plugin-code-check ]
     steps:
       - name: Failure
         if: ${{ contains(needs.*.result, 'failure') }}

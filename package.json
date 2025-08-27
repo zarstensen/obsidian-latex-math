@@ -3,34 +3,43 @@
 	"version": "1.2.0-beta.3",
 	"description": "Evaluate, solve and do much more with LaTeX blocks using Sympy.",
 	"main": "main.js",
+	"type": "module",
 	"scripts": {
 		"watch:tsc": "tsc -noEmit -skipLibCheck --watch",
 		"watch:esbuild": "node esbuild.config.mjs",
 		"dev": "npm-run-all --parallel watch:*",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"test": "vitest",
+		"prepare": "husky"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "MIT",
-	"devDependencies": {
+	"dependencies": {
 		"@codemirror/language": "^6.10.8",
-		"@types/adm-zip": "^0.5.7",
-		"@types/node": "^16.11.6",
-		"@types/ws": "^8.5.14",
-		"@typescript-eslint/eslint-plugin": "5.29.0",
-		"@typescript-eslint/parser": "5.29.0",
-		"adm-zip": "^0.5.16",
-		"builtin-modules": "3.3.0",
-		"esbuild": "0.25.0",
-		"get-port": "^7.1.0",
-		"npm-run-all": "^4.1.5",
-		"obsidian": "latest",
 		"prettier": "^3.5.3",
 		"prettier-plugin-latex": "^2.0.1",
 		"toml": "^3.0.0",
+		"ws": "^8.18.0"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3.3.1",
+		"@eslint/js": "^9.34.0",
+		"@types/node": "^20.18.1",
+		"@types/ws": "^8.5.14",
+		"@typescript-eslint/eslint-plugin": "5.29.0",
+		"@typescript-eslint/parser": "5.29.0",
+		"@vitest/coverage-v8": "^3.2.4",
+		"builtin-modules": "3.3.0",
+		"esbuild": "0.25.0",
+		"eslint": "^8.57.1",
+		"get-port": "^7.1.0",
+		"husky": "^9.1.7",
+		"npm-run-all": "^4.1.5",
+		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4",
-		"ws": "^8.18.0"
+		"vitest": "^3.2.4"
 	}
 }

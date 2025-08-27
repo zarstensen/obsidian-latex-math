@@ -1,35 +1,19 @@
 import { App, Editor, EditorPosition, MarkdownView, Notice } from "obsidian";
-import { CasServer, StartCommandMessage, GenericPayload } from "src/LmatCasServer";
+import { CasServer } from "cas/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "src/EquationExtractor";
-import { LmatEnvironment } from "src/LmatEnvironment";
-import { formatLatex } from "src/FormatLatex";
+import { EquationExtractor } from "EquationExtractor";
+import { LmatEnvironment } from "cas/LmatEnvironment";
+import { formatLatex } from "FormatLatex";
+import { EvaluateArgsPayload, EvaluateMessage, EvaluateMode, EvaluateResponse } from "cas/messages/EvaluateMessage";
 
 export type Expression = { from: number, to: number, contents: string, is_multiline: boolean };
-
-export class EvaluateArgsPayload implements GenericPayload {
-    public constructor(
-        public expression: string,
-        public environment: LmatEnvironment
-    ) { }
-    [x: string]: unknown;
-}
-
-interface EvaluateResponse {
-    metadata: {
-        separator: string,
-        end_line: number
-    },
-    evaluated_expression: string
-}
 
 export class EvaluateCommand extends LatexMathCommand {
     readonly id: string;
 
-    constructor(evaluate_mode: string, ...base_args: ConstructorParameters<typeof LatexMathCommand>) {
+    constructor(private readonly evaluate_mode: EvaluateMode, ...base_args: ConstructorParameters<typeof LatexMathCommand>) {
         super(...base_args);
         this.id = `${evaluate_mode}-latex-expression`;
-        this.evaluate_mode = evaluate_mode;
     }
     
     public async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
@@ -42,10 +26,10 @@ export class EvaluateCommand extends LatexMathCommand {
         }
 
         // send it to python and wait for response.
-        const response = await cas_server.send(new StartCommandMessage({
-            command_type: this.evaluate_mode,
-            start_args: await this.createArgsPayload(expression, app, view)
-        }));
+        const response = await cas_server.send(new EvaluateMessage(
+            this.evaluate_mode,
+            await this.createArgsPayload(expression, app, view)
+        )).response;
 
         const result = this.response_verifier.verifyResponse<EvaluateResponse>(response);
 
@@ -93,6 +77,4 @@ export class EvaluateCommand extends LatexMathCommand {
     protected async createArgsPayload(expression: Expression, app: App, view: MarkdownView): Promise<EvaluateArgsPayload> {
         return new EvaluateArgsPayload(expression.contents, LmatEnvironment.fromMarkdownView(app, view));
     }
-    
-    private evaluate_mode: string;
 }
