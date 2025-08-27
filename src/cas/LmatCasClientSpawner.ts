@@ -13,7 +13,7 @@ export class SourceCodeSpawner implements CasClientSpawner{
 
     public async spawnClient(port: number): Promise<ChildProcessWithoutNullStreams> {
         
-        return spawn(join(this.plugin_dir, this.venv, "scripts", this.python_exe), [join(this.plugin_dir, "lmat-cas-client/lmat-cas-client.py"), port.toString()]);
+        return spawn(join(this.plugin_dir, this.venv, process.platform === "win32" ? "Scripts" : "bin", this.python_exe), [join(this.plugin_dir, "lmat-cas-client/lmat-cas-client.py"), port.toString()]);
     }   
 }
 

@@ -1,37 +1,11 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { EquationExtractor } from "src/EquationExtractor";
-import { formatLatex } from "src/FormatLatex";
-import { CasServer, GenericPayload, StartCommandMessage } from "src/LmatCasServer";
-import { LmatEnvironment } from "src/LmatEnvironment";
-import { LatexMathSymbol, SolveModeModal } from "src/modals/SolveModeModal";
+import { EquationExtractor } from "EquationExtractor";
+import { formatLatex } from "FormatLatex";
+import { CasServer } from "cas/LmatCasServer";
+import { LmatEnvironment } from "cas/LmatEnvironment";
+import { SolveModeModal } from "modals/SolveModeModal";
 import { LatexMathCommand } from "./LatexMathCommand";
-
-class SolveArgsPayload implements GenericPayload {
-    public constructor(
-        public expression: string,
-        public environment: LmatEnvironment,
-        public symbols: string[]
-    ) { }
-    [x: string]: unknown;
-}
-
-interface SolveResponse {
-    solution_set: string
-}
-
-class SolveInfoArgsPayload implements GenericPayload {
-        public constructor(
-        public expression: string,
-        public environment: LmatEnvironment
-    ) { }
-    [x: string]: unknown;
-}
-
-
-interface SolveInfoResponse {
-    required_symbols: number
-    available_symbols: LatexMathSymbol[],
-}
+import { LatexMathSymbol, SolveArgsPayload, SolveInfoArgsPayload, SolveInfoMessage, SolveInfoResponse, SolveMessage, SolveResponse } from "cas/messages/SolveMessage";
 
 export class SolveCommand extends LatexMathCommand {
     readonly id: string = 'solve-latex-expression';
@@ -53,10 +27,9 @@ export class SolveCommand extends LatexMathCommand {
 
         // Send expression to cas server to get some information about it.
 
-        const solve_info_response = await cas_server.send(new StartCommandMessage({
-            command_type: "solve-info",
-            start_args: new SolveInfoArgsPayload(equation.contents, lmat_env)
-        }));
+        const solve_info_response = await cas_server.send(new SolveInfoMessage(
+            new SolveInfoArgsPayload(equation.contents, lmat_env)
+        )).response;
 
         const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResponse>(solve_info_response);
 
@@ -81,10 +54,9 @@ export class SolveCommand extends LatexMathCommand {
 
         // actually solve the equation now, with the symbols configured automatically or by the user.
 
-        const solve_response = await cas_server.send(new StartCommandMessage({
-            command_type: "solve",
-            start_args: new SolveArgsPayload(equation.contents, lmat_env, [...symbols].map((symbol) => symbol.sympy_symbol)),
-        }));
+        const solve_response = await cas_server.send(new SolveMessage(
+            new SolveArgsPayload(equation.contents, lmat_env, [...symbols].map((symbol) => symbol.sympy_symbol)),
+        )).response;
 
         const solve_result = this.response_verifier.verifyResponse<SolveResponse>(solve_response);
 

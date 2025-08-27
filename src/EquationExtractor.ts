@@ -7,6 +7,7 @@ export class EquationExtractor {
     // Extract the contents of the equation block, which the given position offset is currently inside.
     // Returns null if the position is not inside an equation.
     public static extractEquation(position: number, editor: Editor) : { from: number; to: number, block_from: number, block_to: number, contents: string, is_multiline: boolean} | null {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const state = (editor as any).cm.state as EditorState;
         
         // we cannot extract an equation if we are not currently within one.

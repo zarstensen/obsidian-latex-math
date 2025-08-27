@@ -1,32 +1,10 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { GenericPayload, StartCommandMessage, CasServer } from "src/LmatCasServer";
+import { CasServer } from "cas/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "src/EquationExtractor";
-import { LmatEnvironment } from "src/LmatEnvironment";
-import { formatLatex } from "src/FormatLatex";
-
-class TruthTableArgsPayload implements GenericPayload {
-    public constructor(
-        public expression: string,
-        public environment: LmatEnvironment,
-        public truth_table_format: TruthTableFormat
-    ) { }
-    [x: string]: unknown;
-}
-
-interface TruthTableResponse {
-    truth_table: string
-}
-
-// Enum of all possible truth table formats returned by the cas client
-export enum TruthTableFormat {
-    // truth table contents is formatted as a markdown table with latex entries.
-    MARKDOWN = "md",
-    // truth table is formatted in a latex array, displayable by mathjax 
-    LATEX_ARRAY = "latex-array",
-    // TODO: LATEX_TABLE?
-    // this is not supported by mathjax, but could be usefull for real latex documents?
-}
+import { EquationExtractor } from "EquationExtractor";
+import { LmatEnvironment } from "cas/LmatEnvironment";
+import { formatLatex } from "FormatLatex";
+import { TruthTableArgsPayload, TruthTableFormat, TruthTableMessage, TruthTableResponse } from "cas/messages/TruthTableMessage";
 
 export class TruthTableCommand extends LatexMathCommand {
     readonly id: string;
@@ -49,10 +27,9 @@ export class TruthTableCommand extends LatexMathCommand {
         const lmat_env = LmatEnvironment.fromMarkdownView(app, view);
 
         // Send it to python.
-        const response = await cas_server.send(new StartCommandMessage({
-            command_type: "truth-table",
-            start_args: new TruthTableArgsPayload(equation.contents, lmat_env, this.truth_table_format)
-        }));
+        const response = await cas_server.send(new TruthTableMessage(
+            new TruthTableArgsPayload(equation.contents, lmat_env, this.truth_table_format)
+        )).response;
 
         const result = this.response_verifier.verifyResponse<TruthTableResponse>(response);
 

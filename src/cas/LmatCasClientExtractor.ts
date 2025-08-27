@@ -2,9 +2,9 @@ import * as fs from "fs/promises";
 import * as fs_sync from "fs";
 import path from "path";
 import { platform } from "os";
-import LmatCasClientWin from "../bundle-bin/lmat-cas-client-win/lmat-cas-client-win.bin";
-import LmatCasClientMacos from "../bundle-bin/lmat-cas-client-macos/lmat-cas-client-macos.bin";
-import LmatCasClientLinux from "../bundle-bin/lmat-cas-client-linux/lmat-cas-client-linux.bin";
+import LmatCasClientWin from "/../bundle-bin/lmat-cas-client-win/lmat-cas-client-win.bin";
+import LmatCasClientMacos from "/../bundle-bin/lmat-cas-client-macos/lmat-cas-client-macos.bin";
+import LmatCasClientLinux from "/../bundle-bin/lmat-cas-client-linux/lmat-cas-client-linux.bin";
 
 type PlatformStr = "win" | "macos" | "linux";
 
