@@ -350,7 +350,7 @@ _delimited_proposition: _L_PAREN _proposition _R_PAREN | _L_BRACKET _proposition
 prop_iff: prop_iff_arg (_PROP_OP_BIIMPLICATION prop_iff_arg)+
 ?prop_iff_arg: prop_implies_arg | prop_implies
 
-!prop_implies: prop_implies_arg ((_PROP_OP_LR_IMPLICATION|_PROP_OP_RL_IMPLICATION) prop_implies_arg)+
+!prop_implies: prop_implies_arg ((_PROP_OP_LR_IMPLICATION|_PROP_OP_NEG_LR_IMPLICATION|_PROP_OP_RL_IMPLICATION|_PROP_OP_NEG_RL_IMPLICATION) prop_implies_arg)+
 ?prop_implies_arg: prop_or_arg | prop_or
 
 prop_or: prop_or_arg (_PROP_OP_OR prop_or_arg)+
@@ -672,18 +672,34 @@ _CMD_END_CASES: CMD_END _WS? "cases" _WS? _R_BRACE
 
 // ======== propositional logic ========
 
-CMD_TAUTOLOGY.1: /\\(?:mathrm|operatorname)\s*{\s*(?:T|True|TRUE)\s*}/
-CMD_CONTRADICTION.1: /\\(?:mathrm|operatorname)\s*{\s*(?:F|False|FALSE)\s*}/
+CMD_TAUTOLOGY.1: /\\(?:mathrm|operatorname)\s*{\s*(?:T|True|TRUE)\s*}/ | "\\top"
+CMD_CONTRADICTION.1: /\\(?:mathrm|operatorname)\s*{\s*(?:F|False|FALSE)\s*}/ | "\\bot"
 
-_PROP_OP_BIIMPLICATION: "\\iff" | /\\(?:[Ll]ongl|[Ll])eftrightarrow/ | /\\(?:leftright|rightleft)harpoons/
-_PROP_OP_LR_IMPLICATION.1: "\\implies" | "\\to" | /\\(?:[Ll]ongr|[Rr])ightarrow/ // have to increase priority due to _LIM_APPROACH_SYMBOL
+_CMD_DOT: "\\dot"
+
+_PROP_OP_BIIMPLICATION: "\\iff"
+    | /\\(?:[Ll]ongl|[Ll])eftrightarrow/
+    | /\\(?:leftright|rightleft)harpoons/
+// have to increase priority due to _LIM_APPROACH_SYMBOL
+_PROP_OP_LR_IMPLICATION.1: "\\implies"
+    | "\\to"
+    | /\\(?:[Ll]ongr|[Rr])ightarrow/
+_PROP_OP_NEG_LR_IMPLICATION: /\\n[Rr]ightarrow/
 _PROP_OP_RL_IMPLICATION: /\\(?:[Ll]ongl|[Ll])eftarrow/
-_PROP_OP_OR: "\\vee"
-_PROP_OP_NAND: (_CMD_BAR|_CMD_OVERLINE) _WS? _PROP_OP_AND
-_PROP_OP_AND: "\\wedge"
-_PROP_OP_NOR: (_CMD_BAR|_CMD_OVERLINE) _WS? _PROP_OP_OR
-_PROP_OP_XOR: "\\oplus"
+_PROP_OP_NEG_RL_IMPLICATION: /\\n[Ll]eftarrow/
+_PROP_OP_OR: /\\(big)?vee/
+    | "\\lor"
+_PROP_OP_NAND: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_AND | _L_BRACE _WS? _PROP_OP_AND _WS? _R_BRACE)
+_PROP_OP_AND: /\\(big)?wedge/
+    | "\\land"
+_PROP_OP_NOR: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
+_PROP_OP_XOR: /\\(big)?oplus/
+    | "\\veebar"
+    | _CMD_DOT _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
 _PROP_OP_XNOR: "\\odot"
+    | (_CMD_BAR|_CMD_OVERLINE) _WS? ( _PROP_OP_XOR | _L_BRACE _WS? (_PROP_OP_XOR) _WS? _R_BRACE)
 _PROP_OP_NOT: "\\neg"
+    | "\\sim"
+_PROP_OP_PREFIX_NOT: "\\not"
 
 _PROP_OP_EQUIV: "\\equiv"
