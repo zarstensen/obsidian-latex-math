@@ -59,19 +59,25 @@ class LmatEnvironment(BaseModel):
 
             match definition_id:
                 case Symbol() as def_symbol:
-                    definitions[def_symbol.name] = AstDefinition(
-                        expr_transformer = sympy_transformer_runner,
-                        dependencies_transformer = dependencies_transformer_runner,
-                        ast_definition = latex_parser.parse(definition.value_expr)
-                    )
+                    if definition.value_expr == "":
+                        del definitions[def_symbol.name]
+                    else:
+                        definitions[def_symbol.name] = AstDefinition(
+                            expr_transformer = sympy_transformer_runner,
+                            dependencies_transformer = dependencies_transformer_runner,
+                            ast_definition = latex_parser.parse(definition.value_expr)
+                        )
                 case AppliedUndef() as def_function:
-                    definitions[def_function.name] = AstFunctionDefinition(
-                        expr_transformer = sympy_transformer_runner,
-                        dependencies_transformer = dependencies_transformer_runner,
-                        func_name = def_function.name,
-                        ast_body = latex_parser.parse(definition.value_expr),
-                        variables = [ arg.name for arg in def_function.args ]
-                    )
+                    if definition.value_expr == "":
+                        del definitions[def_function.name]
+                    else:
+                        definitions[def_function.name] = AstFunctionDefinition(
+                            expr_transformer = sympy_transformer_runner,
+                            dependencies_transformer = dependencies_transformer_runner,
+                            func_name = def_function.name,
+                            ast_body = latex_parser.parse(definition.value_expr),
+                            variables = [ arg.name for arg in def_function.args ]
+                        )
                 case _:
                     pass
 
