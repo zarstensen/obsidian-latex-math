@@ -186,6 +186,19 @@ class TestEvaluate:
         })
         assert result.sympy_expr == 4
 
+        x = Symbol('x')
+
+        result = handler.handle({
+            "expression": "x",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="x", value_expr="25"),
+                    EnvDefinition(name_expr="x", value_expr=""),
+                ]
+            }
+        })
+
+        assert result.sympy_expr == x
 
     def test_gradient(self):
         handler = EvalHandler(self.compiler)
