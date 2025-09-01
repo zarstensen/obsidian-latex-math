@@ -339,11 +339,11 @@ class TestParse:
         result = self._parse_expr(r"A \iff B \Longleftrightarrow C \longleftrightarrow D \leftrightharpoons E \rightleftharpoons F ")
         assert simplify(result) == simplify(Equivalent(a, b, c, d, e, f))
 
-        result = self._parse_expr(r"A \implies B \to C \Longrightarrow D \longrightarrow E \Rightarrow F \rightarrow G")
-        assert simplify(result) == simplify(a >> (b >> (c >> (d >> (e >> (f >> g))))))
+        result = self._parse_expr(r"A \implies B \to C \Longrightarrow D \longrightarrow E \nRightarrow F \rightarrow G")
+        assert simplify(result) == simplify(Not(((((a >> b) >> c) >> d) >> e) >> f) >> g)
 
         result = self._parse_expr(r"A \Longleftarrow B \longleftarrow C \Leftarrow D \leftarrow E")
-        assert simplify(result) == simplify(a << (b << (c << (d << e))))
+        assert simplify(result) == simplify((((a << b) << c) << d) << e)
 
         result = self._parse_expr(r"A \vee B")
         assert simplify(result) == simplify(Or(a, b))
