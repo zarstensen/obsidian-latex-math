@@ -44,20 +44,27 @@ class PropositionsTransformer(Transformer):
     def prop_iff(self, *args: tuple[Expr]) -> Expr:
         return Functions.SymbolicIff(*args)
 
+    def prop_negated_iff(self, *args: tuple[Expr]) -> Expr:
+        return Not(Functions.SymbolicIff(*args))
+
     def prop_implies(self, *args: tuple[Expr|Token]) -> Expr:
 
-        args = list(args)
+        args = list(reversed(args))
 
         while len(args) > 1:
-            right = args.pop()
-            op_token = args.pop()
             left = args.pop()
+            op_token = args.pop()
+            right = args.pop()
 
             match op_token.type:
                 case "_PROP_OP_LR_IMPLICATION":
                     implication = Implies(left, right, evaluate=False)
+                case "_PROP_OP_NEG_LR_IMPLICATION":
+                    implication = Not(Implies(left, right, evaluate=False), evaluate=False)
                 case "_PROP_OP_RL_IMPLICATION":
                     implication = Implies(right, left, evaluate=False)
+                case "_PROP_OP_NEG_RL_IMPLICATION":
+                    implication = Not(Implies(right, left, evaluate=False), evaluate=False)
                 case _:
                     raise ValueError(f"Unexpected token: {repr(op_token)}")
 
