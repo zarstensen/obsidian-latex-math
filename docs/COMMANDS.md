@@ -16,9 +16,9 @@ In general, all commands require a LaTeX expression as input. Below is the list 
 
 If a command is being processed for longer than some set time (currently 1 sec), **LaTeX Math** will display a clickable 'evaluating' entry in the Obsidian status bar.
 
-Upon clicking this, one gets the option to interrupt all currently processed commands.
+Upon clicking this, one gets the option to interrupt all currently processing commands.
 
-This is especially useful if you accidentally try to evaluate an intensive expression, which may never finish within a reasonable time frame.
+This is especially useful if one accidentally tries to evaluate an intensive expression, which may never finish within a reasonable time frame.
 
 <!-- omit in toc -->
 ## Table Of Contents
