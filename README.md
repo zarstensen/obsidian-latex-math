@@ -26,7 +26,7 @@ In general, all demo GIFs will make use of the [recommended hotkeys](#command-li
 
 ## Usage
 
-Start out by placing the cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse the latex math block, evaluate the equation, and insert the result at the end of the math block.
+Start out by placing the cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse the latex math block, evaluate the expression, and insert the result at the end of the math block.
 
 Take a look at the [command list](#command-list) a brief overview of what this plugin can do, or go look at the [features](#features) list, for a more in depth walkthrough of this plugin's advanced features.
 
@@ -46,7 +46,7 @@ Take a look at the [command list](#command-list) a brief overview of what this p
 - [Installing](#installing)
   - [Installing a Specific Version](#installing-a-specific-version)
 - [Contributing](#contributing)
-  - [Developing the Cas Client](#developing-the-cas-client)
+  - [Developing the CAS Client](#developing-the-cas-client)
   - [Developing the Obsidian Plugin](#developing-the-obsidian-plugin)
 - [License](#license)
 
@@ -56,7 +56,7 @@ Below is a table of all the commands this plugin provides, along with a brief de
 
 | Command                                     | Recommended Hotkey | Usage                                                                                                                                             |
 | ------------------------------------------- | :----------------: | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Evaluate LaTeX expression                   |     `Alt + B`      | Evaluate the right most expression (if in a relation) and simplify the result.                                                                    |
+| Evaluate LaTeX expression                   |     `Alt + B`      | Evaluate the right most expression in a relation and simplify the result.                                                                    |
 | Evalf LaTeX expression                      |     `Alt + F`      | Evaluate expression and output decimal numbers instead of fractions in the result.                                                                |
 | Expand LaTeX expression                     |     `Alt + E`      | Evaluate expression and expand the result as much as possible.                                                                                    |
 | Factor LaTeX expression                     |                    | Evaluate expression and factorize the result as much as possible.                                                                                 |
@@ -104,7 +104,7 @@ To undefine a symbol or function, leave the right-hand side of the `:=` operator
 ### Units and Physical Constants
 
 Denote units or physical constants in equations by surrounding them with braces `{}`.
-LaTeX Math automatically handles conversions between units, constants and their various prefixes. See the [syntax](SYNTAX.md#supported-units) document for a list of supported units and physical constants.
+LaTeX Math automatically handles conversions between units, constants and their various prefixes. See the [syntax](docs/SYNTAX.md#supported-units) document for a list of supported units and physical constants.
 
 ### Symbol Assumptions
 
@@ -131,7 +131,7 @@ See the [Sympy documentation](https://docs.sympy.org/latest/guides/assumptions.h
 
 Simplify logical propositions using the [evaluate commands](#evaluate). Truth tables can be generated from a logical proposition using the `Create truth table from LaTeX expression` commands.
 
-See [SYNTAX.md/Logical Operators](SYNTAX.md#logical-operators) for a list of logical operators.
+See [SYNTAX.md/Logical Operators](docs/SYNTAX.md#logical-operators) for a list of logical operators.
 
 > [!TIP]
 > Want to check if two expressions are equal?
