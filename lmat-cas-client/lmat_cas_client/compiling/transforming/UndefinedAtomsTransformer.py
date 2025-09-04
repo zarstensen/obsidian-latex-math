@@ -18,8 +18,11 @@ class UndefinedAtomsTransformer(Transformer):
     def __init__(self, definition_store: DefinitionStore):
         self.__definition_store = definition_store
 
-    def combine_symbol(self, *symbol_strings: str) -> Symbol:
+    def combine_symbol(self, *symbol_strings: str) -> str:
         return ''.join(map(str, symbol_strings))
+
+    def delta_symbol(self, delta_token: Token, symbol_string: str) -> str:
+        return self.combine_symbol(delta_token.value, ' ', symbol_string)
 
     def substitute_symbol(self, symbol_name: str) -> Symbol | Expr:
         definition = self.__definition_store.get_definition(str(symbol_name), default=SympyDefinition(Symbol(symbol_name)))
@@ -53,8 +56,12 @@ class UndefinedAtomsTransformer(Transformer):
         else:
             return self.substitute_symbol(unit_symbol)
 
-    def undefined_function(self, func_name: Token, func_args: Iterator[Expr]) -> Function | Expr:
+    def undefined_function(self, delta_token: Token | None, func_name: Token, func_args: Iterator[Expr]) -> Function | Expr:
         func_name = func_name.value[:-1] # remove the suffixed parenthesees
+
+        if delta_token:
+            func_name = f"{delta_token.value} {func_name}"
+
         func_definition = self.__definition_store.get_definition(func_name)
 
         if func_definition is not None and isinstance(func_definition, DefinitionStore.FunctionDefinition):
