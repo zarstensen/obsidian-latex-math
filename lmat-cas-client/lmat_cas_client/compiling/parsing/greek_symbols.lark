@@ -1,27 +1,42 @@
 // Based on sympy's original greek_symbols.lark: https://github.com/sympy/sympy/blob/2e7baea39cd0d891433bdc2ef2222e445c381ca3/sympy/parsing/latex/lark/grammar/greek_symbols.lark
 
-ALPHA: "\\alpha"
-BETA: "\\beta"
-GAMMA: "\\gamma"
-DELTA: "\\delta"
-EPSILON: "\\epsilon" |  "\\varepsilon"
-ZETA: "\\zeta"
-ETA: "\\eta"
-THETA: "\\theta" | "\\vartheta"
-IOTA: "\\iota"
-KAPPA: "\\kappa"
-LAMBDA: "\\lambda"
-MU: "\\mu"
-NU: "\\nu"
-XI: "\\xi"
-RHO: "\\rho" | "\\varrho"
-SIGMA: "\\sigma"
-TAU: "\\tau"
-UPSILON: "\\upsilon"
-PHI: "\\phi" | "\\varphi"
-CHI: "\\chi"
-PSI: "\\psi"
-OMEGA: "\\omega"
+ALPHA_LOWER: "\\alpha"
+BETA_LOWER: "\\beta"
+GAMMA_LOWER: "\\gamma"
+DELTA_LOWER: "\\delta"
+EPSILON_LOWER: "\\epsilon" | "\\varepsilon"
+ZETA_LOWER: "\\zeta"
+ETA_LOWER: "\\eta"
+THETA_LOWER: "\\theta" | "\\vartheta"
+IOTA_LOWER: "\\iota"
+KAPPA_LOWER: "\\kappa"
+LAMBDA_LOWER: "\\lambda"
+MU_LOWER: "\\mu"
+NU_LOWER: "\\nu"
+XI_LOWER: "\\xi"
+RHO_LOWER: "\\rho" | "\\varrho"
+SIGMA_LOWER: "\\sigma"
+TAU_LOWER: "\\tau"
+UPSILON_LOWER: "\\upsilon"
+PHI_LOWER: "\\phi" | "\\varphi"
+CHI_LOWER: "\\chi"
+PSI_LOWER: "\\psi"
+OMEGA_LOWER: "\\omega"
 
-GREEK_SYMBOL: ALPHA | BETA | GAMMA | DELTA | EPSILON | ZETA | ETA | THETA | IOTA | KAPPA
-    | LAMBDA | MU | NU | XI | RHO | SIGMA | TAU | UPSILON | PHI | CHI | PSI | OMEGA
+GAMMA_UPPER: "\\Gamma"
+DELTA_UPPER: "\\Delta"
+THETA_UPPER: "\\Theta"
+LAMBDA_UPPER: "\\Lambda"
+XI_UPPER: "\\Xi"
+SIGMA_UPPER: "\\Sigma"
+UPSILON_UPPER: "\\Upsilon"
+PHI_UPPER: "\\Phi" | "\\varPhi"
+PSI_UPPER: "\\Psi"
+OMEGA_UPPER: "\\Omega"
+
+GREEK_SYMBOL_LOWER: ALPHA_LOWER | BETA_LOWER | GAMMA_LOWER | DELTA_LOWER | EPSILON_LOWER | ZETA_LOWER | ETA_LOWER | THETA_LOWER | IOTA_LOWER | KAPPA_LOWER
+    | LAMBDA_LOWER | MU_LOWER | NU_LOWER | XI_LOWER | RHO_LOWER | SIGMA_LOWER | TAU_LOWER | UPSILON_LOWER | PHI_LOWER | CHI_LOWER | PSI_LOWER | OMEGA_LOWER
+
+GREEK_SYMBOL_UPPER: GAMMA_UPPER | DELTA_UPPER | THETA_UPPER | LAMBDA_UPPER | XI_UPPER | SIGMA_UPPER | UPSILON_UPPER | PHI_UPPER | PSI_UPPER | OMEGA_UPPER
+
+GREEK_SYMBOL: GREEK_SYMBOL_LOWER | GREEK_SYMBOL_UPPER

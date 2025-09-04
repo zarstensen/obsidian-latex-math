@@ -65,7 +65,8 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
 // ======== Symbols ========
 
 substitute_symbol: combine_symbol
-combine_symbol: indexed_symbol | _non_indexed_symbol
+combine_symbol: delta_symbol | indexed_symbol | _non_indexed_symbol
+delta_symbol: DELTA_UPPER combine_symbol
 
 single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
@@ -99,7 +100,7 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 
 // ======== Functions ========
 
-undefined_function: UNDEFINED_FUNC_START list_of_expressions _R_PAREN
+undefined_function: [DELTA_UPPER] UNDEFINED_FUNC_START list_of_expressions _R_PAREN
 
 // groups all functions whic cannot be used as an argument to other functions.
 // to pass this type of function, delimit them so they are matched by the _delimited_factor rule.
@@ -606,6 +607,7 @@ OPERATOR_DIV: _CMD_DIV | DIV
 OPERATOR_MUL: MUL | _CMD_TIMES | _CMD_CDOT
 
 %import .greek_symbols.GREEK_SYMBOL
+%import .greek_symbols.DELTA_UPPER
 
 _PARTIAL_DIFFERENTIAL_SYMBOL: "\\partial"
 _UPRIGHT_DIFFERENTIAL_SYMBOL: "\\text{d}" | "\\mathrm{d}"
