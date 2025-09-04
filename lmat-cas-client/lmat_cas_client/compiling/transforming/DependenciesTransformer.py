@@ -51,10 +51,16 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
 
         return symbol_or_unit
 
-    def undefined_function(self, func_name: Token, func_args: Iterator[Expr]) -> Function | Expr:
+    def undefined_function(self, delta_token: Token | None, func_name: Token, func_args: Iterator[Expr]) -> Function | Expr:
         # include both the function itself, and all arguments to the function as dependencies.
         # e.g. f(x, 1, y) should produce [ 'f', 'x', 'y' ]
-        return [ Function(func_name.value[:-1]), *func_args ]
+
+        func_name = func_name.value[:-1]
+
+        if delta_token:
+            func_name = f"{delta_token.value} {func_name}"
+
+        return [ Function(func_name), *func_args ]
 
     @v_args(inline=False)
     def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:

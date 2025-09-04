@@ -238,6 +238,15 @@ class TestParse:
 
         assert result == s_a + s_b * s_c + sqrt(s_e**s_f) + s_d**-1
 
+    def test_delta_symbols(self):
+        delta_v = Symbol(r"\Delta v")
+        delta_f = Function(r"\Delta f")
+        x = Symbol('x')
+
+        result = self._parse_expr(r"\Delta   f(x) + \Delta v + \Delta       v")
+
+        assert result == delta_f(x) + 2 * delta_v
+
     def test_definitions(self):
         result = self._parse_expr(r"x", { "symbols": { "x": [ "real" ] } })
         assert result == symbols("x", real=True)
