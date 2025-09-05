@@ -390,6 +390,7 @@ _WS: /[\s\t\n\r]+/
 %ignore "\\!" | "\\negthinspace" | "\\negmedspace" | "\\negthickspace"
 %ignore "\\vrule" | "\\vcenter" | "\\vbox" | "\\vskip" | "\\vspace" | "\\hfill"
 %ignore "\\*" | "\\-" | "\\." | "\\/" | "\\(" | "\\=" | "\\middle"
+%ignore "~"
 
 _LR_FORMAT: "\\left" | "\\right"
 %ignore _LR_FORMAT
