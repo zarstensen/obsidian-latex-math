@@ -2,16 +2,22 @@
 
 ## [Commands](COMMANDS.md)
 
-a bit more detailed version without the default hotkey info, but basically just the command list.
+**LaTeX Math** provides its main function through a series of commands.
 
-## [Supported LaTeX Syntax](SYNTAX.md)
+This section of the documentation goes through each command in detail.
 
+## [LaTeX Syntax (how to write valid LaTeX)](SYNTAX.md)
+
+these are probably used often so these are just quickly linked here.
 ### [Units](SYNTAX.md#supported-units)
 
 ### [Physical Constants](SYNTAX.md#supported-physical-constants)
 
-## [LMat Environment](LMAT_ENV.md)
+
+## [LaTeX Math (`lmat`) Environment](LMAT_ENV.md)
 
 detailed specification of all fields in the lmat environment, could be automated maybe?
 
 ## [Contributing](CONTRIBUTING.md)
+
+how to contribute, general overview of setup and where code generally is located.
