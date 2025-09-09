@@ -112,7 +112,7 @@ Register the command in `src/LatexMathPlugin.ts` as an argument to `this.addComm
 
 The LaTeX parser is implemented with the [lark](https://lark-parser.readthedocs.io/en/latest/philosophy.html) library.
 
-Start by looking at [SYNTAX.md] to get a broad overview of the LaTeX syntax,
+Start by looking at the [SYNTAX](SYNTAX.md) document, to get a broad overview of the LaTeX syntax,
 
 then dive deeper into `lmat-cas-client/lmat_cas_client/compiling/parsing/latex_math_grammar.lark` and the [lark documentation](https://lark-parser.readthedocs.io/en/latest/how_to_use.html), to get a good understanding of the parser.
 

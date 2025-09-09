@@ -119,7 +119,7 @@ If the input is a series of relations, one must restrict the solution set by app
 
 > Obsidian command name: `Create truth table from LaTeX expression (markdown)` / `Create truth table from LaTeX expression (LaTeX)`
 
-This command requires the input is a [proposition](MISSING_LINK).
+This command requires the input is a [proposition](SYNTAX.md#logical-proposition).
 
 [`sympy.logic.boolalg.truth_table`](https://docs.sympy.org/latest/modules/logic.html#sympy.logic.boolalg.truth_table) is used to generate a truth table of the proposition input, which is then inserted either as a LaTeX array, or a markdown table depending on the chosen command.
 

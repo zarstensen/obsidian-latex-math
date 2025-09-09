@@ -1,7 +1,7 @@
 ---
 name: General Bug report
 about: Create a report which does not fit any other category
-title: "[BUG]"
+title: "[BUG]: "
 labels: bug
 assignees: ''
 

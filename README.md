@@ -30,6 +30,8 @@ Start out by placing the cursor inside any math block. Then execute the `Evaluat
 
 Take a look at the [command list](#command-list) a brief overview of what this plugin can do, or go look at the [features](#features) list, for a more in depth walkthrough of this plugin's advanced features.
 
+Also look at the [documentation](https://github.com/zarstensen/obsidian-latex-math/tree/main/docs), which goes more in depth about the features than this README.
+
 <!-- omit in toc -->
 ## Table of Contents
 
@@ -102,7 +104,7 @@ To undefine a symbol or function, leave the right-hand side of the `:=` operator
 ### Units and Physical Constants
 
 Denote units or physical constants in equations by surrounding them with braces `{}`.
-LaTeX Math automatically handles conversions between units, constants and their various prefixes. See the [syntax](docs/SYNTAX.md#supported-units) document for a list of supported units and physical constants.
+LaTeX Math automatically handles conversions between units, constants and their various prefixes. See the [syntax](https://github.com/zarstensen/obsidian-latex-math/blob/main/docs/SYNTAX.md#supported-units) document for a list of supported units and physical constants.
 
 ### Symbol Assumptions
 
@@ -129,7 +131,7 @@ See the [Sympy documentation](https://docs.sympy.org/latest/guides/assumptions.h
 
 Simplify logical propositions using the [evaluate commands](#evaluate). Truth tables can be generated from a logical proposition using the `Create truth table from LaTeX expression` commands.
 
-See [SYNTAX.md/Logical Operators](docs/SYNTAX.md#logical-operators) for a list of logical operators.
+See [SYNTAX.md/Logical Operators](https://github.com/zarstensen/obsidian-latex-math/blob/main/docs/SYNTAX.md#logical-operators) for a list of logical operators.
 
 > [!TIP]
 > Want to check if two expressions are equal?

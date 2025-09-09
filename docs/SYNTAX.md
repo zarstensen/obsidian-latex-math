@@ -36,7 +36,7 @@ Terms consists of a series of factors separated by a multiplication sign (`*`, `
 - [Number](#numbers)
 - [Symbol](#symbols)
 - [Unit / Constant](#units-and-physical-constants)
-- Matrix
+- [Matrix](#matrices)
 - Exponentiation
 - [Function](#mathematical-functions)
 - Expression delimited by `()`, `{}` or `[]`
@@ -98,18 +98,18 @@ Transpositions of matrices are performed by inserting `^T` after a matrix value.
 
 > [!NOTE]
 > **Examples**
-> 
+>
 > 2 x 2 matrix with elements 1, 2, 3 and 4.
-> 
+>
 > ```latex
 > \begin{bmatrix}
 > 1 & 2 \\
 > 3 & 4
 > \end{bmatrix}
 > ```
-> 
+>
 > 3d vector using the `array` environment
-> 
+>
 > ```latex
 > \left[\begin{array}
 > x \\
@@ -126,9 +126,9 @@ In case multiple matrices are computed into a single matrix, the left most matri
 
 > [!NOTE]
 > **Example**
-> 
+>
 > The output is a `bmatrix` as this was the left most matrix in the original expression.
-> 
+>
 > ```latex
 > \begin{bmatrix} ... \end{bmatrix} + \begin{pmatrix} ... \end{pmatrix} = \begin{bmatrix} ... \end{bmatrix}
 > ```
