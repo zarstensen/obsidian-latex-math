@@ -28,7 +28,7 @@ Any changes to the python source code requires reloading Obsidian to have any ef
 
 ### Node Environment
 
-Start out by downloading the [`bundle-bin.zip`](https://github.com/zarstensen/obsidian-latex-math/releases/latest) file from the latest release (including beta releases), and extract it in the root directory.[^bundle-bin]
+Start out by downloading the [`bundle-bin.zip`](https://github.com/zarstensen/obsidian-latex-math/releases) file from the latest release (including beta releases), and extract it in the root directory.[^bundle-bin]
 
 [^bundle-bin]: The exact contents of this folder do not matter as long as `Developer Mode` is on, but esbuild needs them to be present, otherwise dev builds will error out.
 
