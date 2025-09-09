@@ -2,7 +2,7 @@
   
   <h1 align="center">
   
-  LaTeX Math
+  **LaTeX Math**
   </br>
 
   [<img src="https://img.shields.io/badge/Open%20In%20Obsidian-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" alt="Install Plugin" width="200">][install-url]
@@ -174,10 +174,11 @@ The desired plugin version should now be installed in your vault.
 
 ## Contributing
 
+See [CONTRIBUTING](https://github.com/zarstensen/obsidian-latex-math/tree/dev/docs/CONTRIBUTING.md)
 
 ## License
 
-See [LICENSE](LICENSE)
+See [LICENSE](https://github.com/zarstensen/obsidian-latex-math/tree/main/LICENSE)
 
 [github-latest-release-badge]: https://img.shields.io/github/v/release/zarstensen/obsidian-latex-math?style=flat-square&label=stable%20release&labelColor=2e3440&color=%235e81ac
 
