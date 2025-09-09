@@ -2,7 +2,7 @@
 
 ## [Commands](COMMANDS.md)
 
-**LaTeX Math** provides its main function through a series of commands.
+**LaTeX Math** provides its main functionality through a series of Obsidian commands.
 
 This section of the documentation goes through each command in detail.
 
