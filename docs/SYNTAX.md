@@ -14,6 +14,8 @@ Whilst this document should provide a good overview of the parser, one can alway
 - [Ignored Tokens](#ignored-tokens)
 - [Numbers](#numbers)
 - [Symbols](#symbols)
+- [Matrices](#matrices)
+  - [Delimiters in Matrix Environments](#delimiters-in-matrix-environments)
 - [Mathematical Functions](#mathematical-functions)
 - [Mathematical Constants](#mathematical-constants)
 - [Logical Operators](#logical-operators)
@@ -87,6 +89,49 @@ The parser understands various ways of notating symbols. The below table gives s
 > [!CAUTION]
 > Note that Latin symbols spelling out Greek letters will be converted to Greek symbols upon evaluation e.g. the Latin symbol `alpha` will be output as `\alpha` upon evaluation.
 > This is a side effect of how Sympy handles symbols internally.
+
+## Matrices
+
+A matrix can be notated via. the `matrix` environment, (or any other environment matching the regex `([bp]?(?:small)?)matrix`), or the `array` environment.
+
+Transpositions of matrices are performed by inserting `^T` after a matrix value.
+
+> [!NOTE]
+> **Examples**
+> 
+> 2 x 2 matrix with elements 1, 2, 3 and 4.
+> 
+> ```latex
+> \begin{bmatrix}
+> 1 & 2 \\
+> 3 & 4
+> \end{bmatrix}
+> ```
+> 
+> 3d vector using the `array` environment
+> 
+> ```latex
+> \left[\begin{array}
+> x \\
+> y \\
+> z
+> \end{array}\right]
+> ```
+
+### Delimiters in Matrix Environments
+
+Delimiters before and after `array` environments, and the type of `matrix` environment, are persisted through parsing and will be present in command outputs.
+
+In case multiple matrices are computed into a single matrix, the left most matrix delimiters in the original expression is persisted in the output.
+
+> [!NOTE]
+> **Example**
+> 
+> The output is a `bmatrix` as this was the left most matrix in the original expression.
+> 
+> ```latex
+> \begin{bmatrix} ... \end{bmatrix} + \begin{pmatrix} ... \end{pmatrix} = \begin{bmatrix} ... \end{bmatrix}
+> ```
 
 ## Mathematical Functions
 
