@@ -6,7 +6,7 @@
 
 This section of the documentation goes through each command in detail.
 
-## [LaTeX Syntax (how to write valid LaTeX)](SYNTAX.md)
+## [LaTeX Syntax (how to write LaTeX the plugin understands)](SYNTAX.md)
 
 these are probably used often so these are just quickly linked here.
 ### [Units](SYNTAX.md#supported-units)
