@@ -3,11 +3,11 @@
 
 **LaTeX Math** environments are used to configure CAS options for a section of a note.
 
-The persistence of **LaTeX Math** environments are location based.
+The persistence of **LaTeX Math** environments is location-based.
 
 A new environment declaration resets all previous configurations to their default values, including variables defined through `$ .. := .. $`.
 
-Environments are declared directly in the note with an `lmat` code block.
+Environments are declared directly in the note using an `lmat` code block.
 
 Below is a preview of the default **LaTeX Math** environment used, when no other environment has been declared.
 
@@ -41,11 +41,11 @@ y = [ "integer", ... ]
 ...
 ```
 
-A preview is also generated of the symbol assumptions, whilst the `lmat` code block is not being edited.
+A preview of the symbol assumptions is also generated while the `lmat` code block is not being edited.
 
 ## Unit System
 
-The default unit system to use when auto converting between units can be specified in the `system` field under the `units` table.
+The default unit system to use when auto-converting between units can be specified in the `system` field under the `units` table.
 
 ```toml
 [units]

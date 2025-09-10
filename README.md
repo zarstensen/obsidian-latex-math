@@ -28,9 +28,9 @@ In general, all demo GIFs will make use of the [recommended hotkeys](#command-li
 
 Start out by placing the cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse the latex math block, evaluate the expression, and insert the result at the end of the math block.
 
-Take a look at the [command list](#command-list) a brief overview of what this plugin can do, or go look at the [features](#features) list, for a more in depth walkthrough of this plugin's advanced features.
+Take a look at the [command list](#command-list) for a brief overview of what this plugin can do, or see the [features](#features) list for a more in-depth walkthrough of the plugin's advanced features.
 
-Also look at the [documentation](https://github.com/zarstensen/obsidian-latex-math/tree/main/docs), which goes more in depth about the features than this README.
+Also see the [documentation](https://github.com/zarstensen/obsidian-latex-math/tree/main/docs), which goes more in depth about the features than this README.
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -95,7 +95,7 @@ Restrict the solution domain of a system of equations with [symbol assumptions](
 Define values of symbols or functions using the `:=` operator.
 Only one symbol or function can be defined per math block.
 
-Definitions persistence are location based, any math block below a definition will make use of it, all others will ignore it. Furthermore, all definitions are reset after an `lmat` code block.
+Definition persistence is location-based: any math block below a definition will use it; others will ignore it. Furthermore, all definitions are reset after an `lmat` code block.
 
 To undefine a symbol or function, leave the right-hand side of the `:=` operator blank.
 
@@ -142,7 +142,7 @@ See [SYNTAX.md/Logical Operators](https://github.com/zarstensen/obsidian-latex-m
 
 ### Convert To Sympy Code
 
-Quickly convert latex to Sympy code to perform more advanced computations using the `Convert LaTeX expression to Sympy` command.
+Quickly convert LaTeX to Sympy code to perform more advanced computations using the `Convert LaTeX expression to Sympy` command.
 This will insert a python code block containing the equivalent Sympy code of the selected math block.
 
 ## Installing
@@ -151,11 +151,11 @@ This will insert a python code block containing the equivalent Sympy code of the
 
 or
 
-Press `Browse` in obsidians `Options > Community plugins` menu and search for `LaTeX Math`.
+Press `Browse` in Obsidian's `Options > Community plugins` menu and search for `LaTeX Math`.
 
 ### Installing a Specific Version
 
-An earlier or beta version of this plugin can be installed via. 2 methods.
+An earlier or beta version of this plugin can be installed via two methods.
 
 #### BRAT Installation (easy)
 

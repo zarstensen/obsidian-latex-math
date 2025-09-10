@@ -1,9 +1,9 @@
 <!-- omit in toc -->
 # LaTeX Math Syntax
 
-This document aims to provide an overview of the latex parsing capabilities of this plugin. As a general note, the parser was designed with standard latex notation in mind, so as long as no complex formatting or esoteric math functions are used, it should be pretty straight forward to write latex formulas parsable by this plugin.
+This document aims to provide an overview of the LaTeX parsing capabilities of this plugin. As a general note, the parser was designed with standard LaTeX notation in mind, so as long as you avoid complex formatting or esoteric math functions, it should be straightforward to write LaTeX formulas that the plugin can parse.
 
-Whilst this document should provide a good overview of the parser, one can always look at the [grammar files](lmat-cas-client/lmat_cas_client/grammar/latex_math_grammar.lark) for the concrete implementation.
+While this document provides a good overview of the parser, you can also consult the [grammar files](lmat-cas-client/lmat_cas_client/grammar/latex_math_grammar.lark) for the concrete implementation.
 
 <!-- omit in toc -->
 ## Table of Contents

@@ -32,11 +32,11 @@ List of built-in physical constants.
 
 ## [LaTeX Math (`lmat`) Environments](LMAT_ENV.md)
 
-The most important function of the **LaTeX Math** environment is to reset definitions throughout ones note.
+The most important function of the **LaTeX Math** environment is to reset definitions throughout one's note.
 
-But the **LaTeX Math** environment have many other powerful features, which this section also goes through.
+The **LaTeX Math** environment also has many other powerful features, which this section covers.
 
-This section provides and overview of the purpose of **LaTeX Math** environments, as well as how to use the `lmat` code block.
+This section provides an overview of the purpose of **LaTeX Math** environments and how to use the `lmat` code block.
 
 ## [Contributing](CONTRIBUTING.md)
 

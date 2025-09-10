@@ -2,7 +2,7 @@
 <!-- omit in toc -->
 # LaTeX Math Commands
 
-This documentation section provides detailed descriptions for all obsidian commands provided by the **LaTeX Math** plugin. For a quick overview, take a look at the [README command list](../README.md#command-list).
+This documentation section provides detailed descriptions for all Obsidian commands provided by the **LaTeX Math** plugin. For a quick overview, see the [README command list](../README.md#command-list).
 
 <!-- omit in toc -->
 ## Table Of Contents
@@ -22,8 +22,8 @@ This documentation section provides detailed descriptions for all obsidian comma
 ## General Information
 
 In general, all commands require a LaTeX expression as input.
-The contents of the input are decided based on various conditions.
-See the list below for a list of required conditions as well as the corresponding input, ordered by decreasing priority.
+The contents of the input are decided based on several conditions.
+See the list below for the required conditions and the corresponding input, ordered by decreasing priority.
 
 - **Selection is present:** Use selection as the input.
 - **Cursor is inside a math block:**[^math-block] Use the contents of the math block as input.
@@ -31,11 +31,11 @@ See the list below for a list of required conditions as well as the correspondin
 
 [^math-block]: A math block is any text surrounded by unescaped dollar signs `$`.
 
-If a command is being processed for longer than some set time (currently 1 sec), **LaTeX Math** will display a clickable 'evaluating' entry in the Obsidian status bar.
+If a command is processed for longer than a set time (currently 1 s), **LaTeX Math** displays a clickable 'evaluating' entry in the Obsidian status bar.
 
-Upon clicking this, one gets the option to interrupt all currently processing commands.
+Clicking this gives the option to interrupt all currently processing commands.
 
-This is especially useful if one accidentally tries to evaluate an intensive expression, which may never finish within a reasonable time frame.
+This is useful if you accidentally try to evaluate an intensive expression that may not finish within a reasonable time.
 
 ## Commands
 
@@ -43,35 +43,35 @@ This is especially useful if one accidentally tries to evaluate an intensive exp
 
 > Obsidian command name: `Evaluate LaTeX expression`
 
-The `Evaluate LaTeX expression` command simplifies (via. [`sympy.simplify`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#simplify)) the *right most* expression in the given LaTeX input, and inserts the result to the right of the input, separated by `=`.
+The `Evaluate LaTeX expression` command simplifies (via [`sympy.simplify`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#simplify)) the *right-most* expression in the given LaTeX input, and inserts the result to the right of the input, separated by `=`.
 
-As an example, if `2x < y = 3^2` is the input, then **LaTeX Math** evaluates `3^2` (the *right most* expression) to be `9`, and inserts `= 9` at the end of the input.
+For example, if `2x < y = 3^2` is the input, **LaTeX Math** evaluates `3^2` (the *right-most* expression) to `9`, and inserts `= 9` at the end of the input.
 
-If the input is a system of relations, then the *right most* expression of the *bottom most* line is evaluated and inserted on the same line.
+If the input is a system of relations, the *right-most* expression of the *bottom-most* line is evaluated and inserted on that line.
 
 ### Evalf LaTeX Expression
 
 > Obsidian command name: `Evalf LaTeX expression`
 
-Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.evalf`](https://docs.sympy.org/latest/modules/core.html#module-sympy.core.evalf) is also applied to the parsed input, after simplification.
+Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.evalf`](https://docs.sympy.org/latest/modules/core.html#module-sympy.core.evalf) is also applied to the parsed input after simplification.
 
 ### Factor LaTeX Expression
 
 > Obsidian command name: `Factor LaTeX expression`
 
-Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.factor`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#factor) is also applied to the parsed input, after simplification.
+Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.factor`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#factor) is also applied to the parsed input after simplification.
 
 ### Expand LaTeX Expression
 
 > Obsidian command name: `Expand LaTeX expression`
 
-Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.expand`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#expand) is also applied to the parsed input, after simplification.
+Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.expand`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#expand) is also applied to the parsed input after simplification.
 
 ### Partial Fraction Decompose LaTeX Expression
 
 > Obsidian command name: `Partial Fraction Decompose LaTeX expression`
 
-Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.apart`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#apart) is also applied to the parsed input, after simplification.
+Same as [Evaluate LaTeX Expression](#evaluate-latex-expression), except [`sympy.apart`](https://docs.sympy.org/latest/tutorials/intro-tutorial/simplification.html#apart) is also applied to the parsed input after simplification.
 
 ### Convert Units In LaTeX Expression
 
