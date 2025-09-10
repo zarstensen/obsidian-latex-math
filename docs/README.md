@@ -8,6 +8,19 @@ This section of the documentation goes through each command in detail.
 
 ## [LaTeX Syntax (how to write LaTeX the plugin understands)](SYNTAX.md)
 
+The parser is designed to parse most naturally written LaTeX.
+
+Still, LaTeX is very flexible, and the same visual output can be produced in many different ways.
+
+This section outlines how the parser expects the input to be written.
+
+### [Constants](SYNTAX.md#mathematical-constants)
+
+List of mathematical constants supported by this plugin.
+
+### [Functions](SYNTAX.md#mathematical-functions)
+
+List of mathematical functions supported by this plugin.
 
 ### [Units](SYNTAX.md#supported-units)
 
@@ -17,9 +30,13 @@ List of units supported by this plugin.
 
 List of built-in physical constants.
 
-## [LaTeX Math (`lmat`) Environment](LMAT_ENV.md)
+## [LaTeX Math (`lmat`) Environments](LMAT_ENV.md)
 
-detailed specification of all fields in the lmat environment, could be automated maybe?
+The most important function of the **LaTeX Math** environment is to reset definitions throughout ones note.
+
+But the **LaTeX Math** environment have many other powerful features, which this section also goes through.
+
+This section provides and overview of the purpose of **LaTeX Math** environments, as well as how to use the `lmat` code block.
 
 ## [Contributing](CONTRIBUTING.md)
 

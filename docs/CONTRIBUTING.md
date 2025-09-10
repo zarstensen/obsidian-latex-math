@@ -1,3 +1,5 @@
+
+<!-- omit in toc -->
 # Contributing To The LaTeX Math Plugin
 
 Planning to make a contribution to this plugin? If so, please make sure to checkout and make PR's to the **dev** branch.
@@ -9,6 +11,20 @@ The only exception to this are hotfixes, which should be checked out from and me
 The following sections describe how to set up a development environment for **LaTeX Math**.
 
 Make sure to have [python 3.12 or later](https://www.python.org/) and [node + npm](https://nodejs.org/en/download/) installed before continuing.
+
+<!-- omit in toc -->
+## Table of Contents
+
+- [Development Environment Setup](#development-environment-setup)
+  - [Python Environment](#python-environment)
+  - [Node Environment](#node-environment)
+- [Tests and Code Quality](#tests-and-code-quality)
+  - [Tests](#tests)
+  - [Code Quality](#code-quality)
+- [Developing](#developing)
+  - [Adding Commands](#adding-commands)
+  - [Extending The LaTeX Parser](#extending-the-latex-parser)
+  - [Modifying The UX / UI](#modifying-the-ux--ui)
 
 ### Python Environment
 

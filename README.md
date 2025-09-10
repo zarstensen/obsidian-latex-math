@@ -85,7 +85,7 @@ To solve a system of equations, place them in a `align` or `cases` environment, 
 The solution domain can be restricted for single equations in the solve equation modal, see the [relevant Sympy documentation](https://docs.sympy.org/latest/modules/sets.html#module-sympy.sets.fancysets) for a list of possible values.[^lmat-solve-domain]
 Restrict the solution domain of a system of equations with [symbol assumptions](#symbol-assumptions) on the free symbols.
 
-[^lmat-solve-domain]: The default solution domain for single equations can be set via. The `domain` key in the `domain` table in an `lmat` environment.
+[^lmat-solve-domain]: The default solution domain for single equations can be set via. The `domain` key in the `solve` table in an `lmat` environment.
 
 <!-- TODO: update this one so it has a set solution (sin for example with a periodic solution domain) -->
 ![demo](readme-assets/solve-demo.gif)
@@ -124,6 +124,8 @@ Use an `lmat` code block to tell **LaTeX Math** about various assumptions it may
 > y = [ "integer" ]
 > ```
 > ````
+
+You can read more about **LaTeX Math** environments and the `lmat` code block [in the docs](https://github.com/zarstensen/obsidian-latex-math/blob/main/docs/LMAT_ENV.md).
 
 See the [Sympy documentation](https://docs.sympy.org/latest/guides/assumptions.html#id28) for a list of possible assumptions.
 
