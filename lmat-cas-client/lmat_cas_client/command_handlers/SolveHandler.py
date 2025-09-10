@@ -80,10 +80,10 @@ class SolveHandler(CommandHandler):
         if len(free_symbols) == 0:
             raise HandlerError("Cannot solve equation if no free symbols are present.")
 
-        domain = S.Complexes
+        solve_domain = S.Complexes
 
-        if message.environment.domain is not None and message.environment.domain.strip() != "":
-            domain = sympify(message.environment.domain)
+        if message.environment.solve_domain is not None and message.environment.solve_domain.strip() != "":
+            solve_domain = sympify(message.environment.solve_domain)
 
         symbols = [ None ] * len(message.symbols)
 
@@ -99,7 +99,7 @@ class SolveHandler(CommandHandler):
             raise HandlerError(f"No such symbols: {message.symbols}")
 
         if len(equations) == 1 and len(symbols) == 1: # these two should always have equal lenth.
-            solution_set = solveset(equations[0], symbols[0], domain=domain)
+            solution_set = solveset(equations[0], symbols[0], domain=solve_domain)
         else:
             try:
                 solution_set = linsolve(equations, symbols)

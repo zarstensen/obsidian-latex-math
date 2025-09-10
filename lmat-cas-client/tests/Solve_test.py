@@ -11,7 +11,7 @@ class TestSolve:
         x = symbols('x')
 
         handler = SolveHandler(self.compiler)
-        result = handler.handle({ "expression": r"\sin(x) = 0", "environment": { "domain": "Interval.Ropen(0, 2 * pi)"}, "symbols": [ "x" ] })
+        result = handler.handle({ "expression": r"\sin(x) = 0", "environment": { "solve_domain": "Interval.Ropen(0, 2 * pi)"}, "symbols": [ "x" ] })
 
         assert result.symbols == [x]
         assert result.solution == FiniteSet(0, pi)
