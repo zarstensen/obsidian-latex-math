@@ -111,9 +111,9 @@ Series of equations can be notated by chaining multiple relations together (`x <
 The method for restricting the set of solutions for a given input varies on the input type.
 
 If the input is a single relation, then one must restrict the solution set either through the solve modals `Solution domain` input,
-or in the `lmat` environments [domain field](MISSING LINK).
+or in the `lmat` environments [solve domain field](LMAT_ENV.md#default-solve-domain).
 
-If the input is a series of relations, one must restrict the solution set by applying [assumptions on the unknown variables](MISSING LINK) in the relations.
+If the input is a series of relations, one must restrict the solution set by applying [assumptions on the unknown variables](LMAT_ENV.md#symbol-assumptions) in the relations.
 
 ### Create Truth Table from LaTeX Expression
 
