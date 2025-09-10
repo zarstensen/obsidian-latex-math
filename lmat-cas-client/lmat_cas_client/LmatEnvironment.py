@@ -36,7 +36,7 @@ class LmatEnvironment(BaseModel):
 
     unit_system: Optional[str] = None
 
-    domain: Optional[str] = None
+    solve_domain: Optional[str] = None
 
     # Create a definition store populated with definitions based on the environments symbols, variables and functions fields.
     @staticmethod

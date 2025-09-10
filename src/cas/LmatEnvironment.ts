@@ -19,7 +19,7 @@ export class LmatEnvironment {
             parsed_lmat_block.symbols,
             definitions,
             parsed_lmat_block.units?.system,
-            parsed_lmat_block.domain?.domain
+            parsed_lmat_block.solve?.domain
         );
     }
 
@@ -109,7 +109,7 @@ export class LmatEnvironment {
         /**
          * the domain is a sympy expression, evaluating to the default solution domain of any equation solutions.
          */
-        public domain: string | undefined = undefined
+        public solve_domain: string | undefined = undefined
     ) { }
 
     // regex for extracting the contents of an lmat code block.
