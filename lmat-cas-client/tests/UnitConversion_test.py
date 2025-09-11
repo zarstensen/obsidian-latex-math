@@ -83,3 +83,7 @@ class TestUnitConversion:
         handler = EvalHandler(self.compiler)
         result = handler.handle({"expression": r"5 {gee} \cdot (10 {minutes})^2", "environment": {}})
         assert result.sympy_expr == 17651970.0 * units.meters
+
+        handler = EvalHandler(self.compiler)
+        result = handler.handle({"expression": r"{R}", "environment": {}})
+        assert simplify(result.sympy_expr - 8.31446  * units.kg * units.m**2 / (units.kelvin * units.mol * units.second ** 2)) < 1e-4 * units.kg * units.m**2 / (units.kelvin * units.mol * units.second ** 2)
