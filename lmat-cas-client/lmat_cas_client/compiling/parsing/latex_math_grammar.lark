@@ -68,7 +68,7 @@ substitute_symbol: combine_symbol
 combine_symbol: delta_symbol | indexed_symbol | _non_indexed_symbol
 delta_symbol: DELTA_UPPER combine_symbol
 
-single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
+!single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
@@ -314,9 +314,7 @@ taylor: _FUNC_TAYLOR _UNDERSCORE _L_BRACE expression _COMMA expression [_COMMA e
 _combinatorial_functions: permutations | combinations | derangements
 
 permutations: _FUNC_PERMUTATIONS expression _COMMA expression _R_PAREN
-    | _L_BRACE (_CARET|_UNDERSCORE) expression _CMD_PERMUTATIONS _UNDERSCORE expression _R_BRACE
 combinations: _FUNC_COMBINATIONS expression _COMMA expression _R_PAREN
-    | _L_BRACE (_CARET|_UNDERSCORE) expression _CMD_COMBINATIONS _UNDERSCORE expression _R_BRACE
 derangements: _FUNC_DERANGEMENTS expression _R_PAREN
     | _L_BRACE _BANG expression _R_BRACE
 
@@ -547,9 +545,9 @@ _FUNC_TAYLOR.1: /T(?=\s*_\s*{([^,]+?,)+.+?}(\\left)?\(.+?\))/s // (\\right)? che
 // all combinatorial functions should have to be called with their arguments wrapped in parenthesees,
 // therefore they are defined a bit differently here.
 
-_CMD_PERMUTATIONS.1: "P"
-_CMD_COMBINATIONS.1: "C"
-_CMD_DERANGEMENTS.1: "D"
+_CMD_PERMUTATIONS: "P"
+_CMD_COMBINATIONS: "C"
+_CMD_DERANGEMENTS: "D"
 
 _FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _LR_FORMAT? _L_PAREN
 _FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _LR_FORMAT? _L_PAREN

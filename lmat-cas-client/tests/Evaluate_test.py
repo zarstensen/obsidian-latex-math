@@ -364,15 +364,6 @@ class TestEvaluate:
 
         assert result.sympy_expr == 265
 
-        result = handler.handle({ 'expression': r"{^10P_5}", 'environment': { } })
-
-        assert result.sympy_expr == 30240
-
-        n, c = symbols('n C')
-        result = handler.handle({'expression': r"C (2 + 3) + {_n C_42}", 'environment': { } })
-
-        assert result.sympy_expr == c * 5 + binomial(n, 42)
-
         result = handler.handle({'expression': r"{!6}", 'environment': { } })
 
         assert result.sympy_expr == 265

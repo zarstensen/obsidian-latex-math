@@ -474,3 +474,7 @@ class TestParse:
 
         n = symbols('n')
         assert result == Sum(n, (n, 0, 1))
+
+    def test_regression_150(self):
+        assert self._parse_expr(r"a C") == sympify("a * C")
+        assert self._parse_expr(r"a P") == sympify("a * P")
