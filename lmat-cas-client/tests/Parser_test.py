@@ -474,3 +474,8 @@ class TestParse:
 
         n = symbols('n')
         assert result == Sum(n, (n, 0, 1))
+
+    def test_series_input_presedence(self):
+        j = Symbol('j')
+        assert self._parse_expr(r"\sum_{j = 0}^\infty (\frac{1}{2})^j") == Sum(Rational(1, 2) ** j , (j, 0, oo))
+        assert self._parse_expr(r"\prod_{j = 0}^\infty 3 \cdot j^3 - j") == Product(3 * j**3, (j, 0, oo)) - j
