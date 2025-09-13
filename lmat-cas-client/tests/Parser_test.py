@@ -474,3 +474,16 @@ class TestParse:
 
         n = symbols('n')
         assert result == Sum(n, (n, 0, 1))
+
+    def test_regression_150(self):
+        assert self._parse_expr(r"a C") == sympify("a * C")
+        assert self._parse_expr(r"a P") == sympify("a * P")
+
+    def test_series_input_presedence(self):
+        j = Symbol('j')
+        assert self._parse_expr(r"\sum_{j = 0}^\infty (\frac{1}{2})^j") == Sum(Rational(1, 2) ** j , (j, 0, oo))
+        assert self._parse_expr(r"\sum_{j = 0}^\infty (\frac{1}{j})^j") == Sum((1 / j) ** j , (j, 0, oo))
+        assert self._parse_expr(r"\prod_{j = 0}^\infty 3 \cdot j^3 - j") == Product(3 * j**3, (j, 0, oo)) - j
+
+        assert self._parse_expr(r"\prod_{j = 0}^\infty (j) j^j") == Product(j , (j, 0, oo)) * j ** j
+        assert self._parse_expr(r"\sum_{j = 0}^\infty {3 j} j ^2") == Sum(3 * j, (j, 0, oo)) * j ** 2

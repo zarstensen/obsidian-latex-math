@@ -68,7 +68,7 @@ substitute_symbol: combine_symbol
 combine_symbol: delta_symbol | indexed_symbol | _non_indexed_symbol
 delta_symbol: DELTA_UPPER combine_symbol
 
-single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
+!single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
@@ -195,8 +195,11 @@ limit_direction: _L_BRACE (ADD|SUB) _R_BRACE
 _lim_approach_symbol: _PROP_OP_LR_IMPLICATION
 limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _lim_approach_symbol basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
-_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg factor_func_arg
-_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE factor_func_arg
+// prioritize delimited expressions over terms, such that e.g. \sum_{j = 0}^5 (j) j is parsed as Sum(j, (j, 0, 5)) * j and not Sum(j ** 2, (j, 0, 5)).
+_series_delimited_arg.1: _delimitedfactor
+
+_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg (_series_delimited_arg|term)
+_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE (_series_delimited_arg|term)
 
 _series_function: sum | product
 
@@ -314,9 +317,7 @@ taylor: _FUNC_TAYLOR _UNDERSCORE _L_BRACE expression _COMMA expression [_COMMA e
 _combinatorial_functions: permutations | combinations | derangements
 
 permutations: _FUNC_PERMUTATIONS expression _COMMA expression _R_PAREN
-    | _L_BRACE (_CARET|_UNDERSCORE) expression _CMD_PERMUTATIONS _UNDERSCORE expression _R_BRACE
 combinations: _FUNC_COMBINATIONS expression _COMMA expression _R_PAREN
-    | _L_BRACE (_CARET|_UNDERSCORE) expression _CMD_COMBINATIONS _UNDERSCORE expression _R_BRACE
 derangements: _FUNC_DERANGEMENTS expression _R_PAREN
     | _L_BRACE _BANG expression _R_BRACE
 
@@ -547,9 +548,9 @@ _FUNC_TAYLOR.1: /T(?=\s*_\s*{([^,]+?,)+.+?}(\\left)?\(.+?\))/s // (\\right)? che
 // all combinatorial functions should have to be called with their arguments wrapped in parenthesees,
 // therefore they are defined a bit differently here.
 
-_CMD_PERMUTATIONS.1: "P"
-_CMD_COMBINATIONS.1: "C"
-_CMD_DERANGEMENTS.1: "D"
+_CMD_PERMUTATIONS: "P"
+_CMD_COMBINATIONS: "C"
+_CMD_DERANGEMENTS: "D"
 
 _FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _LR_FORMAT? _L_PAREN
 _FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _LR_FORMAT? _L_PAREN

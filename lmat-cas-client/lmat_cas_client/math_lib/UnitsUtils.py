@@ -1,3 +1,4 @@
+import sys
 from copy import copy
 
 import sympy.physics.units as u
@@ -105,6 +106,12 @@ def get_unit_complexity(expression):
     complexity = 0
 
     for val, pow in expression.as_powers_dict().items():
+
+        # PhysicalConstants should always be auto converted from,
+        # so if the input contains one the maximum possible complexity is returned.
+        if isinstance(val, PhysicalConstant):
+            return sys.maxsize
+
         if isinstance(val, Quantity):
 
             if 0 < abs(pow) < 1:

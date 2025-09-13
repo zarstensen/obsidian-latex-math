@@ -197,8 +197,8 @@ Note that a *mathematical function* also encompasses concepts not normally thoug
 | gradient                   | `\nabla ...`                                                                           |
 | hessian                    | `\mathbf{H} ...`                                                                       |
 | Jacobian                   | `\mathbf{J} ...`                                                                       |
-| permutations               | `P( ... ,  ... )` / `{[_^] ... P_ ... }`                                               |
-| combinations               | `C( ... ,  ... )` / `{[_^] ... C_ ... }`                                               |
+| permutations               | `P( ... ,  ... )`                                                                      |
+| combinations               | `C( ... ,  ... )`                                                                      |
 | derangements               | `D( ... )` / `{ ! ... }`                                                               |
 | greatest common divisor    | `\gcd( ... ,  ... )`                                                                   |
 | least common multiple      | `\mathrm{lcm}( ... ,  ... )` / `\operatorname{lcm}( ... ,  ... )`                      |
