@@ -195,8 +195,11 @@ limit_direction: _L_BRACE (ADD|SUB) _R_BRACE
 _lim_approach_symbol: _PROP_OP_LR_IMPLICATION
 limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _lim_approach_symbol basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
-_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg term
-_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE term
+// prioritize delimited expressions over terms, such that e.g. \sum_{j = 0}^5 (j) j is parsed as Sum(j, (j, 0, 5)) * j and not Sum(j ** 2, (j, 0, 5)).
+_series_delimited_arg.1: _delimitedfactor
+
+_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg (_series_delimited_arg|term)
+_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE (_series_delimited_arg|term)
 
 _series_function: sum | product
 
