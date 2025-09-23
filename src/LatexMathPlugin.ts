@@ -17,6 +17,7 @@ import { ConfirmModal } from 'modals/ConfirmModal';
 import { SuccessResponseVerifier } from 'cas/ResponseVerifier';
 import { EvaluateMode } from 'cas/messages/EvaluateMessage';
 import { TruthTableFormat } from 'cas/messages/TruthTableMessage';
+import { definitions_view_plugin } from './view/definitionsViewPlugin';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -66,6 +67,8 @@ export default class LatexMathPlugin extends Plugin {
             [ new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)' ],
             [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)' ],
         ]));
+
+        this.registerEditorExtension(definitions_view_plugin);
     }
 
     // sets up the given map of commands as obsidian commands.
