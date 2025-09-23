@@ -20,6 +20,7 @@ import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
 import { CasCommandRequester } from './services/CasCommandRequester';
 import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
 import { mathjaxLoadLatexPackages } from './utils/MathJaxPackageLoader';
+import { definitions_view_plugin } from './view/definitionsViewPlugin';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -75,6 +76,8 @@ export default class LatexMathPlugin extends Plugin {
 
         // import latex packages
         await mathjaxLoadLatexPackages(["physics"]);
+
+        this.registerEditorExtension(definitions_view_plugin);
     }
 
     // sets up the given map of commands as obsidian commands.
