@@ -36,7 +36,7 @@ export class UnitConvertModeModal extends Modal {
         this.scope.register(null, 'Enter', () => {
             this.close();
             this.target_units_resolve(this.target_units);
-        })
+        });
     }
 
     public getTargetUnits(): Promise<string[]> {
