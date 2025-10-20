@@ -12,7 +12,7 @@ export class ConfirmModal extends BaseModal {
         this.default_action = () => {
             this.close();
             on_confirm();
-        }
+        };
 
         new Setting(this.contentEl)
             .setDesc(prompt);
