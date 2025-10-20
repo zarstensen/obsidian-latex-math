@@ -5,7 +5,7 @@ export class BaseModal extends Modal {
     constructor(app: App) {//, protected on_confirm: () => void) {
         super(app);
 
-        this.scope.register(null, 'Enter', (event) => {
+        this.scope.register([], 'Enter', (event) => {
             event.preventDefault();
             this.on_confirm();
         });
