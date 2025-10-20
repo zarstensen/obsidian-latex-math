@@ -1,6 +1,6 @@
 import { App, finishRenderMath, Notice, renderMath, Setting } from "obsidian";
 import { LatexMathSymbol } from "cas/messages/SolveMessage";
-import { BaseModal } from "./BaseModal"
+import { BaseModal } from "./BaseModal";
 
 type SolveConfig = { domain: string, symbols: LatexMathSymbol[] };
 

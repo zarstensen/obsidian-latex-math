@@ -6,7 +6,7 @@ export class BaseModal extends Modal {
         super(app);
 
         this.scope.register(null, 'Enter', (event) => {
-            event.preventDefault()
+            event.preventDefault();
             this.on_confirm();
         });
     }
