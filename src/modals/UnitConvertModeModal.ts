@@ -1,7 +1,8 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Setting } from "obsidian";
+import { BaseModal } from "./BaseModal";
 
 // The UnitConvertModeModal provides a modal dialog to specify a list of units which should be converted to.
-export class UnitConvertModeModal extends Modal {
+export class UnitConvertModeModal extends BaseModal {
     constructor(app: App) {
         super(app);
 
@@ -9,6 +10,10 @@ export class UnitConvertModeModal extends Modal {
             this.target_units_resolve = resolve;
         });
 
+        this.on_confirm = () => {
+            this.close();
+            this.target_units_resolve(this.target_units);
+        };
 
         this.setTitle("Convert units");
 
@@ -28,15 +33,9 @@ export class UnitConvertModeModal extends Modal {
                     .setButtonText("Convert")
                     .setCta()
                     .onClick(() => {
-                        this.close();
-                        this.target_units_resolve(this.target_units);
+                        this.on_confirm();
                     });
             });
-
-        this.scope.register(null, 'Enter', () => {
-            this.close();
-            this.target_units_resolve(this.target_units);
-        });
     }
 
     public getTargetUnits(): Promise<string[]> {
