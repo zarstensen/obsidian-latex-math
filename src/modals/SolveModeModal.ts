@@ -13,16 +13,8 @@ export class SolveModeModal extends BaseModal {
         app: App) {
         super(app);
 
-        this.on_confirm = () => {
-            const selected_symbols = this.getSelectedSymbols();
-
-            if (selected_symbols.length !== this.equation_count) {
-                new Notice(`Please select ${this.equation_count} symbols.`);
-                return;
-            }
-
-            this.close();
-            this.solve_config_resolve({ domain: this.domain, symbols: selected_symbols });
+        this.default_action = () => {
+            this.solve();
         };
         // setup model data
 
@@ -73,7 +65,7 @@ export class SolveModeModal extends BaseModal {
                     .setButtonText("Solve")
                     .setCta()
                     .onClick(() => {
-                        this.on_confirm();
+                        this.solve();
                     });
             });
     }
@@ -83,6 +75,18 @@ export class SolveModeModal extends BaseModal {
 
     protected getSelectedSymbols(): LatexMathSymbol[] {
         return [...this.symbol_selection].filter(([_, selected]) => selected).map(([symbol, _]) => symbol);
+    }
+
+    private solve(): void {
+        const selected_symbols = this.getSelectedSymbols();
+
+        if (selected_symbols.length !== this.equation_count) {
+            new Notice(`Please select ${this.equation_count} symbols.`);
+            return;
+        }
+
+        this.close();
+        this.solve_config_resolve({ domain: this.domain, symbols: selected_symbols });
     }
 
     private symbol_selection: Map<LatexMathSymbol, boolean> = new Map();

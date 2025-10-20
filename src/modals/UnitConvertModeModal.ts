@@ -10,7 +10,7 @@ export class UnitConvertModeModal extends BaseModal {
             this.target_units_resolve = resolve;
         });
 
-        this.on_confirm = () => {
+        this.default_action = () => {
             this.close();
             this.target_units_resolve(this.target_units);
         };
@@ -33,7 +33,8 @@ export class UnitConvertModeModal extends BaseModal {
                     .setButtonText("Convert")
                     .setCta()
                     .onClick(() => {
-                        this.on_confirm();
+                        this.close();
+                        this.target_units_resolve(this.target_units);
                     });
             });
     }

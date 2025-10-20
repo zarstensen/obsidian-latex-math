@@ -1,14 +1,14 @@
 import { App, Modal } from "obsidian";
 
-// The UnitConvertModeModal provides a modal dialog to specify a list of units which should be converted to.
+// The BaseModal handles common functionality between the modals
 export class BaseModal extends Modal {
-    constructor(app: App) {//, protected on_confirm: () => void) {
+    constructor(app: App) {
         super(app);
 
         this.scope.register([], 'Enter', (event) => {
             event.preventDefault();
-            this.on_confirm();
+            this.default_action();
         });
     }
-    protected on_confirm: () => void;
+    protected default_action: () => void;
 }

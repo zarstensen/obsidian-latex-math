@@ -9,7 +9,10 @@ export class ConfirmModal extends BaseModal {
     constructor(app: App, title: string, prompt: string, protected on_confirm: () => void) {
         super(app);
         this.setTitle(title);
-        this.on_confirm = on_confirm;
+        this.default_action = () => {
+            this.close();
+            on_confirm();
+        }
 
         new Setting(this.contentEl)
             .setDesc(prompt);
@@ -20,7 +23,7 @@ export class ConfirmModal extends BaseModal {
                 .setCta()
                 .onClick(() => {
                     this.close();
-                    this.on_confirm();
+                    on_confirm();
                 })
             ).addButton((btn) => btn
                 .setButtonText("Cancel")
