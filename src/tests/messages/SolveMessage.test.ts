@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { normLatexStr, response_verifier, server } from "../setup";
-import { LmatEnvironment } from "/cas/LmatEnvironment";
-import { LatexMathSymbol, SolveArgsPayload, SolveInfoArgsPayload, SolveInfoMessage, SolveInfoResponse, SolveMessage, SolveResponse } from "/cas/messages/SolveMessage";
+import { LmatEnvironment } from "../../models/cas/LmatEnvironment";
+import { LatexMathSymbol, SolveArgsPayload, SolveInfoArgsPayload, SolveInfoMessage, SolveInfoResponse, SolveMessage, SolveResponse } from "../../models/cas/messages/SolveMessage";
 
 test('Test Solve Message', async () => {
     const response = response_verifier.verifyResponse<SolveResponse>(await server.send(

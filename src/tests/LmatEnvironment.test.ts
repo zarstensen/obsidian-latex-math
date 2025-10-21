@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { Definition, LmatEnvironment } from "/cas/LmatEnvironment";
+import { Definition, LmatEnvironment } from "../models/cas/LmatEnvironment";
 
 test('Test LmatEnvironment.parseDefinitions', async () => {
     const definitions = LmatEnvironment.parseDefinitions(`
@@ -11,7 +11,7 @@ test('Test LmatEnvironment.parseDefinitions', async () => {
         $ 1 + 2 + 3 = 6$
         $ := 25$
         `);
-    
+
     expect(definitions).toEqual([
         { name_expr: "x", value_expr: "25" } as Definition,
         { name_expr: "f(x)", value_expr: "x^2" } as Definition,

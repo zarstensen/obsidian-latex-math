@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { normLatexStr, response_verifier, server } from "../setup";
-import { EvaluateArgsPayload, EvaluateMessage, EvaluateMode, EvaluateResponse, UnitConvertArgsPayload } from "/cas/messages/EvaluateMessage";
-import { LmatEnvironment } from "/cas/LmatEnvironment";
+import { EvaluateArgsPayload, EvaluateMessage, EvaluateMode, EvaluateResponse, UnitConvertArgsPayload } from "../../models/cas/messages/EvaluateMessage";
+import { LmatEnvironment } from "../../models/cas/LmatEnvironment";
 
 test('Test Eval Message', async () => {
     const response = response_verifier.verifyResponse<EvaluateResponse>(await server.send(
@@ -47,7 +47,7 @@ test('Test Apart Message', async () => {
 
 test('Test Unit Convert Message', async () => {
     const response = response_verifier.verifyResponse<EvaluateResponse>(await server.send(
-        new EvaluateMessage(EvaluateMode.CONVERT_UNITS, new UnitConvertArgsPayload("120 {s}", new LmatEnvironment(), [ "min" ]))
+        new EvaluateMessage(EvaluateMode.CONVERT_UNITS, new UnitConvertArgsPayload("120 {s}", new LmatEnvironment(), ["min"]))
     ).response);
 
     expect(normLatexStr(response.evaluated_expression)).toBe(normLatexStr("2 {min}"));

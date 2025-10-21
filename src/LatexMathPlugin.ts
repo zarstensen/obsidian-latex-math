@@ -1,22 +1,24 @@
 import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
 import path from 'path';
-import { EvaluateCommand } from 'commands/EvaluateCommand';
-import { LatexMathCommand } from 'commands/LatexMathCommand';
-import { SolveCommand } from 'commands/SolveCommand';
-import { ConvertSympyCommand } from 'commands/ConvertSympyCommand';
-import { TruthTableCommand } from 'commands/TruthTableCommand';
-import { UnitConvertCommand } from 'commands/UnitConvertCommand';
-import { HandlerInterrupter } from 'HandlerInterrupter';
-import { CasClientExtractor } from 'cas/LmatCasClientExtractor';
-import { ExecutableSpawner, SourceCodeSpawner } from 'cas/LmatCasClientSpawner';
-import { CasServer, ClientResponse, UnixTimestampMillis } from 'cas/LmatCasServer';
-import { LmatCodeBlockRenderer } from 'LmatCodeBlockRenderer';
-import { LmatSettingsTab } from 'LmatSettingsTab';
-import { EvaluateStatusBar } from 'LmatStatusBar';
-import { ConfirmModal } from 'modals/ConfirmModal';
-import { SuccessResponseVerifier } from 'cas/ResponseVerifier';
-import { EvaluateMode } from 'cas/messages/EvaluateMessage';
-import { TruthTableFormat } from 'cas/messages/TruthTableMessage';
+import { EvaluateCommand } from '/controllers/commands/EvaluateCommand';
+import { LatexMathCommand } from '/controllers/commands/LatexMathCommand';
+import { SolveCommand } from '/controllers/commands/SolveCommand';
+import { ConvertSympyCommand } from '/controllers/commands/ConvertSympyCommand';
+import { TruthTableCommand } from '/controllers/commands/TruthTableCommand';
+import { UnitConvertCommand } from '/controllers/commands/UnitConvertCommand';
+import { HandlerInterrupter } from '/services/HandlerInterrupter';
+import { CasClientExtractor } from '/models/cas/LmatCasClientExtractor';
+import { ExecutableSpawner, SourceCodeSpawner } from '/models/cas/LmatCasClientSpawner';
+import { CasServer, ClientResponse, UnixTimestampMillis } from '/models/cas/LmatCasServer';
+import { LmatCodeBlockRenderer } from '/views/LmatCodeBlockRenderer';
+import { LmatSettingsTab } from '/views/LmatSettingsTab';
+import { EvaluateStatusBar } from '/views/LmatStatusBar';
+import { ConfirmModal } from '/views/modals/ConfirmModal';
+import { SuccessResponseVerifier } from '/models/cas/ResponseVerifier';
+import { EvaluateMode } from '/models/cas/messages/EvaluateMessage';
+import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
+import { CasCommandRequester } from './services/CasCommandRequester';
+import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -31,12 +33,12 @@ export default class LatexMathPlugin extends Plugin {
 
     async onload() {
         console.log(`Loading Latex Math (v${this.manifest.version})`);
-        
-        if(!this.manifest.dir) {
+
+        if (!this.manifest.dir) {
             new Notice("Latex Math could not determine its plugin directory, aborting load.");
             return;
         }
-        
+
         await this.loadSettings();
         this.addSettingTab(new LmatSettingsTab(this.app, this));
 
@@ -48,23 +50,26 @@ export default class LatexMathPlugin extends Plugin {
 
         await this.setupStatusBar(new HandlerInterrupter(this.cas_server, response_verifier));
 
-        
+
         // add code block renderer
-        const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);
+        const lmat_code_block_renderer = new LmatCodeBlockRenderer(
+            new CasCommandRequester(this.cas_server, this.spawn_cas_client_promise, response_verifier, SymbolSetMessage)
+        );
+
         this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
 
         // add commands
         this.addCommands(new Map([
-            [ new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate LaTeX expression' ],
-            [ new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf LaTeX expression' ],
-            [ new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand LaTeX expression' ],
-            [ new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor LaTeX expression' ],
-            [ new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Partial fraction decompose LaTeX expression' ],
-            [ new SolveCommand(response_verifier), 'Solve LaTeX expression' ],
-            [ new ConvertSympyCommand(response_verifier), 'Convert LaTeX expression to Sympy' ],
-            [ new UnitConvertCommand(response_verifier), 'Convert units in LaTeX expression' ],
-            [ new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)' ],
-            [ new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)' ],
+            [new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate LaTeX expression'],
+            [new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf LaTeX expression'],
+            [new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand LaTeX expression'],
+            [new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor LaTeX expression'],
+            [new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Partial fraction decompose LaTeX expression'],
+            [new SolveCommand(response_verifier), 'Solve LaTeX expression'],
+            [new ConvertSympyCommand(response_verifier), 'Convert LaTeX expression to Sympy'],
+            [new UnitConvertCommand(response_verifier), 'Convert units in LaTeX expression'],
+            [new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)'],
+            [new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)'],
         ]));
     }
 
@@ -72,11 +77,11 @@ export default class LatexMathPlugin extends Plugin {
     // the provided values for each command will be set as the command description.
     addCommands(commands: Map<LatexMathCommand, string>) {
         commands.forEach((description, cmd) => {
-          
+
             this.addCommand({
                 id: cmd.id,
                 name: description,
-                editorCallback: async (e, v) => { 
+                editorCallback: async (e, v) => {
                     await this.spawn_cas_client_promise;
                     cmd.functionCallback(this.cas_server, this.app, e, v as MarkdownView);
                 }
@@ -119,7 +124,7 @@ export default class LatexMathPlugin extends Plugin {
         await this.spawn_cas_client_promise;
     }
 
-    
+
     private async setupStatusBar(handler_interrupter: HandlerInterrupter): Promise<EvaluateStatusBar> {
         const status_bar = new EvaluateStatusBar(await this.addStatusBarItem());
 
@@ -130,7 +135,7 @@ export default class LatexMathPlugin extends Plugin {
                 running_command_handlers: this.cas_server.getCurrentMessages().length
             });
 
-            status_bar.show(this.cas_server.getHangingMessages({min_hang_time: LatexMathPlugin.STATUS_BAR_MESSAGE_HANG_TIME}).length > 0);
+            status_bar.show(this.cas_server.getHangingMessages({ min_hang_time: LatexMathPlugin.STATUS_BAR_MESSAGE_HANG_TIME }).length > 0);
         }, LatexMathPlugin.STATUS_BAR_UPDATE_FREQ);
 
         status_bar.onStatusBarClicked((_) => {
@@ -149,7 +154,7 @@ export default class LatexMathPlugin extends Plugin {
     }
 
     private async spawnCasClient(plugin_dir: string) {
-        if(!(this.app.vault.adapter instanceof FileSystemAdapter)) {
+        if (!(this.app.vault.adapter instanceof FileSystemAdapter)) {
             throw new Error(`Expected FileSystemAdapter, got ${this.app.vault.adapter}`);
         }
         const file_system_adapter: FileSystemAdapter = this.app.vault.adapter;
@@ -173,9 +178,9 @@ export default class LatexMathPlugin extends Plugin {
 
         new Notice("An unexpected error occured whilst handling command.\nPlease see the dev console for more info\n(ctrl + shift + i)");
     }
-    
+
     private handleCasError(usr_error: string, _dev_error: string): void {
-        if(this.prev_err_notice !== null) {
+        if (this.prev_err_notice !== null) {
             this.prev_err_notice.hide();
         }
 
@@ -188,9 +193,9 @@ export default class LatexMathPlugin extends Plugin {
             .join('\n') +
             (errorLines.length > LatexMathPlugin.ERR_NOTICE_LINE_COUNT ? '\n...' : '') +
             "\n\nOpen the dev console for more info (ctrl + shift + i).";
-        
+
         const err_notice = new Notice("Latex Math Error\n", LatexMathPlugin.ERR_NOTICE_TIMEOUT);
-        
+
         const err_elem = err_notice.messageEl.createEl('code');
         err_elem.innerText = truncatedError;
         err_notice.messageEl.appendChild(err_elem);
