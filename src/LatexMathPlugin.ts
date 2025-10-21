@@ -1,22 +1,24 @@
 import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
 import path from 'path';
-import { EvaluateCommand } from 'commands/EvaluateCommand';
-import { LatexMathCommand } from 'commands/LatexMathCommand';
-import { SolveCommand } from 'commands/SolveCommand';
-import { ConvertSympyCommand } from 'commands/ConvertSympyCommand';
-import { TruthTableCommand } from 'commands/TruthTableCommand';
-import { UnitConvertCommand } from 'commands/UnitConvertCommand';
-import { HandlerInterrupter } from 'HandlerInterrupter';
-import { CasClientExtractor } from 'cas/LmatCasClientExtractor';
-import { ExecutableSpawner, SourceCodeSpawner } from 'cas/LmatCasClientSpawner';
-import { CasServer, ClientResponse, UnixTimestampMillis } from 'cas/LmatCasServer';
-import { LmatCodeBlockRenderer } from 'LmatCodeBlockRenderer';
-import { LmatSettingsTab } from 'LmatSettingsTab';
-import { EvaluateStatusBar } from 'LmatStatusBar';
-import { ConfirmModal } from 'modals/ConfirmModal';
-import { SuccessResponseVerifier } from 'cas/ResponseVerifier';
-import { EvaluateMode } from 'cas/messages/EvaluateMessage';
-import { TruthTableFormat } from 'cas/messages/TruthTableMessage';
+import { EvaluateCommand } from '/controllers/commands/EvaluateCommand';
+import { LatexMathCommand } from '/controllers/commands/LatexMathCommand';
+import { SolveCommand } from '/controllers/commands/SolveCommand';
+import { ConvertSympyCommand } from '/controllers/commands/ConvertSympyCommand';
+import { TruthTableCommand } from '/controllers/commands/TruthTableCommand';
+import { UnitConvertCommand } from '/controllers/commands/UnitConvertCommand';
+import { HandlerInterrupter } from '/services/HandlerInterrupter';
+import { CasClientExtractor } from '/models/cas/LmatCasClientExtractor';
+import { ExecutableSpawner, SourceCodeSpawner } from '/models/cas/LmatCasClientSpawner';
+import { CasServer, ClientResponse, UnixTimestampMillis } from '/models/cas/LmatCasServer';
+import { LmatCodeBlockRenderer } from '/views/LmatCodeBlockRenderer';
+import { LmatSettingsTab } from '/views/LmatSettingsTab';
+import { EvaluateStatusBar } from '/views/LmatStatusBar';
+import { ConfirmModal } from '/views/modals/ConfirmModal';
+import { SuccessResponseVerifier } from '/models/cas/ResponseVerifier';
+import { EvaluateMode } from '/models/cas/messages/EvaluateMessage';
+import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
+import { CasCommandRequester } from './services/CasCommandRequester';
+import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -68,7 +70,10 @@ export default class LatexMathPlugin extends Plugin {
 
 
         // add code block renderer
-        const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);
+        const lmat_code_block_renderer = new LmatCodeBlockRenderer(
+            new CasCommandRequester(this.cas_server, this.spawn_cas_client_promise, response_verifier, SymbolSetMessage)
+        );
+
         this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
 
         // add commands

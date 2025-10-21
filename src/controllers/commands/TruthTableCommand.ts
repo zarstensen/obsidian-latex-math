@@ -1,10 +1,10 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { CasServer } from "cas/LmatCasServer";
+import { CasServer } from "/models/cas/LmatCasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "EquationExtractor";
-import { LmatEnvironment } from "cas/LmatEnvironment";
-import { formatLatex } from "FormatLatex";
-import { TruthTableArgsPayload, TruthTableFormat, TruthTableMessage, TruthTableResponse } from "cas/messages/TruthTableMessage";
+import { EquationExtractor } from "/services/EquationExtractor";
+import { LmatEnvironment } from "/models/cas/LmatEnvironment";
+import { formatLatex } from "/services/FormatLatex";
+import { TruthTableArgsPayload, TruthTableFormat, TruthTableMessage, TruthTableResponse } from "/models/cas/messages/TruthTableMessage";
 
 export class TruthTableCommand extends LatexMathCommand {
     readonly id: string;
@@ -36,13 +36,13 @@ export class TruthTableCommand extends LatexMathCommand {
         // Insert truth table right after the current math block.
         let insert_content: string = "\n\n" + result.truth_table;
 
-        if(this.format == TruthTableFormat.LATEX_ARRAY) {
+        if (this.format == TruthTableFormat.LATEX_ARRAY) {
             insert_content = "\n$$\n" + await formatLatex(insert_content) + "\n$$";
         }
 
         editor.replaceRange(insert_content, editor.offsetToPos(equation.block_to));
         editor.setCursor(editor.offsetToPos(equation.to + insert_content.length));
     }
- 
+
     private readonly truth_table_format: TruthTableFormat;
 }

@@ -1,11 +1,11 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { EquationExtractor } from "EquationExtractor";
-import { formatLatex } from "FormatLatex";
-import { CasServer } from "cas/LmatCasServer";
-import { LmatEnvironment } from "cas/LmatEnvironment";
-import { SolveModeModal } from "modals/SolveModeModal";
+import { EquationExtractor } from "/services/EquationExtractor";
+import { formatLatex } from "/services/FormatLatex";
+import { CasServer } from "/models/cas/LmatCasServer";
+import { LmatEnvironment } from "/models/cas/LmatEnvironment";
+import { SolveModeModal } from "/views/modals/SolveModeModal";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { LatexMathSymbol, SolveArgsPayload, SolveInfoArgsPayload, SolveInfoMessage, SolveInfoResponse, SolveMessage, SolveResponse } from "cas/messages/SolveMessage";
+import { LatexMathSymbol, SolveArgsPayload, SolveInfoArgsPayload, SolveInfoMessage, SolveInfoResponse, SolveMessage, SolveResponse } from "/models/cas/messages/SolveMessage";
 
 export class SolveCommand extends LatexMathCommand {
     readonly id: string = 'solve-latex-expression';
@@ -33,9 +33,9 @@ export class SolveCommand extends LatexMathCommand {
 
         const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResponse>(solve_info_response);
 
-        let symbols: LatexMathSymbol[] = [ ];
+        let symbols: LatexMathSymbol[] = [];
 
-        if(solve_info_result.available_symbols.length > solve_info_result.required_symbols) {
+        if (solve_info_result.available_symbols.length > solve_info_result.required_symbols) {
             const symbol_selector = new SolveModeModal(
                 solve_info_result.available_symbols,
                 solve_info_result.required_symbols,
@@ -65,5 +65,5 @@ export class SolveCommand extends LatexMathCommand {
         editor.setCursor(editor.offsetToPos(equation.to + solve_result.solution_set.length + 3));
 
     }
-    
+
 }
