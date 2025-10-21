@@ -33,9 +33,9 @@ export class SolveCommand extends LatexMathCommand {
 
         const solve_info_result = this.response_verifier.verifyResponse<SolveInfoResponse>(solve_info_response);
 
-        let symbols: LatexMathSymbol[] = [ ];
+        let symbols: LatexMathSymbol[] = [];
 
-        if(solve_info_result.available_symbols.length > solve_info_result.required_symbols) {
+        if (solve_info_result.available_symbols.length > solve_info_result.required_symbols) {
             const symbol_selector = new SolveModeModal(
                 solve_info_result.available_symbols,
                 solve_info_result.required_symbols,
@@ -55,15 +55,17 @@ export class SolveCommand extends LatexMathCommand {
         // actually solve the equation now, with the symbols configured automatically or by the user.
 
         const solve_response = await cas_server.send(new SolveMessage(
-            new SolveArgsPayload(equation.contents, lmat_env, [...symbols].map((symbol) => symbol.sympy_symbol)),
+            new SolveArgsPayload(equation.contents, lmat_env, [...symbols].map((symbol) => symbol.sympy_symbol), false),
         )).response;
 
         const solve_result = this.response_verifier.verifyResponse<SolveResponse>(solve_response);
+
+        console.log(solve_result);
 
         // insert solution as a new math block, right after the current one.
         editor.replaceRange("\n$$" + await formatLatex(solve_result.solution_set) + "$$", editor.offsetToPos(equation.block_to));
         editor.setCursor(editor.offsetToPos(equation.to + solve_result.solution_set.length + 3));
 
     }
-    
+
 }

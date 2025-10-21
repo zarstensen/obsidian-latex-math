@@ -7,7 +7,8 @@ export class SolveArgsPayload implements GenericPayload {
     public constructor(
         public expression: string,
         public environment: LmatEnvironment,
-        public symbols: string[]
+        public symbols: string[],
+        public try_define_solution: boolean,
     ) { }
     [x: string]: unknown;
 }
@@ -24,7 +25,7 @@ export interface SolveResponse {
 
 
 export class SolveInfoArgsPayload implements GenericPayload {
-        public constructor(
+    public constructor(
         public expression: string,
         public environment: LmatEnvironment
     ) { }

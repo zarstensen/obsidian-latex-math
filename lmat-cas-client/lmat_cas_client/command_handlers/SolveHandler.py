@@ -18,8 +18,9 @@ from .CommandHandler import *
 
 class SolveMessage(BaseModel):
     expression: str
-    symbols: list[str]
     environment: LmatEnvironment
+    symbols: list[str]
+    try_define_solution: bool = False
 
 class SolveResult(CommandResult):
 
@@ -28,10 +29,11 @@ class SolveResult(CommandResult):
     MAX_RELATIONAL_FINITE_SOLUTIONS = 5
 
 
-    def __init__(self, solution: Any, symbols: list[Any]):
+    def __init__(self, solution: Any, symbols: list[Any], try_define_solution: bool):
         super().__init__()
         self.solution = solution
         self.symbols = symbols
+        self.try_define_solution = try_define_solution
 
     @override
     def getResponsePayload(self) -> dict:
@@ -43,7 +45,17 @@ class SolveResult(CommandResult):
             symbols = tuple(self.symbols)
 
         if isinstance(solutions_set, FiniteSet) and len(solutions_set) <= SolveResult.MAX_RELATIONAL_FINITE_SOLUTIONS:
-            return CommandResult.result(dict(solution_set=lmat_latex(solutions_set.as_relational(symbols))))
+
+            can_define_solution = len(solutions_set) == 1 and type(symbols) is Symbol
+
+            if self.try_define_solution and can_define_solution:
+                return CommandResult.result(dict(
+                    solution_set=f"{lmat_latex(symbols)} := {lmat_latex(solutions_set.args[0])}"
+                ))
+            else:
+                return CommandResult.result(dict(
+                    solution_set=lmat_latex(solutions_set.as_relational(symbols))
+                ))
         else:
             return CommandResult.result(dict(
                 solution_set=f"{lmat_latex(symbols)} \\in {lmat_latex(solutions_set)}"
@@ -121,7 +133,7 @@ class SolveHandler(CommandHandler):
                     for sol in solution_set.args)
                     )
 
-        return SolveResult(solution_set, symbols)
+        return SolveResult(solution_set, symbols, message.try_define_solution)
 
 class SolveInfoMessage(BaseModel):
     expression: str
