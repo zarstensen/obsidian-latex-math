@@ -5,7 +5,7 @@ import { LatexMathSymbol, SolveArgsPayload, SolveInfoArgsPayload, SolveInfoMessa
 
 test('Test Solve Message', async () => {
     const response = response_verifier.verifyResponse<SolveResponse>(await server.send(
-        new SolveMessage(new SolveArgsPayload("x^2 = 4", new LmatEnvironment(), ["x"]))
+        new SolveMessage(new SolveArgsPayload("x^2 = 4", new LmatEnvironment(), ["x"], false))
     ).response);
 
     expect(normLatexStr(response.solution_set)).toMatch(/x\s*=\s*2/g);
@@ -14,7 +14,7 @@ test('Test Solve Message', async () => {
 
 test('Test Solve Message With Assumptions', async () => {
     const response = response_verifier.verifyResponse<SolveResponse>(await server.send(
-        new SolveMessage(new SolveArgsPayload("x^2 = 4", new LmatEnvironment(undefined, undefined, undefined, "Naturals"), ["x"]))
+        new SolveMessage(new SolveArgsPayload("x^2 = 4", new LmatEnvironment(undefined, undefined, undefined, "Naturals"), ["x"], false))
     ).response);
 
     expect(normLatexStr(response.solution_set)).toMatch(/x\s*=\s*2/g);
@@ -24,13 +24,13 @@ test('Test Solve Message With Assumptions', async () => {
 
 test('Test Solve Message Multivariate', async () => {
     let response = response_verifier.verifyResponse<SolveResponse>(await server.send(
-        new SolveMessage(new SolveArgsPayload("x - y = 0", new LmatEnvironment(), ["x"]))
+        new SolveMessage(new SolveArgsPayload("x - y = 0", new LmatEnvironment(), ["x"], false))
     ).response);
 
     expect(normLatexStr(response.solution_set)).toMatch(/x\s*=\s*y/g);
 
     response = response_verifier.verifyResponse<SolveResponse>(await server.send(
-        new SolveMessage(new SolveArgsPayload("x - y = 0", new LmatEnvironment(), ["y"]))
+        new SolveMessage(new SolveArgsPayload("x - y = 0", new LmatEnvironment(), ["y"], false))
     ).response);
 
     expect(normLatexStr(response.solution_set)).toMatch(/y\s*=\s*x/g);
