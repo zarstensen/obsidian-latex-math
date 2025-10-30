@@ -1,7 +1,8 @@
-# TODO: more rules should probably be added, but this is fine to start with.
+target-version = "py312"
+
 [lint]
 
-select = [
+extend-select = [
     # imports
     "I",
     "F401",
@@ -10,7 +11,12 @@ select = [
     "W391",
     # unneeded whitespace
     "W291",
-    "W293"
-    ]
+    "W293",
+]
+
+extend-ignore = ["F405", "F403"]
 
 extend-safe-fixes = ["W291"]
+
+[format]
+# Use default Ruff formatting

@@ -91,7 +91,7 @@ class SymbolSetHandler(CommandHandler):
 
                 set_contains_symbol = set.contains(sympy_symbol)
 
-                if set_contains_symbol == True:
+                if set_contains_symbol:
                     smallest_containing_set = set
 
             if smallest_containing_set is not None:

@@ -195,7 +195,7 @@ class TestParse:
 
         assert result.get_expr(2) == Eq(z, x + 2 * y / x)
         assert result.get_location(2).line == 5
-        assert result.get_location(2).end_line == None
+        assert result.get_location(2).end_line is None
 
 
         result = self._parse_expr(r"""
@@ -399,10 +399,10 @@ class TestParse:
     def test_symbolic_iff(self):
 
         result = self._parse_expr(r"\sqrt{\fracc3} \iff \frac{\sqrt{3}}{3} \sqrt{c}")
-        assert sympify(result) == True
+        assert sympify(result)
 
         result = self._parse_expr(r"3 \iff 5")
-        assert sympify(result) == False
+        assert not sympify(result)
 
         a = Symbol('A')
         result = self._parse_expr(r"(c^2 \iff c) \vee A")

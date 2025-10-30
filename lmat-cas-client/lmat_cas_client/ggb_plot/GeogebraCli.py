@@ -10,7 +10,7 @@ class GeogebraCli:
 
         try:
             result = self._run_ggb(["--v"])
-        except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        except (FileNotFoundError, subprocess.CalledProcessError):
             raise invalid_ggb_install_Err
 
         if not result.stdout.lower().startswith(b"geogebra"):

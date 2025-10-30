@@ -114,7 +114,7 @@ class GeogebraPlot:
         ElementTree.SubElement(
             self._construction, 'command', name='Sequence'
         ).extend([
-            Element('input', a0=f'c', a1='c', a2='C_m_i_n', a3='C_m_a_x', a4='abs(C_m_i_n - C_m_a_x) / N'),
+            Element('input', a0='c', a1='c', a2='C_m_i_n', a3='C_m_a_x', a4='abs(C_m_i_n - C_m_a_x) / N'),
             Element('output', a0='LevelSets')
         ])
 
@@ -130,7 +130,7 @@ class GeogebraPlot:
         ElementTree.SubElement(
             self._construction, "command", name="Zip"
         ).extend([
-            Element("input", a0=f'Text[c, ClosestPoint[CC, CenterPoint]]', a1="CC", a2="ContourCurves", a3="c", a4="LevelSets"),
+            Element("input", a0='Text[c, ClosestPoint[CC, CenterPoint]]', a1="CC", a2="ContourCurves", a3="c", a4="LevelSets"),
             Element("output", a0="ContourLabels")
         ])
 

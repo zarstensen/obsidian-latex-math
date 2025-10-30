@@ -14,9 +14,9 @@ UNIT_ALIAS_MAP = {}
 __defined_units_quantities = { unit_name: getattr(unit_definitions, unit_name) for unit_name in dir(unit_definitions) if isinstance(getattr(unit_definitions, unit_name), Quantity) }
 
 def __add_unit_aliases(str_units: list[tuple[str, Quantity]]):
-    for k, u in str_units:
-        if k not in UNIT_ALIAS_MAP:
-            UNIT_ALIAS_MAP[k] = u
+    for alias, unit in str_units:
+        if alias not in UNIT_ALIAS_MAP:
+            UNIT_ALIAS_MAP[alias] = unit
 
 # add SI units
 __add_unit_aliases(( (str(unit), unit) for unit in SI._units))
