@@ -18,6 +18,7 @@ npm run test
 echo Code Quality Checks
 
 ruff check --preview
+ruff format --diff --preview
 npx eslint ./src
 
 echo Pre Push Completed
