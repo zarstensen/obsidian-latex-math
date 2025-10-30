@@ -20,7 +20,7 @@ jobs:
         run: ruff check --preview --output-format=github
 
       - name: Run Ruff Format Check
-        run: ruff format --diff --preview --output-format=github
+        run: ruff format --check --preview --output-format=github
 
   plugin-code-check:
     runs-on: ubuntu-latest
