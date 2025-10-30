@@ -14,10 +14,10 @@ print("Installing venv dependencies")
 
 pip_executable = os.path.join(venv_dir, venv_bin_folder, "pip")
 subprocess.check_call([
-    pip_executable,
-    "install",
-    "-r",
-    "requirements.txt",
-    "-r",
-    "requirements-dev.txt",
+pip_executable,
+"install",
+"-r",
+"requirements.txt",
+"-r",
+"requirements-dev.txt",
 ])
