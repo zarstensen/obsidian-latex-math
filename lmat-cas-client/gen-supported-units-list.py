@@ -7,7 +7,6 @@ constant_aliases: dict[Quantity, set[str]] = dict()
 
 # Loop through all exported things in unit_definitions
 for alias, unit in UNIT_ALIAS_MAP.items():
-
     if unit.is_prefixed:
         continue
 
@@ -23,10 +22,9 @@ for alias, unit in UNIT_ALIAS_MAP.items():
         alias_dict[unit].add(alias)
 
 
-
 unit_data = {
     "Unit": [str(unit) for unit in unit_aliases.keys()],
-    "Aliases": ["<br/>".join(aliases) for aliases in unit_aliases.values()]
+    "Aliases": ["<br/>".join(aliases) for aliases in unit_aliases.values()],
 }
 
 unit_table = pd.DataFrame(unit_data)
@@ -37,7 +35,7 @@ print(unit_table.to_markdown(index=False))
 
 constants_data = {
     "Constant": [str(unit) for unit in constant_aliases.keys()],
-    "Aliases": ["<br/>".join(aliases) for aliases in constant_aliases.values()]
+    "Aliases": ["<br/>".join(aliases) for aliases in constant_aliases.values()],
 }
 
 constants_table = pd.DataFrame(constants_data)

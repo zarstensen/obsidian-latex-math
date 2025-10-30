@@ -29,7 +29,9 @@ from .LatexMatrix import LatexMatrix
 from .SystemOfExpr import SystemOfExpr
 
 
-class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, PropositionsTransformer):
+class SympyTransformer(
+    BuiltInFunctionsTransformer, ConstantsTransformer, PropositionsTransformer
+):
     """
     The SympyTransformer class provides functions for transforming
     rules defined in latex_math_grammar.lark into sympy expressions.
@@ -48,10 +50,9 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
 
     @v_args(inline=True)
     def BASE_10_NUMBER(self, number: Token):
-
         number_str = str(number)
 
-        if '.' in number_str:
+        if "." in number_str:
             return Float(number_str)
         return Integer(number_str)
 
@@ -79,10 +80,12 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
 
     def system_of_relations(self, relations: list[Expr]) -> SystemOfExpr:
         return SystemOfExpr([
-            next(row) # the row iterator should only contain 1 element
-            for is_delim, row in itertools.groupby(relations, lambda t: t == self.Delim.MatDelim)
+            next(row)  # the row iterator should only contain 1 element
+            for is_delim, row in itertools.groupby(
+                relations, lambda t: t == self.Delim.MatDelim
+            )
             if not is_delim
-            ])
+        ])
 
     class system_of_relations_expr:
         @staticmethod
@@ -91,7 +94,7 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
             return (children[0], meta)
 
     @v_args(meta=True)
-    def relation(self, meta, tokens: list[Expr|Token]) -> SystemOfExpr | Expr:
+    def relation(self, meta, tokens: list[Expr | Token]) -> SystemOfExpr | Expr:
         if len(tokens) == 1:
             return tokens[0]
 
@@ -110,7 +113,9 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
                 relation_type = token.type
             else:
                 if relation_type is not None:
-                    relations.append(self._create_relation(prev_expr, token, relation_type))
+                    relations.append(
+                        self._create_relation(prev_expr, token, relation_type)
+                    )
                     relation_type = None
                 prev_expr = token
 
@@ -122,19 +127,24 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
         else:
             return SystemOfExpr([(relation, meta) for relation in relations])
 
-    def expression(self, tokens: list[Expr|Token]) -> Expr:
+    def expression(self, tokens: list[Expr | Token]) -> Expr:
         # construct a sum between the given sympy expressions,
         # with the sign that separates them in the tokens list.
 
-        signs = [ self.SIGN_DICT[t.type] for t in filter(lambda t: isinstance(t, Token), tokens)]
+        signs = [
+            self.SIGN_DICT[t.type]
+            for t in filter(lambda t: isinstance(t, Token), tokens)
+        ]
         values = list(filter(lambda t: not isinstance(t, Token), tokens))
 
         # if no first sign was specified, it is implicitly '+'.
         if len(signs) < len(values):
-            signs.insert(0, self.SIGN_DICT['ADD'])
+            signs.insert(0, self.SIGN_DICT["ADD"])
 
         if len(signs) != len(values):
-            raise RuntimeError(f"Error, too few signs were present in expression, expected {len(values) - 1} - {len(values)} got {len(signs)}")
+            raise RuntimeError(
+                f"Error, too few signs were present in expression, expected {len(values) - 1} - {len(values)} got {len(signs)}"
+            )
 
         result = signs[0] * values[0] if signs[0] != S.One else values[0]
 
@@ -145,7 +155,7 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
 
         return result
 
-    def term(self, tokens: list[Expr|Token]) -> Expr:
+    def term(self, tokens: list[Expr | Token]) -> Expr:
         # multiply / divide a series of factor together.
         # tokens is a list of sympy expressions, representing factors,
         # separated by a multiplication / division token.
@@ -167,9 +177,9 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
             factor = tokens[i]
             i += 1
 
-            if operator.type == 'OPERATOR_MUL':
+            if operator.type == "OPERATOR_MUL":
                 result *= sign * factor
-            elif operator.type == 'OPERATOR_DIV':
+            elif operator.type == "OPERATOR_DIV":
                 result /= sign * factor
             else:
                 raise RuntimeError(f"Unknown term operator '{operator.type}'")
@@ -187,7 +197,11 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
     @v_args(inline=True)
     def exponentiation(self, base: Expr, exponent: Expr) -> Expr:
         # special matrix notation.
-        if isinstance(exponent, Symbol) and hasattr(base, "is_Matrix") and base.is_Matrix:
+        if (
+            isinstance(exponent, Symbol)
+            and hasattr(base, "is_Matrix")
+            and base.is_Matrix
+        ):
             if str(exponent) == "T":
                 return base.transpose()
             elif str(exponent) == "H":
@@ -199,17 +213,27 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
     def matrix_body(self, *body: Expr | Token) -> list[list[Expr]]:
         return [
             list(row)
-            for is_delim, row in itertools.groupby(body, lambda t: t == self.Delim.MatDelim)
+            for is_delim, row in itertools.groupby(
+                body, lambda t: t == self.Delim.MatDelim
+            )
             if not is_delim
         ]
 
     @v_args(inline=True)
     def matrix(self, matrix_begin_cmd, matrix_body, matrix_end_cmd) -> LatexMatrix:
-        return LatexMatrix(matrix_body, env_begin = str(matrix_begin_cmd), env_end = str(matrix_end_cmd))
+        return LatexMatrix(
+            matrix_body, env_begin=str(matrix_begin_cmd), env_end=str(matrix_end_cmd)
+        )
 
     @v_args(inline=True)
-    def array_matrix(self, matrix_begin_cmd, array_options, matrix_body, matrix_end_cmd) -> LatexMatrix:
-        return LatexMatrix(matrix_body, env_begin = f'{matrix_begin_cmd}{array_options}', env_end = str(matrix_end_cmd))
+    def array_matrix(
+        self, matrix_begin_cmd, array_options, matrix_body, matrix_end_cmd
+    ) -> LatexMatrix:
+        return LatexMatrix(
+            matrix_body,
+            env_begin=f"{matrix_begin_cmd}{array_options}",
+            env_end=str(matrix_end_cmd),
+        )
 
     @v_args(inline=True)
     def det_matrix(self, begin, matrix_body, end) -> LatexMatrix:
@@ -218,32 +242,34 @@ class SympyTransformer(BuiltInFunctionsTransformer, ConstantsTransformer, Propos
     def matrix_like_delim(self, _: Iterator[Token]):
         return self.Delim.MatDelim
 
-    SIGN_DICT = {
-        'ADD': S.One,
-        'SUB': S.NegativeOne
-    }
+    SIGN_DICT = {"ADD": S.One, "SUB": S.NegativeOne}
 
     def _create_relation(self, left: Expr, right: Expr, relation_type: str) -> Rel:
         with evaluate(False):
             match relation_type:
-                case 'EQUAL':
+                case "EQUAL":
                     return Eq(left, right, evaluate=False)
-                case 'NOT_EQUAL':
+                case "NOT_EQUAL":
                     return Ne(left, right)
-                case 'LT':
+                case "LT":
                     return Lt(left, right)
-                case 'LTE':
+                case "LTE":
                     return Le(left, right)
-                case 'GT':
+                case "GT":
                     return Gt(left, right)
-                case 'GTE':
+                case "GTE":
                     return Ge(left, right)
                 case _:
-                    raise RuntimeError(f"Unknown relation type '{relation_type}' between {left} and {right}")
+                    raise RuntimeError(
+                        f"Unknown relation type '{relation_type}' between {left} and {right}"
+                    )
 
     def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
-        return list(filter(lambda x: not isinstance(x, Token) or x.type != 'COMMA', tokens))
+        return list(
+            filter(lambda x: not isinstance(x, Token) or x.type != "COMMA", tokens)
+        )
+
 
 sympy_transformer_runner = TransformerRunner[[DefinitionStore], Expr](SympyTransformer)
 
-__all__ = [ "sympy_transformer_runner" ]
+__all__ = ["sympy_transformer_runner"]

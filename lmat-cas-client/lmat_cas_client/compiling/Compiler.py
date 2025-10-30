@@ -19,9 +19,13 @@ class Compiler[**PTransform, TRes](ABC):
     Interface providing a compile function taking an input string as wella s PTransform args,
     and produces TRes from the given args.
     """
+
     @abstractmethod
-    def compile(self, input_str: str, *args: PTransform.args, **kwargs: PTransform.kwargs) -> TRes:
+    def compile(
+        self, input_str: str, *args: PTransform.args, **kwargs: PTransform.kwargs
+    ) -> TRes:
         pass
+
 
 class LatexToSympyCompiler(Compiler[[DefinitionStore], Expr]):
     """

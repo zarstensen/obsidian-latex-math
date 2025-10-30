@@ -1,4 +1,3 @@
-
 from itertools import chain
 from typing import Iterator
 
@@ -23,12 +22,11 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     def __init__(self):
         UndefinedAtomsTransformer.__init__(self, DefinitionStore())
 
-    def latex_math_string(self, dependencies: list[Symbol|Function] = []) -> set[str]:
+    def latex_math_string(self, dependencies: list[Symbol | Function] = []) -> set[str]:
         return set(dependency.name for dependency in dependencies)
 
     def __default__(self, _data, children, _meta):
-
-        symbols = [ ]
+        symbols = []
 
         for child in children:
             if child is None or isinstance(child, Token):
@@ -51,7 +49,9 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
 
         return symbol_or_unit
 
-    def undefined_function(self, delta_token: Token | None, func_name: Token, func_args: Iterator[Expr]) -> Function | Expr:
+    def undefined_function(
+        self, delta_token: Token | None, func_name: Token, func_args: Iterator[Expr]
+    ) -> Function | Expr:
         # include both the function itself, and all arguments to the function as dependencies.
         # e.g. f(x, 1, y) should produce [ 'f', 'x', 'y' ]
 
@@ -60,12 +60,15 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
         if delta_token:
             func_name = f"{delta_token.value} {func_name}"
 
-        return [ Function(func_name), *func_args ]
+        return [Function(func_name), *func_args]
 
     @v_args(inline=False)
     def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
         return list(chain.from_iterable(tokens))
 
-dependencies_transformer_runner = TransformerRunner[[], set[str]](DependenciesTransformer)
 
-__all__ = [ "dependencies_transformer_runner" ]
+dependencies_transformer_runner = TransformerRunner[[], set[str]](
+    DependenciesTransformer
+)
+
+__all__ = ["dependencies_transformer_runner"]

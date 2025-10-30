@@ -19,10 +19,11 @@ from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
 from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
 
 if len(sys.argv) != 2:
-    print("Usage:"
-            f"\npython {os.path.basename(__file__)} [port]"
-            "\n\tport - port number on local host the plugin server is listening at."
-            )
+    print(
+        "Usage:"
+        f"\npython {os.path.basename(__file__)} [port]"
+        "\n\tport - port number on local host the plugin server is listening at."
+    )
     sys.exit(1)
 
 port = int(sys.argv[1])
@@ -46,13 +47,19 @@ client.register_handler("truth-table", TruthTableHandler(LatexToSympyCompiler())
 
 client.register_handler("test-hang", TestHangHandler())
 
+
 async def main():
     await client.connect(port)
     await client.run_message_loop()
 
+
 # set this policy so async functions work in threads on windows.
 # otherwise exceptions randomly occur when async loops terminate.
-if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
+if (
+    sys.version_info[0] == 3
+    and sys.version_info[1] >= 8
+    and sys.platform.startswith("win")
+):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 asyncio.run(main())
