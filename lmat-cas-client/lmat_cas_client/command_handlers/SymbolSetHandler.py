@@ -2,6 +2,7 @@ from typing import override
 
 from pydantic import BaseModel
 from sympy import *
+from sympy.logic.boolalg import BooleanAtom
 
 from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.Definitions import AssumptionDefinition
@@ -97,7 +98,10 @@ class SymbolSetHandler(CommandHandler):
 
                 set_contains_symbol = set.contains(sympy_symbol)
 
-                if set_contains_symbol is bool and set_contains_symbol:
+                if (
+                    isinstance(set_contains_symbol, (BooleanAtom, bool))
+                    and set_contains_symbol
+                ):
                     smallest_containing_set = set
 
             if smallest_containing_set is not None:
