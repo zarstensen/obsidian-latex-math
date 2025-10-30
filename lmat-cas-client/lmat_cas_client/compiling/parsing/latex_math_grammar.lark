@@ -93,7 +93,7 @@ _number: _numeric_number | _digit
 // it may be a bit counter intuitive, but here pi (and other constants) are essentially seen as a "_digit".
 _digit: _numeric_digit | _constant
 
-_constant: CONST_PI | CONST_EULER | CONST_IMAGINARY | CONST_INFINITY
+_constant: CONST_INFINITY
 
 _numeric_digit: NUMERIC_DIGIT
 _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUMBER
@@ -565,10 +565,7 @@ _FUNC_MOD: "\\mod"
 // TODO: use a bit more elaborate regex here, so more complex strings are allowed in the index.
 UNDEFINED_FUNC_START: (SINGLE_LETTER_SYMBOL|MULTI_LETTER_SYMBOL) (_WS? _UNDERSCORE _WS? _L_BRACE /\s*[^{}]+\s*/ _R_BRACE)? _LR_FORMAT? _L_PAREN
 
-// mathematical constants
-CONST_PI: "\\pi"
-CONST_EULER: "e"
-CONST_IMAGINARY: "i"
+// un-redefinable mathematical constants
 CONST_INFINITY: "\\infty"
 
 // Text formatting

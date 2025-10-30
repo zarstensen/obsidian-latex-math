@@ -81,13 +81,16 @@ class DefinitionStore:
     The DefinitionStore is responsible for storing a series of definitions, identifying them by a string key, known as a 'definition name'.
     """
 
-    def __init__(self, definitions: dict[str, Definition] = { }):
+    def __init__(self, definitions: Optional[dict[str, Definition]] = None):
         """
         Construct a DefinitionStore from the given map of definition names to their corresponding Definition objects
 
         Args:
             definitions (dict[str, Definition], optional): Defaults to { }.
         """
+        if definitions is None:
+            definitions = {}
+
         self._definitions = dict()
         self._expr_cache = dict()
 
