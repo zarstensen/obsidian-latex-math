@@ -5,9 +5,10 @@ from typing import Callable, Iterator
 from lark import Lark, Token
 from lark.lark import PostLex
 from lark.lexer import TerminalDef
+from regex import Regex
 from sympy import *
 
-from lmat_cas_client.compiling.parsing.PrettyParser import PrettyParser
+from lmat_cas_client.compiling.parsing.Parser import Parser
 
 
 # Represents a scope to be handled by the ScopePostLexer.
@@ -224,27 +225,38 @@ class ScopePostLexer(PostLex):
                     continue
                 break
 
+
+__latex_comment_regex = Regex(r"(?<!^.*?\\)((?:\\\\)*%.*)$", regex.MULTILINE)
+
+
+def latex_comment_remover(latex: str) -> str:
+    return __latex_comment_regex.sub(lambda m: m.group(0).replace(m.group(1), ""), latex)
+
+
 GRAMMAR_FILE = "latex_math_grammar.lark"
 
 __latex_parser_post_lexer = ScopePostLexer()
 
-latex_parser = PrettyParser(Lark.open(
-    os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
-    rel_to=os.path.dirname(__file__),
-    parser='lalr',
-    start='latex_math_string',
-    lexer='contextual',
-    debug=False,
-    cache=True,
-    propagate_positions=True,
-    maybe_placeholders=True,
-    regex=True,
-    postlex=__latex_parser_post_lexer
-))
+latex_parser = Parser(
+    Lark.open(
+        os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
+        rel_to=os.path.dirname(__file__),
+        parser="lalr",
+        start="latex_math_string",
+        lexer="contextual",
+        debug=False,
+        cache=True,
+        propagate_positions=True,
+        maybe_placeholders=True,
+        regex=True,
+        postlex=__latex_parser_post_lexer,
+    ),
+    pre_processor=latex_comment_remover,
+)
 """
 PrettyParser instance capable of parsing a latex math string.
 """
 
 __latex_parser_post_lexer.initialize_scopes(latex_parser.parser)
 
-__all__ = [ "latex_parser" ]
+__all__ = ["latex_parser"]

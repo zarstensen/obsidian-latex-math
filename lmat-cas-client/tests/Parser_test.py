@@ -15,7 +15,22 @@ class TestParse:
 
     def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
         environment = LmatEnvironment.model_validate(environment)
-        return self.compiler.compile(expr, LmatEnvironment.create_definition_store(environment))
+        return self.compiler.compile(
+            expr, LmatEnvironment.create_definition_store(environment)
+        )
+
+    def test_comments(self):
+        result = self._parse_expr(
+            r"""
+1 + 1 % test comment %%% comment
+\cdot 50 \% % some more comments
+% this is an empty line
+\\\\\\\\\\\\\\%
+- 100 \ \%
+            """
+        )
+
+        assert result == 0.5
 
     def test_basic(self):
         a, b, c = symbols('a b c')

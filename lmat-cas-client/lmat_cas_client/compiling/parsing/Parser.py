@@ -1,3 +1,4 @@
+from typing import Callable, Optional
 
 import regex
 from lark import Lark, LarkError, ParseTree, UnexpectedInput, UnexpectedToken
@@ -7,14 +8,23 @@ class PrettyParserError(LarkError):
     pass
 
 
-class PrettyParser:
+class Parser:
     """
     Wrapper class for a Lark parser instance.
     provides a parse method which rethrows any UnexpectedInput exception, produced by the Lark parser,
     as an PrettyParserError with a more user friendly exception message.
+    Additionally, this also adds a pre processor which perform broad transformations on the input before it is parsed by lark.
     """
 
-    def __init__(self, lark_parser: Lark):
+    def __init__(
+        self, lark_parser: Lark, pre_processor: Optional[Callable[[str], str]]
+    ):
+        if pre_processor is None:
+            pre_processor = (
+                lambda t: t
+            )  # default pre processor simply does nothign to the input.
+
+        self._pre_processor = pre_processor
         self._lark_parser = lark_parser
 
     @property
@@ -34,18 +44,22 @@ class PrettyParser:
         Returns:
             ParseTree: result of the latex parser parse method.
         """
+
+        pre_processed_text = self._pre_processor(text)
+
         try:
-            return self._lark_parser.parse(text, *args, **kwargs)
+            return self._lark_parser.parse(pre_processed_text, *args, **kwargs)
         except UnexpectedInput as e:
-            raise self._prettify_unexpected_input(e, text) from e
+            raise self._prettify_unexpected_input(e, pre_processed_text) from e
 
     _PARSE_ERR_PRETTY_STR_SPAN = 30
     # Maximum number of expected tokens to show to the user.
     # If the number of expected tokens is greater, do not show any.
     _PARSE_ERR_MAX_EXPECTED_TOKENS = 6
 
-
-    def _prettify_unexpected_input(self, lark_error: UnexpectedInput, parse_text: str) -> PrettyParserError:
+    def _prettify_unexpected_input(
+        self, lark_error: UnexpectedInput, parse_text: str
+    ) -> PrettyParserError:
         """
         Produce a LarkError with a user readable error message which contains the following info:
         - A snippet of the problematic latex source, pinpointing exactly where the parse error occured.
@@ -66,14 +80,18 @@ class PrettyParser:
         if lark_error.pos_in_stream is None:
             lark_error.pos_in_stream = len(parse_text) - 1
 
-        pretty_err = f"{lark_error.get_context(parse_text, PrettyParser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
+        pretty_err = f"{lark_error.get_context(parse_text, Parser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
 
-        if isinstance(lark_error, UnexpectedToken) and len(lark_error.expected) <= PrettyParser._PARSE_ERR_MAX_EXPECTED_TOKENS:
+        if (
+            isinstance(lark_error, UnexpectedToken)
+            and len(lark_error.expected) <= Parser._PARSE_ERR_MAX_EXPECTED_TOKENS
+        ):
             pretty_terminals = self._prettify_terminals(lark_error.expected)
-            pretty_err += f"\nExpected one of the following:\n{'\n'.join(pretty_terminals)}"
+            pretty_err += (
+                f"\nExpected one of the following:\n{'\n'.join(pretty_terminals)}"
+            )
 
         return PrettyParserError(pretty_err)
-
 
     def _prettify_terminals(self, terminal_names: list[str]) -> list[str]:
         """
@@ -94,7 +112,7 @@ class PrettyParser:
                 term = self.parser.get_terminal(term_name)
                 term_pattern = term.pattern
 
-                unescaped_value = regex.sub(r'\\(.)', r'\1', term_pattern.value)
+                unescaped_value = regex.sub(r"\\(.)", r"\1", term_pattern.value)
 
                 if regex.fullmatch(term_pattern.to_regexp(), unescaped_value):
                     pretty_terminals.append(f"'{unescaped_value}'")
@@ -103,6 +121,6 @@ class PrettyParser:
                 # this happens if the terminal is a %declare terminal
                 continue
 
-            pretty_terminals.append(term_name.replace('_', ' ').capitalize().strip())
+            pretty_terminals.append(term_name.replace("_", " ").capitalize().strip())
 
         return pretty_terminals
