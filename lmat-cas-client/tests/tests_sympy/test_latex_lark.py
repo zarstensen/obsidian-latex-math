@@ -6,7 +6,7 @@
 # some tests have been slightly modified or disabled, due to fundamental differences in the parsers functionality (multi letter symbols is an exmaple of this)
 
 from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 from sympy import (
     Add,
     Expr,
@@ -89,7 +89,8 @@ def _MatMul(a, b):
     return MatMul(a, b, evaluate=False)
 
 def parse_latex_lark(latex_str):
-    return LatexToSympyCompiler().compile(latex_str, DefinitionStore())
+    return LatexToSympyCompiler().compile(latex_str, StandardDefinitionStore)
+
 
 # These LaTeX strings should parse to the corresponding SymPy expression
 SYMBOL_EXPRESSION_PAIRS = [

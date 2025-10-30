@@ -547,6 +547,26 @@ class TestEvaluate:
 
     # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)
 
+    def test_standard_def_override(self):
+        handler = EvalHandler(self.compiler)
+
+        x = symbols("x")
+
+        result = handler.handle(
+            {
+                "expression": r"i \cdot \pi + e(x)",
+                "environment": {
+                    "definitions": [
+                        EnvDefinition(name_expr="i", value_expr="-1"),
+                        EnvDefinition(name_expr=r"\pi", value_expr="2"),
+                        EnvDefinition(name_expr=r"e(\pi)", value_expr=r"\pi^2"),
+                    ]
+                },
+            }
+        )
+
+        assert result.sympy_expr == -2 + x**2
+
     def test_regression_168(self):
         handler = EvalHandler(self.compiler)
 

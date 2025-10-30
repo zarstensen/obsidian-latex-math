@@ -1,4 +1,3 @@
-
 from typing import Optional, Self
 
 from pydantic import BaseModel, Field
@@ -21,6 +20,7 @@ from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
 from lmat_cas_client.compiling.transforming.SympyTransformer import (
     sympy_transformer_runner,
 )
+from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 
 
 class EnvDefinition(BaseModel):
@@ -81,4 +81,4 @@ class LmatEnvironment(BaseModel):
                 case _:
                     pass
 
-        return DefinitionStore(definitions)
+        return StandardDefinitionStore.override(definitions)
