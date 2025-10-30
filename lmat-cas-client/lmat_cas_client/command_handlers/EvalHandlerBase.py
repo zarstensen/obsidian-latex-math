@@ -23,8 +23,11 @@ class EvaluateMessage(BaseModel):
     expression: str
     environment: LmatEnvironment
 
+
 class EvaluateResult(CommandResult, ABC):
-    def __init__(self, sympy_expr: Expr, expr_separator: str, expr_lines: list[int] | None):
+    def __init__(
+        self, sympy_expr: Expr, expr_separator: str, expr_lines: list[int] | None
+    ):
         super().__init__()
         self.sympy_expr = sympy_expr
         self.expr_separator = expr_separator
@@ -32,19 +35,19 @@ class EvaluateResult(CommandResult, ABC):
 
     @override
     def getResponsePayload(self):
-        metadata = dict(separator = self.expr_separator)
+        metadata = dict(separator=self.expr_separator)
 
         if self.expr_lines is not None and self.expr_lines[0] != self.expr_lines[1]:
             metadata = dict(
-                **metadata,
-                start_line = self.expr_lines[0],
-                end_line = self.expr_lines[1]
+                **metadata, start_line=self.expr_lines[0], end_line=self.expr_lines[1]
             )
 
-        return CommandResult.result(dict(evaluated_expression=lmat_latex(self.sympy_expr), metadata=metadata))
+        return CommandResult.result(
+            dict(evaluated_expression=lmat_latex(self.sympy_expr), metadata=metadata)
+        )
+
 
 class EvalHandlerBase(CommandHandler, ABC):
-
     def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
@@ -62,10 +65,15 @@ class EvalHandlerBase(CommandHandler, ABC):
         expr_lines = None
 
         # choose bottom / right most evaluatable expression.
-        while isinstance(sympy_expr, SystemOfExpr) or isinstance(sympy_expr, Relational):
+        while isinstance(sympy_expr, SystemOfExpr) or isinstance(
+            sympy_expr, Relational
+        ):
             # for system of expressions, take the last one
             if isinstance(sympy_expr, SystemOfExpr):
-                expr_lines = (sympy_expr.get_location(-1).line, sympy_expr.get_location(-1).end_line)
+                expr_lines = (
+                    sympy_expr.get_location(-1).line,
+                    sympy_expr.get_location(-1).end_line,
+                )
 
                 if expr_lines[1] is None:
                     expr_lines = (expr_lines[0], len(message.expression.splitlines()))
@@ -86,9 +94,10 @@ class EvalHandlerBase(CommandHandler, ABC):
         unit_system = message.environment.unit_system
 
         if unit_system is not None:
-            sympy_expr = UnitsUtils.auto_convert(sympy_expr, UnitSystem.get_unit_system(unit_system))
+            sympy_expr = UnitsUtils.auto_convert(
+                sympy_expr, UnitSystem.get_unit_system(unit_system)
+            )
         else:
             sympy_expr = UnitsUtils.auto_convert(sympy_expr)
-
 
         return EvaluateResult(sympy_expr, separator, expr_lines)

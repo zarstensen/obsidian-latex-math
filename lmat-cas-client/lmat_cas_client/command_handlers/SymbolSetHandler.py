@@ -2,6 +2,7 @@ from typing import override
 
 from pydantic import BaseModel
 from sympy import *
+from sympy.logic.boolalg import BooleanAtom
 
 from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.Definitions import AssumptionDefinition
@@ -10,7 +11,7 @@ from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import *
 
-SETS = [
+SETS: list[Set] = [
     S.Complexes,
     S.Reals,
     Interval(0, oo),
@@ -40,8 +41,10 @@ SET_TO_LATEX = {
     FiniteSet(0): "\\{0\\}",
 }
 
+
 class SymbolSetMessage(BaseModel):
     environment: LmatEnvironment
+
 
 class SymbolSetResult(CommandResult):
     def __init__(self, set_symbols: dict[Set, list[Symbol]]):
@@ -56,11 +59,14 @@ class SymbolSetResult(CommandResult):
             if len(symbols) > 0:
                 latex_sets.append(f"{', '.join(symbols)} & \\in & {SET_TO_LATEX[set]}")
 
-        return CommandResult.result(dict(symbol_sets=f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}"))
+        return CommandResult.result(
+            dict(
+                symbol_sets=f"\\begin{{array}}{{rcl}}\n{' \\\\\n'.join(latex_sets)}\n\\end{{array}}"
+            )
+        )
 
 
 class SymbolSetHandler(CommandHandler):
-
     def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
@@ -88,10 +94,12 @@ class SymbolSetHandler(CommandHandler):
             smallest_containing_set = None
 
             for set in SETS:
-
                 set_contains_symbol = set.contains(sympy_symbol)
 
-                if set_contains_symbol == True:
+                if (
+                    isinstance(set_contains_symbol, (BooleanAtom, bool))
+                    and set_contains_symbol
+                ):
                     smallest_containing_set = set
 
             if smallest_containing_set is not None:

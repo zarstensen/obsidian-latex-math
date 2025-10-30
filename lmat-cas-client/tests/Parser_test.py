@@ -15,12 +15,27 @@ class TestParse:
 
     def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
         environment = LmatEnvironment.model_validate(environment)
-        return self.compiler.compile(expr, LmatEnvironment.create_definition_store(environment))
+        return self.compiler.compile(
+            expr, LmatEnvironment.create_definition_store(environment)
+        )
+
+    def test_comments(self):
+        result = self._parse_expr(
+            r"""
+1 + 1 % test comment %%% comment
+\cdot 50 \% % some more comments
+% this is an empty line
+\\\\\\\\\\\\\\%
+- 100 \ \%
+            """
+        )
+
+        assert result == 0.5
 
     def test_basic(self):
-        a, b, c = symbols('a b c')
+        a, b, c = symbols("a b c")
         # result = self.parser.doparse(r'-a i + b \pi + e + \frac{{a}}{b} + {a}^{b} \cdot f(a 25^2 symbol^{yaysymbol}) - \frac{50 - 70}5^{-99} - \frac{{km}}{{h}} \over \sin x + \sqrt[5]{x}')
-        result = self._parse_expr(r'-a i \cdot (5 + 7)^c + b')
+        result = self._parse_expr(r"-a i \cdot (5 + 7)^c + b")
         assert result == -a * I * (5 + 7) ** c + b
 
     def test_non_base_10_numbers(self):
@@ -31,20 +46,19 @@ class TestParse:
         assert result == 140
 
     def test_trig_funcs(self):
-        x, y, abc = symbols('x y abc')
-        assert self._parse_expr(r'\sin x') == sin(x)
-        assert self._parse_expr(r'\sin^y x') == sin(x)**y
-        assert simplify(self._parse_expr(r'\frac{\sin(abc)}{\cos {abc}}')) == tan(abc)
-        assert self._parse_expr(r'\arctan{abc}') == atan(abc)
-        assert self._parse_expr(r'\mathrm{arcosh} y') == acosh(y)
-        assert self._parse_expr(r'\operatorname{arcosh} y') == acosh(y)
-        assert self._parse_expr(r'\mathrm{sech} y') == sech(y)
-        assert self._parse_expr(r'\mathrm{arsech} y') == asech(y)
-        assert self._parse_expr(r'\mathrm{csch} y') == csch(y)
-        assert self._parse_expr(r'\mathrm{arcsch} y') == acsch(y)
-        assert self._parse_expr(r'\coth y') == coth(y)
-        assert self._parse_expr(r'\mathrm{arcoth} y') == acoth(y)
-
+        x, y, abc = symbols("x y abc")
+        assert self._parse_expr(r"\sin x") == sin(x)
+        assert self._parse_expr(r"\sin^y x") == sin(x) ** y
+        assert simplify(self._parse_expr(r"\frac{\sin(abc)}{\cos {abc}}")) == tan(abc)
+        assert self._parse_expr(r"\arctan{abc}") == atan(abc)
+        assert self._parse_expr(r"\mathrm{arcosh} y") == acosh(y)
+        assert self._parse_expr(r"\operatorname{arcosh} y") == acosh(y)
+        assert self._parse_expr(r"\mathrm{sech} y") == sech(y)
+        assert self._parse_expr(r"\mathrm{arsech} y") == asech(y)
+        assert self._parse_expr(r"\mathrm{csch} y") == csch(y)
+        assert self._parse_expr(r"\mathrm{arcsch} y") == acsch(y)
+        assert self._parse_expr(r"\coth y") == coth(y)
+        assert self._parse_expr(r"\mathrm{arcoth} y") == acoth(y)
 
     def test_relations(self):
         x, y, z = symbols("x y z")
@@ -57,24 +71,33 @@ class TestParse:
 
         assert result.get_all_expr() == (Eq(x, y), Lt(y, z))
 
-
     def test_matrix(self):
-
-        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix([[1], [2]])
-        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix([[1, 2]])
-        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}") == Matrix([[1, 2], [3, 4]])
-        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix}") == Matrix([[1, 2], [3, 4], [5, 6]])
+        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix([
+            [1],
+            [2],
+        ])
+        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix([
+            [1, 2]
+        ])
+        assert self._parse_expr(
+            r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}"
+        ) == Matrix([[1, 2], [3, 4]])
+        assert self._parse_expr(
+            r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix}"
+        ) == Matrix([[1, 2], [3, 4], [5, 6]])
 
     def test_mathematical_constants(self):
-
         assert self._parse_expr(r"\pi") == S.Pi
         assert self._parse_expr(r"e") == S.Exp1
         assert self._parse_expr(r"i") == I
 
     def test_ambigous_function_expressions(self):
-        a, b, c = symbols('a b c')
+        a, b, c = symbols("a b c")
 
-        assert self._parse_expr(r"(\sin(a) - b)^2 + c + (\sin(b) - a)") == (sin(a) - b)**2 + c + sin(b) - a
+        assert (
+            self._parse_expr(r"(\sin(a) - b)^2 + c + (\sin(b) - a)")
+            == (sin(a) - b) ** 2 + c + sin(b) - a
+        )
         assert self._parse_expr(r"\sin(a) - b") == sin(a) - b
         assert self._parse_expr(r"\sin(5) - 75") == sin(5) - 75
         assert self._parse_expr(r"\sin(a - b)") == sin(a - b)
@@ -83,7 +106,7 @@ class TestParse:
         assert self._parse_expr(r"\sin{a \cdot b} - c") == sin(a * b) - c
 
     def test_implicit_multiplication(self):
-        a, b, c = symbols('a b c')
+        a, b, c = symbols("a b c")
 
         assert self._parse_expr(r"2 a") == 2 * a
         assert self._parse_expr(r"a b") == a * b
@@ -92,7 +115,7 @@ class TestParse:
         assert self._parse_expr(r"a \cdot b c") == a * b * c
 
         # indexed_symbols
-        x1, x2 = symbols('x_{1} x_{2}')
+        x1, x2 = symbols("x_{1} x_{2}")
 
         assert self._parse_expr(r"x_{1} x_{2}") == x1 * x2
 
@@ -136,7 +159,7 @@ class TestParse:
         assert self._parse_expr(r"b a^2") == a**2 * b
         assert self._parse_expr(r"a^2 b") == a**2 * b
 
-        #scripts
+        # scripts
         x1 = symbols("x_{1}")
         assert self._parse_expr(r"b x_1") == x1 * b
         assert self._parse_expr(r"x_1 b") == x1 * b
@@ -144,7 +167,7 @@ class TestParse:
         f, x = symbols("f x")
 
         assert self._parse_expr("f (x)") == f * x
-        assert self._parse_expr("f(x)") == Function('f')(x)
+        assert self._parse_expr("f(x)") == Function("f")(x)
 
     def test_partial_relations(self):
         x, y = symbols("x y")
@@ -170,7 +193,7 @@ class TestParse:
         assert isinstance(result, SystemOfExpr)
         assert len(result) == 3
 
-        assert result.get_expr(0) == Eq(x, 2*y * 5 * z)
+        assert result.get_expr(0) == Eq(x, 2 * y * 5 * z)
         assert result.get_location(0).line == 3
         assert result.get_location(0).end_line == 3
 
@@ -180,8 +203,7 @@ class TestParse:
 
         assert result.get_expr(2) == Eq(z, x + 2 * y / x)
         assert result.get_location(2).line == 5
-        assert result.get_location(2).end_line == None
-
+        assert result.get_location(2).end_line is None
 
         result = self._parse_expr(r"""
             \begin{cases}
@@ -204,27 +226,28 @@ class TestParse:
         assert isinstance(result, SystemOfExpr)
         assert len(result) == 1
 
-        assert result.get_expr(0) == Eq(x, 2*y)
+        assert result.get_expr(0) == Eq(x, 2 * y)
         assert result.get_location(0).line == 3
 
-
     def test_matrix_operations(self):
-        result = self._parse_expr(r"A A^\ast",
-        {
-            "definitions": [
-                EnvDefinition(
-                    name_expr="A",
-                    value_expr=r"""
+        result = self._parse_expr(
+            r"A A^\ast",
+            {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="A",
+                        value_expr=r"""
                         \begin{bmatrix}
                         1 & 2 \\
                         i & 2 i
                         \end{bmatrix}
-                        """
-                )
-            ]
-        })
+                        """,
+                    )
+                ]
+            },
+        )
 
-        assert result.doit() == Matrix([[5, - 5 * I], [5 * I, 5]])
+        assert result.doit() == Matrix([[5, -5 * I], [5 * I, 5]])
 
     def test_symbols(self):
         s_a = Symbol("variable")
@@ -234,55 +257,45 @@ class TestParse:
         s_e = Symbol(r"\pmb{M}_{some label i;j}")
         s_f = Symbol(r"\alpha_{very_{indexed_{variable}}}")
 
-        result = self._parse_expr(r"variable + v \cdot a_1 + \sqrt{\pmb{M}_{some label i;j}^{\alpha_{very_{indexed_{variable}}}}} + \mathrm{X}^{-1}")
+        result = self._parse_expr(
+            r"variable + v \cdot a_1 + \sqrt{\pmb{M}_{some label i;j}^{\alpha_{very_{indexed_{variable}}}}} + \mathrm{X}^{-1}"
+        )
 
         assert result == s_a + s_b * s_c + sqrt(s_e**s_f) + s_d**-1
 
     def test_delta_symbols(self):
         delta_v = Symbol(r"\Delta v")
         delta_f = Function(r"\Delta f")
-        x = Symbol('x')
+        x = Symbol("x")
 
         result = self._parse_expr(r"\Delta   f(x) + \Delta v + \Delta       v")
 
         assert result == delta_f(x) + 2 * delta_v
 
     def test_definitions(self):
-        result = self._parse_expr(r"x", { "symbols": { "x": [ "real" ] } })
+        result = self._parse_expr(r"x", {"symbols": {"x": ["real"]}})
         assert result == symbols("x", real=True)
 
         x = symbols("x", real=True)
         y = symbols("y", positive=True)
-        result = self._parse_expr(r"a + b", {
-            "symbols": {
-            "x": ["real"],
-            "y": ["positive"]
+        result = self._parse_expr(
+            r"a + b",
+            {
+                "symbols": {"x": ["real"], "y": ["positive"]},
+                "definitions": [
+                    EnvDefinition(name_expr="a", value_expr="x + y"),
+                    EnvDefinition(name_expr="b", value_expr="y"),
+                ],
             },
-            "definitions": [
-                EnvDefinition(name_expr="a", value_expr="x + y"),
-                EnvDefinition(name_expr="b", value_expr="y"),
-            ]
-        })
+        )
 
         assert result == x + y + y
 
-        a, b, x, y = symbols('a b x y')
+        a, b, x, y = symbols("a b x y")
 
-        result = self._parse_expr("a + b + x + y", {
-            "definitions": [
-            EnvDefinition(name_expr="x", value_expr="y^2 - z"),
-            EnvDefinition(name_expr="y", value_expr="50"),
-            EnvDefinition(name_expr="z", value_expr="2 y"),
-            EnvDefinition(name_expr="A", value_expr="B"),
-            EnvDefinition(name_expr="B", value_expr="A + z"),
-            ]
-        })
-
-
-        assert result == a + b + 50**2 - 2 * 50 + 50
-
-        with pytest.raises(CyclicDependencyError):
-            result = self._parse_expr("A + B + x + y", {
+        result = self._parse_expr(
+            "a + b + x + y",
+            {
                 "definitions": [
                     EnvDefinition(name_expr="x", value_expr="y^2 - z"),
                     EnvDefinition(name_expr="y", value_expr="50"),
@@ -290,30 +303,54 @@ class TestParse:
                     EnvDefinition(name_expr="A", value_expr="B"),
                     EnvDefinition(name_expr="B", value_expr="A + z"),
                 ]
-            })
+            },
+        )
+
+        assert result == a + b + 50**2 - 2 * 50 + 50
 
         with pytest.raises(CyclicDependencyError):
-            result = self._parse_expr("f(1, x)", {
-                "definitions": [
-                    EnvDefinition(name_expr="x", value_expr="y"),
-                    EnvDefinition(name_expr="y", value_expr="x"),
-                    EnvDefinition(name_expr="f(x, y)", value_expr="x y"),
-                ]
-            })
+            result = self._parse_expr(
+                "A + B + x + y",
+                {
+                    "definitions": [
+                        EnvDefinition(name_expr="x", value_expr="y^2 - z"),
+                        EnvDefinition(name_expr="y", value_expr="50"),
+                        EnvDefinition(name_expr="z", value_expr="2 y"),
+                        EnvDefinition(name_expr="A", value_expr="B"),
+                        EnvDefinition(name_expr="B", value_expr="A + z"),
+                    ]
+                },
+            )
 
         with pytest.raises(CyclicDependencyError):
-            result = self._parse_expr("f(10)", {
-                "definitions": [
-                    EnvDefinition(name_expr="f(x)", value_expr="g(x)"),
-                    EnvDefinition(name_expr="g(x)", value_expr="f(x)")
-                ]
-            })
+            result = self._parse_expr(
+                "f(1, x)",
+                {
+                    "definitions": [
+                        EnvDefinition(name_expr="x", value_expr="y"),
+                        EnvDefinition(name_expr="y", value_expr="x"),
+                        EnvDefinition(name_expr="f(x, y)", value_expr="x y"),
+                    ]
+                },
+            )
+
+        with pytest.raises(CyclicDependencyError):
+            result = self._parse_expr(
+                "f(10)",
+                {
+                    "definitions": [
+                        EnvDefinition(name_expr="f(x)", value_expr="g(x)"),
+                        EnvDefinition(name_expr="g(x)", value_expr="f(x)"),
+                    ]
+                },
+            )
 
     def test_brace_units(self):
         import sympy.physics.units as u
-        x, a, b = symbols('x a b')
 
-        assert self._parse_expr(r"{a + b}^2 + {s}^2") == u.second**2 + (a + b)**2
+        x, a, b = symbols("x a b")
+
+        assert self._parse_expr(r"{a + b}^2 + {s}^2") == u.second**2 + (a + b) ** 2
 
         result = self._parse_expr(r"{km} + \sin{x} + \frac{a}{{J}} + b")
         assert result == u.km + sin(x) + a / u.joule + b
@@ -324,12 +361,16 @@ class TestParse:
         assert result.doit() == Matrix([[2, 0], [0, 2]])
 
     def test_jacobian(self):
-        result = self._parse_expr(r"\mathbf{J}(\begin{bmatrix} x + y \\ x \\ y\end{bmatrix})")
+        result = self._parse_expr(
+            r"\mathbf{J}(\begin{bmatrix} x + y \\ x \\ y\end{bmatrix})"
+        )
 
         assert result.doit() == Matrix([[1, 1], [1, 0], [0, 1]])
 
     def test_rref(self):
-        result = self._parse_expr(r"\mathrm{rref}(\begin{bmatrix} 20 & 50 \\ 10 & 25\end{bmatrix})")
+        result = self._parse_expr(
+            r"\mathrm{rref}(\begin{bmatrix} 20 & 50 \\ 10 & 25\end{bmatrix})"
+        )
 
         assert result == Matrix([[1, Rational(5, 2)], [0, 0]])
 
@@ -339,19 +380,33 @@ class TestParse:
         assert abs(result - (0.25 - 0.005)) <= 1e-14
 
     def test_propositions_presedence(self):
-        a, b, c, d, e, f, g, h, i = symbols('A B C D E F G H I')
+        a, b, c, d, e, f, g, h, i = symbols("A B C D E F G H I")
 
         # test presedence
-        result = self._parse_expr(r"\neg A \odot B \oplus C \bar \vee D \wedge E \overline \wedge F \vee G \implies H \iff I")
-        assert simplify(result) == simplify(Equivalent(Implies(Or(Nand(And(Nor(Xor(Xnor(Not(a), b), c), d), e), f), g), h), i))
+        result = self._parse_expr(
+            r"\neg A \odot B \oplus C \bar \vee D \wedge E \overline \wedge F \vee G \implies H \iff I"
+        )
+        assert simplify(result) == simplify(
+            Equivalent(
+                Implies(Or(Nand(And(Nor(Xor(Xnor(Not(a), b), c), d), e), f), g), h), i
+            )
+        )
 
-        result = self._parse_expr(r"A \iff B \Longleftrightarrow C \longleftrightarrow D \leftrightharpoons E \rightleftharpoons F ")
+        result = self._parse_expr(
+            r"A \iff B \Longleftrightarrow C \longleftrightarrow D \leftrightharpoons E \rightleftharpoons F "
+        )
         assert simplify(result) == simplify(Equivalent(a, b, c, d, e, f))
 
-        result = self._parse_expr(r"A \implies B \to C \Longrightarrow D \longrightarrow E \nRightarrow F \rightarrow G")
-        assert simplify(result) == simplify(Not(((((a >> b) >> c) >> d) >> e) >> f) >> g)
+        result = self._parse_expr(
+            r"A \implies B \to C \Longrightarrow D \longrightarrow E \nRightarrow F \rightarrow G"
+        )
+        assert simplify(result) == simplify(
+            Not(((((a >> b) >> c) >> d) >> e) >> f) >> g
+        )
 
-        result = self._parse_expr(r"A \Longleftarrow B \longleftarrow C \Leftarrow D \leftarrow E")
+        result = self._parse_expr(
+            r"A \Longleftarrow B \longleftarrow C \Leftarrow D \leftarrow E"
+        )
         assert simplify(result) == simplify((((a << b) << c) << d) << e)
 
         result = self._parse_expr(r"A \vee B")
@@ -382,32 +437,33 @@ class TestParse:
         assert simplify(result) == simplify(And(Equivalent(a, b), Equivalent(c, d)))
 
     def test_symbolic_iff(self):
-
         result = self._parse_expr(r"\sqrt{\fracc3} \iff \frac{\sqrt{3}}{3} \sqrt{c}")
-        assert sympify(result) == True
+        assert sympify(result)
 
         result = self._parse_expr(r"3 \iff 5")
-        assert sympify(result) == False
+        assert not sympify(result)
 
-        a = Symbol('A')
+        a = Symbol("A")
         result = self._parse_expr(r"(c^2 \iff c) \vee A")
         assert simplify(result.expr) == a
 
     def test_proposition_variables(self):
+        result = self._parse_expr(
+            r"P \implies Q",
+            {
+                "definitions": [
+                    EnvDefinition(name_expr="P", value_expr=r"A \wedge B"),
+                    EnvDefinition(name_expr="Q", value_expr=r"B \vee A"),
+                ]
+            },
+        )
 
-        result = self._parse_expr(r"P \implies Q", {
-            "definitions": [
-                EnvDefinition(name_expr="P", value_expr=r"A \wedge B"),
-                EnvDefinition(name_expr="Q", value_expr=r"B \vee A"),
-            ]
-        })
-
-        a, b = symbols('A B')
+        a, b = symbols("A B")
 
         assert simplify(result) == simplify(Implies(And(a, b), Or(b, a)))
 
     def test_regression_101(self):
-        x, y = symbols('x y')
+        x, y = symbols("x y")
 
         result = self._parse_expr(r"\sin x^2")
 
@@ -415,7 +471,7 @@ class TestParse:
 
         result = self._parse_expr(r"\sin(x)^2")
 
-        assert result == sin(x)**2
+        assert result == sin(x) ** 2
 
         result = self._parse_expr(r"\log_{10} x^2")
         assert result == log(x**2, 10)
@@ -436,14 +492,16 @@ class TestParse:
         result = self._parse_expr(r"\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}")
 
         assert isinstance(result, LatexMatrix)
-        assert result.env_begin == r'\begin{pmatrix}'
-        assert result.env_end == r'\end{pmatrix}'
+        assert result.env_begin == r"\begin{pmatrix}"
+        assert result.env_end == r"\end{pmatrix}"
 
-        result = self._parse_expr(r"\left\{ \begin{array}{r | c : l} x & y^2 \\ z_3 & \mathrm{uv} \end{array} \right]")
+        result = self._parse_expr(
+            r"\left\{ \begin{array}{r | c : l} x & y^2 \\ z_3 & \mathrm{uv} \end{array} \right]"
+        )
 
         assert isinstance(result, LatexMatrix)
-        assert result.env_begin == r'\left\{ \begin{array}{r | c : l}'
-        assert result.env_end == r'\end{array} \right]'
+        assert result.env_begin == r"\left\{ \begin{array}{r | c : l}"
+        assert result.env_end == r"\end{array} \right]"
 
     def test_exception_types(self):
         # unexpected EOF
@@ -457,7 +515,7 @@ class TestParse:
     def test_text(self):
         result = self._parse_expr(r"a + \text{some text} b")
 
-        a, b = symbols('a b')
+        a, b = symbols("a b")
         assert result == a + b
 
         result = self._parse_expr(r"""
@@ -472,7 +530,7 @@ class TestParse:
             \sum_{n = 0 \text{some \textbf{nested \textit{text}}} and some not nested \text{text}}^1 n
             """)
 
-        n = symbols('n')
+        n = symbols("n")
         assert result == Sum(n, (n, 0, 1))
 
     def test_regression_150(self):
@@ -480,10 +538,23 @@ class TestParse:
         assert self._parse_expr(r"a P") == sympify("a * P")
 
     def test_series_input_presedence(self):
-        j = Symbol('j')
-        assert self._parse_expr(r"\sum_{j = 0}^\infty (\frac{1}{2})^j") == Sum(Rational(1, 2) ** j , (j, 0, oo))
-        assert self._parse_expr(r"\sum_{j = 0}^\infty (\frac{1}{j})^j") == Sum((1 / j) ** j , (j, 0, oo))
-        assert self._parse_expr(r"\prod_{j = 0}^\infty 3 \cdot j^3 - j") == Product(3 * j**3, (j, 0, oo)) - j
+        j = Symbol("j")
+        assert self._parse_expr(r"\sum_{j = 0}^\infty (\frac{1}{2})^j") == Sum(
+            Rational(1, 2) ** j, (j, 0, oo)
+        )
+        assert self._parse_expr(r"\sum_{j = 0}^\infty (\frac{1}{j})^j") == Sum(
+            (1 / j) ** j, (j, 0, oo)
+        )
+        assert (
+            self._parse_expr(r"\prod_{j = 0}^\infty 3 \cdot j^3 - j")
+            == Product(3 * j**3, (j, 0, oo)) - j
+        )
 
-        assert self._parse_expr(r"\prod_{j = 0}^\infty (j) j^j") == Product(j , (j, 0, oo)) * j ** j
-        assert self._parse_expr(r"\sum_{j = 0}^\infty {3 j} j ^2") == Sum(3 * j, (j, 0, oo)) * j ** 2
+        assert (
+            self._parse_expr(r"\prod_{j = 0}^\infty (j) j^j")
+            == Product(j, (j, 0, oo)) * j**j
+        )
+        assert (
+            self._parse_expr(r"\sum_{j = 0}^\infty {3 j} j ^2")
+            == Sum(3 * j, (j, 0, oo)) * j**2
+        )

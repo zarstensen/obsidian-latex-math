@@ -6,6 +6,7 @@ class LatexMatrix(Matrix):
     """
     The LatexMatrix class stores additional info about the eventual latex representation of a sympy matrix.
     """
+
     env_begin: str = None
     env_end: str = None
 

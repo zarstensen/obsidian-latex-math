@@ -10,7 +10,6 @@ from sympy.printing.str import StrPrinter
 # but not all functions or data structures are guaranteed to actually be parsable by geogebra.
 #
 class GeogebraPrinter(StrPrinter):
-
     def _print_Function(self, expr: Function):
         func_name = expr.func.__name__
 
@@ -24,7 +23,7 @@ class GeogebraPrinter(StrPrinter):
 
     def _print_Relational(self, expr: Relational):
         if isinstance(expr, Equality):
-            op_str = '='
+            op_str = "="
         else:
             op_str = expr.rel_op
 
@@ -37,14 +36,19 @@ class GeogebraPrinter(StrPrinter):
 
         # special case for vectors, they should be printed with parenthesees.
         if expr.cols == 1:
-            return f"({','.join((self.doprint(value) for value in expr.iter_values()))})"
+            return (
+                f"({','.join((self.doprint(value) for value in expr.iter_values()))})"
+            )
 
         return f"{{{
-            ','.join((
-                f"{{{
-                    ','.join((self.doprint(value) for value in row))
-                }}}" for row in expr.tolist()
-            ))}}}"
+            ','.join(
+                (
+                    f'{{{",".join((self.doprint(value) for value in row))}}}'
+                    for row in expr.tolist()
+                )
+            )
+        }}}"
+
 
 def print_geogebra(expr):
     return GeogebraPrinter().doprint(expr)

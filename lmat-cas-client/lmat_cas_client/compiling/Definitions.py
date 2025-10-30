@@ -1,4 +1,3 @@
-
 from typing import Iterable, override
 
 from lark import Tree
@@ -32,11 +31,11 @@ class SympyDefinition(Definition):
     def dependencies(self) -> set[str]:
         # return all free symbol names and applied undefined function names as dependencies.
         return set(
-                map(
-                    lambda d: d.name,
-                    self._sympy_expr.free_symbols | self._sympy_expr.atoms(AppliedUndef)
-                    )
-                )
+            map(
+                lambda d: d.name,
+                self._sympy_expr.free_symbols | self._sympy_expr.atoms(AppliedUndef),
+            )
+        )
 
 
 class AssumptionDefinition(SympyDefinition):
@@ -53,11 +52,18 @@ class AssumptionDefinition(SympyDefinition):
         # so we need to explicitly return an empty set here.
         return set()
 
+
 class AstDefinition(Definition):
     """
     Definition holding an abstract syntax tree (AST), which needs to be transformed in order to retreivieve its defined value.
     """
-    def __init__(self, expr_transformer: TransformerRunner[[DefinitionStore], Expr], dependencies_transformer: TransformerRunner[[], set[str]], ast_definition: Tree):
+
+    def __init__(
+        self,
+        expr_transformer: TransformerRunner[[DefinitionStore], Expr],
+        dependencies_transformer: TransformerRunner[[], set[str]],
+        ast_definition: Tree,
+    ):
         """
         Args:
             expr_transformer (TransformerRunner[[DefinitionStore], Expr]): transformer for producing the defined value
@@ -76,13 +82,21 @@ class AstDefinition(Definition):
     def dependencies(self) -> set[str]:
         return self._dependencies_transformer.transform(self._ast_definition)
 
+
 #
 class AstFunctionDefinition(FunctionDefinition):
     """
     Like SerializedDefinition, but with FunctionDefinition as a base
     """
 
-    def __init__(self, expr_transformer: TransformerRunner[[DefinitionStore], Expr], dependencies_transformer: TransformerRunner[[], set[str]], func_name: str, ast_body: Tree, variables: Iterable[str]):
+    def __init__(
+        self,
+        expr_transformer: TransformerRunner[[DefinitionStore], Expr],
+        dependencies_transformer: TransformerRunner[[], set[str]],
+        func_name: str,
+        ast_body: Tree,
+        variables: Iterable[str],
+    ):
         super().__init__(variables)
         self._func_name = func_name
         self._ast_body = ast_body
@@ -94,22 +108,32 @@ class AstFunctionDefinition(FunctionDefinition):
         return Function(self._func_name)
 
     @override
-    def applied_value(self, definition_store: DefinitionStore, args: Iterable[Definition] | None = None) -> Expr:
+    def applied_value(
+        self,
+        definition_store: DefinitionStore,
+        args: Iterable[Definition] | None = None,
+    ) -> Expr:
         if args is None:
             args = tuple()
         else:
             args = tuple(args)
 
             if len(args) != len(self.variables):
-                raise ValueError(f"Incorrect number of function args provided.\nExpected {len(self.variables)} ({', '.join(self.variables)}) got {len(self.args)}")
+                raise ValueError(
+                    f"Incorrect number of function args provided.\nExpected {len(self.variables)} ({', '.join(self.variables)}) got {len(self.args)}"
+                )
 
-        args_definitions = { }
+        args_definitions = {}
 
         for variable_name, argument_definition in zip(self.variables, args):
             args_definitions[variable_name] = argument_definition
 
-        return self._transformer.transform(self._ast_body, definition_store.override(args_definitions))
+        return self._transformer.transform(
+            self._ast_body, definition_store.override(args_definitions)
+        )
 
     @override
     def dependencies(self) -> set[str]:
-        return self._dependencies_transformer.transform(self._ast_body).difference(self._variables)
+        return self._dependencies_transformer.transform(self._ast_body).difference(
+            self._variables
+        )

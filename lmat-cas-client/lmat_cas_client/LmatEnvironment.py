@@ -1,4 +1,3 @@
-
 from typing import Optional, Self
 
 from pydantic import BaseModel, Field
@@ -21,11 +20,13 @@ from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
 from lmat_cas_client.compiling.transforming.SympyTransformer import (
     sympy_transformer_runner,
 )
+from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 
 
 class EnvDefinition(BaseModel):
     name_expr: str
     value_expr: str
+
 
 ## The LmatEnvironment type represents a dictionary
 ## parsed from a json encoded LmatEnvironment typescript class.
@@ -43,42 +44,44 @@ class LmatEnvironment(BaseModel):
     def create_definition_store(environment: Self) -> DefinitionStore:
         environment = LmatEnvironment.model_validate(environment)
 
-        definitions = { }
+        definitions = {}
 
         for symbol_name, assumption_expr in environment.symbols.items():
-            definitions[symbol_name] = AssumptionDefinition(Symbol(
-                symbol_name,
-                **{ assumption: True for assumption in assumption_expr }
-                ))
+            definitions[symbol_name] = AssumptionDefinition(
+                Symbol(
+                    symbol_name, **{assumption: True for assumption in assumption_expr}
+                )
+            )
 
         latex_to_sympy_compiler = LatexToSympyCompiler()
 
         for definition in environment.definitions:
-
-            definition_id = latex_to_sympy_compiler.compile(definition.name_expr, DefinitionStore())
+            definition_id = latex_to_sympy_compiler.compile(
+                definition.name_expr, DefinitionStore()
+            )
 
             match definition_id:
                 case Symbol() as def_symbol:
                     if definition.value_expr == "":
-                        del definitions[def_symbol.name]
+                        definitions.pop(def_symbol.name, None)
                     else:
                         definitions[def_symbol.name] = AstDefinition(
-                            expr_transformer = sympy_transformer_runner,
-                            dependencies_transformer = dependencies_transformer_runner,
-                            ast_definition = latex_parser.parse(definition.value_expr)
+                            expr_transformer=sympy_transformer_runner,
+                            dependencies_transformer=dependencies_transformer_runner,
+                            ast_definition=latex_parser.parse(definition.value_expr),
                         )
                 case AppliedUndef() as def_function:
                     if definition.value_expr == "":
-                        del definitions[def_function.name]
+                        definitions.pop(def_function.name, None)
                     else:
                         definitions[def_function.name] = AstFunctionDefinition(
-                            expr_transformer = sympy_transformer_runner,
-                            dependencies_transformer = dependencies_transformer_runner,
-                            func_name = def_function.name,
-                            ast_body = latex_parser.parse(definition.value_expr),
-                            variables = [ arg.name for arg in def_function.args ]
+                            expr_transformer=sympy_transformer_runner,
+                            dependencies_transformer=dependencies_transformer_runner,
+                            func_name=def_function.name,
+                            ast_body=latex_parser.parse(definition.value_expr),
+                            variables=[arg.name for arg in def_function.args],
                         )
                 case _:
                     pass
 
-        return DefinitionStore(definitions)
+        return StandardDefinitionStore.override(definitions)

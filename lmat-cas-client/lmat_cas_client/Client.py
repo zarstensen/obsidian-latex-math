@@ -14,12 +14,17 @@ from lmat_cas_client.command_handlers.CommandHandler import CommandHandler
 class ThreadKill(Exception):
     pass
 
+
 class KillableThread(Thread):
     def kill(self):
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self.ident), ctypes.py_object(ThreadKill))
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(
+            ctypes.c_long(self.ident), ctypes.py_object(ThreadKill)
+        )
+
 
 class HandlerError(Exception):
     pass
+
 
 #
 # The LmatCasClient class manages a connection and message parsing + encoding between an active Latex Math plugin.
@@ -30,7 +35,6 @@ class HandlerError(Exception):
 # Each handle key has a handler registered, which is called with the received payload.
 #
 class LmatCasClient:
-
     SUCCESS_STATUS = "success"
     ERR_STATUS = "error"
     INTERRUPT_STATUS = "interrupted"
@@ -65,7 +69,7 @@ class LmatCasClient:
 
                 match message_type:
                     case "exit":
-                        await self._respond_success(uid, "exit", { })
+                        await self._respond_success(uid, "exit", {})
                         break
                     case "start":
                         await self._start_handler(payload, uid)
@@ -77,7 +81,7 @@ class LmatCasClient:
                         await self._respond_error(
                             uid,
                             dev_message=f"Unsupported message type: {message.type}",
-                            usr_message="Message type is not supported, please try reinstalling the plugin."
+                            usr_message="Message type is not supported, please try reinstalling the plugin.",
                         )
             except Exception:
                 traceback.print_exc(file=sys.stderr)
@@ -86,8 +90,8 @@ class LmatCasClient:
         if payload["command_type"] not in self.command_handlers:
             await self._respond_error(
                 uid,
-                dev_message=f"Unsupported command type: {payload["command_type"]}",
-                usr_message="Command type is not supported, please try reinstalling the plugin."
+                dev_message=f"Unsupported command type: {payload['command_type']}",
+                usr_message="Command type is not supported, please try reinstalling the plugin.",
             )
             return
 
@@ -100,7 +104,7 @@ class LmatCasClient:
                 uid,
                 payload["start_args"],
             ),
-            daemon=True
+            daemon=True,
         )
 
         self.command_handler_threads[uid].start()
@@ -120,7 +124,7 @@ class LmatCasClient:
 
                 self.command_handler_threads[target_uid].kill()
 
-        await self._respond_success(uid, 'result', dict())
+        await self._respond_success(uid, "result", dict())
 
     def _async_target(self, uid, coro, *args, **kwargs):
         async def coro_err_handler():
@@ -131,7 +135,7 @@ class LmatCasClient:
                     await self._respond_error(
                         uid,
                         dev_message=str(e) + "\n" + traceback.format_exc(),
-                        usr_message=str(e)
+                        usr_message=str(e),
                     )
                 except ValueError:
                     # This error means the thread was intentionally interrupted,
@@ -146,7 +150,6 @@ class LmatCasClient:
 
     # Send the given json dumpable object back to the plugin.
     async def _respond(self, status: str, uid: str, message: dict):
-
         if uid not in self.pending_message_responses:
             raise ValueError(f"Response not pending for message with uid '{uid}'")
 
@@ -160,12 +163,13 @@ class LmatCasClient:
         await self._respond(self.SUCCESS_STATUS, uid, dict(type=type, value=value))
 
     async def _respond_interrupt(self, uid):
-        await self._respond(self.INTERRUPT_STATUS, uid, { })
+        await self._respond(self.INTERRUPT_STATUS, uid, {})
 
-    async def _respond_error(self, uid: str, dev_message: str, usr_message: str | None = None):
+    async def _respond_error(
+        self, uid: str, dev_message: str, usr_message: str | None = None
+    ):
         usr_message = dev_message if usr_message is None else usr_message
 
-        await self._respond(self.ERR_STATUS, uid, dict(
-            dev_message = dev_message,
-            usr_message = usr_message
-        ))
+        await self._respond(
+            self.ERR_STATUS, uid, dict(dev_message=dev_message, usr_message=usr_message)
+        )

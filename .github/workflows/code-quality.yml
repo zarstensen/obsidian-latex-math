@@ -16,9 +16,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt -r requirements-dev.txt
-      - name: Run Ruff Check
+      - name: Run Ruff Lint Check
         run: ruff check --preview --output-format=github
-  
+
+      - name: Run Ruff Format Check
+        run: ruff format --check --preview --output-format=github
+
   plugin-code-check:
     runs-on: ubuntu-latest
     steps:
@@ -34,14 +37,14 @@ jobs:
         run: tsc -noEmit -skipLibCheck
       - name: Eslint Check
         run: npx eslint ./src
-    
+
   code-quality-result:
     runs-on: ubuntu-latest
     if: always()
-    needs: [ cas-code-quality-check, plugin-code-check ]
+    needs: [cas-code-quality-check, plugin-code-check]
     steps:
       - name: Failure
         if: ${{ contains(needs.*.result, 'failure') }}
-        run: | 
+        run: |
           echo "Code quality check failed!"
           exit 1

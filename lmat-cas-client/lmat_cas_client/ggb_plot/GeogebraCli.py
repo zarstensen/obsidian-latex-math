@@ -6,11 +6,13 @@ class GeogebraCli:
     def __init__(self, ggb_install_dir):
         self._ggb_install_dir = ggb_install_dir
 
-        invalid_ggb_install_Err = RuntimeError(f'"{ggb_install_dir}" is not a valid geogebra installation directory.')
+        invalid_ggb_install_Err = RuntimeError(
+            f'"{ggb_install_dir}" is not a valid geogebra installation directory.'
+        )
 
         try:
             result = self._run_ggb(["--v"])
-        except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        except (FileNotFoundError, subprocess.CalledProcessError):
             raise invalid_ggb_install_Err
 
         if not result.stdout.lower().startswith(b"geogebra"):
@@ -25,18 +27,18 @@ class GeogebraCli:
     def _run_ggb(self, args):
         result = subprocess.run(
             [
-            f"{self._ggb_install_dir}/jre/bin/java",
-            "-Xms32m",
-            "-Xmx1024m",
-            "-Dsun.jnu.encoding=UTF-8",
-            "-jar",
-            f"{self._ggb_install_dir}/geogebra.jar",
-            "--logLevel=ERROR",
-            "--showSplash=false",
-            *args
+                f"{self._ggb_install_dir}/jre/bin/java",
+                "-Xms32m",
+                "-Xmx1024m",
+                "-Dsun.jnu.encoding=UTF-8",
+                "-jar",
+                f"{self._ggb_install_dir}/geogebra.jar",
+                "--logLevel=ERROR",
+                "--showSplash=false",
+                *args,
             ],
             cwd=os.getcwd(),
-            capture_output=True
+            capture_output=True,
         )
 
         return result
