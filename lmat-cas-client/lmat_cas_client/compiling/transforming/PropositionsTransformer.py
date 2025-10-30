@@ -13,11 +13,13 @@ class PropositionExpr:
     Simply wraps a propositional expression,
     is primarily used to detect if an expression came from PropositionsTransformer.
     """
+
     def __init__(self, expr):
         self.expr = expr
 
     def _sympy_(self):
         return self.expr
+
 
 @v_args(inline=True)
 class PropositionsTransformer(Transformer):
@@ -47,8 +49,7 @@ class PropositionsTransformer(Transformer):
     def prop_negated_iff(self, *args: tuple[Expr]) -> Expr:
         return Not(Functions.SymbolicIff(*args))
 
-    def prop_implies(self, *args: tuple[Expr|Token]) -> Expr:
-
+    def prop_implies(self, *args: tuple[Expr | Token]) -> Expr:
         args = list(reversed(args))
 
         while len(args) > 1:
@@ -60,11 +61,15 @@ class PropositionsTransformer(Transformer):
                 case "_PROP_OP_LR_IMPLICATION":
                     implication = Implies(left, right, evaluate=False)
                 case "_PROP_OP_NEG_LR_IMPLICATION":
-                    implication = Not(Implies(left, right, evaluate=False), evaluate=False)
+                    implication = Not(
+                        Implies(left, right, evaluate=False), evaluate=False
+                    )
                 case "_PROP_OP_RL_IMPLICATION":
                     implication = Implies(right, left, evaluate=False)
                 case "_PROP_OP_NEG_RL_IMPLICATION":
-                    implication = Not(Implies(right, left, evaluate=False), evaluate=False)
+                    implication = Not(
+                        Implies(right, left, evaluate=False), evaluate=False
+                    )
                 case _:
                     raise ValueError(f"Unexpected token: {repr(op_token)}")
 

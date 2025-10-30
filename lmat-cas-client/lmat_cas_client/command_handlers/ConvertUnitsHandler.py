@@ -9,9 +9,9 @@ from .EvalHandlerBase import EvalHandlerBase, EvaluateMessage, EvaluateResult
 class ConvertMessage(EvaluateMessage):
     target_units: list[str]
 
+
 # Tries to convert the sympy expressions units to the provided units in message.target_units.
 class ConvertUnitsHandler(EvalHandlerBase):
-
     def handle(self, message: ConvertMessage) -> EvaluateResult:
         message = ConvertMessage.model_validate(message)
         message.environment.unit_system = "SI"

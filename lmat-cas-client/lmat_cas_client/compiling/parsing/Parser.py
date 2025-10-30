@@ -20,8 +20,9 @@ class Parser:
         self, lark_parser: Lark, pre_processor: Optional[Callable[[str], str]]
     ):
         if pre_processor is None:
+
             def pre_processor(t):
-                return (t)  # default pre processor simply does nothign to the input.
+                return t  # default pre processor simply does nothign to the input.
 
         self._pre_processor = pre_processor
         self._lark_parser = lark_parser

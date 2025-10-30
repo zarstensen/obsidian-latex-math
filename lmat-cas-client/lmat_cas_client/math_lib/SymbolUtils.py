@@ -5,9 +5,10 @@ from sympy import Symbol
 
 __FORMATTED_SYMBOL_REGEX = r"(?:\\[^{]*{\s*)?(%s)(?:\s*})?(\s*_{.*})?"
 __symbols_priority = [
-            __FORMATTED_SYMBOL_REGEX % ("[xyz]",),
-            __FORMATTED_SYMBOL_REGEX % ("[ut]",)
-        ]
+    __FORMATTED_SYMBOL_REGEX % ("[xyz]",),
+    __FORMATTED_SYMBOL_REGEX % ("[ut]",),
+]
+
 
 # Convert the given symbol into a sortable key, prioritizing first the _symbols_priority list,
 # second lexicographical ordering of all matched regex group, and third lexicographical ordering of the original symbols string.
@@ -28,6 +29,7 @@ def symbols_var_order_key(symb: Symbol):
             compare_key = "".join(filter(None, match.groups()))
 
     return (priority, compare_key, str(symb))
+
 
 # Return the given list of symbols in order of most likely to least likely symbol to be treated as a variable instead of a constant.
 # e.g. the symbols a, b, c, x, y, z have the following ordering: x, y, z, a, b, c

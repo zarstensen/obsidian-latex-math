@@ -61,13 +61,12 @@ class SymbolSetResult(CommandResult):
 
         return CommandResult.result(
             dict(
-                symbol_sets=f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}"
+                symbol_sets=f"\\begin{{array}}{{rcl}}\n{' \\\\\n'.join(latex_sets)}\n\\end{{array}}"
             )
         )
 
 
 class SymbolSetHandler(CommandHandler):
-
     def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
@@ -95,7 +94,6 @@ class SymbolSetHandler(CommandHandler):
             smallest_containing_set = None
 
             for set in SETS:
-
                 set_contains_symbol = set.contains(sympy_symbol)
 
                 if (

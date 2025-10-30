@@ -21,12 +21,11 @@ class SolveMessage(BaseModel):
     symbols: list[str]
     environment: LmatEnvironment
 
-class SolveResult(CommandResult):
 
+class SolveResult(CommandResult):
     # The maximum number of finite solution to display it as a disjunction of solutions.
     # instead of the set itself.
     MAX_RELATIONAL_FINITE_SOLUTIONS = 5
-
 
     def __init__(self, solution: Any, symbols: list[Any]):
         super().__init__()
@@ -42,19 +41,26 @@ class SolveResult(CommandResult):
         else:
             symbols = tuple(self.symbols)
 
-        if isinstance(solutions_set, FiniteSet) and len(solutions_set) <= SolveResult.MAX_RELATIONAL_FINITE_SOLUTIONS:
-            return CommandResult.result(dict(solution_set=lmat_latex(solutions_set.as_relational(symbols))))
+        if (
+            isinstance(solutions_set, FiniteSet)
+            and len(solutions_set) <= SolveResult.MAX_RELATIONAL_FINITE_SOLUTIONS
+        ):
+            return CommandResult.result(
+                dict(solution_set=lmat_latex(solutions_set.as_relational(symbols)))
+            )
         else:
-            return CommandResult.result(dict(
-                solution_set=f"{lmat_latex(symbols)} \\in {lmat_latex(solutions_set)}"
-            ))
+            return CommandResult.result(
+                dict(
+                    solution_set=f"{lmat_latex(symbols)} \\in {lmat_latex(solutions_set)}"
+                )
+            )
+
 
 # tries to solve the given latex expression.
 # if a symbol is not given, and the expression is multivariate, this mode sends a response with status multivariate_equation,
 # along with a list of possible symbols to solve for in its symbols key.
 # if successfull its sends a message with status solved, and the result in the result key.
 class SolveHandler(CommandHandler):
-
     def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
         super().__init__()
         self._compiler = compiler
@@ -63,9 +69,10 @@ class SolveHandler(CommandHandler):
     def handle(self, message: SolveMessage) -> SolveResult:
         message = SolveMessage.model_validate(message)
 
-        equations = self._compiler.compile(message.expression,
-                                           LmatEnvironment.create_definition_store(message.environment)
-                                         )
+        equations = self._compiler.compile(
+            message.expression,
+            LmatEnvironment.create_definition_store(message.environment),
+        )
 
         # position information is not needed here,
         # so extract the equations into a tuple, which sympy can work with.
@@ -75,17 +82,22 @@ class SolveHandler(CommandHandler):
             equations = (equations,)
 
         # get a list of free symbols, by combining all the equations individual free symbols.
-        free_symbols = set(symbol for equation in equations for symbol in equation.free_symbols)
+        free_symbols = set(
+            symbol for equation in equations for symbol in equation.free_symbols
+        )
 
         if len(free_symbols) == 0:
             raise HandlerError("Cannot solve equation if no free symbols are present.")
 
         solve_domain = S.Complexes
 
-        if message.environment.solve_domain is not None and message.environment.solve_domain.strip() != "":
+        if (
+            message.environment.solve_domain is not None
+            and message.environment.solve_domain.strip() != ""
+        ):
             solve_domain = sympify(message.environment.solve_domain)
 
-        symbols = [ None ] * len(message.symbols)
+        symbols = [None] * len(message.symbols)
 
         if len(message.symbols) != len(equations):
             raise HandlerError("Incorrect number of symbols provided.")
@@ -98,7 +110,9 @@ class SolveHandler(CommandHandler):
         if None in symbols:
             raise HandlerError(f"No such symbols: {message.symbols}")
 
-        if len(equations) == 1 and len(symbols) == 1: # these two should always have equal lenth.
+        if (
+            len(equations) == 1 and len(symbols) == 1
+        ):  # these two should always have equal lenth.
             solution_set = solveset(equations[0], symbols[0], domain=solve_domain)
         else:
             try:
@@ -111,24 +125,29 @@ class SolveHandler(CommandHandler):
         # if there is a finite number of solutions, go through each solution, simplify it, and convert units in it.
         if isinstance(solution_set, FiniteSet):
             if unit_system is not None:
-                solution_set = FiniteSet(*(
-                    UnitsUtils.auto_convert(simplify(sol.doit()), unit_system)
-                    for sol in solution_set.args)
+                solution_set = FiniteSet(
+                    *(
+                        UnitsUtils.auto_convert(simplify(sol.doit()), unit_system)
+                        for sol in solution_set.args
                     )
+                )
             else:
-                solution_set = FiniteSet(*(
-                    UnitsUtils.auto_convert(simplify(sol.doit()))
-                    for sol in solution_set.args)
+                solution_set = FiniteSet(
+                    *(
+                        UnitsUtils.auto_convert(simplify(sol.doit()))
+                        for sol in solution_set.args
                     )
+                )
 
         return SolveResult(solution_set, symbols)
+
 
 class SolveInfoMessage(BaseModel):
     expression: str
     environment: LmatEnvironment
 
-class SolveInfoResult(CommandResult):
 
+class SolveInfoResult(CommandResult):
     def __init__(self, symbols, equation_count: int):
         super().__init__()
         self.symbols = symbols
@@ -136,26 +155,31 @@ class SolveInfoResult(CommandResult):
 
     @override
     def getResponsePayload(self) -> dict:
+        return CommandResult.result(
+            dict(
+                required_symbols=self.equation_count,
+                available_symbols=[
+                    dict(sympy_symbol=str(s), latex_symbol=lmat_latex(s))
+                    for s in self.symbols
+                ],
+            )
+        )
 
-        return CommandResult.result(dict(
-            required_symbols = self.equation_count,
-            available_symbols = [ dict(sympy_symbol=str(s), latex_symbol=lmat_latex(s)) for s in self.symbols ]
-        ))
 
 # retreive equation info needed for configuring a solution through the solve command.
 # returns number of required symbols, and a list of symbols to choose from.
 class SolveInfoHandler(CommandHandler):
     def __init__(self, parser: Compiler[[DefinitionStore], Expr]):
-            super().__init__()
-            self._parser = parser
+        super().__init__()
+        self._parser = parser
 
     @override
     def handle(self, message: SolveInfoMessage) -> SolveInfoResult:
         message = SolveInfoMessage.model_validate(message)
         equations = self._parser.compile(
-                                    message.expression,
-                                    LmatEnvironment.create_definition_store(message.environment)
-                                )
+            message.expression,
+            LmatEnvironment.create_definition_store(message.environment),
+        )
 
         # ok this is the number of expressions
         if isinstance(equations, SystemOfExpr):
@@ -166,7 +190,9 @@ class SolveInfoHandler(CommandHandler):
         # time for a full symbols list, and a default symbols list maybe?
         # or it should be ordered such that the first n symbols are the default symbols.
 
-        symbols = set(symbol for equation in equations for symbol in equation.free_symbols)
+        symbols = set(
+            symbol for equation in equations for symbol in equation.free_symbols
+        )
         ordered_symbols = symbols_variable_order(symbols)
 
         return SolveInfoResult(symbols=ordered_symbols, equation_count=len(equations))

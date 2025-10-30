@@ -17,6 +17,3 @@ extend-select = [
 extend-ignore = ["F405", "F403"]
 
 extend-safe-fixes = ["W291"]
-
-[format]
-# Use default Ruff formatting

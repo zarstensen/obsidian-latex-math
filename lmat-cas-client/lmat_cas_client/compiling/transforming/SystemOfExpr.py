@@ -7,20 +7,26 @@ class SystemOfExpr:
     """
     The SystemOfExpr class represents a list of sympy expressions and their original locations in some source text.
     """
+
     def __init__(self, expressions: list[tuple[Any, Meta]]):
-        self.__expressions: list[Any] = [ e[0] for e in expressions]
-        self.__location_data: list[Meta] = [ e[1] for e in expressions ]
+        self.__expressions: list[Any] = [e[0] for e in expressions]
+        self.__location_data: list[Meta] = [e[1] for e in expressions]
 
     # retreive number of expressions in the system
     def __len__(self):
         return len(self.__expressions)
 
     def extend(self, expressions: list[tuple[Any, Meta]]):
-        return SystemOfExpr([ *[ (e, m) for e, m in zip(self.__expressions, self.__location_data) ], *expressions])
+        return SystemOfExpr([
+            *[(e, m) for e, m in zip(self.__expressions, self.__location_data)],
+            *expressions,
+        ])
 
     # modify a single expression in the system.
     def change_expr(self, expression_index: int, change_func: Callable[[Any], Any]):
-        self.__expressions[expression_index] = change_func(self.__expressions[expression_index])
+        self.__expressions[expression_index] = change_func(
+            self.__expressions[expression_index]
+        )
 
     # retreive the expression at the given index
     def get_expr(self, expression_index: int):

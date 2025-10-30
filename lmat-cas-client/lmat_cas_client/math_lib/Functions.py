@@ -36,7 +36,7 @@ def taylor(
 
     if not int_valued(degree) or degree < 0:
         raise RuntimeError(
-            "Degree of taylor series must be a natural number.\n" f"Was [{degree}]"
+            f"Degree of taylor series must be a natural number.\nWas [{degree}]"
         )
 
     if len(expansion_point) != dimension:
@@ -108,7 +108,6 @@ def taylor(
 # An example is SymbolicIff(2 * a, 2), here it will return False, because 2 * a != 2, for some values of a, but it is technically true for a = 1.
 # Therefore this is more akin to a universal quantification combined with an iff in the symbolic case.
 class SymbolicIff(Function):
-
     @classmethod
     def eval(cls, *args: Expr) -> Expr:
         try:

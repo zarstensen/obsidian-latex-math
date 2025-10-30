@@ -15,6 +15,7 @@ class Definition(ABC):
     Args:
         ABC (_type_): _description_
     """
+
     @abstractmethod
     def dependencies(self) -> set[str]:
         """
@@ -23,7 +24,7 @@ class Definition(ABC):
         pass
 
     @abstractmethod
-    def defined_value(self, definition_store: 'DefinitionStore') -> Expr:
+    def defined_value(self, definition_store: "DefinitionStore") -> Expr:
         """
         return the value this symbol has been defined to be,
         pulling values of dependencies from the given definition store.
@@ -38,7 +39,8 @@ class FunctionDefinition(Definition):
     defined_value should in this case return a value representing the unapplied function itself,
     and applied_value should produce the output of the applied function.
     """
-    def __init__(self, variables: Iterable[str] = [ ]):
+
+    def __init__(self, variables: Iterable[str] = []):
         super().__init__()
         self._variables = tuple(variables)
 
@@ -50,9 +52,12 @@ class FunctionDefinition(Definition):
         """
         return self._variables
 
-
     @abstractmethod
-    def applied_value(self, definition_store: 'DefinitionStore', args: Iterable[Definition] | None = None) -> Expr:
+    def applied_value(
+        self,
+        definition_store: "DefinitionStore",
+        args: Iterable[Definition] | None = None,
+    ) -> Expr:
         """
         compute the output of the applied function given some args and a DefinitionStore to pull definitions from.
         args should be equal in length to variables, and variables[n] should be replaced with args[n] when computing the applied function.
@@ -72,9 +77,11 @@ class CyclicDependencyError(Exception):
     Error thrown when a DefinitionStore has detected a cyclic dependency between a subset of Definitions.
     The problematic definitions are stored in the cyclic_dependencies field.
     """
+
     def __init__(self, cyclic_dependencies: set[str], *args):
         super().__init__(*args)
         self.cyclic_dependencies = cyclic_dependencies
+
 
 class DefinitionStore:
     """
@@ -122,7 +129,9 @@ class DefinitionStore:
         # also clear cache here.
         self._expr_cache[definition_name] = dict()
 
-    def get_definition(self, definition_name: str, *, default: Optional[Definition] = None) -> Optional[Definition]:
+    def get_definition(
+        self, definition_name: str, *, default: Optional[Definition] = None
+    ) -> Optional[Definition]:
         return self._definitions.get(definition_name, default)
 
     def get_definitions(self) -> dict[str, Definition]:
@@ -143,8 +152,9 @@ class DefinitionStore:
         """
         return set(self._definitions.keys())
 
-
-    def resolve_dependencies(self, definition_names: Iterable[str]) -> tuple[bool, tuple[str]]:
+    def resolve_dependencies(
+        self, definition_names: Iterable[str]
+    ) -> tuple[bool, tuple[str]]:
         """
         produce a list containing all elements of 'definition_names', as well as their dependencies such that
         every name in the list, only depends on definitions to the left of it self.
@@ -184,16 +194,15 @@ class DefinitionStore:
 
         definition_names = tuple(definition_names)
 
-        dependency_graph: dict[str, set[str]] = { }
-        in_deg_table: dict[int, str] = { }
+        dependency_graph: dict[str, set[str]] = {}
+        in_deg_table: dict[int, str] = {}
 
-        marked_definitions = set({ })
+        marked_definitions = set({})
 
         # construct 'G' by performing BFS from each name in definition_names,
         # this visits the connected subcomponent which 'G' should equal.
 
         for definition_name in definition_names:
-
             if definition_name in marked_definitions:
                 continue
 
@@ -201,10 +210,9 @@ class DefinitionStore:
             in_deg_table[definition_name] = 0
             marked_definitions.add(definition_name)
 
-            visit_queue = deque({ definition_name })
+            visit_queue = deque({definition_name})
 
             while len(visit_queue) > 0:
-
                 definition_name_vertex = visit_queue.popleft()
 
                 definition_node = self.get_definition(definition_name_vertex)
@@ -227,9 +235,11 @@ class DefinitionStore:
         # construct topological order from 'G' by iteratively removing a source node (in-degree = 0)
         # from 'G' and placing it in topological_ordering, until 'G' is empty.
 
-        topological_ordering = [ ]
+        topological_ordering = []
 
-        source_definitions = deque(filter(lambda s: in_deg_table[s] == 0, dependency_graph))
+        source_definitions = deque(
+            filter(lambda s: in_deg_table[s] == 0, dependency_graph)
+        )
 
         while len(source_definitions) > 0:
             source_definition = source_definitions.popleft()
@@ -244,13 +254,15 @@ class DefinitionStore:
 
             del in_deg_table[source_definition]
 
-        if in_deg_table != { }:
+        if in_deg_table != {}:
             # in_deg_table is not empty <==> graph is not a DAG <==> there is a cyclic dependency in the remaining vertices in the graph.
             return False, tuple(in_deg_table.keys())
 
         return True, tuple(topological_ordering)
 
-    def assert_acyclic_dependencies(self, definition_names: Iterable[str]) -> tuple[str]:
+    def assert_acyclic_dependencies(
+        self, definition_names: Iterable[str]
+    ) -> tuple[str]:
         """
         same as resolve_dependencies, but throws an exception if dependencies are cyclic.
 
@@ -268,4 +280,7 @@ class DefinitionStore:
         if success:
             return result
 
-        raise CyclicDependencyError(result, f"There is a cyclic dependency between the following definitions: {', '.join(result)}")
+        raise CyclicDependencyError(
+            result,
+            f"There is a cyclic dependency between the following definitions: {', '.join(result)}",
+        )

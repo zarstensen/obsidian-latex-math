@@ -2,7 +2,7 @@ import os
 import subprocess
 import venv
 
-venv_bin_folder = 'Scripts' if os.name == 'nt' else 'bin'
+venv_bin_folder = "Scripts" if os.name == "nt" else "bin"
 
 print("Creating virtual environment")
 

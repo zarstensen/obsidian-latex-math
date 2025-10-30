@@ -13,10 +13,12 @@ from pydantic import BaseModel
 class TestHangMessage(BaseModel):
     hang_time: float
 
+
 class TestHangResult(CommandResult, ABC):
     @override
     def getResponsePayload(self):
         return CommandResult.result(dict())
+
 
 class TestHangHandler(CommandHandler, ABC):
     """
