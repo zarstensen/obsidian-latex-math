@@ -10,7 +10,7 @@ from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import *
 
-SETS = [
+SETS: list[Set] = [
     S.Complexes,
     S.Reals,
     Interval(0, oo),
@@ -40,8 +40,10 @@ SET_TO_LATEX = {
     FiniteSet(0): "\\{0\\}",
 }
 
+
 class SymbolSetMessage(BaseModel):
     environment: LmatEnvironment
+
 
 class SymbolSetResult(CommandResult):
     def __init__(self, set_symbols: dict[Set, list[Symbol]]):
@@ -56,7 +58,11 @@ class SymbolSetResult(CommandResult):
             if len(symbols) > 0:
                 latex_sets.append(f"{', '.join(symbols)} & \\in & {SET_TO_LATEX[set]}")
 
-        return CommandResult.result(dict(symbol_sets=f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}"))
+        return CommandResult.result(
+            dict(
+                symbol_sets=f"\\begin{{array}}{{rcl}}\n{" \\\\\n".join(latex_sets)}\n\\end{{array}}"
+            )
+        )
 
 
 class SymbolSetHandler(CommandHandler):
@@ -91,7 +97,7 @@ class SymbolSetHandler(CommandHandler):
 
                 set_contains_symbol = set.contains(sympy_symbol)
 
-                if set_contains_symbol:
+                if set_contains_symbol is bool and set_contains_symbol:
                     smallest_containing_set = set
 
             if smallest_containing_set is not None:
