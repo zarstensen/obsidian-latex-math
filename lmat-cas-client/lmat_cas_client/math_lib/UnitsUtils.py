@@ -62,7 +62,21 @@ __add_unit_aliases(
 )
 
 # add LaTeX Math specific unit aliases.
-__add_unit_aliases([("min", u.minute), ("sec", u.second)])
+__add_unit_aliases([
+    ("min", u.minute),
+    ("sec", u.second),
+    ("epsilon_0", u.vacuum_permittivity),
+    ("\\epsilon_0", u.vacuum_permittivity),
+    ("e_0", u.vacuum_permittivity),
+    ("mu_0", u.vacuum_permeability),
+    ("\\mu_0", u.vacuum_permeability),
+    ("N_A", u.avogadro_constant),
+    ("N_0", u.avogadro_number),
+    ("\\omega_P", u.planck_angular_frequency),
+    ("\\ohm_P", u.planck_angular_frequency),
+    ("\\omega", u.ohms),
+    ("\\ohm", u.ohms),
+])
 
 
 # attempt to automatically convert the units in the given sympy expression.
