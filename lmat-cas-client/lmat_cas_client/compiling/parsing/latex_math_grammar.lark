@@ -272,8 +272,7 @@ modulo: factor_func_arg _FUNC_MOD factor_func_arg
 frac: _FUNC_FRAC _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 binom: _FUNC_BINOM _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 
-diff_symbol_exponent: substitute_symbol [_CARET function_special_arg]
-diff_symbol_arg_list: (_DIFFERENTIAL_SYMBOL diff_symbol_exponent)+
+diff_symbol_arg_list: (_DIFFERENTIAL_SYMBOL ["["function_special_arg "]"] substitute_symbol)+
 
 _DERIV_ARG_SEPARATOR.-1: _L_BRACE
 // need to have a post lex which recognises _FUNC_DERIVATIVE and then replaces any single letter symbol which matches _DIFFERENTIAL_SYMBOL with _DIFFERENTIAL_SYMBOL
@@ -608,11 +607,7 @@ OPERATOR_MUL: MUL | _CMD_CDOT
 %import .greek_symbols.GREEK_SYMBOL
 %import .greek_symbols.DELTA_UPPER
 
-_PARTIAL_DIFFERENTIAL_SYMBOL: "\\partial"
-_UPRIGHT_DIFFERENTIAL_SYMBOL: "\\text{d}" | "\\mathrm{d}"
-// TODO: this priority should ideally not be here.
-_DIFFERENTIAL_SYMBOL.-1: "d" | _UPRIGHT_DIFFERENTIAL_SYMBOL | _PARTIAL_DIFFERENTIAL_SYMBOL
-
+_DIFFERENTIAL_SYMBOL: "\\dd" | "\\partial"
 
 LATIN_SYMBOL: /[a-zA-Z]/
 LATIN_SYMBOL_WITH_PRIMTES: LATIN_SYMBOL PRIMES
