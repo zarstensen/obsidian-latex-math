@@ -158,24 +158,12 @@ class ScopePostLexer(PostLex):
             # Scope for functions which require the _DIFFERENTIAL_SYMBOL be prioritized over symbols.
             PartialDiffScope(
                 scope_pairs=[("_FUNC_DERIVATIVE", "_R_BRACE")],
-                replace_tokens={
-                    "SINGLE_LETTER_SYMBOL": [
-                        parser.get_terminal("_DIFFERENTIAL_SYMBOL")
-                    ],
-                    "FORMATTED_SYMBOLS": [parser.get_terminal("_DIFFERENTIAL_SYMBOL")],
-                },
             ),
             LexerScope(
                 scope_pairs=[
                     ("_FUNC_INTEGRAL", "_DIFFERENTIAL_SYMBOL"),
                     ("_DERIV_ARG_SEPARATOR", "_R_BRACE"),
-                ],
-                replace_tokens={
-                    "SINGLE_LETTER_SYMBOL": [
-                        parser.get_terminal("_DIFFERENTIAL_SYMBOL")
-                    ],
-                    "FORMATTED_SYMBOLS": [parser.get_terminal("_DIFFERENTIAL_SYMBOL")],
-                },
+                ]
             ),
             MatrixScope(
                 scope_pairs=[
