@@ -48,6 +48,10 @@ class Parser:
         pre_processed_text = self._pre_processor(text)
 
         try:
+            print(
+                self._lark_parser.parse(pre_processed_text, *args, **kwargs).pretty(),
+                flush=True,
+            )
             return self._lark_parser.parse(pre_processed_text, *args, **kwargs)
         except UnexpectedInput as e:
             raise self._prettify_unexpected_input(e, pre_processed_text) from e

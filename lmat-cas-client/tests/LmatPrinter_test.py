@@ -26,8 +26,6 @@ class TestLmatPrinter:
     def test_fraction_with_symbols_and_units(self):
         a, b = symbols("a b")
         latex_str = self.printer.doprint((7 * a**2 * u.joule) / (3 * b * u.second**2))
-        # TODO: this string is not parsable by the new parser, {s}^{2} is not recognized.
-        # also the output should probably be {{s}}^2
         self._assert_str_equal(
             r"\frac{7}{3} \, \frac{a^{2}}{b} \, \frac{{J}}{{s}^{2}}", latex_str
         )

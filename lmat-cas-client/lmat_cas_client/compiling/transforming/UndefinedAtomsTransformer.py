@@ -21,9 +21,6 @@ class UndefinedAtomsTransformer(Transformer):
     def combine_symbol(self, *symbol_strings: str) -> str:
         return "".join(map(str, symbol_strings))
 
-    def delta_symbol(self, delta_token: Token, symbol_string: str) -> str:
-        return self.combine_symbol(delta_token.value, " ", symbol_string)
-
     def substitute_symbol(self, symbol_name: str) -> Symbol | Expr:
         definition = self.__definition_store.get_definition(
             str(symbol_name), default=SympyDefinition(Symbol(symbol_name))
@@ -42,9 +39,15 @@ class UndefinedAtomsTransformer(Transformer):
 
         return f"{symbol}_{indexed_text}{primes}"
 
-    def formatted_symbol(self, formatter: Token, text: str, primes: str | None) -> str:
+    def formatted_symbol(
+        self, formatter: Token, text: str | list[str], primes: str | None
+    ) -> str:
+        print(f"FORMATTED_SYMBOL ARGS {formatter}: ", text, type(text), flush=True)
         formatter_text = str(formatter)
         primes = "" if primes is None else primes
+
+        if not text.startswith("{") and not text.endswith("}"):
+            text = f"{{{str(text)}}}"
 
         return f"{formatter_text}{text}{primes}"
 

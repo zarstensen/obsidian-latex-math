@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import Iterator, Optional
 
 import sympy
 from lark import Token, v_args
@@ -154,12 +154,17 @@ class BuiltInFunctionsTransformer(UndefinedAtomsTransformer):
         return [*arg_list]
 
     def derivative_symbols_first(
-        self, symbols: Iterator[tuple[Expr, Expr]], expr: Expr
+        self, power: Optional[Expr], symbols: Iterator[tuple[Expr, Expr]], expr: Expr
     ):
+        if power is not None and power != len(symbols):
+            raise ValueError("AAAA POWER IS NOT CORRECT")
+
         return diff(expr, *symbols)
 
-    def derivative_func_first(self, expr: Expr, symbols: Iterator[tuple[Expr, Expr]]):
-        return self.derivative_symbols_first(symbols, expr)
+    def derivative_func_first(
+        self, power: Expr, expr: Expr, symbols: Iterator[tuple[Expr, Expr]]
+    ):
+        return self.derivative_symbols_first(power, symbols, expr)
 
     def derivative_prime(self, expr: Expr, primes: Token):
         body, variables = self._expr_as_function(expr, range(0, 2))
@@ -256,6 +261,11 @@ class BuiltInFunctionsTransformer(UndefinedAtomsTransformer):
     def rref(self, exponent: Expr | None, mat: Expr) -> Expr:
         return self._try_raise_exponent(
             MatrixUtils.ensure_matrix(mat).rref()[0], exponent
+        )
+
+    def unitvec(self, exponent: Expr | None, vector: Expr) -> Expr:
+        return self._try_raise_exponent(
+            MatrixUtils.ensure_matrix(vector).normalized(), exponent
         )
 
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
