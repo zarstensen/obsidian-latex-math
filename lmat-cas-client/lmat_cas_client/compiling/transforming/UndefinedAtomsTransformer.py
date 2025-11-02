@@ -64,12 +64,9 @@ class UndefinedAtomsTransformer(Transformer):
             return self.substitute_symbol(unit_symbol)
 
     def undefined_function(
-        self, delta_token: Token | None, func_name: Token, func_args: Iterator[Expr]
+        self, func_name: Token, func_args: Iterator[Expr] = None
     ) -> Function | Expr:
         func_name = func_name.value[:-1]  # remove the suffixed parenthesees
-
-        if delta_token:
-            func_name = f"{delta_token.value} {func_name}"
 
         func_definition = self.__definition_store.get_definition(func_name)
 

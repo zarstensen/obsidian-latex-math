@@ -540,9 +540,9 @@ _FUNC_MATRIX_RREF: CMD_OPERATOR _WS? _L_BRACE _WS? "rref" _WS? _R_BRACE
 _FUNC_VEC_UNIT: "\\vectorunit" | /\\vu\*?/
 // linear alg functions.
 
-_FUNC_GRADIENT: "\\nabla" | /\\grad(ient)?/
-_FUNC_HESSIAN: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "H" _WS? _R_BRACE
-_FUNC_JACOBIAN: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
+_FUNC_GRADIENT.1: "\\nabla" | /\\grad(ient)?/
+_FUNC_HESSIAN.1: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "H" _WS? _R_BRACE
+_FUNC_JACOBIAN.1: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
 
 // Match any "T" which has at least 1 comma in its index string and is followed by parenthesees.
 // The lookahead "(?=...)" ensures we do not match the index string itself,
