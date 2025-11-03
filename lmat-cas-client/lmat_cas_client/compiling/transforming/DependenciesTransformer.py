@@ -51,12 +51,10 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
 
     @override
     def undefined_function(
-        self, func_name: Token, func_args: Iterator[Expr]
+        self, func_name: str, func_args: Iterator[Expr]
     ) -> Function | Expr:
         # include both the function itself, and all arguments to the function as dependencies.
         # e.g. f(x, 1, y) should produce [ 'f', 'x', 'y' ]
-
-        func_name = func_name.value[:-1]
 
         return [Function(func_name), *func_args]
 

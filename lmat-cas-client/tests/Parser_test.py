@@ -53,9 +53,9 @@ class TestParse:
         assert self._parse_expr(r"\arctan{abc}") == atan(abc)
         assert self._parse_expr(r"\mathrm{arcosh} y") == acosh(y)
         assert self._parse_expr(r"\operatorname{arcosh} y") == acosh(y)
-        assert self._parse_expr(r"\mathrm{sech} y") == sech(y)
+        assert self._parse_expr(r"\sech y") == sech(y)
         assert self._parse_expr(r"\mathrm{arsech} y") == asech(y)
-        assert self._parse_expr(r"\mathrm{csch} y") == csch(y)
+        assert self._parse_expr(r"\csch y") == csch(y)
         assert self._parse_expr(r"\mathrm{arcsch} y") == acsch(y)
         assert self._parse_expr(r"\coth y") == coth(y)
         assert self._parse_expr(r"\mathrm{arcoth} y") == acoth(y)
@@ -72,13 +72,15 @@ class TestParse:
         assert result.get_all_expr() == (Eq(x, y), Lt(y, z))
 
     def test_matrix(self):
-        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix([
-            [1],
-            [2],
-        ])
-        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix([
-            [1, 2]
-        ])
+        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix(
+            [
+                [1],
+                [2],
+            ]
+        )
+        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix(
+            [[1, 2]]
+        )
         assert self._parse_expr(
             r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}"
         ) == Matrix([[1, 2], [3, 4]])
@@ -128,7 +130,9 @@ class TestParse:
         assert self._parse_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert self._parse_expr(r"""
+        assert (
+            self._parse_expr(
+                r"""
             \begin{bmatrix}
             10 \\
             20
@@ -137,23 +141,36 @@ class TestParse:
             30 &
             40
             \end{bmatrix}
-            """) == Matrix([[10], [20]]) * Matrix([[30, 40]])
+            """
+            )
+            == Matrix([[10], [20]]) * Matrix([[30, 40]])
+        )
 
-        assert self._parse_expr(r"""
+        assert (
+            self._parse_expr(
+                r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
-            """) == a * Matrix([[30, 40]])
+            """
+            )
+            == a * Matrix([[30, 40]])
+        )
 
-        assert self._parse_expr(r"""
+        assert (
+            self._parse_expr(
+                r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
-            """) == a * Matrix([[30, 40]])
+            """
+            )
+            == a * Matrix([[30, 40]])
+        )
 
         # powers
         assert self._parse_expr(r"b a^2") == a**2 * b
@@ -182,13 +199,15 @@ class TestParse:
     def test_multi_expressions(self):
         x, y, z = symbols("x y z")
 
-        result = self._parse_expr(r"""
+        result = self._parse_expr(
+            r"""
             \begin{align}
             x & = 2y 5z \\
             y & = x^2 \\
             z & = x + 2\frac{y}{x} \\
             \end{align}
-            """)
+            """
+        )
 
         assert isinstance(result, SystemOfExpr)
         assert len(result) == 3
@@ -205,11 +224,13 @@ class TestParse:
         assert result.get_location(2).line == 5
         assert result.get_location(2).end_line is None
 
-        result = self._parse_expr(r"""
+        result = self._parse_expr(
+            r"""
             \begin{cases}
             x
             \end{cases}
-            """)
+            """
+        )
 
         assert isinstance(result, SystemOfExpr)
         assert len(result) == 1
@@ -217,11 +238,13 @@ class TestParse:
         assert result.get_expr(0) == x
         assert result.get_location(0).line == 3
 
-        result = self._parse_expr(r"""
+        result = self._parse_expr(
+            r"""
             \begin{cases}
             x & = 2y
             \end{cases}
-            """)
+            """
+        )
 
         assert isinstance(result, SystemOfExpr)
         assert len(result) == 1
@@ -264,8 +287,8 @@ class TestParse:
         assert result == s_a + s_b * s_c + sqrt(s_e**s_f) + s_d**-1
 
     def test_delta_symbols(self):
-        delta_v = Symbol(r"\Delta v")
-        delta_f = Function(r"\Delta f")
+        delta_v = Symbol(r"\Delta{v}")
+        delta_f = Function(r"\Delta{f}")
         x = Symbol("x")
 
         result = self._parse_expr(r"\Delta   f(x) + \Delta v + \Delta       v")
@@ -518,17 +541,21 @@ class TestParse:
         a, b = symbols("a b")
         assert result == a + b
 
-        result = self._parse_expr(r"""
+        result = self._parse_expr(
+            r"""
             \begin{bmatrix}
             1 & 2 \text{123} \\
             3 & 4
             \end{bmatrix}
-            """)
+            """
+        )
         assert result == Matrix([[1, 2], [3, 4]])
 
-        result = self._parse_expr(r"""
+        result = self._parse_expr(
+            r"""
             \sum_{n = 0 \text{some \textbf{nested \textit{text}}} and some not nested \text{text}}^1 n
-            """)
+            """
+        )
 
         n = symbols("n")
         assert result == Sum(n, (n, 0, 1))

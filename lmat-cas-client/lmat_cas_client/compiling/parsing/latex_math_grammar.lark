@@ -72,7 +72,7 @@ multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
 // this could for example be \mathit
-formatted_symbol: CMD_FORMAT (BRACE_SURROUNDED_TEXT | single_letter_symbol) [PRIMES]
+formatted_symbol: _cmd_format (BRACE_SURROUNDED_TEXT | single_letter_symbol) [PRIMES]
 _non_indexed_symbol: single_letter_symbol | multi_letter_symbol | formatted_symbol
 
 indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | BRACE_SURROUNDED_TEXT) [PRIMES]
@@ -99,7 +99,12 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 
 // ======== Functions ========
 
-undefined_function: UNDEFINED_FUNC_START list_of_expressions _R_PAREN
+// Option 1: Use single_letter_symbol directly in function_special_arg instead of substitute_single_letter_symbol
+// and remove the substitute_single_letter_symbol alias entirely
+
+// Option 2: Change your undefined_function to be more explicit
+undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PAREN
+
 
 // groups all functions whic cannot be used as an argument to other functions.
 // to pass this type of function, delimit them so they are matched by the _delimited_factor rule.
@@ -131,7 +136,7 @@ undefined_function: UNDEFINED_FUNC_START list_of_expressions _R_PAREN
     | _divisibility_functions
 
 // matches a special kind of argument, defined by the fact that fractions and binomials can be passed without surrounding them with braces.
-substitute_single_letter_symbol: single_letter_symbol -> substitute_symbol
+substitute_single_letter_symbol.1: single_letter_symbol -> substitute_symbol
 ?function_special_arg: braces_expression | parenthesees_expression | named_function | _delimited_function | frac | binom | substitute_single_letter_symbol | _digit
 
 
@@ -319,12 +324,9 @@ taylor: _FUNC_TAYLOR _UNDERSCORE _L_BRACE expression _COMMA expression [_COMMA e
 
 // ======== Combinatorial functions ========
 
-_combinatorial_functions: permutations | combinations | derangements
+_combinatorial_functions: derangements
 
-permutations: _FUNC_PERMUTATIONS expression _COMMA expression _R_PAREN
-combinations: _FUNC_COMBINATIONS expression _COMMA expression _R_PAREN
-derangements: _FUNC_DERANGEMENTS expression _R_PAREN
-    | _L_BRACE _BANG expression _R_BRACE
+derangements: _L_BRACE _BANG expression _R_BRACE
 
 // ======== Divisibility functions ========
 
@@ -441,6 +443,8 @@ _L_BAR: _BAR
 _L_DOUBLE_BAR: _DOUBLE_BAR
 %declare _R_DOUBLE_BAR
 
+_UNDEF_FUNC_START.1: /(?<! )\(/
+
 _L_DELIMITER: _DOT | _L_ANGLE | L_BRACE_LITERAL | _L_BRACKET | _L_CEIL | _L_FLOOR | _L_PAREN
 _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOOR | _R_PAREN
 
@@ -480,10 +484,10 @@ FUNC_LG:   "\\lg"
 _FUNC_MIN: "\\min"
 _FUNC_MAX: "\\max"
 _FUNC_CONJUGATE: _CMD_OVERLINE | _CMD_BAR
-_FUNC_RE: "\\Re" | "\\real" | CMD_OPERATOR _WS? _L_BRACE _WS? "Re" _WS? _R_BRACE
-_FUNC_IM: "\\Im" | "\\imaginary" | CMD_OPERATOR _WS? _L_BRACE _WS? "Im" _WS? _R_BRACE
+_FUNC_RE.1: "\\Re" | "\\real" | CMD_OPERATOR _WS? _L_BRACE _WS? "Re" _WS? _R_BRACE
+_FUNC_IM.1: "\\Im" | "\\imaginary" | CMD_OPERATOR _WS? _L_BRACE _WS? "Im" _WS? _R_BRACE
 _FUNC_ARG: "\\arg"
-_FUNC_SGN: CMD_OPERATOR _WS? _L_BRACE _WS? "sgn" _WS? _R_BRACE
+_FUNC_SGN.1: CMD_OPERATOR _WS? _L_BRACE _WS? "sgn" _WS? _R_BRACE
 
 // multiarg functions
 
@@ -553,19 +557,6 @@ _FUNC_JACOBIAN.1: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
 //
 _FUNC_TAYLOR.1: /T(?=\s*_\s*{([^,]+?,)+.+?}(\\left)?\(.+?\))/s // (\\right)? check is not needed as .+ accounts for this
 
-// combinatorial functions.
-
-// all combinatorial functions should have to be called with their arguments wrapped in parenthesees,
-// therefore they are defined a bit differently here.
-
-_CMD_PERMUTATIONS: "P"
-_CMD_COMBINATIONS: "C"
-_CMD_DERANGEMENTS: "D"
-
-_FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _LR_FORMAT? _L_PAREN
-_FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _LR_FORMAT? _L_PAREN
-_FUNC_DERANGEMENTS.1: _CMD_DERANGEMENTS _LR_FORMAT? _L_PAREN
-
 // divisibility functions.
 
 _FUNC_GCD: "\\gcd"
@@ -573,7 +564,7 @@ _FUNC_LCM: CMD_OPERATOR _WS? _L_BRACE _WS? "lcm" _WS? _R_BRACE
 _FUNC_MOD: "\\mod"
 
 // TODO: use a bit more elaborate regex here, so more complex strings are allowed in the index.
-UNDEFINED_FUNC_START: (SINGLE_LETTER_SYMBOL|MULTI_LETTER_SYMBOL) (_WS? _UNDERSCORE _WS? _L_BRACE /\s*[^{}]+\s*/ _R_BRACE)? _LR_FORMAT? _L_PAREN
+// UNDEFINED_FUNC_START: (SINGLE_LETTER_SYMBOL|MULTI_LETTER_SYMBOL) (_WS? _UNDERSCORE _WS? _L_BRACE /\s*[^{}]+\s*/ _R_BRACE)? _LR_FORMAT? _L_PAREN
 
 // un-redefinable mathematical constants
 CONST_INFINITY: "\\infty"
@@ -586,14 +577,14 @@ CMD_VECBOLD: "\\vectorbold" |/\\vb\*?/
 CMD_HAT: "\\hat"
 CMD_BOLD_FORMAT: "\\pmb"
 
-CMD_FORMAT: CMD_MATH | CMD_VEC | CMD_VECBOLD | CMD_HAT | CMD_BOLD_FORMAT | DELTA_UPPER
+_cmd_format: CMD_MATH | CMD_VEC | CMD_VECBOLD | CMD_HAT | CMD_BOLD_FORMAT | DELTA_UPPER
 CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
 
 _TEXT: CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
 
 
 // mathrm is also included here so operatorname does not have to be used everywhere.
-CMD_OPERATOR: "\\operatorname" | "\\mathrm"
+CMD_OPERATOR.1: "\\operatorname" | "\\mathrm"
 CMD_MATRIX_FORMAT: "\\mathbf"
 
 _BANG: "!"

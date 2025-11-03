@@ -64,10 +64,8 @@ class UndefinedAtomsTransformer(Transformer):
             return self.substitute_symbol(unit_symbol)
 
     def undefined_function(
-        self, func_name: Token, func_args: Iterator[Expr] = None
+        self, func_name: str, func_args: Iterator[Expr] = None
     ) -> Function | Expr:
-        func_name = func_name.value[:-1]  # remove the suffixed parenthesees
-
         func_definition = self.__definition_store.get_definition(func_name)
 
         if func_definition is not None and isinstance(
