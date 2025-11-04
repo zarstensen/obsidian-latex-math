@@ -456,7 +456,7 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 // this recursive match does not work with (?0), as lark places this regex in a larger regex,
 // so the (?0) would refer to an incorrect capturing group, leading to unexpected matches.
 // NOTE: this does not currently support escaped braces, it just treats them as they were unescaped.
-BRACE_SURROUNDED_TEXT: /(?<brace_text>{(?:[^{}]+|(?&brace_text))*})/ 
+BRACE_SURROUNDED_TEXT: /({(?:[^{}]+|(?-1))*})/ 
 
 
 // limit, integral, sum, and product symbols
@@ -576,8 +576,7 @@ CMD_BOLD_FORMAT: "\\pmb"
 CMD_FORMAT: CMD_MATH | CMD_BOLD_FORMAT
 CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
 
-// this regex is identical to BRACE_SURROUNDED_TEXT, except the capture group name is different to avoid a collision.
-_TEXT: CMD_TEXT _WS? /(?|(?<text_contents>{(?:[^{}]+|(?&text_contents))*}))/
+_TEXT: CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
 
 
 // mathrm is also included here so operatorname does not have to be used everywhere.
