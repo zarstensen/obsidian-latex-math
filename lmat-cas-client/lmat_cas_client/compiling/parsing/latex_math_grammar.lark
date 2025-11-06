@@ -15,7 +15,7 @@ relation: (_align* _rel_op)? expression (_rel_op expression)* (_rel_op _align*)?
 expression: (_align* (ADD|SUB))? term ((ADD|SUB) term)*
 
 // a term is a series of products of factors separated by product operators.
-term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_DIV) (_align* (ADD|SUB))? implicit_multiplication)*
+term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_CROSS|OPERATOR_DIV) (_align* (ADD|SUB))? implicit_multiplication)*
 
 // factors with no operator between them are implicitly multiplied together.
 ?implicit_multiplication: _align* factor (_align* factor)* _align*
@@ -602,7 +602,8 @@ GT: ">"
 GTE: GT EQUAL | "\\geq" | "\\ge" | "\\geqslant"
 
 OPERATOR_DIV: _CMD_DIV | DIV
-OPERATOR_MUL: MUL | _CMD_TIMES | _CMD_CDOT
+OPERATOR_CROSS: _CMD_TIMES
+OPERATOR_MUL: MUL | _CMD_CDOT
 
 %import .greek_symbols.GREEK_SYMBOL
 %import .greek_symbols.DELTA_UPPER

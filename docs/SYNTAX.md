@@ -16,7 +16,7 @@ While this document provides a good overview of the parser, you can also consult
 - [Symbols](#symbols)
 - [Matrices](#matrices)
   - [Delimiters in Matrix Environments](#delimiters-in-matrix-environments)
-- [Mathematical Functions](#mathematical-functions)
+- [Mathematical Functions and Operations](#mathematical-functions-and-operations)
 - [Mathematical Constants](#mathematical-constants)
 - [Logical Operators](#logical-operators)
 - [Units and Physical Constants](#units-and-physical-constants)
@@ -133,9 +133,9 @@ In case multiple matrices are computed into a single matrix, the left most matri
 > \begin{bmatrix} ... \end{bmatrix} + \begin{pmatrix} ... \end{pmatrix} = \begin{bmatrix} ... \end{bmatrix}
 > ```
 
-## Mathematical Functions
+## Mathematical Functions and Operations
 
-Below is a table of all supported mathematical functions supported by the parser, this list may grow overtime as this project develops.
+Below is a table of all supported mathematical functions and operations supported by the parser, this list may grow overtime as this project develops.
 Note that a *mathematical function* also encompasses concepts not normally thought of as a function, e.g. `\frac` is considered part of this table whilst it may not intuitively be thought of as a function.
 
 | Function                   | LaTeX String                                                                           |
@@ -179,8 +179,9 @@ Note that a *mathematical function* also encompasses concepts not normally thoug
 | minimum                    | `\min(. , . , ..., . )`                                                                |
 | maximum                    | `\max( . , . , ..., . )`                                                               |
 | standard inner product     | `\langle . \| . \rangle`                                                               |
+| vector cross product       | ` . \times . `                                                                         |
 | numeric value              | `\| . \|`                                                                              |
-| norm                       | `\Vert . \Vert` / `\|\| . \|\|`                                                        |
+| norm of matrix             | `\Vert . \Vert` / `\|\| . \|\|`                                                        |
 | floor                      | `\lfloor . \rfloor`                                                                    |
 | ceiling                    | `\lceil . \rceil`                                                                      |
 | root                       | `\sqrt[index]?`                                                                        |
