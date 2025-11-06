@@ -24,6 +24,7 @@ from lmat_cas_client.compiling.transforming.TransformerRunner import Transformer
 from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
+from lmat_cas_client.math_lib import MatrixUtils
 
 from .LatexMatrix import LatexMatrix
 from .SystemOfExpr import SystemOfExpr
@@ -177,7 +178,9 @@ class SympyTransformer(
             factor = tokens[i]
             i += 1
 
-            if operator.type == "OPERATOR_MUL":
+            if operator.type == "OPERATOR_CROSS" and MatrixUtils.is_matrix(result):
+                result = result.cross(sign * factor)
+            elif operator.type in ("OPERATOR_CROSS", "OPERATOR_MUL"):
                 result *= sign * factor
             elif operator.type == "OPERATOR_DIV":
                 result /= sign * factor
@@ -197,11 +200,7 @@ class SympyTransformer(
     @v_args(inline=True)
     def exponentiation(self, base: Expr, exponent: Expr) -> Expr:
         # special matrix notation.
-        if (
-            isinstance(exponent, Symbol)
-            and hasattr(base, "is_Matrix")
-            and base.is_Matrix
-        ):
+        if isinstance(exponent, Symbol) and MatrixUtils.is_matrix(base):
             if str(exponent) == "T":
                 return base.transpose()
             elif str(exponent) == "H":

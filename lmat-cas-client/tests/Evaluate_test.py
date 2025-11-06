@@ -70,6 +70,71 @@ class TestEvaluate:
 
         assert result.sympy_expr == sqrt(20**2 + 30**2 + 40**2 + 50**2)
 
+    def test_matrix_cross_prod(self):
+        handler = EvalHandler(self.compiler)
+        result = handler.handle({
+            "expression": r"""
+                \begin{bmatrix}
+                3 \\
+                -3 \\
+                1
+                \end{bmatrix}
+                \times
+                \begin{bmatrix}
+                4 \\
+                9 \\
+                2
+                \end{bmatrix}
+                """,
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([-15, -2, 39])
+
+        result = handler.handle({
+            "expression": r"""
+                \begin{bmatrix}
+                5 \\
+                -21 \\
+                42
+                \end{bmatrix}
+                \times
+                M
+                """,
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="M",
+                        value_expr=r"\begin{bmatrix}11 \\95 \\9999 i\end{bmatrix}",
+                    ),
+                ]
+            },
+        })
+
+        assert result.sympy_expr == Matrix([-3990 - 209979 * I, 462 - 49995 * I, 706])
+
+        result = handler.handle({
+            "expression": r"""
+                M
+                \times
+                \begin{bmatrix}
+                3 \\
+                -3 \\
+                1
+                \end{bmatrix}
+                """,
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="M",
+                        value_expr=r"\begin{bmatrix}4 \\9 \\2\end{bmatrix}",
+                    ),
+                ]
+            },
+        })
+
+        assert result.sympy_expr == Matrix([15, 2, -39])
+
     def test_matrix_inner_prodcut(self):
         handler = EvalHandler(self.compiler)
         result = handler.handle({
