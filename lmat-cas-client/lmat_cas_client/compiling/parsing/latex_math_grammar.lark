@@ -324,9 +324,12 @@ taylor: _FUNC_TAYLOR _UNDERSCORE _L_BRACE expression _COMMA expression [_COMMA e
 
 // ======== Combinatorial functions ========
 
-_combinatorial_functions: derangements
+_combinatorial_functions: permutations | combinations | derangements
 
-derangements: _L_BRACE _BANG expression _R_BRACE
+permutations: _FUNC_PERMUTATIONS expression _COMMA expression _R_PAREN
+combinations: _FUNC_COMBINATIONS expression _COMMA expression _R_PAREN
+derangements: _FUNC_DERANGEMENTS expression _R_PAREN
+    | _L_BRACE _BANG expression _R_BRACE
 
 // ======== Divisibility functions ========
 
@@ -443,7 +446,7 @@ _L_BAR: _BAR
 _L_DOUBLE_BAR: _DOUBLE_BAR
 %declare _R_DOUBLE_BAR
 
-_UNDEF_FUNC_START.1: /(?<! )\(/
+_UNDEF_FUNC_START.1: /(?<! )(?<! \\left)\(/
 
 _L_DELIMITER: _DOT | _L_ANGLE | L_BRACE_LITERAL | _L_BRACKET | _L_CEIL | _L_FLOOR | _L_PAREN
 _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOOR | _R_PAREN
@@ -556,6 +559,19 @@ _FUNC_JACOBIAN.1: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
 // e.g. "T_{x_{1,1}}(y)" would be matched by this, but these scenarios are very obscure anyways, so it should not be an issue.
 //
 _FUNC_TAYLOR.1: /T(?=\s*_\s*{([^,]+?,)+.+?}(\\left)?\(.+?\))/s // (\\right)? check is not needed as .+ accounts for this
+
+// combinatorial functions.
+
+// all combinatorial functions should have to be called with their arguments wrapped in parenthesees,
+// therefore they are defined a bit differently here.
+
+_CMD_PERMUTATIONS: "P"
+_CMD_COMBINATIONS: "C"
+_CMD_DERANGEMENTS: "D"
+
+_FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _LR_FORMAT? _L_PAREN
+_FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _LR_FORMAT? _L_PAREN
+_FUNC_DERANGEMENTS.1: _CMD_DERANGEMENTS _LR_FORMAT? _L_PAREN
 
 // divisibility functions.
 

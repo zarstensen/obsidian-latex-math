@@ -37,14 +37,16 @@ class SympyDefinition(Definition):
             )
         )
 
+
 class SympyFunctionDefinition(FunctionDefinition):
-    def __init__(self, func_name: str, variables = ...):
+    def __init__(self, func_name: str, variables=...):
         super().__init__(variables)
         self._func_name = func_name
 
     @override
     def defined_value(self, _definition_store):
         return Function(self._func_name)
+
 
 class AssumptionDefinition(SympyDefinition):
     """

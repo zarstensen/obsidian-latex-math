@@ -9,6 +9,4 @@ StandardDefinitionStore = DefinitionStore({
     r"e": SympyDefinition(sympy.E),
     r"\pi": SympyDefinition(sympy.pi),
     r"i": SympyDefinition(sympy.I),
-    # Combinatorial Functions
-    r"P(n, k)": 
 })

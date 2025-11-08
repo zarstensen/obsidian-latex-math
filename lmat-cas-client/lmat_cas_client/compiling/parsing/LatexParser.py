@@ -183,11 +183,7 @@ class ScopePostLexer(PostLex):
                 ],
                 replace_tokens={"_LATEX_NEWLINE": "_EXPR_DELIM"},
             ),
-            LexerScope(
-                scope_pairs=[
-                    ("_UNDEF_FUNC_START", "_R_PAREN")
-                ]
-            ),
+            LexerScope(scope_pairs=[("_UNDEF_FUNC_START", "_R_PAREN")]),
             # General scope for L R token pairs.
             # This makes sure stuff like |(|x|)| does not get parsed as "|(|", "x" and "|)|" but instead as "|(|x|)|"
             LexerScope(
