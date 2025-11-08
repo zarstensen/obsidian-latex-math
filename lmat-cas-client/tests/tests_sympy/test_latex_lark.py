@@ -293,12 +293,22 @@ INTEGRAL_EXPRESSION_PAIRS = [
 
 DERIVATIVE_EXPRESSION_PAIRS = [
     (r"\frac{\dd}{\dd x} x", Derivative(x, x)),
-    (r"\frac{\dd}{\dd t} x", Derivative(x, t)),
+    (r"\frac{\differential}{\partial x} x", Derivative(x, x)),
+    (r"\frac{\partial}{\differential t} x", Derivative(x, t)),
     (r"\frac{\dd}{\dd x^2} x^3", Derivative(x**3, (x, 2))),
     (r"\frac{\dd x y}{\dd x \dd y}", Derivative(x * y, (x, 1), (y, 1))),
     (r"\frac{\dd}{\dd x} ( \tan x )", Derivative(tan(x), x)),
     (r"\frac{\dd f(x)}{\dd x}", Derivative(f(x), x)),
-    (r"\frac{\dd\theta(x)}{\dd x}", Derivative(Function("theta")(x), x)),
+    (r"\frac{\dd\theta(x)}{\dd x}", Derivative(Function(r"\theta")(x), x)),
+    (r"\frac{\dd[3]\theta(x)}{\dd x^3}", Derivative(Function(r"\theta")(x), x, x, x)),
+    (
+        r"\frac{\partial^3\theta(x)}{\dd x^3}",
+        Derivative(Function(r"\theta")(x), x, x, x),
+    ),
+    (
+        r"\frac{\dd[2]\theta(x) \cdot y}{\dd x \dd y}",
+        Derivative(Function(r"\theta")(x) * y, x, y),
+    ),
 ]
 
 TRIGONOMETRIC_EXPRESSION_PAIRS = [
@@ -611,9 +621,9 @@ def test_integral_expressions():
     for i, (latex_str, sympy_expr) in enumerate(INTEGRAL_EXPRESSION_PAIRS):
         if i in expected_failures:
             continue
-        assert simplify(parse_latex_lark(latex_str)) == simplify(sympy_expr.doit()), (
-            latex_str
-        )
+        assert simplify(parse_latex_lark(latex_str)) == simplify(
+            sympy_expr.doit()
+        ), latex_str
 
 
 def test_derivative_expressions():
@@ -699,6 +709,6 @@ def test_matrix_expressions():
     for latex_str, sympy_expr in MATRIX_EXPRESSION_PAIRS:
         if isinstance(sympy_expr, Expr):
             sympy_expr = sympy_expr.doit()
-        assert simplify(parse_latex_lark(latex_str)) == simplify(expand(sympy_expr)), (
-            latex_str
-        )
+        assert simplify(parse_latex_lark(latex_str)) == simplify(
+            expand(sympy_expr)
+        ), latex_str

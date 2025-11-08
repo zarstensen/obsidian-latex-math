@@ -156,8 +156,12 @@ class BuiltInFunctionsTransformer(UndefinedAtomsTransformer):
     def derivative_symbols_first(
         self, power: Optional[Expr], symbols: Iterator[tuple[Expr, Expr]], expr: Expr
     ):
-        if power is not None and power != len(symbols):
-            raise ValueError("AAAA POWER IS NOT CORRECT")
+        exponent_sum = sum(s[1] for s in symbols)
+
+        if power is not None and power != exponent_sum:
+            raise ValueError(
+                f"Power mismatch in derivative, expected sum of exponents to be {power}, but was {exponent_sum}"
+            )
 
         return diff(expr, *symbols)
 
