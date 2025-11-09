@@ -334,6 +334,15 @@ class TestEvaluate:
         x, y = symbols("x y")
         assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
 
+        result = handler.handle(
+            {
+                "expression": r"\grad (x^2 y + y^2 x)",
+                "environment": {},
+            }
+        )
+
+        assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
+
     def test_evalf(self):
         handler = EvalfHandler(self.compiler)
         result = handler.handle({"expression": "5/2", "environment": {}})
@@ -701,8 +710,6 @@ class TestEvaluate:
         )
 
         assert result.sympy_expr == 1 + x + y + x**2 / 2
-
-    # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)
 
     def test_standard_def_override(self):
         handler = EvalHandler(self.compiler)
