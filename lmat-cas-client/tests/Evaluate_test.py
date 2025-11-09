@@ -1,3 +1,4 @@
+import pytest
 from lmat_cas_client.command_handlers.ApartHandler import *
 from lmat_cas_client.command_handlers.EvalfHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
@@ -79,7 +80,7 @@ class TestEvaluate:
                 -3 \\
                 1
                 \end{bmatrix}
-                \times
+                \cp
                 \begin{bmatrix}
                 4 \\
                 9 \\
@@ -116,7 +117,7 @@ class TestEvaluate:
         result = handler.handle({
             "expression": r"""
                 M
-                \times
+                \cross
                 \begin{bmatrix}
                 3 \\
                 -3 \\
@@ -301,6 +302,13 @@ class TestEvaluate:
         x, y = symbols("x y")
         assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
 
+        result = handler.handle({
+            "expression": r"\grad (x^2 y + y^2 x)",
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
+
     def test_evalf(self):
         handler = EvalfHandler(self.compiler)
         result = handler.handle({"expression": "5/2", "environment": {}})
@@ -429,6 +437,43 @@ class TestEvaluate:
             [0, cos(y), 0],
             [-sin(x) * sin(y), cos(x) * cos(y), 0],
         ])
+
+    def test_unitvec(self):
+        handler = EvalHandler(self.compiler)
+
+        result = handler.handle({
+            "expression": r"\vu \begin{bmatrix} 1 & 2 & 3 \end{bmatrix}",
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([1, 2, 3]).T.normalized()
+
+        result = handler.handle({
+            "expression": r"\vu* \begin{bmatrix} 4 \\ 5 \\ 6 \end{bmatrix}",
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([4, 5, 6]).normalized()
+
+        result = handler.handle({
+            "expression": r"\vectorunit* v",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="v",
+                        value_expr=r"\begin{bmatrix} 2 \\ 2 \end{bmatrix}",
+                    )
+                ]
+            },
+        })
+
+        assert result.sympy_expr == Matrix([2, 2]).normalized()
+
+        with pytest.raises(Exception):
+            result = handler.handle({
+                "expression": r"\vu \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}",
+                "environment": {},
+            })
 
     def test_assumptions(self):
         handler = EvalHandler(self.compiler)
@@ -573,8 +618,6 @@ class TestEvaluate:
         })
 
         assert result.sympy_expr == 1 + x + y + x**2 / 2
-
-    # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)
 
     def test_standard_def_override(self):
         handler = EvalHandler(self.compiler)

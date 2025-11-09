@@ -263,41 +263,52 @@ POWER_EXPRESSION_PAIRS = [
     (r"5^0 - 4^0", 0),
 ]
 
+# these have been modified with the new \dd symbol.
 INTEGRAL_EXPRESSION_PAIRS = [
-    (r"\int x d x", Integral(x, x)),
-    (r"\int x \, d x", Integral(x, x)),
-    (r"\int x d\theta", Integral(x, theta)),
-    (r"\int (x^2 - y)d x", Integral(x**2 - y, x)),
-    (r"\int x + a d x", Integral(x + a, x)),
-    (r"\int d a", Integral(1, a)),
-    (r"\int_0^7 d x", Integral(1, (x, 0, 7))),
-    (r"\int\limits_{0}^{1} x d x", Integral(x, (x, 0, 1))),
-    (r"\int_a^b x d x", Integral(x, (x, a, b))),
-    (r"\int^b_a x d x", Integral(x, (x, a, b))),
-    (r"\int_{a}^b x d x", Integral(x, (x, a, b))),
-    (r"\int^{b}_a x d x", Integral(x, (x, a, b))),
-    (r"\int_{a}^{b} x d x", Integral(x, (x, a, b))),
-    (r"\int^{b}_{a} x d x", Integral(x, (x, a, b))),
-    (r"\int_{f(a)}^{f(b)} f(z) d z", Integral(f(z), (z, f(a), f(b)))),
-    (r"\int a + b + c d x", Integral(a + b + c, x)),
+    (r"\int x \dd x", Integral(x, x)),
+    (r"\int x \, \dd x", Integral(x, x)),
+    (r"\int x \dd\theta", Integral(x, theta)),
+    (r"\int (x^2 - y)\dd x", Integral(x**2 - y, x)),
+    (r"\int x + a \dd x", Integral(x + a, x)),
+    (r"\int \dd a", Integral(1, a)),
+    (r"\int_0^7 \dd x", Integral(1, (x, 0, 7))),
+    (r"\int\limits_{0}^{1} x \dd x", Integral(x, (x, 0, 1))),
+    (r"\int_a^b x \dd x", Integral(x, (x, a, b))),
+    (r"\int^b_a x \dd x", Integral(x, (x, a, b))),
+    (r"\int_{a}^b x \dd x", Integral(x, (x, a, b))),
+    (r"\int^{b}_a x \dd x", Integral(x, (x, a, b))),
+    (r"\int_{a}^{b} x \dd x", Integral(x, (x, a, b))),
+    (r"\int^{b}_{a} x \dd x", Integral(x, (x, a, b))),
+    (r"\int_{f(a)}^{f(b)} f(z) \dd z", Integral(f(z), (z, f(a), f(b)))),
+    (r"\int a + b + c \dd x", Integral(a + b + c, x)),
     # TODO: the below two were rewritten so the dz term is not in the fraction numerator.
     # it should be possible for them to be in the numerator, but the integral grammar has to be a bit more elaborate.
-    (r"\int \frac{1}{z} d z", Integral(Pow(z, -1), z)),
-    (r"\int \frac{3}{z} d z", Integral(3 * Pow(z, -1), z)),
-    (r"\int \frac{1}{x} d x", Integral(1 / x, x)),
-    (r"\int \frac{1}{a} + \frac{1}{b} d x", Integral(1 / a + 1 / b, x)),
-    (r"\int \frac{1}{a} - \frac{1}{b} d x", Integral(1 / a - 1 / b, x)),
-    (r"\int \frac{1}{x} + 1 d x", Integral(1 / x + 1, x)),
+    (r"\int \frac{1}{z} \dd z", Integral(Pow(z, -1), z)),
+    (r"\int \frac{3}{z} \dd z", Integral(3 * Pow(z, -1), z)),
+    (r"\int \frac{1}{x} \dd x", Integral(1 / x, x)),
+    (r"\int \frac{1}{a} + \frac{1}{b} \dd x", Integral(1 / a + 1 / b, x)),
+    (r"\int \frac{1}{a} - \frac{1}{b} \dd x", Integral(1 / a - 1 / b, x)),
+    (r"\int \frac{1}{x} + 1 \dd x", Integral(1 / x + 1, x)),
 ]
 
 DERIVATIVE_EXPRESSION_PAIRS = [
-    (r"\frac{d}{d x} x", Derivative(x, x)),
-    (r"\frac{d}{d t} x", Derivative(x, t)),
-    (r"\frac{d}{d x^2} x^3", Derivative(x**3, (x, 2))),
-    (r"\frac{d x y}{d x d y}", Derivative(x * y, (x, 1), (y, 1))),
-    (r"\frac{d}{d x} ( \tan x )", Derivative(tan(x), x)),
-    (r"\frac{d f(x)}{d x}", Derivative(f(x), x)),
-    (r"\frac{d\theta(x)}{d x}", Derivative(Function("theta")(x), x)),
+    (r"\frac{\dd}{\dd x} x", Derivative(x, x)),
+    (r"\frac{\differential}{\partial x} x", Derivative(x, x)),
+    (r"\frac{\partial}{\differential t} x", Derivative(x, t)),
+    (r"\frac{\dd}{\dd x^2} x^3", Derivative(x**3, (x, 2))),
+    (r"\frac{\dd x y}{\dd x \dd y}", Derivative(x * y, (x, 1), (y, 1))),
+    (r"\frac{\dd}{\dd x} ( \tan x )", Derivative(tan(x), x)),
+    (r"\frac{\dd f(x)}{\dd x}", Derivative(f(x), x)),
+    (r"\frac{\dd\theta(x)}{\dd x}", Derivative(Function(r"\theta")(x), x)),
+    (r"\frac{\dd[3]\theta(x)}{\dd x^3}", Derivative(Function(r"\theta")(x), x, x, x)),
+    (
+        r"\frac{\partial^3\theta(x)}{\dd x^3}",
+        Derivative(Function(r"\theta")(x), x, x, x),
+    ),
+    (
+        r"\frac{\dd[2]\theta(x) \cdot y}{\dd x \dd y}",
+        Derivative(Function(r"\theta")(x) * y, x, y),
+    ),
 ]
 
 TRIGONOMETRIC_EXPRESSION_PAIRS = [
@@ -474,7 +485,7 @@ MATRIX_EXPRESSION_PAIRS = [
     ),
     (r"\begin{pmatrix}i & 1+i \\-i & 4\end{pmatrix}^H", Matrix([[-I, I], [1 - I, 4]])),
     (
-        r"\operatorname{trace}(\begin{pmatrix}i & 1+i \\-i & 4\end{pmatrix})",
+        r"\trace(\begin{pmatrix}i & 1+i \\-i & 4\end{pmatrix})",
         Trace(Matrix([[I, 1 + I], [-I, 4]])),
     ),
     (
@@ -553,7 +564,7 @@ MATRIX_EXPRESSION_PAIRS = [
         (_MatAdd(Matrix([[I, 2], [3, 4]]), Matrix([[I, 2], [3, 4]]))).det(),
     ),
     (
-        r"\mathrm{trace}(\begin{pmatrix}i&2\\3&4\end{pmatrix}+\begin{pmatrix}i&2\\3&4\end{pmatrix})",
+        r"\Tr(\begin{pmatrix}i&2\\3&4\end{pmatrix}+\begin{pmatrix}i&2\\3&4\end{pmatrix})",
         Trace(_MatAdd(Matrix([[I, 2], [3, 4]]), Matrix([[I, 2], [3, 4]]))),
     ),
     (
