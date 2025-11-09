@@ -99,10 +99,6 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 
 // ======== Functions ========
 
-// Option 1: Use single_letter_symbol directly in function_special_arg instead of substitute_single_letter_symbol
-// and remove the substitute_single_letter_symbol alias entirely
-
-// Option 2: Change your undefined_function to be more explicit
 undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PAREN
 
 
