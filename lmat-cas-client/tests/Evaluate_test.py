@@ -637,6 +637,18 @@ class TestEvaluate:
 
         assert result.sympy_expr == -2 + x**2
 
+        result = handler.handle({
+            "expression": r"e + \pi",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="e", value_expr=""),
+                    EnvDefinition(name_expr=r"\pi", value_expr=""),
+                ]
+            },
+        })
+
+        assert result.sympy_expr == S("e") + Symbol(r"\pi")
+
     def test_regression_168(self):
         handler = EvalHandler(self.compiler)
 

@@ -63,7 +63,7 @@ class LmatEnvironment(BaseModel):
             match definition_id:
                 case Symbol() as def_symbol:
                     if definition.value_expr == "":
-                        definitions.pop(def_symbol.name, None)
+                        definitions[def_symbol.name] = None
                     else:
                         definitions[def_symbol.name] = AstDefinition(
                             expr_transformer=sympy_transformer_runner,
@@ -72,7 +72,7 @@ class LmatEnvironment(BaseModel):
                         )
                 case AppliedUndef() as def_function:
                     if definition.value_expr == "":
-                        definitions.pop(def_function.name, None)
+                        definitions[def_function.name] = None
                     else:
                         definitions[def_function.name] = AstFunctionDefinition(
                             expr_transformer=sympy_transformer_runner,

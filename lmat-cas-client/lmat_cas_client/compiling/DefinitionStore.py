@@ -99,7 +99,6 @@ class DefinitionStore:
             definitions = {}
 
         self._definitions = dict()
-        self._expr_cache = dict()
 
         for def_key, def_value in definitions.items():
             self.set_definition(def_key, def_value)
@@ -124,10 +123,20 @@ class DefinitionStore:
 
         return new_def_store
 
-    def set_definition(self, definition_name: str, definition: Definition):
-        self._definitions[definition_name] = definition
-        # also clear cache here.
-        self._expr_cache[definition_name] = dict()
+    def set_definition(self, definition_name: str, definition: Optional[Definition]):
+        """
+        Set the defined value to be assosiated with the given name.
+
+        Args:
+            definition_name (str): String to search for when the given value should be substituted in.
+            definition (Optional[Definition]):
+                Value to substituted when definition name has been matched.
+                If `None`, any definition tied to `definition_name` is deleted.
+        """
+        if definition is None:
+            self._definitions.pop(definition_name, None)
+        else:
+            self._definitions[definition_name] = definition
 
     def get_definition(
         self, definition_name: str, *, default: Optional[Definition] = None
