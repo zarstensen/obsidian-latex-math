@@ -545,7 +545,7 @@ _FUNC_MATRIX_TRACE: CMD_OPERATOR _WS? _L_BRACE _WS? "trace" _WS? _R_BRACE | /\\t
 _FUNC_MATRIX_ADJUGATE: CMD_OPERATOR _WS? _L_BRACE _WS? "adjugate" _WS? _R_BRACE
 _FUNC_MATRIX_RREF: CMD_OPERATOR _WS? _L_BRACE _WS? "rref" _WS? _R_BRACE
 // this needs to have priority, so \vectorunit is not parsed as the symbol \vec{torunit}
-_FUNC_VEC_UNIT.1:  /\\v(ectorunit|u)\*?/
+_FUNC_VEC_UNIT:  /\\v(ectorunit|u)\*?/
 
 // linear alg functions.
 
@@ -590,7 +590,7 @@ CONST_INFINITY: "\\infty"
 // Text formatting
 
 CMD_MATH: /\\math\w+/
-CMD_VEC: "\\vec" | /\\va\*?/ | "\\vectorarrow"
+CMD_VEC: /\\vec(?!torunit)(?!torarrow)(?!torbold)/ | /\\va\*?/ | "\\vectorarrow"
 CMD_VECBOLD: "\\vectorbold" |/\\vb\*?/
 CMD_HAT: "\\hat"
 CMD_BOLD_FORMAT: "\\pmb"
