@@ -72,15 +72,13 @@ class TestParse:
         assert result.get_all_expr() == (Eq(x, y), Lt(y, z))
 
     def test_matrix(self):
-        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix(
-            [
-                [1],
-                [2],
-            ]
-        )
-        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix(
-            [[1, 2]]
-        )
+        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix([
+            [1],
+            [2],
+        ])
+        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix([
+            [1, 2]
+        ])
         assert self._parse_expr(
             r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}"
         ) == Matrix([[1, 2], [3, 4]])
@@ -130,9 +128,8 @@ class TestParse:
         assert self._parse_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert (
-            self._parse_expr(
-                r"""
+        assert self._parse_expr(
+            r"""
             \begin{bmatrix}
             10 \\
             20
@@ -142,35 +139,27 @@ class TestParse:
             40
             \end{bmatrix}
             """
-            )
-            == Matrix([[10], [20]]) * Matrix([[30, 40]])
-        )
+        ) == Matrix([[10], [20]]) * Matrix([[30, 40]])
 
-        assert (
-            self._parse_expr(
-                r"""
+        assert self._parse_expr(
+            r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
-        assert (
-            self._parse_expr(
-                r"""
+        assert self._parse_expr(
+            r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
         # powers
         assert self._parse_expr(r"b a^2") == a**2 * b

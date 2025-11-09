@@ -30,20 +30,17 @@ class TestEvaluate:
     def test_matrix_single_line(self):
         handler = EvalHandler(self.compiler)
 
-        result = handler.handle(
-            {
-                "expression": r"2 \cdot \begin{bmatrix} 1 \\ 1 \end{bmatrix}",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"2 \cdot \begin{bmatrix} 1 \\ 1 \end{bmatrix}",
+            "environment": {},
+        })
 
         assert result.sympy_expr == 2 * Matrix([[1], [1]])
 
     def test_matrix_multi_line(self):
         handler = EvalHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
         2
         \cdot
         \begin{bmatrix}
@@ -51,17 +48,15 @@ class TestEvaluate:
         3 & 4
         \end{bmatrix}
         """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == 2 * Matrix([[1, 2], [3, 4]])
 
     def test_matrix_normal(self):
         handler = EvalHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
         \Vert
         \begin{bmatrix}
         20 \\
@@ -71,17 +66,15 @@ class TestEvaluate:
         \end{bmatrix}
         \Vert
         """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == sqrt(20**2 + 30**2 + 40**2 + 50**2)
 
     def test_matrix_cross_prod(self):
         handler = EvalHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
                 \begin{bmatrix}
                 3 \\
                 -3 \\
@@ -94,15 +87,13 @@ class TestEvaluate:
                 2
                 \end{bmatrix}
                 """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == Matrix([-15, -2, 39])
 
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
                 \begin{bmatrix}
                 5 \\
                 -21 \\
@@ -111,22 +102,20 @@ class TestEvaluate:
                 \times
                 M
                 """,
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(
-                            name_expr="M",
-                            value_expr=r"\begin{bmatrix}11 \\95 \\9999 i\end{bmatrix}",
-                        ),
-                    ]
-                },
-            }
-        )
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="M",
+                        value_expr=r"\begin{bmatrix}11 \\95 \\9999 i\end{bmatrix}",
+                    ),
+                ]
+            },
+        })
 
         assert result.sympy_expr == Matrix([-3990 - 209979 * I, 462 - 49995 * I, 706])
 
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
                 M
                 \cross
                 \begin{bmatrix}
@@ -135,24 +124,22 @@ class TestEvaluate:
                 1
                 \end{bmatrix}
                 """,
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(
-                            name_expr="M",
-                            value_expr=r"\begin{bmatrix}4 \\9 \\2\end{bmatrix}",
-                        ),
-                    ]
-                },
-            }
-        )
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="M",
+                        value_expr=r"\begin{bmatrix}4 \\9 \\2\end{bmatrix}",
+                    ),
+                ]
+            },
+        })
 
         assert result.sympy_expr == Matrix([15, 2, -39])
 
     def test_matrix_inner_prodcut(self):
         handler = EvalHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
         \langle
         \begin{bmatrix}
         1 \\
@@ -165,9 +152,8 @@ class TestEvaluate:
         \end{bmatrix}
         \rangle
         """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == 1 * 2 + 2 * 4
 
@@ -175,177 +161,151 @@ class TestEvaluate:
         a, b = symbols("a b")
 
         handler = EvalHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
         5 + 5 + 5 + 5 = 10 + 10
         """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == 20
 
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
         a = b = (a - b)^2
         """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == (a - b) ** 2
 
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
         1 = 2 = 1
         """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == 1
 
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
             \begin{cases}
             2 + 2 + 2 + 2 &= 4 + 2 + 2 \\
                           &= 4 + 4
             \end{cases}
             """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == 8
         assert result.expr_lines == (4, 4)
 
-        result = handler.handle(
-            {
-                "expression": r"""
+        result = handler.handle({
+            "expression": r"""
             1 = 2 = 3 = 4 = 5 = 6 = 7 = 8 = 9
             """,
-                "environment": {},
-            }
-        )
+            "environment": {},
+        })
 
         assert result.sympy_expr == 9
 
     def test_variable_substitution(self):
         handler = EvalHandler(self.compiler)
 
-        result = handler.handle(
-            {
-                "expression": r"a + b",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="a", value_expr="2"),
-                        EnvDefinition(name_expr="b", value_expr="3"),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"a + b",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="a", value_expr="2"),
+                    EnvDefinition(name_expr="b", value_expr="3"),
+                ]
+            },
+        })
         assert result.sympy_expr == 5
 
-        result = handler.handle(
-            {
-                "expression": r"\alpha",
-                "environment": {
-                    "definitions": [EnvDefinition(name_expr="\\alpha", value_expr="2")]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"\alpha",
+            "environment": {
+                "definitions": [EnvDefinition(name_expr="\\alpha", value_expr="2")]
+            },
+        })
         assert result.sympy_expr == 2
 
-        result = handler.handle(
-            {
-                "expression": r"A^T B",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(
-                            name_expr="A",
-                            value_expr=r"""
+        result = handler.handle({
+            "expression": r"A^T B",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="A",
+                        value_expr=r"""
                     \begin{bmatrix}
                     1 \\ 2
                     \end{bmatrix}
                     """,
-                        ),
-                        EnvDefinition(
-                            name_expr="B",
-                            value_expr=r"""
+                    ),
+                    EnvDefinition(
+                        name_expr="B",
+                        value_expr=r"""
                     \begin{bmatrix}
                     3 \\ 4
                     \end{bmatrix}
                     """,
-                        ),
-                    ]
-                },
-            }
-        )
+                    ),
+                ]
+            },
+        })
         assert result.sympy_expr == Matrix([11])
 
-        result = handler.handle(
-            {
-                "expression": r"\sin{abc}",
-                "environment": {
-                    "definitions": [EnvDefinition(name_expr="abc", value_expr="1")]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"\sin{abc}",
+            "environment": {
+                "definitions": [EnvDefinition(name_expr="abc", value_expr="1")]
+            },
+        })
         assert result.sympy_expr == sin(1)
 
-        result = handler.handle(
-            {
-                "expression": r"\sqrt{ val_{sub} + val_{2}^{val_{three}}}",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="val_{sub}", value_expr="7"),
-                        EnvDefinition(name_expr="val_{2}", value_expr="3"),
-                        EnvDefinition(name_expr="val_{three}", value_expr="2"),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"\sqrt{ val_{sub} + val_{2}^{val_{three}}}",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="val_{sub}", value_expr="7"),
+                    EnvDefinition(name_expr="val_{2}", value_expr="3"),
+                    EnvDefinition(name_expr="val_{three}", value_expr="2"),
+                ]
+            },
+        })
         assert result.sympy_expr == 4
 
         x = Symbol("x")
 
-        result = handler.handle(
-            {
-                "expression": "x",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="x", value_expr="25"),
-                        EnvDefinition(name_expr="x", value_expr=""),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": "x",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="x", value_expr="25"),
+                    EnvDefinition(name_expr="x", value_expr=""),
+                ]
+            },
+        })
 
         assert result.sympy_expr == x
 
     def test_gradient(self):
         handler = EvalHandler(self.compiler)
 
-        result = handler.handle(
-            {
-                "expression": r"\nabla (x^2 y + y^2 x)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\nabla (x^2 y + y^2 x)",
+            "environment": {},
+        })
 
         x, y = symbols("x y")
         assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
 
-        result = handler.handle(
-            {
-                "expression": r"\grad (x^2 y + y^2 x)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\grad (x^2 y + y^2 x)",
+            "environment": {},
+        })
 
         assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
 
@@ -362,34 +322,28 @@ class TestEvaluate:
 
     def test_factor(self):
         handler = FactorHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": "x^3 - 10x^2 + 3x + 54",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": "x^3 - 10x^2 + 3x + 54",
+            "environment": {},
+        })
         x = symbols("x")
         assert result.sympy_expr == (x - 9) * (x - 3) * (x + 2)
 
     def test_apart(self):
         handler = ApartHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": r"\frac{8x + 7}{x^2 + x - 2}",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\frac{8x + 7}{x^2 + x - 2}",
+            "environment": {},
+        })
         x = symbols("x")
         assert result.sympy_expr == 3 / (x + 2) + 5 / (x - 1)
 
     def test_quick_derivative(self):
         handler = ExpandHandler(self.compiler)
-        result = handler.handle(
-            {
-                "expression": "(x^5 + 3x^4 + 2x + 5)'''",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": "(x^5 + 3x^4 + 2x + 5)'''",
+            "environment": {},
+        })
         x = symbols("x")
         assert result.sympy_expr == 60 * x**2 + 72 * x
 
@@ -397,43 +351,37 @@ class TestEvaluate:
         handler = EvalHandler(self.compiler)
 
         # Standard function
-        result = handler.handle(
-            {
-                "expression": "f(25, -2)",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="f(x, y)", value_expr="2x + y^2 + C"),
-                        EnvDefinition(name_expr="C", value_expr="-4"),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": "f(25, -2)",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="f(x, y)", value_expr="2x + y^2 + C"),
+                    EnvDefinition(name_expr="C", value_expr="-4"),
+                ]
+            },
+        })
         assert result.sympy_expr == 50
 
         # Function with arg name defined as variables
-        result = handler.handle(
-            {
-                "expression": "f(y)",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="f(x)", value_expr="2x"),
-                        EnvDefinition(name_expr="x", value_expr="-1"),
-                        EnvDefinition(name_expr="y", value_expr="99"),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": "f(y)",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="f(x)", value_expr="2x"),
+                    EnvDefinition(name_expr="x", value_expr="-1"),
+                    EnvDefinition(name_expr="y", value_expr="99"),
+                ]
+            },
+        })
         assert result.sympy_expr == 198
 
         # Function with matrices as input
-        result = handler.handle(
-            {
-                "expression": r"f(\begin{bmatrix} 5 & 10 \end{bmatrix})",
-                "environment": {
-                    "definitions": [EnvDefinition(name_expr="f(x)", value_expr="x x^T")]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"f(\begin{bmatrix} 5 & 10 \end{bmatrix})",
+            "environment": {
+                "definitions": [EnvDefinition(name_expr="f(x)", value_expr="x x^T")]
+            },
+        })
         assert result.sympy_expr == Matrix([[125]])
 
     def test_hessian(self):
@@ -441,31 +389,23 @@ class TestEvaluate:
         x, y = symbols("x y")
 
         # Standard function
-        result = handler.handle(
-            {
-                "expression": r"\mathbf{H}(y x^5 + \sin(y))",
-                "environment": {},
-            }
-        )
-        assert result.sympy_expr == Matrix(
-            [
-                [20 * x**3 * y, 5 * x**4],
-                [5 * x**4, -sin(y)],
-            ]
-        )
+        result = handler.handle({
+            "expression": r"\mathbf{H}(y x^5 + \sin(y))",
+            "environment": {},
+        })
+        assert result.sympy_expr == Matrix([
+            [20 * x**3 * y, 5 * x**4],
+            [5 * x**4, -sin(y)],
+        ])
 
-        result = handler.handle(
-            {
-                "expression": r"\mathbf{H}(f)",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(
-                            name_expr="f(x, y, z)", value_expr=r"\log(x) + e^y"
-                        )
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"\mathbf{H}(f)",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="f(x, y, z)", value_expr=r"\log(x) + e^y")
+                ]
+            },
+        })
 
         assert result.sympy_expr == Matrix([[-1 / x**2, 0, 0], [0, E**y, 0], [0, 0, 0]])
 
@@ -474,90 +414,74 @@ class TestEvaluate:
         x, y = symbols("x y")
 
         # Standard function
-        result = handler.handle(
-            {
-                "expression": r"\mathbf{J}(\begin{bmatrix} x^2 \\ y \\ x * y \end{bmatrix})",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\mathbf{J}(\begin{bmatrix} x^2 \\ y \\ x * y \end{bmatrix})",
+            "environment": {},
+        })
         assert result.sympy_expr == Matrix([[2 * x, 0], [0, 1], [y, x]])
 
-        result = handler.handle(
-            {
-                "expression": r"\mathbf{J}(f)",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(
-                            name_expr="f(x, y, z)",
-                            value_expr=r"\begin{bmatrix}\log(x)\\ \sin(y) \\ \cos(x) * \sin(y) \end{bmatrix}",
-                        )
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"\mathbf{J}(f)",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="f(x, y, z)",
+                        value_expr=r"\begin{bmatrix}\log(x)\\ \sin(y) \\ \cos(x) * \sin(y) \end{bmatrix}",
+                    )
+                ]
+            },
+        })
 
-        assert result.sympy_expr == Matrix(
-            [
-                [1 / x, 0, 0],
-                [0, cos(y), 0],
-                [-sin(x) * sin(y), cos(x) * cos(y), 0],
-            ]
-        )
+        assert result.sympy_expr == Matrix([
+            [1 / x, 0, 0],
+            [0, cos(y), 0],
+            [-sin(x) * sin(y), cos(x) * cos(y), 0],
+        ])
 
     def test_unitvec(self):
         handler = EvalHandler(self.compiler)
 
-        result = handler.handle(
-            {
-                "expression": r"\vu \begin{bmatrix} 1 & 2 & 3 \end{bmatrix}",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\vu \begin{bmatrix} 1 & 2 & 3 \end{bmatrix}",
+            "environment": {},
+        })
 
         assert result.sympy_expr == Matrix([1, 2, 3]).T.normalized()
 
-        result = handler.handle(
-            {
-                "expression": r"\vu* \begin{bmatrix} 4 \\ 5 \\ 6 \end{bmatrix}",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\vu* \begin{bmatrix} 4 \\ 5 \\ 6 \end{bmatrix}",
+            "environment": {},
+        })
 
         assert result.sympy_expr == Matrix([4, 5, 6]).normalized()
 
-        result = handler.handle(
-            {
-                "expression": r"\vectorunit* v",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(
-                            name_expr="v",
-                            value_expr=r"\begin{bmatrix} 2 \\ 2 \end{bmatrix}",
-                        )
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"\vectorunit* v",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="v",
+                        value_expr=r"\begin{bmatrix} 2 \\ 2 \end{bmatrix}",
+                    )
+                ]
+            },
+        })
 
         assert result.sympy_expr == Matrix([2, 2]).normalized()
 
         with pytest.raises(Exception):
-            result = handler.handle(
-                {
-                    "expression": r"\vu \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}",
-                    "environment": {},
-                }
-            )
+            result = handler.handle({
+                "expression": r"\vu \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}",
+                "environment": {},
+            })
 
     def test_assumptions(self):
         handler = EvalHandler(self.compiler)
         x = symbols("x", real=True)
-        result = handler.handle(
-            {
-                "expression": r"\bar x x",
-                "environment": {"symbols": {"x": ["real"]}},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\bar x x",
+            "environment": {"symbols": {"x": ["real"]}},
+        })
         assert result.sympy_expr == x**2
 
     def test_combinatorial(self):
@@ -568,12 +492,10 @@ class TestEvaluate:
         assert result.sympy_expr == 30240
 
         n, c = symbols("n C")
-        result = handler.handle(
-            {
-                "expression": r"C (2 + 3) + C(n, 42)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"C (2 + 3) + C(n, 42)",
+            "environment": {},
+        })
 
         assert result.sympy_expr == c * 5 + binomial(n, 42)
 
@@ -588,12 +510,10 @@ class TestEvaluate:
     def test_gamma(self):
         handler = EvalHandler(self.compiler)
 
-        result = handler.handle(
-            {
-                "expression": r"\frac{6!}{e} - \frac{\gamma\left(6 + 1, -1\right)}{e}",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\frac{6!}{e} - \frac{\gamma\left(6 + 1, -1\right)}{e}",
+            "environment": {},
+        })
 
         assert result.sympy_expr == 265
 
@@ -610,24 +530,20 @@ class TestEvaluate:
         assert result.sympy_expr == 0
 
         a, b, m = symbols("a b m")
-        result = handler.handle(
-            {
-                "expression": r"(a \mod m + b \mod m) \mod m",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"(a \mod m + b \mod m) \mod m",
+            "environment": {},
+        })
         assert result.sympy_expr == Mod(a + b, m)
 
         result = handler.handle({"expression": r"\gcd(8, 12)", "environment": {}})
 
         assert result.sympy_expr == 4
 
-        result = handler.handle(
-            {
-                "expression": r"\operatorname{lcm}(6, 21)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\operatorname{lcm}(6, 21)",
+            "environment": {},
+        })
         assert result.sympy_expr == 42
 
     def test_complex(self):
@@ -636,28 +552,22 @@ class TestEvaluate:
         result = handler.handle({"expression": r"\Re (5 + 7 i)", "environment": {}})
         assert result.sympy_expr == 5
 
-        result = handler.handle(
-            {
-                "expression": r"\operatorname{Im} (5 + 7 i)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\operatorname{Im} (5 + 7 i)",
+            "environment": {},
+        })
         assert result.sympy_expr == 7
 
-        result = handler.handle(
-            {
-                "expression": r"\arg e^{i \pi / 2}",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\arg e^{i \pi / 2}",
+            "environment": {},
+        })
         assert result.sympy_expr == pi / 2
 
-        result = handler.handle(
-            {
-                "expression": r"\mathrm{sgn}(-256)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"\mathrm{sgn}(-256)",
+            "environment": {},
+        })
 
         assert result.sympy_expr == -1
 
@@ -665,23 +575,19 @@ class TestEvaluate:
         handler = EvalHandler(self.compiler)
         x, y, z = symbols("x y z")
 
-        result = handler.handle(
-            {
-                "expression": r"T_{2,\sin{x},1}(x)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"T_{2,\sin{x},1}(x)",
+            "environment": {},
+        })
 
         assert result.sympy_expr == sin(1) + (x - 1) * cos(1) - Rational(1, 2) * (
             x - 1
         ) ** 2 * sin(1)
 
-        result = handler.handle(
-            {
-                "expression": r"T_{3,\sin{x} + \cos{y} + \tan{z}}(x, y, z)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"T_{3,\sin{x} + \cos{y} + \tan{z}}(x, y, z)",
+            "environment": {},
+        })
 
         assert (
             result.sympy_expr
@@ -695,25 +601,21 @@ class TestEvaluate:
 
         expr = sin(x) * cos(z) - tan(z) * sec(y)
 
-        result = handler.handle(
-            {
-                "expression": r"T_{2,\sin{x} \cos{z} - \tan{z} \sec{y},\begin{bmatrix} 1 \\ 2 \\ 3 \end{bmatrix}}(1, 2, 3)",
-                "environment": {},
-            }
-        )
+        result = handler.handle({
+            "expression": r"T_{2,\sin{x} \cos{z} - \tan{z} \sec{y},\begin{bmatrix} 1 \\ 2 \\ 3 \end{bmatrix}}(1, 2, 3)",
+            "environment": {},
+        })
 
         assert result.sympy_expr == expr.subs({x: 1, y: 2, z: 3})
 
-        result = handler.handle(
-            {
-                "expression": "T_{2,f}(x, y)",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="f(a, b)", value_expr=r"e^a + \sin b")
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": "T_{2,f}(x, y)",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="f(a, b)", value_expr=r"e^a + \sin b")
+                ]
+            },
+        })
 
         assert result.sympy_expr == 1 + x + y + x**2 / 2
 
@@ -722,50 +624,44 @@ class TestEvaluate:
 
         x = symbols("x")
 
-        result = handler.handle(
-            {
-                "expression": r"i \cdot \pi + e(x)",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="i", value_expr="-1"),
-                        EnvDefinition(name_expr=r"\pi", value_expr="2"),
-                        EnvDefinition(name_expr=r"e(\pi)", value_expr=r"\pi^2"),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": r"i \cdot \pi + e(x)",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="i", value_expr="-1"),
+                    EnvDefinition(name_expr=r"\pi", value_expr="2"),
+                    EnvDefinition(name_expr=r"e(\pi)", value_expr=r"\pi^2"),
+                ]
+            },
+        })
 
         assert result.sympy_expr == -2 + x**2
 
     def test_regression_168(self):
         handler = EvalHandler(self.compiler)
 
-        result = handler.handle(
-            {
-                "expression": "x",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="x", value_expr="1"),
-                        EnvDefinition(name_expr="x", value_expr=""),
-                        EnvDefinition(name_expr="x", value_expr=""),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": "x",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="x", value_expr="1"),
+                    EnvDefinition(name_expr="x", value_expr=""),
+                    EnvDefinition(name_expr="x", value_expr=""),
+                ]
+            },
+        })
 
         assert result.sympy_expr == Symbol("x")
 
-        result = handler.handle(
-            {
-                "expression": "f",
-                "environment": {
-                    "definitions": [
-                        EnvDefinition(name_expr="f(x)", value_expr="x"),
-                        EnvDefinition(name_expr="f(x)", value_expr=""),
-                        EnvDefinition(name_expr="f(x)", value_expr=""),
-                    ]
-                },
-            }
-        )
+        result = handler.handle({
+            "expression": "f",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="f(x)", value_expr="x"),
+                    EnvDefinition(name_expr="f(x)", value_expr=""),
+                    EnvDefinition(name_expr="f(x)", value_expr=""),
+                ]
+            },
+        })
 
         assert result.sympy_expr == Symbol("f")

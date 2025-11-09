@@ -621,9 +621,9 @@ def test_integral_expressions():
     for i, (latex_str, sympy_expr) in enumerate(INTEGRAL_EXPRESSION_PAIRS):
         if i in expected_failures:
             continue
-        assert simplify(parse_latex_lark(latex_str)) == simplify(
-            sympy_expr.doit()
-        ), latex_str
+        assert simplify(parse_latex_lark(latex_str)) == simplify(sympy_expr.doit()), (
+            latex_str
+        )
 
 
 def test_derivative_expressions():
@@ -709,6 +709,6 @@ def test_matrix_expressions():
     for latex_str, sympy_expr in MATRIX_EXPRESSION_PAIRS:
         if isinstance(sympy_expr, Expr):
             sympy_expr = sympy_expr.doit()
-        assert simplify(parse_latex_lark(latex_str)) == simplify(
-            expand(sympy_expr)
-        ), latex_str
+        assert simplify(parse_latex_lark(latex_str)) == simplify(expand(sympy_expr)), (
+            latex_str
+        )
