@@ -79,27 +79,30 @@ class TestEvaluate:
 
     def test_matrix_cross_prod(self):
         handler = EvalHandler(self.compiler)
-        result = handler.handle({
-            "expression": r"""
+        result = handler.handle(
+            {
+                "expression": r"""
                 \begin{bmatrix}
                 3 \\
                 -3 \\
                 1
                 \end{bmatrix}
-                \times
+                \cp
                 \begin{bmatrix}
                 4 \\
                 9 \\
                 2
                 \end{bmatrix}
                 """,
-            "environment": {},
-        })
+                "environment": {},
+            }
+        )
 
         assert result.sympy_expr == Matrix([-15, -2, 39])
 
-        result = handler.handle({
-            "expression": r"""
+        result = handler.handle(
+            {
+                "expression": r"""
                 \begin{bmatrix}
                 5 \\
                 -21 \\
@@ -108,37 +111,40 @@ class TestEvaluate:
                 \times
                 M
                 """,
-            "environment": {
-                "definitions": [
-                    EnvDefinition(
-                        name_expr="M",
-                        value_expr=r"\begin{bmatrix}11 \\95 \\9999 i\end{bmatrix}",
-                    ),
-                ]
-            },
-        })
+                "environment": {
+                    "definitions": [
+                        EnvDefinition(
+                            name_expr="M",
+                            value_expr=r"\begin{bmatrix}11 \\95 \\9999 i\end{bmatrix}",
+                        ),
+                    ]
+                },
+            }
+        )
 
         assert result.sympy_expr == Matrix([-3990 - 209979 * I, 462 - 49995 * I, 706])
 
-        result = handler.handle({
-            "expression": r"""
+        result = handler.handle(
+            {
+                "expression": r"""
                 M
-                \times
+                \cross
                 \begin{bmatrix}
                 3 \\
                 -3 \\
                 1
                 \end{bmatrix}
                 """,
-            "environment": {
-                "definitions": [
-                    EnvDefinition(
-                        name_expr="M",
-                        value_expr=r"\begin{bmatrix}4 \\9 \\2\end{bmatrix}",
-                    ),
-                ]
-            },
-        })
+                "environment": {
+                    "definitions": [
+                        EnvDefinition(
+                            name_expr="M",
+                            value_expr=r"\begin{bmatrix}4 \\9 \\2\end{bmatrix}",
+                        ),
+                    ]
+                },
+            }
+        )
 
         assert result.sympy_expr == Matrix([15, 2, -39])
 
