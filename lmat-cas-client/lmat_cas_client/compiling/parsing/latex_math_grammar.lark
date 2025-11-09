@@ -541,7 +541,7 @@ _FUNC_LOWER_GAMMA.1: "\\gamma" _LR_FORMAT? _L_PAREN
 // matrix functions
 
 _FUNC_MATRIX_DETERMINANT: "\\det"
-_FUNC_MATRIX_TRACE: CMD_OPERATOR _WS? _L_BRACE _WS? "trace" _WS? _R_BRACE | /\\tr(ace)?/
+_FUNC_MATRIX_TRACE: /\\[Tt]r(ace)?/
 _FUNC_MATRIX_ADJUGATE: CMD_OPERATOR _WS? _L_BRACE _WS? "adjugate" _WS? _R_BRACE
 _FUNC_MATRIX_RREF: CMD_OPERATOR _WS? _L_BRACE _WS? "rref" _WS? _R_BRACE
 // this needs to have priority, so \vectorunit is not parsed as the symbol \vec{torunit}

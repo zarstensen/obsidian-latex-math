@@ -485,7 +485,7 @@ MATRIX_EXPRESSION_PAIRS = [
     ),
     (r"\begin{pmatrix}i & 1+i \\-i & 4\end{pmatrix}^H", Matrix([[-I, I], [1 - I, 4]])),
     (
-        r"\operatorname{trace}(\begin{pmatrix}i & 1+i \\-i & 4\end{pmatrix})",
+        r"\trace(\begin{pmatrix}i & 1+i \\-i & 4\end{pmatrix})",
         Trace(Matrix([[I, 1 + I], [-I, 4]])),
     ),
     (
@@ -564,7 +564,7 @@ MATRIX_EXPRESSION_PAIRS = [
         (_MatAdd(Matrix([[I, 2], [3, 4]]), Matrix([[I, 2], [3, 4]]))).det(),
     ),
     (
-        r"\mathrm{trace}(\begin{pmatrix}i&2\\3&4\end{pmatrix}+\begin{pmatrix}i&2\\3&4\end{pmatrix})",
+        r"\Tr(\begin{pmatrix}i&2\\3&4\end{pmatrix}+\begin{pmatrix}i&2\\3&4\end{pmatrix})",
         Trace(_MatAdd(Matrix([[I, 2], [3, 4]]), Matrix([[I, 2], [3, 4]]))),
     ),
     (
