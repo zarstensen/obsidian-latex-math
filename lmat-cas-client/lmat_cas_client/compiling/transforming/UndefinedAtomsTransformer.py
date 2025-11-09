@@ -42,7 +42,6 @@ class UndefinedAtomsTransformer(Transformer):
     def formatted_symbol(
         self, formatter: Token, text: str | list[str], primes: str | None
     ) -> str:
-        print(f"FORMATTED_SYMBOL ARGS {formatter}: ", text, type(text), flush=True)
         formatter_text = str(formatter)
         primes = "" if primes is None else primes
 

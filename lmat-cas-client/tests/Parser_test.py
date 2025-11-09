@@ -591,7 +591,7 @@ class TestParse:
     derivative_test_cases = [
         (r"\dv{x} x", Derivative(S("x"), S("x"))),
         (r"\dv*{x} x", Derivative(S("x"), S("x"))),
-        (r"\dv*{x}{x}", Derivative(S("x"), S("x"))),
+        (r"\dv*{z}{z}", Derivative(S("z"), S("z"))),
         (r"\dv{x}{x}", Derivative(S("x"), S("x"))),
         (r"\dv[5]{x^7}{x}", Derivative(S("x") ** 7, (S("x"), 5))),
         (r"\dv[5]{x} x^7", Derivative(S("x") ** 7, (S("x"), 5))),
