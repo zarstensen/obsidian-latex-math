@@ -166,9 +166,23 @@ class BuiltInFunctionsTransformer(UndefinedAtomsTransformer):
         return diff(expr, *symbols)
 
     def derivative_func_first(
-        self, power: Expr, expr: Expr, symbols: Iterator[tuple[Expr, Expr]]
+        self, power: Optional[Expr], expr: Expr, symbols: Iterator[tuple[Expr, Expr]]
     ):
         return self.derivative_symbols_first(power, symbols, expr)
+
+    def derivative_phys_symbols_first(
+        self, power: Optional[Expr], symbol: Expr, expr: Expr
+    ):
+        return self.derivative_symbols_first(
+            power, [(symbol, power if power is not None else 1)], expr
+        )
+
+    def derivative_phys_func_first(
+        self, power: Optional[Expr], expr: Expr, symbol: Expr
+    ):
+        return self.derivative_symbols_first(
+            power, [(symbol, power if power is not None else 1)], expr
+        )
 
     def derivative_prime(self, expr: Expr, primes: Token):
         body, variables = self._expr_as_function(expr, range(0, 2))

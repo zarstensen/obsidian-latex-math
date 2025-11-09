@@ -72,13 +72,15 @@ class TestParse:
         assert result.get_all_expr() == (Eq(x, y), Lt(y, z))
 
     def test_matrix(self):
-        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix([
-            [1],
-            [2],
-        ])
-        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix([
-            [1, 2]
-        ])
+        assert self._parse_expr(r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}") == Matrix(
+            [
+                [1],
+                [2],
+            ]
+        )
+        assert self._parse_expr(r"\begin{bmatrix} 1 & 2 \end{bmatrix}") == Matrix(
+            [[1, 2]]
+        )
         assert self._parse_expr(
             r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}"
         ) == Matrix([[1, 2], [3, 4]])
@@ -128,8 +130,9 @@ class TestParse:
         assert self._parse_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert self._parse_expr(
-            r"""
+        assert (
+            self._parse_expr(
+                r"""
             \begin{bmatrix}
             10 \\
             20
@@ -139,27 +142,35 @@ class TestParse:
             40
             \end{bmatrix}
             """
-        ) == Matrix([[10], [20]]) * Matrix([[30, 40]])
+            )
+            == Matrix([[10], [20]]) * Matrix([[30, 40]])
+        )
 
-        assert self._parse_expr(
-            r"""
+        assert (
+            self._parse_expr(
+                r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             """
-        ) == a * Matrix([[30, 40]])
+            )
+            == a * Matrix([[30, 40]])
+        )
 
-        assert self._parse_expr(
-            r"""
+        assert (
+            self._parse_expr(
+                r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
             """
-        ) == a * Matrix([[30, 40]])
+            )
+            == a * Matrix([[30, 40]])
+        )
 
         # powers
         assert self._parse_expr(r"b a^2") == a**2 * b
@@ -576,3 +587,30 @@ class TestParse:
             self._parse_expr(r"\sum_{j = 0}^\infty {3 j} j ^2")
             == Sum(3 * j, (j, 0, oo)) * j**2
         )
+
+    derivative_test_cases = [
+        (r"\dv{x} x", Derivative(S("x"), S("x"))),
+        (r"\dv*{x} x", Derivative(S("x"), S("x"))),
+        (r"\dv*{x}{x}", Derivative(S("x"), S("x"))),
+        (r"\dv{x}{x}", Derivative(S("x"), S("x"))),
+        (r"\dv[5]{x^7}{x}", Derivative(S("x") ** 7, (S("x"), 5))),
+        (r"\dv[5]{x} x^7", Derivative(S("x") ** 7, (S("x"), 5))),
+        (r"\dv*[3]{x} x^7 + y", Derivative(S("x") ** 7, (S("x"), 3)) + S("y")),
+        (r"\dv*[3]{x} {x^7 + y}", Derivative(S("x") ** 7 + S("y"), (S("x"), 3))),
+        (r"\dv[3]{x^5 + y} {x}", Derivative(S("x") ** 5 + S("y"), (S("x"), 3))),
+        (r"\dv[2]{x^7}{x} y", Derivative(S("x") ** 7, (S("x"), 2)) * S("y")),
+    ]
+
+    partial_derivative_test_cases = list(
+        map(
+            lambda item: (item[0].replace(r"\dv", r"\pdv"), item[1]),
+            derivative_test_cases,
+        )
+    )
+
+    @pytest.mark.parametrize(
+        "latex,expected_expr",
+        derivative_test_cases + partial_derivative_test_cases,
+    )
+    def test_physics_derivative(self, latex, expected_expr):
+        assert self._parse_expr(latex) == simplify(expected_expr)
