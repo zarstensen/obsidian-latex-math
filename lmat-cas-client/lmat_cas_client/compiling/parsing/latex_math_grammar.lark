@@ -544,7 +544,9 @@ _FUNC_MATRIX_DETERMINANT: "\\det"
 _FUNC_MATRIX_TRACE: CMD_OPERATOR _WS? _L_BRACE _WS? "trace" _WS? _R_BRACE | /\\tr(ace)?/
 _FUNC_MATRIX_ADJUGATE: CMD_OPERATOR _WS? _L_BRACE _WS? "adjugate" _WS? _R_BRACE
 _FUNC_MATRIX_RREF: CMD_OPERATOR _WS? _L_BRACE _WS? "rref" _WS? _R_BRACE
-_FUNC_VEC_UNIT: "\\vectorunit" | /\\vu\*?/
+// this needs to have priority, so \vectorunit is not parsed as the symbol \vec{torunit}
+_FUNC_VEC_UNIT.1:  /\\v(ectorunit|u)\*?/
+
 // linear alg functions.
 
 _FUNC_GRADIENT.1: "\\nabla" | /\\grad(ient)?/
