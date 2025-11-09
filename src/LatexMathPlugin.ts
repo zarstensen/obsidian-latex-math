@@ -42,6 +42,7 @@ export default class LatexMathPlugin extends Plugin {
         }
 
         // require physics package
+		// TODO: this should definetly not be here, but the plugin-refactor branch moves everything around anyways, so this may aswell be fixed there.
 
         const require_physics = "\\require{physics}";
 
