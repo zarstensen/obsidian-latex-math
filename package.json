@@ -1,6 +1,6 @@
 {
 	"name": "latex-math",
-	"version": "python-socks-fix-test-release",
+	"version": "1.3.0",
 	"description": "Evaluate, solve and do much more with LaTeX blocks using Sympy.",
 	"main": "main.js",
 	"type": "module",
