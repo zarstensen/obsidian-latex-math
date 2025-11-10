@@ -1,12 +1,12 @@
 import { expect, test } from "vitest";
 import { normLatexStr, response_verifier, server } from "../setup";
-import { LmatEnvironment } from "/cas/LmatEnvironment";
-import { SymbolSetArgsPayload, SymbolSetMessage, SymbolSetResponse } from "/cas/messages/SymbolSetsMessage";
+import { LmatEnvironment } from "../../models/cas/LmatEnvironment";
+import { SymbolSetArgsPayload, SymbolSetMessage, SymbolSetResponse } from "../../models/cas/messages/SymbolSetsMessage";
 
 test('Test SymbolSets Message (with assumptions)', async () => {
     const env = new LmatEnvironment({
-        x: [ "real" ],
-        n: [ "integer" ],
+        x: ["real"],
+        n: ["integer"],
     });
 
     const response = response_verifier.verifyResponse<SymbolSetResponse>(await server.send(
@@ -14,7 +14,7 @@ test('Test SymbolSets Message (with assumptions)', async () => {
     ).response);
 
     const latex = normLatexStr(response.symbol_sets);
-    
+
     // Should include x and n followed by the relevant set symbol
 
     expect(latex).toMatch(/x(?:(?!\\\\).)*R/);

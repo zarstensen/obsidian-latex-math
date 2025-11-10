@@ -1,7 +1,7 @@
 import { afterEach, assert, beforeEach } from "vitest";
-import { SourceCodeSpawner } from "/cas/LmatCasClientSpawner";
-import { CasServer } from "/cas/LmatCasServer";
-import { SuccessResponseVerifier } from "/cas/ResponseVerifier";
+import { SourceCodeSpawner } from "../services/CasClientSpawner";
+import { CasServer } from "../services/CasServer";
+import { SuccessResponseVerifier } from "../services/ResponseVerifier";
 
 export let server: CasServer;
 export const response_verifier: SuccessResponseVerifier = new SuccessResponseVerifier();
@@ -9,7 +9,7 @@ let server_err: string | undefined;
 
 response_verifier.onVerifyFailure((command, response, expected_statuses) => {
     assert.fail(`Expected one of ${expected_statuses.toString()} got ${response.status}`);
-}) ;
+});
 
 export function normLatexStr(latex_str: string): string {
     return latex_str.replace(/(\\,|\s)+/g, ' ').replace(/(\\left|\\right)/g, '');

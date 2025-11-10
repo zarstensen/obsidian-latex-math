@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { normLatexStr, response_verifier, server } from "../setup";
-import { LmatEnvironment } from "/cas/LmatEnvironment";
-import { TruthTableArgsPayload, TruthTableFormat, TruthTableMessage, TruthTableResponse } from "/cas/messages/TruthTableMessage";
+import { LmatEnvironment } from "../../models/cas/LmatEnvironment";
+import { TruthTableArgsPayload, TruthTableFormat, TruthTableMessage, TruthTableResponse } from "../../models/cas/messages/TruthTableMessage";
 
 test('Test TruthTable Message (markdown)', async () => {
     const response = response_verifier.verifyResponse<TruthTableResponse>(await server.send(

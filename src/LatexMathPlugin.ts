@@ -1,22 +1,25 @@
 import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
 import path from 'path';
-import { EvaluateCommand } from 'commands/EvaluateCommand';
-import { LatexMathCommand } from 'commands/LatexMathCommand';
-import { SolveCommand } from 'commands/SolveCommand';
-import { ConvertSympyCommand } from 'commands/ConvertSympyCommand';
-import { TruthTableCommand } from 'commands/TruthTableCommand';
-import { UnitConvertCommand } from 'commands/UnitConvertCommand';
-import { HandlerInterrupter } from 'HandlerInterrupter';
-import { CasClientExtractor } from 'cas/LmatCasClientExtractor';
-import { ExecutableSpawner, SourceCodeSpawner } from 'cas/LmatCasClientSpawner';
-import { CasServer, ClientResponse, UnixTimestampMillis } from 'cas/LmatCasServer';
-import { LmatCodeBlockRenderer } from 'LmatCodeBlockRenderer';
-import { LmatSettingsTab } from 'LmatSettingsTab';
-import { EvaluateStatusBar } from 'LmatStatusBar';
-import { ConfirmModal } from 'modals/ConfirmModal';
-import { SuccessResponseVerifier } from 'cas/ResponseVerifier';
-import { EvaluateMode } from 'cas/messages/EvaluateMessage';
-import { TruthTableFormat } from 'cas/messages/TruthTableMessage';
+import { EvaluateCommand } from '/controllers/commands/EvaluateCommand';
+import { LatexMathCommand } from '/controllers/commands/LatexMathCommand';
+import { SolveCommand } from '/controllers/commands/SolveCommand';
+import { ConvertSympyCommand } from '/controllers/commands/ConvertSympyCommand';
+import { TruthTableCommand } from '/controllers/commands/TruthTableCommand';
+import { UnitConvertCommand } from '/controllers/commands/UnitConvertCommand';
+import { HandlerInterrupter } from '/services/HandlerInterrupter';
+import { CasClientExtractor } from './services/CasClientExtractor';
+import { ExecutableSpawner, SourceCodeSpawner } from './services/CasClientSpawner';
+import { CasServer, ClientResponse, UnixTimestampMillis } from './services/CasServer';
+import { LmatCodeBlockRenderer } from './controllers/LmatCodeBlockRenderer';
+import { LmatSettingsTab } from '/views/LmatSettingsTab';
+import { EvaluateStatusBar } from '/views/LmatStatusBar';
+import { ConfirmModal } from '/views/modals/ConfirmModal';
+import { SuccessResponseVerifier } from './services/ResponseVerifier';
+import { EvaluateMode } from '/models/cas/messages/EvaluateMessage';
+import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
+import { CasCommandRequester } from './services/CasCommandRequester';
+import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
+import { mathjaxLoadLatexPackages } from './utils/MathJaxPackageLoader';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -26,33 +29,15 @@ const DEFAULT_SETTINGS: LatexMathPluginSettings = {
     dev_mode: false
 };
 
-declare global {
-    const MathJax: any;
-}
-
 export default class LatexMathPlugin extends Plugin {
     settings: LatexMathPluginSettings;
 
     async onload() {
-        console.log(`Loading Latex Math (v${this.manifest.version})`);
+        console.log(`Loading LaTeX Math (v${this.manifest.version})`);
 
         if (!this.manifest.dir) {
-            new Notice("Latex Math could not determine its plugin directory, aborting load.");
+            new Notice("LaTeX Math could not determine its plugin directory, aborting load.");
             return;
-        }
-
-        // require physics package
-		// TODO: this should definetly not be here, but the plugin-refactor branch moves everything around anyways, so this may aswell be fixed there.
-
-        const require_physics = "\\require{physics}";
-
-        if (MathJax.tex2chtml == undefined) {
-            MathJax.startup.ready = () => {
-                MathJax.startup.defaultReady();
-                MathJax.tex2chtml(require_physics);
-            };
-        } else {
-            MathJax.tex2chtml(require_physics);
         }
 
         await this.loadSettings();
@@ -68,7 +53,10 @@ export default class LatexMathPlugin extends Plugin {
 
 
         // add code block renderer
-        const lmat_code_block_renderer = new LmatCodeBlockRenderer(this.cas_server, this.spawn_cas_client_promise, response_verifier);
+        const lmat_code_block_renderer = new LmatCodeBlockRenderer(
+            new CasCommandRequester(this.cas_server, this.spawn_cas_client_promise, response_verifier, SymbolSetMessage)
+        );
+
         this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
 
         // add commands
@@ -84,6 +72,9 @@ export default class LatexMathPlugin extends Plugin {
             [new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)'],
             [new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)'],
         ]));
+
+        // import latex packages
+        mathjaxLoadLatexPackages(["physics"]);
     }
 
     // sets up the given map of commands as obsidian commands.

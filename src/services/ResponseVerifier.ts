@@ -1,4 +1,4 @@
-import { SuccessResponse } from "./LmatCasServer";
+import { SuccessResponse } from "./CasServer";
 
 // SuccessResponseVerifier is responsible for verifying a SuccessResponse instance, as well as providing an interface for 
 // providing error handlers for verify failures.
@@ -7,7 +7,7 @@ export class SuccessResponseVerifier {
     // default expected type is 'result'.
     // if verification is failed, an error is thrown, and the VerifyFailure event is triggered.
     public verifyResponse<T>(response: SuccessResponse, expected_types: Set<string> = new Set(['result'])): T {
-        if(!expected_types.has(response.payload.type)) {
+        if (!expected_types.has(response.payload.type)) {
             this.triggerVerifyFailure(response, expected_types);
             throw new Error(`Invalid response type: ${response.payload.type}\nExpected one of the following: ${[...expected_types]}`);
         }

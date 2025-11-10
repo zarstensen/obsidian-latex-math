@@ -1,10 +1,10 @@
 import { App, Editor, EditorPosition, MarkdownView, Notice } from "obsidian";
-import { CasServer } from "cas/LmatCasServer";
+import { CasServer } from "/services/CasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "EquationExtractor";
-import { LmatEnvironment } from "cas/LmatEnvironment";
-import { formatLatex } from "FormatLatex";
-import { EvaluateArgsPayload, EvaluateMessage, EvaluateMode, EvaluateResponse } from "cas/messages/EvaluateMessage";
+import { EquationExtractor } from "/utils/EquationExtractor";
+import { LmatEnvironment } from "/models/cas/LmatEnvironment";
+import { formatLatex } from "/utils/LatexFormatter";
+import { EvaluateArgsPayload, EvaluateMessage, EvaluateMode, EvaluateResponse } from "/models/cas/messages/EvaluateMessage";
 
 export type Expression = { from: number, to: number, contents: string, is_multiline: boolean };
 
@@ -15,9 +15,9 @@ export class EvaluateCommand extends LatexMathCommand {
         super(...base_args);
         this.id = `${evaluate_mode}-latex-expression`;
     }
-    
+
     public async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
-                
+
         const expression = this.getExpression(editor);
 
         if (expression === null) {
@@ -38,9 +38,9 @@ export class EvaluateCommand extends LatexMathCommand {
 
     protected getExpression(editor: Editor): Expression | null {
         let expression: Expression | null
-                        = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
+            = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
 
-        if(editor.getSelection().length > 0) {
+        if (editor.getSelection().length > 0) {
             expression = {
                 from: editor.posToOffset(editor.getCursor('from')),
                 to: editor.posToOffset(editor.getCursor('to')),
@@ -58,7 +58,7 @@ export class EvaluateCommand extends LatexMathCommand {
         let insert_content = ` ${response.metadata.separator} ` + await formatLatex(response.evaluated_expression);
 
         // remove any newlines from the formatted latex if the math block does not support newlines.
-        if(!expression.is_multiline) {
+        if (!expression.is_multiline) {
             insert_content = insert_content.replaceAll('\n', ' ');
         }
 

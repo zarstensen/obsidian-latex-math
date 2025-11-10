@@ -1,20 +1,18 @@
 import { finishRenderMath, MarkdownPostProcessorContext, renderMath } from "obsidian";
-import { LmatEnvironment } from "./cas/LmatEnvironment";
-import { CasServer } from "./cas/LmatCasServer";
-import { SuccessResponseVerifier } from "./cas/ResponseVerifier";
-import { SymbolSetArgsPayload, SymbolSetMessage, SymbolSetResponse } from "./cas/messages/SymbolSetsMessage";
+import { LmatEnvironment } from "models/cas/LmatEnvironment";
+import { SymbolSetArgsPayload, SymbolSetMessage, SymbolSetResponse } from "models/cas/messages/SymbolSetsMessage";
+import { CasCommandRequester } from "services/CasCommandRequester";
 
 // LmatCodeBlockRenderer provides a render handler for the latex math codeblock type.
 export class LmatCodeBlockRenderer {
-    
-    constructor(protected cas_server: CasServer, protected spawn_cas_client_promise: Promise<void>, public response_verifier: SuccessResponseVerifier) { }
+
+    constructor(protected symbol_set_requester: CasCommandRequester<SymbolSetMessage, SymbolSetArgsPayload, SymbolSetResponse>) { }
 
     public getHandler(): (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void> | void {
         return this.renderLmatCodeBlock.bind(this);
     }
 
     private async renderLmatCodeBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> {
-        await this.spawn_cas_client_promise;
 
         // Add the standard code block background div,
         // to ensure a consistent look with other code blocks.
@@ -27,12 +25,9 @@ export class LmatCodeBlockRenderer {
         el.appendChild(div);
 
         // retreive to be rendered latex from python.
-        // TODO: make compatible with threaded stuff. also generally just clean this main file up please...
-        const response = await this.cas_server.send(new SymbolSetMessage(
-            new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, [ ]))
-        )).response;
-
-        const result = this.response_verifier.verifyResponse<SymbolSetResponse>(response);
+        const result = await this.symbol_set_requester.sendRequest(
+            new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, []))
+        );
 
         // render the latex.
         div.appendChild(renderMath(result.symbol_sets, true));

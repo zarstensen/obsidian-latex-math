@@ -1,4 +1,4 @@
-import { GenericPayload, StartCommandMessage } from "/cas/LmatCasServer";
+import { GenericPayload, StartCommandMessage } from "../../../../services/CasServer";
 
 export class TestHangArgsPayload implements GenericPayload {
     public constructor(

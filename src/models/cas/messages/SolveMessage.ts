@@ -1,4 +1,4 @@
-import { GenericPayload, StartCommandMessage } from "../LmatCasServer";
+import { GenericPayload, StartCommandMessage } from "../../../services/CasServer";
 import { LmatEnvironment } from "../LmatEnvironment";
 
 export type LatexMathSymbol = { sympy_symbol: string, latex_symbol: string };
@@ -24,7 +24,7 @@ export interface SolveResponse {
 
 
 export class SolveInfoArgsPayload implements GenericPayload {
-        public constructor(
+    public constructor(
         public expression: string,
         public environment: LmatEnvironment
     ) { }

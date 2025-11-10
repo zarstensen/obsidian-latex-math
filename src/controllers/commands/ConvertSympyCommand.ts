@@ -1,9 +1,9 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { CasServer } from "cas/LmatCasServer";
+import { CasServer } from "/services/CasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "EquationExtractor";
-import { LmatEnvironment } from "cas/LmatEnvironment";
-import { ConvertSympyArgsPayload, ConvertSympyMessage, ConvertSympyResponse } from "cas/messages/ConvertSympyMessage";
+import { EquationExtractor } from "/utils/EquationExtractor";
+import { LmatEnvironment } from "/models/cas/LmatEnvironment";
+import { ConvertSympyArgsPayload, ConvertSympyMessage, ConvertSympyResponse } from "/models/cas/messages/ConvertSympyMessage";
 
 
 export class ConvertSympyCommand extends LatexMathCommand {
@@ -15,17 +15,17 @@ export class ConvertSympyCommand extends LatexMathCommand {
 
     async functionCallback(cas_server: CasServer, app: App, editor: Editor, view: MarkdownView): Promise<void> {
         let equation: { from: number, to: number, block_to: number, contents: string } | null = null;
-        
+
         // Extract equation to evaluate
-        if(editor.getSelection().length <= 0) {
+        if (editor.getSelection().length <= 0) {
             equation = EquationExtractor.extractEquation(editor.posToOffset(editor.getCursor()), editor);
         } else {
             equation = {
-              from: editor.posToOffset(editor.getCursor('from')),
-              to: editor.posToOffset(editor.getCursor('to')),
-              block_to: editor.posToOffset(editor.getCursor('to')),
-              contents: editor.getSelection()  
-            } ;
+                from: editor.posToOffset(editor.getCursor('from')),
+                to: editor.posToOffset(editor.getCursor('to')),
+                block_to: editor.posToOffset(editor.getCursor('to')),
+                contents: editor.getSelection()
+            };
         }
 
         if (equation === null) {
@@ -46,5 +46,5 @@ export class ConvertSympyCommand extends LatexMathCommand {
         editor.replaceRange(sympy_code_block, editor.offsetToPos(equation.block_to));
         editor.setCursor(editor.offsetToPos(equation.to + sympy_code_block.length));
     }
-    
+
 }
