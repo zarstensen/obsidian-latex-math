@@ -1,5 +1,5 @@
-import { CasServer, InterruptHandlerMessage } from "../models/cas/LmatCasServer";
-import { SuccessResponseVerifier } from "/models/cas/ResponseVerifier";
+import { CasServer, InterruptHandlerMessage } from "./CasServer";
+import { SuccessResponseVerifier } from "./ResponseVerifier";
 
 // Class responsible for interrupting all hanging handlers of a given CasServer,
 // verifying the interrupt message response with the given SuccessResponseVerifier.

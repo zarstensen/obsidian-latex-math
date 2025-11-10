@@ -1,6 +1,6 @@
 import { App, Editor, MarkdownView } from "obsidian";
-import { SuccessResponseVerifier } from "../../models/cas/ResponseVerifier";
-import { CasServer } from "/models/cas/LmatCasServer";
+import { SuccessResponseVerifier } from "../../services/ResponseVerifier";
+import { CasServer } from "../../services/CasServer";
 
 // Abstract class for a latex math command
 // The id will be used to set the resulting obsidian command id.

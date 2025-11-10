@@ -1,4 +1,4 @@
-import { GenericPayload, StartCommandMessage } from "../LmatCasServer";
+import { GenericPayload, StartCommandMessage } from "../../../services/CasServer";
 import { LmatEnvironment } from "../LmatEnvironment";
 
 export class SymbolSetArgsPayload implements GenericPayload {
@@ -11,7 +11,7 @@ export class SymbolSetArgsPayload implements GenericPayload {
 export class SymbolSetMessage extends StartCommandMessage {
     public constructor(args: SymbolSetArgsPayload) {
         super({ command_type: 'symbolsets', start_args: args });
-        
+
     }
 }
 

@@ -1,4 +1,4 @@
-import { GenericPayload, StartCommandMessage } from "../LmatCasServer";
+import { GenericPayload, StartCommandMessage } from "../../../services/CasServer";
 import { LmatEnvironment } from "../LmatEnvironment";
 
 // Enum of all possible truth table formats returned by the cas client

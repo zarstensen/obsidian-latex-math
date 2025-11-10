@@ -1,7 +1,7 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { CasServer } from "/models/cas/LmatCasServer";
+import { CasServer } from "../../services/CasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "/services/EquationExtractor";
+import { EquationExtractor } from "../../utils/EquationExtractor";
 import { LmatEnvironment } from "/models/cas/LmatEnvironment";
 import { ConvertSympyArgsPayload, ConvertSympyMessage, ConvertSympyResponse } from "/models/cas/messages/ConvertSympyMessage";
 

@@ -1,7 +1,7 @@
 import { afterEach, assert, beforeEach } from "vitest";
-import { SourceCodeSpawner } from "../models/cas/LmatCasClientSpawner";
-import { CasServer } from "../models/cas/LmatCasServer";
-import { SuccessResponseVerifier } from "../models/cas/ResponseVerifier";
+import { SourceCodeSpawner } from "../services/CasClientSpawner";
+import { CasServer } from "../services/CasServer";
+import { SuccessResponseVerifier } from "../services/ResponseVerifier";
 
 export let server: CasServer;
 export const response_verifier: SuccessResponseVerifier = new SuccessResponseVerifier();

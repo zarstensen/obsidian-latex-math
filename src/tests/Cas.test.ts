@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { response_verifier, server } from './setup';
-import { SendResult } from '../models/cas/LmatCasServer';
+import { SendResult } from '../services/CasServer';
 import { TestHangArgsPayload, TestHangMessage } from '../models/cas/messages/test_messages/TestHangMessage';
 import { HandlerInterrupter } from '../services/HandlerInterrupter';
 

@@ -1,5 +1,5 @@
-import { CasServer, StartCommandMessage } from "/models/cas/LmatCasServer";
-import { SuccessResponseVerifier } from "/models/cas/ResponseVerifier";
+import { CasServer, StartCommandMessage } from "./CasServer";
+import { SuccessResponseVerifier } from "./ResponseVerifier";
 
 export class CasCommandRequester<TMsg extends StartCommandMessage, TArgs, TResponse> {
     constructor(
