@@ -1,7 +1,7 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { EquationExtractor } from "../../utils/EquationExtractor";
-import { formatLatex } from "../../views/utils/LatexFormatter";
-import { CasServer } from "../../services/CasServer";
+import { EquationExtractor } from "/utils/EquationExtractor";
+import { formatLatex } from "/utils/LatexFormatter";
+import { CasServer } from "/services/CasServer";
 import { LmatEnvironment } from "/models/cas/LmatEnvironment";
 import { SolveModeModal } from "/views/modals/SolveModeModal";
 import { LatexMathCommand } from "./LatexMathCommand";

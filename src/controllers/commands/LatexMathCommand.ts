@@ -1,13 +1,14 @@
 import { App, Editor, MarkdownView } from "obsidian";
-import { SuccessResponseVerifier } from "../../services/ResponseVerifier";
-import { CasServer } from "../../services/CasServer";
+import { SuccessResponseVerifier } from "/services/ResponseVerifier";
+import { CasServer } from "/services/CasServer";
 
 // Abstract class for a latex math command
 // The id will be used to set the resulting obsidian command id.
 // function callback is called whenever the command has been invoked by the user.
 // use the response_verifire dependency to verify responses sent to the CasServer.
 export abstract class LatexMathCommand {
-    readonly id: string;
+    readonly id: string; // TODO: this should not be here, it should be in a separate controller
+    // in general, these command classes should be more split up.
 
     constructor(public response_verifier: SuccessResponseVerifier) { }
 

@@ -3,6 +3,7 @@ declare global {
     const MathJax: any;
 }
 
+// load the given set of latex packages via. injecting `\require` strings into MathJax.
 export function mathjaxLoadLatexPackages(latex_packages: string[]) {
     for (const latex_package in latex_packages) {
         const require_str = `\\require{${latex_package}}`;

@@ -1,9 +1,9 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
-import { CasServer } from "../../services/CasServer";
+import { CasServer } from "/services/CasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "../../utils/EquationExtractor";
+import { EquationExtractor } from "/utils/EquationExtractor";
 import { LmatEnvironment } from "/models/cas/LmatEnvironment";
-import { formatLatex } from "../../views/utils/LatexFormatter";
+import { formatLatex } from "/utils/LatexFormatter";
 import { TruthTableArgsPayload, TruthTableFormat, TruthTableMessage, TruthTableResponse } from "/models/cas/messages/TruthTableMessage";
 
 export class TruthTableCommand extends LatexMathCommand {

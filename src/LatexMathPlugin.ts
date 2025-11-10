@@ -10,7 +10,7 @@ import { HandlerInterrupter } from '/services/HandlerInterrupter';
 import { CasClientExtractor } from './services/CasClientExtractor';
 import { ExecutableSpawner, SourceCodeSpawner } from './services/CasClientSpawner';
 import { CasServer, ClientResponse, UnixTimestampMillis } from './services/CasServer';
-import { LmatCodeBlockRenderer } from '/views/LmatCodeBlockRenderer';
+import { LmatCodeBlockRenderer } from './controllers/LmatCodeBlockRenderer';
 import { LmatSettingsTab } from '/views/LmatSettingsTab';
 import { EvaluateStatusBar } from '/views/LmatStatusBar';
 import { ConfirmModal } from '/views/modals/ConfirmModal';

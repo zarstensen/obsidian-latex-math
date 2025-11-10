@@ -1,9 +1,9 @@
 import { App, Editor, EditorPosition, MarkdownView, Notice } from "obsidian";
-import { CasServer } from "../../services/CasServer";
+import { CasServer } from "/services/CasServer";
 import { LatexMathCommand } from "./LatexMathCommand";
-import { EquationExtractor } from "../../utils/EquationExtractor";
+import { EquationExtractor } from "/utils/EquationExtractor";
 import { LmatEnvironment } from "/models/cas/LmatEnvironment";
-import { formatLatex } from "../../views/utils/LatexFormatter";
+import { formatLatex } from "/utils/LatexFormatter";
 import { EvaluateArgsPayload, EvaluateMessage, EvaluateMode, EvaluateResponse } from "/models/cas/messages/EvaluateMessage";
 
 export type Expression = { from: number, to: number, contents: string, is_multiline: boolean };

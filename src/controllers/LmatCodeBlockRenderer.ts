@@ -1,7 +1,7 @@
 import { finishRenderMath, MarkdownPostProcessorContext, renderMath } from "obsidian";
-import { LmatEnvironment } from "../models/cas/LmatEnvironment";
-import { SymbolSetArgsPayload, SymbolSetMessage, SymbolSetResponse } from "../models/cas/messages/SymbolSetsMessage";
-import { CasCommandRequester } from "../services/CasCommandRequester";
+import { LmatEnvironment } from "models/cas/LmatEnvironment";
+import { SymbolSetArgsPayload, SymbolSetMessage, SymbolSetResponse } from "models/cas/messages/SymbolSetsMessage";
+import { CasCommandRequester } from "services/CasCommandRequester";
 
 // LmatCodeBlockRenderer provides a render handler for the latex math codeblock type.
 export class LmatCodeBlockRenderer {
@@ -25,7 +25,6 @@ export class LmatCodeBlockRenderer {
         el.appendChild(div);
 
         // retreive to be rendered latex from python.
-        // TODO: make compatible with threaded stuff. also generally just clean this main file up please...
         const result = await this.symbol_set_requester.sendRequest(
             new SymbolSetArgsPayload(LmatEnvironment.fromCodeBlock(source, []))
         );
