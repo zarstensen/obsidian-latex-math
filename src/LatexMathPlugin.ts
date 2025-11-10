@@ -19,6 +19,7 @@ import { EvaluateMode } from '/models/cas/messages/EvaluateMessage';
 import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
 import { CasCommandRequester } from './services/CasCommandRequester';
 import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
+import { mathjaxLoadLatexPackages } from './utils/MathJaxPackageLoader';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -28,33 +29,15 @@ const DEFAULT_SETTINGS: LatexMathPluginSettings = {
     dev_mode: false
 };
 
-declare global {
-    const MathJax: any;
-}
-
 export default class LatexMathPlugin extends Plugin {
     settings: LatexMathPluginSettings;
 
     async onload() {
-        console.log(`Loading Latex Math (v${this.manifest.version})`);
+        console.log(`Loading LaTeX Math (v${this.manifest.version})`);
 
         if (!this.manifest.dir) {
-            new Notice("Latex Math could not determine its plugin directory, aborting load.");
+            new Notice("LaTeX Math could not determine its plugin directory, aborting load.");
             return;
-        }
-
-        // require physics package
-		// TODO: this should definetly not be here, but the plugin-refactor branch moves everything around anyways, so this may aswell be fixed there.
-
-        const require_physics = "\\require{physics}";
-
-        if (MathJax.tex2chtml == undefined) {
-            MathJax.startup.ready = () => {
-                MathJax.startup.defaultReady();
-                MathJax.tex2chtml(require_physics);
-            };
-        } else {
-            MathJax.tex2chtml(require_physics);
         }
 
         await this.loadSettings();
@@ -89,6 +72,9 @@ export default class LatexMathPlugin extends Plugin {
             [new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)'],
             [new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)'],
         ]));
+
+        // import latex packages
+        mathjaxLoadLatexPackages(["physics"]);
     }
 
     // sets up the given map of commands as obsidian commands.
