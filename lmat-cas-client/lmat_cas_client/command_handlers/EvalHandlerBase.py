@@ -6,7 +6,7 @@ from sympy import *
 from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
-import lmat_cas_client.math_lib.UnitsUtils as UnitsUtils
+import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
 from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
@@ -94,10 +94,10 @@ class EvalHandlerBase(CommandHandler, ABC):
         unit_system = message.environment.unit_system
 
         if unit_system is not None:
-            sympy_expr = UnitsUtils.auto_convert(
+            sympy_expr = UnitUtils.auto_convert(
                 sympy_expr, UnitSystem.get_unit_system(unit_system)
             )
         else:
-            sympy_expr = UnitsUtils.auto_convert(sympy_expr)
+            sympy_expr = UnitUtils.auto_convert(sympy_expr)
 
         return EvaluateResult(sympy_expr, separator, expr_lines)

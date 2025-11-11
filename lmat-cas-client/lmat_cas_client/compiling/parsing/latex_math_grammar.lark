@@ -82,7 +82,7 @@ indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit |
 
 // this rule optionally tries to create a unit, instead of a symbol, if bunits are used.
 // otherwise this is the same as the symbol rule.
-unit: _L_BRACE _non_indexed_symbol _R_BRACE
+unit: _L_BRACE combine_symbol _R_BRACE
 
 // ======== Numbers ========
 
