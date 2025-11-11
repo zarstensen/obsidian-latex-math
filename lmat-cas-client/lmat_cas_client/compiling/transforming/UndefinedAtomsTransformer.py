@@ -6,7 +6,7 @@ from sympy.physics.units import Quantity
 
 from lmat_cas_client.compiling import DefinitionStore
 from lmat_cas_client.compiling.Definitions import SympyDefinition
-from lmat_cas_client.math_lib import UnitsUtils
+from lmat_cas_client.math_lib.units import UnitUtils
 
 
 @v_args(inline=True)
@@ -54,9 +54,10 @@ class UndefinedAtomsTransformer(Transformer):
     def brace_surrounded_text(self, tokens):
         return "".join(map(str, tokens))
 
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol:
-        unit = UnitsUtils.str_to_unit(str(unit_symbol))
-
+    def unit(self, unit_symbol: str) -> Quantity | Symbol:
+        print(unit_symbol, flush=True)
+        unit = UnitUtils.str_to_unit(unit_symbol)
+        print(unit, flush=True)
         if unit is not None:
             return unit
         else:

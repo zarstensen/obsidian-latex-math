@@ -1,5 +1,5 @@
 import pandas as pd
-from lmat_cas_client.math_lib.UnitsUtils import UNIT_ALIAS_MAP
+from lmat_cas_client.math_lib.units.UnitUtils import UNIT_ALIAS_MAP
 from sympy.physics.units.quantities import PhysicalConstant, Quantity
 
 unit_aliases: dict[Quantity, set[str]] = dict()

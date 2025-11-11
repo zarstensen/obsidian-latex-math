@@ -2,24 +2,33 @@ import sys
 from copy import copy
 
 import sympy.physics.units as u
-import sympy.physics.units.definitions.unit_definitions as unit_definitions
 from sympy import Add, Expr, MatrixBase, Rel
 from sympy.physics.units.quantities import PhysicalConstant, Quantity
 from sympy.physics.units.systems import SI
 from sympy.physics.units.unitsystem import UnitSystem
 
+from . import UnitDefinitions
+
 # Maps an alias to its corresponding Quantity object.
 UNIT_ALIAS_MAP = {}
 
 __defined_units_quantities = {
-    unit_name: getattr(unit_definitions, unit_name)
-    for unit_name in dir(unit_definitions)
-    if isinstance(getattr(unit_definitions, unit_name), Quantity)
+    unit_name: getattr(UnitDefinitions, unit_name)
+    for unit_name in dir(UnitDefinitions)
+    if isinstance(getattr(UnitDefinitions, unit_name), Quantity)
 }
+
+
+# preprocess unit / constant str, such that they make more sense when written in latex.
+def __preprocess_quantity_str(alias: str) -> str:
+    # remove underscores, as this looks wierd in latex, remove braces, as indexed units and constants are otherwise never matched,
+    # due to the way the parser handles indexed symbols.
+    return alias.replace("_", "").replace("{", "").replace("}", "")
 
 
 def __add_unit_aliases(str_units: list[tuple[str, Quantity]]):
     for alias, unit in str_units:
+        alias = __preprocess_quantity_str(alias)
         if alias not in UNIT_ALIAS_MAP:
             UNIT_ALIAS_MAP[alias] = unit
 
@@ -79,9 +88,15 @@ __add_unit_aliases([
 ])
 
 
-# attempt to automatically convert the units in the given sympy expression.
-# this convertion method prioritizes as few units as possible raised to the lowest power possible (or lowest root possible).
-def auto_convert(sympy_expr, unit_system: UnitSystem = SI):
+def auto_convert(sympy_expr: Expr, unit_system: UnitSystem = SI) -> Expr:
+    """
+    attempt to automatically convert the units in the given sympy expression.
+    this convertion method prioritizes as few units as possible raised to the lowest power possible (or lowest root possible).
+
+    Returns:
+        Expr: input expression, with its units converted.
+    """
+
     if isinstance(sympy_expr, MatrixBase):
         new_matrix_contents = []
 
@@ -124,6 +139,8 @@ def auto_convert(sympy_expr, unit_system: UnitSystem = SI):
 
 # find sympy unit which has the given str representation.
 def str_to_unit(unit_str: str) -> Quantity | None:
+    unit_str = __preprocess_quantity_str(unit_str)
+
     # attempt to replace the symbol with a corresponding unit.
     if unit_str not in UNIT_ALIAS_MAP:
         return None
@@ -133,9 +150,17 @@ def str_to_unit(unit_str: str) -> Quantity | None:
         return unit
 
 
-# get the 'complexity' of a unit.
-# complexity is defined as the sum of all units raised power (or 1/power if 0 < power < 1).
-def get_unit_complexity(expression):
+#
+#
+def get_unit_complexity(expression: Expr) -> int:
+    """
+    get the 'complexity' of a unit.
+    complexity is defined as the sum of all units raised power absolute value (or 1/power if 0 < power < 1).
+
+
+    Returns:
+        int: "complexity" of input unit.
+    """
     if not hasattr(expression, "as_powers_dict"):
         return None
 

@@ -267,6 +267,10 @@ The only case where this is not true, is for the base factor in exponentiations.
 
 The following sections provide an overview of all the supported units of the parser.
 
+Note: braces (`{}`) and underscores (`_`) are ignored when matching aliases, so as an example `{ full_{moon}_{cycles} }` would match the `fullmooncycles` unit alias.
+This behavior is currently a workaround for some units and constants not being usable otherwise, but this is a temporary fix and will be removed in a future version of **LaTeX Math**,
+so make sure to stay as close to the original aliases as possible to avoid future complications.
+
 ### Supported Units
 
 | Unit                     | Aliases                           |
@@ -370,25 +374,28 @@ The following sections provide an overview of all the supported units of the par
 
 ### Supported Physical Constants
 
-| Constant                    | Aliases                                               |
-| :-------------------------- | :---------------------------------------------------- |
-| acceleration_due_to_gravity | gee<br/>gees                                          |
-| atomic_mass_constant        | amu<br/>atomic_mass_unit<br/>dalton<br/>Da<br/>amus   |
-| avogadro_constant           | avogadro                                              |
-| avogadro_number             |                                                       |
-| boltzmann_constant          | boltzmann                                             |
-| coulomb_constant            | electric_force_constant<br/>k_e<br/>coulombs_constant |
-| electronvolt                | electronvolts<br/>eV                                  |
-| elementary_charge           | e                                                     |
-| faraday_constant            |                                                       |
-| gravitational_constant      | G                                                     |
-| hbar                        |                                                       |
-| josephson_constant          | K_j                                                   |
-| magnetic_constant           | vacuum_permeability<br/>u0                            |
-| molar_gas_constant          | R                                                     |
-| planck                      |                                                       |
-| speed_of_light              | c                                                     |
-| stefan_boltzmann_constant   | stefan                                                |
-| vacuum_impedance            | Z_0<br/>Z0                                            |
-| vacuum_permittivity         | e0<br/>electric_constant                              |
-| von_klitzing_constant       | R_k                                                   |
+| Constant                    | Aliases                                                  |
+| :-------------------------- | :------------------------------------------------------- |
+| acceleration_due_to_gravity | gee<br/>gees                                             |
+| atomic_mass_constant        | amu<br/>Da<br/>dalton<br/>atomic_mass_unit<br/>amus      |
+| avogadro_constant           | N_A<br/>avogadro                                         |
+| avogadro_number             | N_0                                                      |
+| boltzmann_constant          | boltzmann                                                |
+| coulomb_constant            | electric_force_constant<br/>coulombs_constant<br/>k_e    |
+| electron_mass               | m_e                                                      |
+| electronvolt                | eV                                                       |
+| elementary_charge           | e                                                        |
+| faraday_constant            |                                                          |
+| gravitational_constant      | G                                                        |
+| hbar                        |                                                          |
+| josephson_constant          | K_j                                                      |
+| magnetic_constant           | \mu_0<br/>vacuum_permeability<br/>mu_0<br/>u_0           |
+| molar_gas_constant          | R                                                        |
+| neutron_mass                | m_n                                                      |
+| planck                      |                                                          |
+| proton_mass                 | m_p                                                      |
+| speed_of_light              | c                                                        |
+| stefan_boltzmann_constant   | stefan                                                   |
+| vacuum_impedance            | Z_0                                                      |
+| electric_constant           | \epsilon_0<br/>vacuum_permittivity<br/>e_0<br/>epsilon_0 |
+| von_klitzing_constant       | R_k                                                      |
