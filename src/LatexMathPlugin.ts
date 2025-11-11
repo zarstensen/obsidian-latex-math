@@ -74,7 +74,7 @@ export default class LatexMathPlugin extends Plugin {
         ]));
 
         // import latex packages
-        mathjaxLoadLatexPackages(["physics"]);
+        await mathjaxLoadLatexPackages(["physics"]);
     }
 
     // sets up the given map of commands as obsidian commands.

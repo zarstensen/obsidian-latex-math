@@ -1,11 +1,15 @@
+import { loadMathJax } from "obsidian";
+
 declare global {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const MathJax: any;
 }
 
 // load the given set of latex packages via. injecting `\require` strings into MathJax.
-export function mathjaxLoadLatexPackages(latex_packages: string[]) {
-    for (const latex_package in latex_packages) {
+export async function mathjaxLoadLatexPackages(latex_packages: string[]) {
+    await loadMathJax();
+    
+    for (const latex_package of latex_packages) {
         const require_str = `\\require{${latex_package}}`;
 
         if (MathJax.tex2chtml == undefined) {
