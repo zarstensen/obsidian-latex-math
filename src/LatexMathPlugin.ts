@@ -20,7 +20,7 @@ import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
 import { CasCommandRequester } from './services/CasCommandRequester';
 import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
 import { mathjaxLoadLatexPackages } from './utils/MathJaxPackageLoader';
-import { definitions_view_plugin } from './view/definitionsViewPlugin';
+import { definitions_view_plugin } from './views/definitionsViewPlugin';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
