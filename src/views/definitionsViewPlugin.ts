@@ -18,11 +18,11 @@ export class DefinitionsViewPlugin implements PluginValue {
     update(update: ViewUpdate) {
         // console.log("VIEW UPDATED");
         if (update.geometryChanged) {
-            this.updateMathBLocks(update.view);
+            this.extractMathBlocks(update.view);
         }
     }
 
-    extractMathBlocks(view: EditorView, syntax_tree: Tree) {
+    extractMathBlocks(view: EditorView) {
         // TODO:
         // how to cache preview [x]
         // how to insert definition preview [x]
