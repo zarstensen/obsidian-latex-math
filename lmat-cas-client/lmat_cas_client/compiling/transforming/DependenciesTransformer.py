@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Iterator
+from typing import Iterator, override
 
 from lark import Discard, Token, v_args
 from sympy import Expr, Function, Symbol
@@ -49,16 +49,12 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
 
         return symbol_or_unit
 
+    @override
     def undefined_function(
-        self, delta_token: Token | None, func_name: Token, func_args: Iterator[Expr]
+        self, func_name: str, func_args: Iterator[Expr]
     ) -> Function | Expr:
         # include both the function itself, and all arguments to the function as dependencies.
         # e.g. f(x, 1, y) should produce [ 'f', 'x', 'y' ]
-
-        func_name = func_name.value[:-1]
-
-        if delta_token:
-            func_name = f"{delta_token.value} {func_name}"
 
         return [Function(func_name), *func_args]
 

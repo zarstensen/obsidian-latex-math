@@ -117,7 +117,7 @@ class TestSolve:
         result = handler.handle({
             "expression": r"""
             \begin{cases}
-            \int_a^b x d x = 25 \\
+            \int_a^b x \dd x = 25 \\
             \frac{c}{u} = t \\
             \end{cases}
             """,

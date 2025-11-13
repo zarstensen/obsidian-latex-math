@@ -1,3 +1,4 @@
+import pytest
 from lmat_cas_client.command_handlers.ApartHandler import *
 from lmat_cas_client.command_handlers.EvalfHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
@@ -69,6 +70,71 @@ class TestEvaluate:
         })
 
         assert result.sympy_expr == sqrt(20**2 + 30**2 + 40**2 + 50**2)
+
+    def test_matrix_cross_prod(self):
+        handler = EvalHandler(self.compiler)
+        result = handler.handle({
+            "expression": r"""
+                \begin{bmatrix}
+                3 \\
+                -3 \\
+                1
+                \end{bmatrix}
+                \cp
+                \begin{bmatrix}
+                4 \\
+                9 \\
+                2
+                \end{bmatrix}
+                """,
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([-15, -2, 39])
+
+        result = handler.handle({
+            "expression": r"""
+                \begin{bmatrix}
+                5 \\
+                -21 \\
+                42
+                \end{bmatrix}
+                \times
+                M
+                """,
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="M",
+                        value_expr=r"\begin{bmatrix}11 \\95 \\9999 i\end{bmatrix}",
+                    ),
+                ]
+            },
+        })
+
+        assert result.sympy_expr == Matrix([-3990 - 209979 * I, 462 - 49995 * I, 706])
+
+        result = handler.handle({
+            "expression": r"""
+                M
+                \cross
+                \begin{bmatrix}
+                3 \\
+                -3 \\
+                1
+                \end{bmatrix}
+                """,
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="M",
+                        value_expr=r"\begin{bmatrix}4 \\9 \\2\end{bmatrix}",
+                    ),
+                ]
+            },
+        })
+
+        assert result.sympy_expr == Matrix([15, 2, -39])
 
     def test_matrix_inner_prodcut(self):
         handler = EvalHandler(self.compiler)
@@ -236,6 +302,13 @@ class TestEvaluate:
         x, y = symbols("x y")
         assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
 
+        result = handler.handle({
+            "expression": r"\grad (x^2 y + y^2 x)",
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([y * (2 * x + y), x * (2 * y + x)])
+
     def test_evalf(self):
         handler = EvalfHandler(self.compiler)
         result = handler.handle({"expression": "5/2", "environment": {}})
@@ -364,6 +437,43 @@ class TestEvaluate:
             [0, cos(y), 0],
             [-sin(x) * sin(y), cos(x) * cos(y), 0],
         ])
+
+    def test_unitvec(self):
+        handler = EvalHandler(self.compiler)
+
+        result = handler.handle({
+            "expression": r"\vu \begin{bmatrix} 1 & 2 & 3 \end{bmatrix}",
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([1, 2, 3]).T.normalized()
+
+        result = handler.handle({
+            "expression": r"\vu* \begin{bmatrix} 4 \\ 5 \\ 6 \end{bmatrix}",
+            "environment": {},
+        })
+
+        assert result.sympy_expr == Matrix([4, 5, 6]).normalized()
+
+        result = handler.handle({
+            "expression": r"\vectorunit* v",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(
+                        name_expr="v",
+                        value_expr=r"\begin{bmatrix} 2 \\ 2 \end{bmatrix}",
+                    )
+                ]
+            },
+        })
+
+        assert result.sympy_expr == Matrix([2, 2]).normalized()
+
+        with pytest.raises(Exception):
+            result = handler.handle({
+                "expression": r"\vu \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}",
+                "environment": {},
+            })
 
     def test_assumptions(self):
         handler = EvalHandler(self.compiler)
@@ -509,8 +619,6 @@ class TestEvaluate:
 
         assert result.sympy_expr == 1 + x + y + x**2 / 2
 
-    # TODO: add gradient test (it is already implicitly tested in test_jacobi so not high priority)
-
     def test_standard_def_override(self):
         handler = EvalHandler(self.compiler)
 
@@ -528,6 +636,18 @@ class TestEvaluate:
         })
 
         assert result.sympy_expr == -2 + x**2
+
+        result = handler.handle({
+            "expression": r"e + \pi",
+            "environment": {
+                "definitions": [
+                    EnvDefinition(name_expr="e", value_expr=""),
+                    EnvDefinition(name_expr=r"\pi", value_expr=""),
+                ]
+            },
+        })
+
+        assert result.sympy_expr == S("e") + Symbol(r"\pi")
 
     def test_regression_168(self):
         handler = EvalHandler(self.compiler)

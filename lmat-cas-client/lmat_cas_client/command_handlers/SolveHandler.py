@@ -10,8 +10,8 @@ from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
-from lmat_cas_client.math_lib import UnitsUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
+from lmat_cas_client.math_lib.units import UnitUtils
 
 from .CommandHandler import *
 
@@ -127,14 +127,14 @@ class SolveHandler(CommandHandler):
             if unit_system is not None:
                 solution_set = FiniteSet(
                     *(
-                        UnitsUtils.auto_convert(simplify(sol.doit()), unit_system)
+                        UnitUtils.auto_convert(simplify(sol.doit()), unit_system)
                         for sol in solution_set.args
                     )
                 )
             else:
                 solution_set = FiniteSet(
                     *(
-                        UnitsUtils.auto_convert(simplify(sol.doit()))
+                        UnitUtils.auto_convert(simplify(sol.doit()))
                         for sol in solution_set.args
                     )
                 )

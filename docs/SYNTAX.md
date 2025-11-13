@@ -8,6 +8,7 @@ While this document provides a good overview of the parser, you can also consult
 <!-- omit in toc -->
 ## Table of Contents
 
+- [Extra LaTeX Packages](#extra-latex-packages)
 - [Expression Structure](#expression-structure)
   - [Expression](#expression)
   - [Logical Proposition](#logical-proposition)
@@ -16,12 +17,29 @@ While this document provides a good overview of the parser, you can also consult
 - [Symbols](#symbols)
 - [Matrices](#matrices)
   - [Delimiters in Matrix Environments](#delimiters-in-matrix-environments)
-- [Mathematical Functions](#mathematical-functions)
+- [Mathematical Functions and Operations](#mathematical-functions-and-operations)
 - [Mathematical Constants](#mathematical-constants)
 - [Logical Operators](#logical-operators)
 - [Units and Physical Constants](#units-and-physical-constants)
   - [Supported Units](#supported-units)
   - [Supported Physical Constants](#supported-physical-constants)
+
+## Extra LaTeX Packages
+
+**LaTeX Math** includes the following LaTeX, to provide a smoother user experience, and avoid some potential ambiguity issues in the latex parser.
+
+Note that only a subset of the syntax the packages provide is supported by the **LaTeX Math** parser. This is highlighted as a bullet point list below each package.
+
+[**physics**](https://ctan.org/pkg/physics?lang=en):
+
+- [`\vectorbold` and `\vectorarrow`](https://mirrors.dotsrc.org/ctan/macros/latex/contrib/physics/physics.pdf#subsection.2.2) as symbol formatters.
+- [`\vectorunit`](https://mirrors.dotsrc.org/ctan/macros/latex/contrib/physics/physics.pdf#subsection.2.2) for computing the unit vector of a supplied vector.
+- [`\dotproduct`](https://mirrors.dotsrc.org/ctan/macros/latex/contrib/physics/physics.pdf#subsection.2.2) as an alternative multiplication operator.
+- [`\crossproduct`](https://mirrors.dotsrc.org/ctan/macros/latex/contrib/physics/physics.pdf#subsection.2.2) for computing the cross product of 2 3d vectors.
+- [`\gradient`](https://mirrors.dotsrc.org/ctan/macros/latex/contrib/physics/physics.pdf#subsection.2.2) as an alternative to `\nabla`.
+- [`\trace`](https://mirrors.ibiblio.org/CTAN/macros/latex/contrib/physics/physics.pdf#subsection.2.3) for computing the trace of a matrix.
+- [`\differential`](https://mirrors.ibiblio.org/CTAN/macros/latex/contrib/physics/physics.pdf#subsection.2.5) to denote differential symbol `d` in derivatives and integrals.
+- [`\derivative` and `\partialderivative`](https://mirrors.ibiblio.org/CTAN/macros/latex/contrib/physics/physics.pdf#subsection.2.5) for shorthand versions of partial derivatives.
 
 ## Expression Structure
 
@@ -133,81 +151,82 @@ In case multiple matrices are computed into a single matrix, the left most matri
 > \begin{bmatrix} ... \end{bmatrix} + \begin{pmatrix} ... \end{pmatrix} = \begin{bmatrix} ... \end{bmatrix}
 > ```
 
-## Mathematical Functions
+## Mathematical Functions and Operations
 
-Below is a table of all supported mathematical functions supported by the parser, this list may grow overtime as this project develops.
+Below is a table of all supported mathematical functions and operations supported by the parser, this list may grow overtime as this project develops.
 Note that a *mathematical function* also encompasses concepts not normally thought of as a function, e.g. `\frac` is considered part of this table whilst it may not intuitively be thought of as a function.
 
-| Function                   | LaTeX String                                                                           |
-| :------------------------- | :------------------------------------------------------------------------------------- |
-| sine                       | `\sin`                                                                                 |
-| cosine                     | `\cos`                                                                                 |
-| tangent                    | `\tan`                                                                                 |
-| secant                     | `\sec`                                                                                 |
-| cosecant                   | `\csc`                                                                                 |
-| cotangent                  | `\cot`                                                                                 |
-| arcus sine                 | `\arcsin`                                                                              |
-| arcus cosine               | `\arccos`                                                                              |
-| arcus tan                  | `\arctan`                                                                              |
-| arcus secant               | `\arcsec`                                                                              |
-| arcus cosecant             | `\arccsc`                                                                              |
-| arcus cotangent            | `\arccot`                                                                              |
-| hyperbolic sine            | `\sinh`                                                                                |
-| hyperbolic cosine          | `\cosh`                                                                                |
-| hyperbolic tangent         | `\tanh`                                                                                |
-| hyperbolic secant          | `\mathrm{sech}` / `\operatorname{sech}`                                                |
-| hyperbolic cosecant        | `\mathrm{csch}` / `\operatorname{csch}`                                                |
-| hyperbolic cotangent       | `\coth`                                                                                |
-| hyperbolic arcus sine      | `\mathrm{arsinh}` / `\operatorname{arsinh}`                                            |
-| hyperbolic arcus cosine    | `\mathrm{arcosh}` / `\operatorname{arcosh}`                                            |
-| hyperbolic arcus tangent   | `\mathrm{artanh}` / `\operatorname{artanh}`                                            |
-| hyperbolic arcus secant    | `\mathrm{arsech}` / `\operatorname{arsech}`                                            |
-| hyperbolic arcus cosecant  | `\mathrm{arcsch}` / `\operatorname{arcsch}`                                            |
-| hyperbolic arcus cotangent | `\mathrm{arcoth}` / `\operatorname{arcoth}`                                            |
-| log                        | `\log[base]?` / `\ln` / `\lg`                                                          |
-| real part                  | `\Re .` / `\mathrm{Re} .`                                                              |
-| imaginary part             | `\Im .` / `\mathrm{Im} .`                                                              |
-| argument                   | `\arg .`                                                                               |
-| sign                       | `\mathrm{sgn} .` / `\operatorname{sgn} .`                                              |
-| exponential                | `\exp .`                                                                               |
-| factorial                  | `. !`                                                                                  |
-| percent                    | `. \%`                                                                                 |
-| permille                   | `. \textperthousand`                                                                   |
-| limit                      | `\lim_{ . \to . }`                                                                     |
-| sum                        | `\sum_{ . = . }^.`                                                                     |
-| product                    | `\prod_{ . = . }^.`                                                                    |
-| minimum                    | `\min(. , . , ..., . )`                                                                |
-| maximum                    | `\max( . , . , ..., . )`                                                               |
-| standard inner product     | `\langle . \| . \rangle`                                                               |
-| numeric value              | `\| . \|`                                                                              |
-| norm                       | `\Vert . \Vert` / `\|\| . \|\|`                                                        |
-| floor                      | `\lfloor . \rfloor`                                                                    |
-| ceiling                    | `\lceil . \rceil`                                                                      |
-| root                       | `\sqrt[index]?`                                                                        |
-| conjugate                  | `\bar` / `\overline`                                                                   |
-| fraction                   | `\frac{ . }{ . }`                                                                      |
-| binomial                   | `\binom{ . }{ . }`                                                                     |
-| partial derivative         | `\frac{ d ... }{ d . d . ... }` / `\frac{ \partial }{ \partial . \partial . ... } ...` |
-| prime derivative           | `(...)'''...`                                                                          |
-| integral                   | `\int ... d .` / `\int_a^b ... d .`                                                    |
-| determinant                | `\det .` / `\begin{vmatrix} ... \end{vmatrix}`                                         |
-| trace                      | `\mathrm{trace} .` / `\operatorname{trace} .`                                          |
-| adjugate                   | `\mathrm{adjugate} .` / `\operatorname{adjugate} .`                                    |
-| reduced row echelon form   | `\mathrm{rref} .` / `\operatorname{rref} .`                                            |
-| gradient                   | `\nabla ...`                                                                           |
-| hessian                    | `\mathbf{H} ...`                                                                       |
-| Jacobian                   | `\mathbf{J} ...`                                                                       |
-| permutations               | `P( ... ,  ... )`                                                                      |
-| combinations               | `C( ... ,  ... )`                                                                      |
-| derangements               | `D( ... )` / `{ ! ... }`                                                               |
-| greatest common divisor    | `\gcd( ... ,  ... )`                                                                   |
-| least common multiple      | `\mathrm{lcm}( ... ,  ... )` / `\operatorname{lcm}( ... ,  ... )`                      |
-| modulo                     | `. \mod .`                                                                             |
-| Taylor polynomial          | `T_{[degree], [index], [expansion point (0 by default)]}(...)`                         |
+| Function                                                                                                                       | LaTeX String                                                                                 |
+| :----------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------- |
+| sine                                                                                                                           | `\sin`                                                                                       |
+| cosine                                                                                                                         | `\cos`                                                                                       |
+| tangent                                                                                                                        | `\tan`                                                                                       |
+| secant                                                                                                                         | `\sec`                                                                                       |
+| cosecant                                                                                                                       | `\csc`                                                                                       |
+| cotangent                                                                                                                      | `\cot`                                                                                       |
+| arcus sine                                                                                                                     | `\arcsin`                                                                                    |
+| arcus cosine                                                                                                                   | `\arccos`                                                                                    |
+| arcus tan                                                                                                                      | `\arctan`                                                                                    |
+| arcus secant                                                                                                                   | `\arcsec`                                                                                    |
+| arcus cosecant                                                                                                                 | `\arccsc`                                                                                    |
+| arcus cotangent                                                                                                                | `\arccot`                                                                                    |
+| hyperbolic sine                                                                                                                | `\sinh`                                                                                      |
+| hyperbolic cosine                                                                                                              | `\cosh`                                                                                      |
+| hyperbolic tangent                                                                                                             | `\tanh`                                                                                      |
+| hyperbolic secant                                                                                                              | `\sech`                                                                                      |
+| hyperbolic cosecant                                                                                                            | `\csch`                                                                                      |
+| hyperbolic cotangent                                                                                                           | `\coth`                                                                                      |
+| hyperbolic arcus sine                                                                                                          | `\mathrm{arsinh}` / `\operatorname{arsinh}`                                                  |
+| hyperbolic arcus cosine                                                                                                        | `\mathrm{arcosh}` / `\operatorname{arcosh}`                                                  |
+| hyperbolic arcus tangent                                                                                                       | `\mathrm{artanh}` / `\operatorname{artanh}`                                                  |
+| hyperbolic arcus secant                                                                                                        | `\mathrm{arsech}` / `\operatorname{arsech}`                                                  |
+| hyperbolic arcus cosecant                                                                                                      | `\mathrm{arcsch}` / `\operatorname{arcsch}`                                                  |
+| hyperbolic arcus cotangent                                                                                                     | `\mathrm{arcoth}` / `\operatorname{arcoth}`                                                  |
+| log                                                                                                                            | `\log[base]?` / `\ln` / `\lg`                                                                |
+| real part                                                                                                                      | `\Re .` / `\mathrm{Re} .`                                                                    |
+| imaginary part                                                                                                                 | `\Im .` / `\mathrm{Im} .`                                                                    |
+| argument                                                                                                                       | `\arg .`                                                                                     |
+| sign                                                                                                                           | `\mathrm{sgn} .` / `\operatorname{sgn} .`                                                    |
+| exponential                                                                                                                    | `\exp .`                                                                                     |
+| factorial                                                                                                                      | `. !`                                                                                        |
+| percent                                                                                                                        | `. \%`                                                                                       |
+| permille                                                                                                                       | `. \textperthousand`                                                                         |
+| limit                                                                                                                          | `\lim_{ . \to . }`                                                                           |
+| sum                                                                                                                            | `\sum_{ . = . }^.`                                                                           |
+| product                                                                                                                        | `\prod_{ . = . }^.`                                                                          |
+| minimum                                                                                                                        | `\min(. , . , ..., . )`                                                                      |
+| maximum                                                                                                                        | `\max( . , . , ..., . )`                                                                     |
+| standard inner product                                                                                                         | `\langle . \| . \rangle`                                                                     |
+| vector cross product                                                                                                           | ` . \times . `                                                                               |
+| numeric value                                                                                                                  | `\| . \|`                                                                                    |
+| norm of matrix                                                                                                                 | `\Vert . \Vert` / `\|\| . \|\|`                                                              |
+| unit vector from vector                                                                                                        | `\vectorunit .` / `\vu .`                                                                    |
+| floor                                                                                                                          | `\lfloor . \rfloor`                                                                          |
+| ceiling                                                                                                                        | `\lceil . \rceil`                                                                            |
+| root                                                                                                                           | `\sqrt[index]?`                                                                              |
+| conjugate                                                                                                                      | `\bar` / `\overline`                                                                         |
+| fraction                                                                                                                       | `\frac{ . }{ . }`                                                                            |
+| binomial                                                                                                                       | `\binom{ . }{ . }`                                                                           |
+| partial derivative                                                                                                             | `\frac{ \dd ... }{ \dd . \dd . ... }` / `\frac{ \partial }{ \partial . \partial . ... } ...` |
+| partial derivative [physics package](https://mirrors.ibiblio.org/CTAN/macros/latex/contrib/physics/physics.pdf#subsection.2.5) | `\dv[-order-]{-symbol-} -expression-` / `\dv[-order-]{-expression-}{-symbol-} ...`           |
+| prime derivative                                                                                                               | `(...)'''...`                                                                                |
+| integral                                                                                                                       | `\int ... \dd .` / `\int_a^b ... \dd .`                                                      |
+| determinant                                                                                                                    | `\det .` / `\begin{vmatrix} ... \end{vmatrix}`                                               |
+| trace                                                                                                                          | `\mathrm{trace} .` / `\operatorname{trace} .`                                                |
+| adjugate                                                                                                                       | `\mathrm{adjugate} .` / `\operatorname{adjugate} .`                                          |
+| reduced row echelon form                                                                                                       | `\mathrm{rref} .` / `\operatorname{rref} .`                                                  |
+| gradient                                                                                                                       | `\nabla ...` / `\grad ...`                                                                   |
+| hessian                                                                                                                        | `\mathbf{H} ...`                                                                             |
+| Jacobian                                                                                                                       | `\mathbf{J} ...`                                                                             |
+| permutations                                                                                                                   | `P( ... ,  ... )`                                                                            |
+| combinations                                                                                                                   | `C( ... ,  ... )`                                                                            |
+| derangements                                                                                                                   | `D( ... )` / `{ ! ... }`                                                                     |
+| greatest common divisor                                                                                                        | `\gcd( ... ,  ... )`                                                                         |
+| least common multiple                                                                                                          | `\mathrm{lcm}( ... ,  ... )` / `\operatorname{lcm}( ... ,  ... )`                            |
+| modulo                                                                                                                         | `. \mod .`                                                                                   |
+| Taylor polynomial                                                                                                              | `T_{-degree-, -index-, -expansion point (0 by default)-}(...)`                               |
 
 ## Mathematical Constants
-
-The number of mathematical constants has intentionally been kept sparse, as their latex strings cannot be used as symbols. Furthermore, a symbol definition can always be made to emulate a constant in the current notebook.
 
 Below is a table of all the mathematical constants the parser supports.
 
@@ -247,6 +266,10 @@ Units and physical constants are specified by surrounding them with braces `{}`.
 The only case where this is not true, is for the base factor in exponentiations. For example here `{km}^2` is seen as kilometers squared.
 
 The following sections provide an overview of all the supported units of the parser.
+
+Note: braces (`{}`) and underscores (`_`) are ignored when matching aliases, so as an example `{ full_{moon}_{cycles} }` would match the `fullmooncycles` unit alias.
+This behavior is currently a workaround for some units and constants not being usable otherwise, but this is a temporary fix and will be removed in a future version of **LaTeX Math**,
+so make sure to stay as close to the original aliases as possible to avoid future complications.
 
 ### Supported Units
 
@@ -351,25 +374,28 @@ The following sections provide an overview of all the supported units of the par
 
 ### Supported Physical Constants
 
-| Constant                    | Aliases                                               |
-| :-------------------------- | :---------------------------------------------------- |
-| acceleration_due_to_gravity | gee<br/>gees                                          |
-| atomic_mass_constant        | amu<br/>atomic_mass_unit<br/>dalton<br/>Da<br/>amus   |
-| avogadro_constant           | avogadro                                              |
-| avogadro_number             |                                                       |
-| boltzmann_constant          | boltzmann                                             |
-| coulomb_constant            | electric_force_constant<br/>k_e<br/>coulombs_constant |
-| electronvolt                | electronvolts<br/>eV                                  |
-| elementary_charge           | e                                                     |
-| faraday_constant            |                                                       |
-| gravitational_constant      | G                                                     |
-| hbar                        |                                                       |
-| josephson_constant          | K_j                                                   |
-| magnetic_constant           | vacuum_permeability<br/>u0                            |
-| molar_gas_constant          | R                                                     |
-| planck                      |                                                       |
-| speed_of_light              | c                                                     |
-| stefan_boltzmann_constant   | stefan                                                |
-| vacuum_impedance            | Z_0<br/>Z0                                            |
-| vacuum_permittivity         | e0<br/>electric_constant                              |
-| von_klitzing_constant       | R_k                                                   |
+| Constant                    | Aliases                                                  |
+| :-------------------------- | :------------------------------------------------------- |
+| acceleration_due_to_gravity | gee<br/>gees                                             |
+| atomic_mass_constant        | amu<br/>Da<br/>dalton<br/>atomic_mass_unit<br/>amus      |
+| avogadro_constant           | N_A<br/>avogadro                                         |
+| avogadro_number             | N_0                                                      |
+| boltzmann_constant          | boltzmann                                                |
+| coulomb_constant            | electric_force_constant<br/>coulombs_constant<br/>k_e    |
+| electron_mass               | m_e                                                      |
+| electronvolt                | eV                                                       |
+| elementary_charge           | e                                                        |
+| faraday_constant            |                                                          |
+| gravitational_constant      | G                                                        |
+| hbar                        |                                                          |
+| josephson_constant          | K_j                                                      |
+| magnetic_constant           | \mu_0<br/>vacuum_permeability<br/>mu_0<br/>u_0           |
+| molar_gas_constant          | R                                                        |
+| neutron_mass                | m_n                                                      |
+| planck                      |                                                          |
+| proton_mass                 | m_p                                                      |
+| speed_of_light              | c                                                        |
+| stefan_boltzmann_constant   | stefan                                                   |
+| vacuum_impedance            | Z_0                                                      |
+| electric_constant           | \epsilon_0<br/>vacuum_permittivity<br/>e_0<br/>epsilon_0 |
+| von_klitzing_constant       | R_k                                                      |

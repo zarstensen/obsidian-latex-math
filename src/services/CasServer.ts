@@ -2,7 +2,7 @@ import { ChildProcessWithoutNullStreams } from 'child_process';
 import { assert } from 'console';
 import getPort from 'get-port';
 import { RawData, WebSocket, WebSocketServer } from 'ws';
-import { CasClientSpawner } from './LmatCasClientSpawner';
+import { CasClientSpawner } from './CasClientSpawner';
 
 enum MessageType {
     EXIT = "exit",
@@ -21,7 +21,7 @@ type ServerPayload = GenericPayload;
 
 // ======== server messages ========
 
-interface ServerMessage {
+export interface ServerMessage {
     readonly type: MessageType;
     readonly payload: ServerPayload;
 }
@@ -76,7 +76,7 @@ export interface SuccessResponse extends ClientResponse {
 export interface ErrorResponse extends ClientResponse {
     status: MessageStatus.ERROR;
     uid: string;
-    payload: { 
+    payload: {
         usr_message: string;
         dev_message: string;
     };
@@ -111,23 +111,23 @@ export class CasServer {
     public async initializeAsync(cas_client_spawner: CasClientSpawner): Promise<void> {
         // Start by setting up the web socket server, so we can get a port to give to the python program.
         const server_port = await getPort();
-        
-        this.ws_cas_server = new WebSocketServer({ 
+
+        this.ws_cas_server = new WebSocketServer({
             port: server_port
         });
-        
+
         // now start the client process
         this.client_process = await cas_client_spawner.spawnClient(server_port);
-        
+
         // setup output to be logged in the developer console
         this.client_process.stdout.on('data', (data) => {
             console.log('lmat-cas-client stdout:\n' + data.toString());
         });
-        
+
         this.client_process.stderr.on('data', (data) => {
             console.error('lmat-cas-client stderr:\n' + data.toString());
         });
-        
+
         this.client_process.on('close', (code) => {
             console.log(`child process exited with code ${code}`);
             // TODO: do something here
@@ -167,7 +167,7 @@ export class CasServer {
         this.ws_cas_client.close();
         this.ws_cas_server.close();
 
-        if(shutdown_error !== undefined) {
+        if (shutdown_error !== undefined) {
             throw shutdown_error;
         }
     }
@@ -186,13 +186,13 @@ export class CasServer {
 
         const message_uid = crypto.randomUUID();
 
-         const server_message: ServerMessageUID = {
+        const server_message: ServerMessageUID = {
             type: message.type,
             uid: message_uid,
             payload: message.payload
         };
 
-        const result_promise =  new Promise<SuccessResponse>((resolve, reject) => {
+        const result_promise = new Promise<SuccessResponse>((resolve, reject) => {
             this.message_promises[server_message.uid] = {
                 sent_time: this.getTime(),
                 resolve: resolve,
@@ -201,7 +201,7 @@ export class CasServer {
         });
 
         this.ws_cas_client.send(JSON.stringify(server_message));
-        
+
         return { uid: message_uid, response: result_promise };
     }
 
@@ -220,13 +220,13 @@ export class CasServer {
         return this.getHangingMessages({ min_hang_time: 0 });
     }
 
-    
+
     private client_process: ChildProcessWithoutNullStreams;
     private ws_cas_client: WebSocket;
     private ws_cas_server: WebSocketServer;
     private error_callback: (usr_error: string, dev_error: string) => void;
 
-    private message_promises: Record<string, MessagePromiseEntry> = { };
+    private message_promises: Record<string, MessagePromiseEntry> = {};
 
 
     private resolveConnection(resolve: (value: WebSocket) => void, _reject: (reason: string) => void) {
@@ -253,15 +253,15 @@ export class CasServer {
         }
 
         // now handle the response depending on its status.
-        
+
         switch (response.status) {
             case MessageStatus.ERROR: {
                 const err = response as ErrorResponse;
 
-                if(this.error_callback) {
+                if (this.error_callback) {
                     this.error_callback(err.payload.usr_message, err.payload.dev_message);
                 }
-                
+
                 message_promise?.reject(new Error(err.payload.dev_message));
                 break;
             }

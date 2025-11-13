@@ -6,7 +6,7 @@ from sympy.physics.units import Quantity
 
 from lmat_cas_client.compiling import DefinitionStore
 from lmat_cas_client.compiling.Definitions import SympyDefinition
-from lmat_cas_client.math_lib import UnitsUtils
+from lmat_cas_client.math_lib.units import UnitUtils
 
 
 @v_args(inline=True)
@@ -20,9 +20,6 @@ class UndefinedAtomsTransformer(Transformer):
 
     def combine_symbol(self, *symbol_strings: str) -> str:
         return "".join(map(str, symbol_strings))
-
-    def delta_symbol(self, delta_token: Token, symbol_string: str) -> str:
-        return self.combine_symbol(delta_token.value, " ", symbol_string)
 
     def substitute_symbol(self, symbol_name: str) -> Symbol | Expr:
         definition = self.__definition_store.get_definition(
@@ -42,9 +39,14 @@ class UndefinedAtomsTransformer(Transformer):
 
         return f"{symbol}_{indexed_text}{primes}"
 
-    def formatted_symbol(self, formatter: Token, text: str, primes: str | None) -> str:
+    def formatted_symbol(
+        self, formatter: Token, text: str | list[str], primes: str | None
+    ) -> str:
         formatter_text = str(formatter)
         primes = "" if primes is None else primes
+
+        if not text.startswith("{") and not text.endswith("}"):
+            text = f"{{{str(text)}}}"
 
         return f"{formatter_text}{text}{primes}"
 
@@ -52,22 +54,18 @@ class UndefinedAtomsTransformer(Transformer):
     def brace_surrounded_text(self, tokens):
         return "".join(map(str, tokens))
 
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol:
-        unit = UnitsUtils.str_to_unit(str(unit_symbol))
-
+    def unit(self, unit_symbol: str) -> Quantity | Symbol:
+        print(unit_symbol, flush=True)
+        unit = UnitUtils.str_to_unit(unit_symbol)
+        print(unit, flush=True)
         if unit is not None:
             return unit
         else:
             return self.substitute_symbol(unit_symbol)
 
     def undefined_function(
-        self, delta_token: Token | None, func_name: Token, func_args: Iterator[Expr]
+        self, func_name: str, func_args: Iterator[Expr] = None
     ) -> Function | Expr:
-        func_name = func_name.value[:-1]  # remove the suffixed parenthesees
-
-        if delta_token:
-            func_name = f"{delta_token.value} {func_name}"
-
         func_definition = self.__definition_store.get_definition(func_name)
 
         if func_definition is not None and isinstance(

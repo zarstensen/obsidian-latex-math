@@ -15,7 +15,7 @@ relation: (_align* _rel_op)? expression (_rel_op expression)* (_rel_op _align*)?
 expression: (_align* (ADD|SUB))? term ((ADD|SUB) term)*
 
 // a term is a series of products of factors separated by product operators.
-term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_DIV) (_align* (ADD|SUB))? implicit_multiplication)*
+term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_CROSS|OPERATOR_DIV) (_align* (ADD|SUB))? implicit_multiplication)*
 
 // factors with no operator between them are implicitly multiplied together.
 ?implicit_multiplication: _align* factor (_align* factor)* _align*
@@ -65,15 +65,14 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
 // ======== Symbols ========
 
 substitute_symbol: combine_symbol
-combine_symbol: delta_symbol | indexed_symbol | _non_indexed_symbol
-delta_symbol: DELTA_UPPER combine_symbol
+combine_symbol: indexed_symbol | _non_indexed_symbol
 
 !single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
 // this could for example be \mathit
-formatted_symbol: CMD_FORMAT BRACE_SURROUNDED_TEXT [PRIMES]
+formatted_symbol: _cmd_format (BRACE_SURROUNDED_TEXT | single_letter_symbol) [PRIMES]
 _non_indexed_symbol: single_letter_symbol | multi_letter_symbol | formatted_symbol
 
 indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | BRACE_SURROUNDED_TEXT) [PRIMES]
@@ -83,7 +82,7 @@ indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit |
 
 // this rule optionally tries to create a unit, instead of a symbol, if bunits are used.
 // otherwise this is the same as the symbol rule.
-unit: _L_BRACE _non_indexed_symbol _R_BRACE
+unit: _L_BRACE combine_symbol _R_BRACE
 
 // ======== Numbers ========
 
@@ -100,7 +99,8 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 
 // ======== Functions ========
 
-undefined_function: [DELTA_UPPER] UNDEFINED_FUNC_START list_of_expressions _R_PAREN
+undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PAREN
+
 
 // groups all functions whic cannot be used as an argument to other functions.
 // to pass this type of function, delimit them so they are matched by the _delimited_factor rule.
@@ -115,7 +115,7 @@ undefined_function: [DELTA_UPPER] UNDEFINED_FUNC_START list_of_expressions _R_PA
     | conjugate
     | frac
     | binom
-    | derivative
+    | _derivative
     | _postfix_function_arg
 
 ?named_function: undefined_function
@@ -131,7 +131,7 @@ undefined_function: [DELTA_UPPER] UNDEFINED_FUNC_START list_of_expressions _R_PA
     | _divisibility_functions
 
 // matches a special kind of argument, defined by the fact that fractions and binomials can be passed without surrounding them with braces.
-substitute_single_letter_symbol: single_letter_symbol -> substitute_symbol
+substitute_single_letter_symbol.1: single_letter_symbol -> substitute_symbol
 ?function_special_arg: braces_expression | parenthesees_expression | named_function | _delimited_function | frac | binom | substitute_single_letter_symbol | _digit
 
 
@@ -196,10 +196,11 @@ _lim_approach_symbol: _PROP_OP_LR_IMPLICATION
 limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _lim_approach_symbol basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
 // prioritize delimited expressions over terms, such that e.g. \sum_{j = 0}^5 (j) j is parsed as Sum(j, (j, 0, 5)) * j and not Sum(j ** 2, (j, 0, 5)).
-_series_delimited_arg.1: _delimitedfactor
+_delimited_arg.1: _delimitedfactor
+_delimited_arg_or_term: _delimited_arg | term
 
-_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg (_series_delimited_arg|term)
-_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE (_series_delimited_arg|term)
+_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg _delimited_arg_or_term
+_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _delimited_arg_or_term
 
 _series_function: sum | product
 
@@ -269,20 +270,25 @@ derivative_prime_func_arg: factor_func_postfix_arg PRIMES -> derivative_prime
 modulo: factor_func_arg _FUNC_MOD factor_func_arg
 
 // core functions
+// why is _MULTIARG_DELIMITER a thing?
 frac: _FUNC_FRAC _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 binom: _FUNC_BINOM _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 
 diff_symbol_exponent: substitute_symbol [_CARET function_special_arg]
-diff_symbol_arg_list: (_DIFFERENTIAL_SYMBOL diff_symbol_exponent)+
+diff_symbol_arg_list: ((_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) diff_symbol_exponent)+
 
-_DERIV_ARG_SEPARATOR.-1: _L_BRACE
-// need to have a post lex which recognises _FUNC_DERIVATIVE and then replaces any single letter symbol which matches _DIFFERENTIAL_SYMBOL with _DIFFERENTIAL_SYMBOL
-derivative: _FUNC_DERIVATIVE expression _R_BRACE _DERIV_ARG_SEPARATOR diff_symbol_arg_list _R_BRACE -> derivative_func_first
-    |   _FUNC_DERIVATIVE _R_BRACE _DERIV_ARG_SEPARATOR diff_symbol_arg_list _R_BRACE factor_func_arg -> derivative_symbols_first
+// _L_BRACE_R_BRACE_PAIR.1: _R_BRACE _WS? _L_BRACE
 
-integral: _FUNC_INTEGRAL [expression] _DIFFERENTIAL_SYMBOL substitute_symbol -> integral_no_bounds
-    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] _DIFFERENTIAL_SYMBOL substitute_symbol -> integral_lower_bound_first
-    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] _DIFFERENTIAL_SYMBOL substitute_symbol -> integral_upper_bound_first
+_derivative: derivative_func_first | derivative_symbols_first | derivative_phys_symbols_first | derivative_phys_func_first
+
+derivative_func_first: (_FUNC_DERIVATIVE [_L_BRACKET expression _R_BRACKET]|_FUNC_PARTIAL_DERIVATIVE [_CARET function_special_arg]) expression _R_BRACE _L_BRACE diff_symbol_arg_list _R_BRACE
+derivative_symbols_first: (_FUNC_DERIVATIVE [_L_BRACKET expression _R_BRACKET]|_FUNC_PARTIAL_DERIVATIVE [_CARET function_special_arg]) _R_BRACE _L_BRACE diff_symbol_arg_list _R_BRACE _delimited_arg_or_term
+derivative_phys_func_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE expression _R_BRACE _L_BRACE substitute_symbol _R_BRACE
+derivative_phys_symbols_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE substitute_symbol _R_BRACE _delimited_arg_or_term
+
+integral: _FUNC_INTEGRAL [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) substitute_symbol -> integral_no_bounds
+    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) substitute_symbol -> integral_lower_bound_first
+    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) substitute_symbol -> integral_upper_bound_first
 
 // ======== Matrices ========
 
@@ -299,12 +305,13 @@ det_matrix: CMD_BEGIN_VMATRIX matrix_body CMD_END_VMATRIX _MATRIX_ENV_END
 
 // ======== Matrices functions ========
 
-_matrix_functions: determinant | trace | adjugate | rref | gradient | hessian | jacobian | taylor
+_matrix_functions: determinant | trace | adjugate | rref | unitvec | gradient | hessian | jacobian | taylor
 
 determinant: _func_template{_FUNC_MATRIX_DETERMINANT}
 trace: _func_template{_FUNC_MATRIX_TRACE}
 adjugate: _func_template{_FUNC_MATRIX_ADJUGATE}
 rref: _func_template{_FUNC_MATRIX_RREF}
+unitvec: _func_template{_FUNC_VEC_UNIT}
 
 gradient: _func_template{_FUNC_GRADIENT}
 hessian: _func_template{_FUNC_HESSIAN}
@@ -408,7 +415,9 @@ DIV: "/" | "\\over"
 
 // basic common operators
 _CMD_TIMES: "\\times"
+_CMD_XPROD: /\\cross(product)?/ | "\\cp"
 _CMD_CDOT:  "\\cdot"
+_CMD_VDOT: "\\dotproduct" | "\\vdot"
 _CMD_DIV:   "\\div"
 _CMD_BAR: "\\bar"
 _CMD_OVERLINE: "\\overline"
@@ -434,6 +443,8 @@ _L_BAR: _BAR
 _L_DOUBLE_BAR: _DOUBLE_BAR
 %declare _R_DOUBLE_BAR
 
+_UNDEF_FUNC_START.1: /(?<! )(?<! \\left)\(/
+
 _L_DELIMITER: _DOT | _L_ANGLE | L_BRACE_LITERAL | _L_BRACKET | _L_CEIL | _L_FLOOR | _L_PAREN
 _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOOR | _R_PAREN
 
@@ -456,7 +467,7 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 // this recursive match does not work with (?0), as lark places this regex in a larger regex,
 // so the (?0) would refer to an incorrect capturing group, leading to unexpected matches.
 // NOTE: this does not currently support escaped braces, it just treats them as they were unescaped.
-BRACE_SURROUNDED_TEXT: /(?<brace_text>{(?:[^{}]+|(?&brace_text))*})/ 
+BRACE_SURROUNDED_TEXT: /({(?:[^{}]+|(?-1))*})/ 
 
 
 // limit, integral, sum, and product symbols
@@ -473,10 +484,10 @@ FUNC_LG:   "\\lg"
 _FUNC_MIN: "\\min"
 _FUNC_MAX: "\\max"
 _FUNC_CONJUGATE: _CMD_OVERLINE | _CMD_BAR
-_FUNC_RE: "\\Re" | CMD_OPERATOR _WS? _L_BRACE _WS? "Re" _WS? _R_BRACE
-_FUNC_IM: "\\Im" | CMD_OPERATOR _WS? _L_BRACE _WS? "Im" _WS? _R_BRACE
+_FUNC_RE.1: "\\Re" | "\\real" | CMD_OPERATOR _WS? _L_BRACE _WS? "Re" _WS? _R_BRACE
+_FUNC_IM.1: "\\Im" | "\\imaginary" | CMD_OPERATOR _WS? _L_BRACE _WS? "Im" _WS? _R_BRACE
 _FUNC_ARG: "\\arg"
-_FUNC_SGN: CMD_OPERATOR _WS? _L_BRACE _WS? "sgn" _WS? _R_BRACE
+_FUNC_SGN.1: CMD_OPERATOR _WS? _L_BRACE _WS? "sgn" _WS? _R_BRACE
 
 // multiarg functions
 
@@ -484,6 +495,9 @@ _FUNC_FRAC: /\\[dtcs]?frac/ | "\\nicefrac"
 _FUNC_BINOM: /\\[dt]?binom/
 
 _FUNC_DERIVATIVE: _FUNC_FRAC _WS? _L_BRACE _WS? _DIFFERENTIAL_SYMBOL
+_FUNC_PARTIAL_DERIVATIVE: _FUNC_FRAC _WS? _L_BRACE _WS? _PARTIAL_SYMBOL
+
+_FUNC_PHYS_DERIVATIVE: /\\(?:p(?:artial)?)?derivative/ | /\\p?dv\*?/
 
 _FUNC_OVERLINE: "\\overline"
 
@@ -499,16 +513,16 @@ FUNC_COT:  "\\cot"
 FUNC_ASIN: "\\arcsin"
 FUNC_ACOS: "\\arccos"
 FUNC_ATAN: "\\arctan"
-FUNC_ACSC: CMD_OPERATOR _WS? _L_BRACE _WS? "arccsc" _WS? _R_BRACE
-FUNC_ASEC: CMD_OPERATOR _WS? _L_BRACE _WS? "arcsec" _WS? _R_BRACE
-FUNC_ACOT: CMD_OPERATOR _WS? _L_BRACE _WS? "arccot" _WS? _R_BRACE
+FUNC_ACSC: "\\arccsc"
+FUNC_ASEC: "\\arcsec"
+FUNC_ACOT: "\\arccot"
 
 // hyperbolic trigonometric functions
 FUNC_SINH: "\\sinh"
 FUNC_COSH: "\\cosh"
 FUNC_TANH: "\\tanh"
-FUNC_CSCH: CMD_OPERATOR _WS? _L_BRACE _WS? "csch" _WS? _R_BRACE
-FUNC_SECH: CMD_OPERATOR _WS? _L_BRACE _WS? "sech" _WS? _R_BRACE
+FUNC_CSCH: "\\csch"
+FUNC_SECH: "\\sech"
 FUNC_COTH: "\\coth"
 FUNC_ASINH: CMD_OPERATOR _WS? _L_BRACE _WS? "arsinh" _WS? _R_BRACE
 FUNC_ACOSH: CMD_OPERATOR _WS? _L_BRACE _WS? "arcosh" _WS? _R_BRACE
@@ -524,15 +538,17 @@ _FUNC_LOWER_GAMMA.1: "\\gamma" _LR_FORMAT? _L_PAREN
 // matrix functions
 
 _FUNC_MATRIX_DETERMINANT: "\\det"
-_FUNC_MATRIX_TRACE: CMD_OPERATOR _WS? _L_BRACE _WS? "trace" _WS? _R_BRACE
+_FUNC_MATRIX_TRACE: /\\[Tt]r(ace)?/
 _FUNC_MATRIX_ADJUGATE: CMD_OPERATOR _WS? _L_BRACE _WS? "adjugate" _WS? _R_BRACE
 _FUNC_MATRIX_RREF: CMD_OPERATOR _WS? _L_BRACE _WS? "rref" _WS? _R_BRACE
+// this needs to have priority, so \vectorunit is not parsed as the symbol \vec{torunit}
+_FUNC_VEC_UNIT:  /\\v(ectorunit|u)\*?/
 
 // linear alg functions.
 
-_FUNC_GRADIENT: "\\nabla"
-_FUNC_HESSIAN: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "H" _WS? _R_BRACE
-_FUNC_JACOBIAN: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
+_FUNC_GRADIENT.1: "\\nabla" | /\\grad(ient)?/
+_FUNC_HESSIAN.1: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "H" _WS? _R_BRACE
+_FUNC_JACOBIAN.1: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
 
 // Match any "T" which has at least 1 comma in its index string and is followed by parenthesees.
 // The lookahead "(?=...)" ensures we do not match the index string itself,
@@ -563,7 +579,7 @@ _FUNC_LCM: CMD_OPERATOR _WS? _L_BRACE _WS? "lcm" _WS? _R_BRACE
 _FUNC_MOD: "\\mod"
 
 // TODO: use a bit more elaborate regex here, so more complex strings are allowed in the index.
-UNDEFINED_FUNC_START: (SINGLE_LETTER_SYMBOL|MULTI_LETTER_SYMBOL) (_WS? _UNDERSCORE _WS? _L_BRACE /\s*[^{}]+\s*/ _R_BRACE)? _LR_FORMAT? _L_PAREN
+// UNDEFINED_FUNC_START: (SINGLE_LETTER_SYMBOL|MULTI_LETTER_SYMBOL) (_WS? _UNDERSCORE _WS? _L_BRACE /\s*[^{}]+\s*/ _R_BRACE)? _LR_FORMAT? _L_PAREN
 
 // un-redefinable mathematical constants
 CONST_INFINITY: "\\infty"
@@ -571,17 +587,19 @@ CONST_INFINITY: "\\infty"
 // Text formatting
 
 CMD_MATH: /\\math\w+/
+CMD_VEC: /\\vec(?!torunit)(?!torarrow)(?!torbold)/ | /\\va\*?/ | "\\vectorarrow"
+CMD_VECBOLD: "\\vectorbold" |/\\vb\*?/
+CMD_HAT: "\\hat"
 CMD_BOLD_FORMAT: "\\pmb"
 
-CMD_FORMAT: CMD_MATH | CMD_BOLD_FORMAT
+_cmd_format: CMD_MATH | CMD_VEC | CMD_VECBOLD | CMD_HAT | CMD_BOLD_FORMAT | DELTA_UPPER
 CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
 
-// this regex is identical to BRACE_SURROUNDED_TEXT, except the capture group name is different to avoid a collision.
-_TEXT: CMD_TEXT _WS? /(?|(?<text_contents>{(?:[^{}]+|(?&text_contents))*}))/
+_TEXT: CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
 
 
 // mathrm is also included here so operatorname does not have to be used everywhere.
-CMD_OPERATOR: "\\operatorname" | "\\mathrm"
+CMD_OPERATOR.1: "\\operatorname" | "\\mathrm"
 CMD_MATRIX_FORMAT: "\\mathbf"
 
 _BANG: "!"
@@ -603,16 +621,14 @@ GT: ">"
 GTE: GT EQUAL | "\\geq" | "\\ge" | "\\geqslant"
 
 OPERATOR_DIV: _CMD_DIV | DIV
-OPERATOR_MUL: MUL | _CMD_TIMES | _CMD_CDOT
+OPERATOR_CROSS: _CMD_TIMES | _CMD_XPROD
+OPERATOR_MUL: MUL | _CMD_VDOT | _CMD_CDOT
 
 %import .greek_symbols.GREEK_SYMBOL
 %import .greek_symbols.DELTA_UPPER
 
-_PARTIAL_DIFFERENTIAL_SYMBOL: "\\partial"
-_UPRIGHT_DIFFERENTIAL_SYMBOL: "\\text{d}" | "\\mathrm{d}"
-// TODO: this priority should ideally not be here.
-_DIFFERENTIAL_SYMBOL.-1: "d" | _UPRIGHT_DIFFERENTIAL_SYMBOL | _PARTIAL_DIFFERENTIAL_SYMBOL
-
+_DIFFERENTIAL_SYMBOL: "\\differential" | "\\dd"
+_PARTIAL_SYMBOL: "\\partial"
 
 LATIN_SYMBOL: /[a-zA-Z]/
 LATIN_SYMBOL_WITH_PRIMTES: LATIN_SYMBOL PRIMES

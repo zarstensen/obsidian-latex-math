@@ -3,6 +3,7 @@ from lmat_cas_client.command_handlers.ConvertUnitsHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
 from lmat_cas_client.command_handlers.SolveHandler import *
 from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.math_lib.units.UnitUtils import auto_convert
 from sympy import *
 
 
@@ -120,3 +121,21 @@ class TestUnitConversion:
             * units.m**2
             / (units.kelvin * units.mol * units.second**2)
         ) < 1e-4 * units.kg * units.m**2 / (units.kelvin * units.mol * units.second**2)
+
+    def test_preprocessed_quantity_names(self):
+        handler = EvalHandler(self.compiler)
+        result = handler.handle({
+            "expression": r"{e_0} \cdot \frac{{\mu_0}}{{avogadro_{constant}}}",
+            "environment": {},
+        })
+        assert simplify(result.sympy_expr) == auto_convert(
+            units.e0 * units.u0 / units.avogadro_constant
+        )
+
+    def test_custom_quanteties(self):
+        handler = EvalHandler(self.compiler)
+        result = handler.handle({
+            "expression": r"{m_p} \cdot 5.97863739847862 \cdot 10^{26}",
+            "environment": {},
+        })
+        assert abs(simplify(result.sympy_expr) - 1 * units.kg) < 1e-13 * units.kg
