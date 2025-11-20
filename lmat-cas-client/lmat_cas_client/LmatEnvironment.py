@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from sympy import Symbol
 from sympy.core.function import AppliedUndef
 
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
 from lmat_cas_client.compiling.Definitions import (
     AssumptionDefinition,
     AstDefinition,
@@ -13,12 +13,12 @@ from lmat_cas_client.compiling.Definitions import (
 from lmat_cas_client.compiling.DefinitionStore import (
     DefinitionStore,
 )
-from lmat_cas_client.compiling.parsing.LatexParser import latex_parser
+from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
+from lmat_cas_client.compiling.transforming.CasExprTransformer import (
+    cas_expr_tansformer_runner,
+)
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     dependencies_transformer_runner,
-)
-from lmat_cas_client.compiling.transforming.SympyTransformer import (
-    sympy_transformer_runner,
 )
 from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 
@@ -53,12 +53,15 @@ class LmatEnvironment(BaseModel):
                 )
             )
 
-        latex_to_sympy_compiler = LatexToSympyCompiler()
+        latex_to_sympy_compiler = LatexToCasExprCompiler()
 
         for definition in environment.definitions:
             definition_id = latex_to_sympy_compiler.compile(
                 definition.name_expr, DefinitionStore()
             )
+            # its not going to be like this for long anyways, so no point in making it pretty.
+
+            definition_id = definition_id.get_expr(-1)
 
             match definition_id:
                 case Symbol() as def_symbol:
@@ -66,19 +69,19 @@ class LmatEnvironment(BaseModel):
                         definitions[def_symbol.name] = None
                     else:
                         definitions[def_symbol.name] = AstDefinition(
-                            expr_transformer=sympy_transformer_runner,
+                            expr_transformer=cas_expr_tansformer_runner,
                             dependencies_transformer=dependencies_transformer_runner,
-                            ast_definition=latex_parser.parse(definition.value_expr),
+                            ast_definition=cas_expr_parser.parse(definition.value_expr),
                         )
                 case AppliedUndef() as def_function:
                     if definition.value_expr == "":
                         definitions[def_function.name] = None
                     else:
                         definitions[def_function.name] = AstFunctionDefinition(
-                            expr_transformer=sympy_transformer_runner,
+                            expr_transformer=cas_expr_tansformer_runner,
                             dependencies_transformer=dependencies_transformer_runner,
                             func_name=def_function.name,
-                            ast_body=latex_parser.parse(definition.value_expr),
+                            ast_body=cas_expr_parser.parse(definition.value_expr),
                             variables=[arg.name for arg in def_function.args],
                         )
                 case _:

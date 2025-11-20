@@ -2,14 +2,14 @@ import lmat_cas_client.math_lib.units.UnitDefinitions as units
 from lmat_cas_client.command_handlers.ConvertUnitsHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
 from lmat_cas_client.command_handlers.SolveHandler import *
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
 from lmat_cas_client.math_lib.units.UnitUtils import auto_convert
 from sympy import *
 
 
 ## Tests the unit conversions.
 class TestUnitConversion:
-    compiler = LatexToSympyCompiler()
+    compiler = LatexToCasExprCompiler()
 
     def test_single_term_to_derived_unit(self):
         handler = EvalHandler(self.compiler)

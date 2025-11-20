@@ -1,3 +1,3 @@
-from .Compiler import LatexToSympyCompiler
+from .Compiler import LatexToCasExprCompiler
 
-__all__ = ["LatexToSympyCompiler"]
+__all__ = ["LatexToCasExprCompiler"]

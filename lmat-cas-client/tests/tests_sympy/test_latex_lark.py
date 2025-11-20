@@ -5,7 +5,7 @@
 # This is here to ensure feature parity(ish) with their latex parser.
 # some tests have been slightly modified or disabled, due to fundamental differences in the parsers functionality (multi letter symbols is an exmaple of this)
 
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
 from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 from sympy import (
     Add,
@@ -91,7 +91,11 @@ def _MatMul(a, b):
 
 
 def parse_latex_lark(latex_str):
-    return LatexToSympyCompiler().compile(latex_str, StandardDefinitionStore)
+    return (
+        LatexToCasExprCompiler()
+        .compile(latex_str, StandardDefinitionStore)
+        .get_expr(-1)
+    )
 
 
 # These LaTeX strings should parse to the corresponding SymPy expression

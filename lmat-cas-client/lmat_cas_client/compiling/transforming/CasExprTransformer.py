@@ -1,36 +1,75 @@
 import itertools
 from enum import Enum
-from typing import Iterator
+from typing import Iterator, NamedTuple, Self
 
 from lark import Token, v_args
+from lark.tree import Meta
 from sympy import *
-from sympy import Expr
+from sympy import Basic, Expr
 from sympy.core.numbers import Float, Integer
 from sympy.logic.boolalg import *
 
 from lmat_cas_client.compiling.DefinitionStore import (
     DefinitionStore,
 )
-from lmat_cas_client.compiling.transforming.ConstantsTransformer import (
-    ConstantsTransformer,
-)
-from lmat_cas_client.compiling.transforming.FunctionsTransformer import (
-    BuiltInFunctionsTransformer,
-)
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
     PropositionsTransformer,
 )
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
-from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
+from lmat_cas_client.compiling.transforming.transformers.ConstantsTransformer import (
+    ConstantsTransformer,
+)
+from lmat_cas_client.compiling.transforming.transformers.FunctionsTransformer import (
+    BuiltInFunctionsTransformer,
+)
+from lmat_cas_client.compiling.transforming.transformers.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
 from lmat_cas_client.math_lib import MatrixUtils
 
 from .LatexMatrix import LatexMatrix
-from .SystemOfExpr import SystemOfExpr
 
 
-class SympyTransformer(
+class CasExpr(NamedTuple):
+    """
+    The CasExpr class represents a series of sympy expressions and their original locations in some source text.
+    """
+
+    expressions: tuple[Basic, Meta]
+
+    @staticmethod
+    def from_cas_exprs(systems: Iterator[tuple[Basic, Meta] | Self]) -> Self:
+        expressions = []
+
+        for system in systems:
+            expressions.extend(system.expressions)
+
+        return CasExpr(expressions)
+
+    # retreive number of expressions in the system
+    def __len__(self):
+        return len(self.expressions)
+
+    # retreive the expression at the given index
+    def get_expr(self, expression_index: int):
+        (expr, _) = self.expressions[expression_index]
+        return expr
+
+    # retreive all expressions
+    def get_all_expr(self) -> Iterator[Basic]:
+        return map(self.get_expr, range(len(self)))
+
+    # retreive location information about the given expression
+    def get_location(self, expression_index: int) -> Meta:
+        (_, meta) = self.expressions[expression_index]
+        return meta
+
+    # retreive all location information.
+    def get_all_locations(self) -> Iterator[Meta]:
+        return map(self.get_location, range(len(self)))
+
+
+class CasExprTransformer(
     BuiltInFunctionsTransformer, ConstantsTransformer, PropositionsTransformer
 ):
     """
@@ -76,11 +115,11 @@ class SympyTransformer(
         return Integer(int(binary_number_str, 2))
 
     @v_args(inline=True)
-    def latex_math_string(self, expr: Expr) -> Expr:
-        return expr
+    def cas_expression(self, cas_expr: CasExpr) -> CasExpr:
+        return cas_expr
 
-    def system_of_relations(self, relations: list[Expr]) -> SystemOfExpr:
-        return SystemOfExpr([
+    def sor_env(self, relations: list[CasExpr | Delim]) -> CasExpr:
+        return CasExpr.from_cas_exprs([
             next(row)  # the row iterator should only contain 1 element
             for is_delim, row in itertools.groupby(
                 relations, lambda t: t == self.Delim.MatDelim
@@ -88,17 +127,13 @@ class SympyTransformer(
             if not is_delim
         ])
 
-    class system_of_relations_expr:
-        @staticmethod
-        def visit_wrapper(_f, _data, children, meta) -> tuple[Expr]:
-            # location data is needed for system_of_expressions handler.
-            return (children[0], meta)
+    def sor_and_chain(self, relations: list[CasExpr]) -> CasExpr:
+        return CasExpr.from_cas_exprs(relations)
 
     @v_args(meta=True)
-    def relation(self, meta, tokens: list[Expr | Token]) -> SystemOfExpr | Expr:
+    def relation(self, meta, tokens: list[Expr | Token]) -> CasExpr:
         if len(tokens) == 1:
-            return tokens[0]
-
+            return CasExpr([(tokens[0], meta)])
         # construct a list of relations which later will be used to construct
         # a chained relation object.
         # a = b = c should produce [a = b, b = c],
@@ -123,10 +158,7 @@ class SympyTransformer(
         if relation_type is not None:
             relations.append(self._create_relation(prev_expr, Dummy(), relation_type))
 
-        if len(relations) == 1:
-            return relations[0]
-        else:
-            return SystemOfExpr([(relation, meta) for relation in relations])
+        return CasExpr([(relation, meta) for relation in relations])
 
     def expression(self, tokens: list[Expr | Token]) -> Expr:
         # construct a sum between the given sympy expressions,
@@ -269,6 +301,8 @@ class SympyTransformer(
         )
 
 
-sympy_transformer_runner = TransformerRunner[[DefinitionStore], Expr](SympyTransformer)
+cas_expr_tansformer_runner = TransformerRunner[[DefinitionStore], CasExpr](
+    CasExprTransformer
+)
 
-__all__ = ["sympy_transformer_runner"]
+__all__ = ["cas_expr_tansformer_runner"]

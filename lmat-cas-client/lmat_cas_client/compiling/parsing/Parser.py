@@ -1,7 +1,15 @@
 from typing import Callable, Optional
 
 import regex
-from lark import Lark, LarkError, ParseTree, UnexpectedInput, UnexpectedToken
+from lark import (
+    Lark,
+    LarkError,
+    ParseTree,
+    Token,
+    Tree,
+    UnexpectedInput,
+    UnexpectedToken,
+)
 
 
 class PrettyParserError(LarkError):
@@ -80,7 +88,7 @@ class Parser:
         if lark_error.pos_in_stream is None:
             lark_error.pos_in_stream = len(parse_text) - 1
 
-        pretty_err = f"{lark_error.get_context(parse_text, Parser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
+        pretty_err = f"\n{lark_error.get_context(parse_text, Parser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
 
         if (
             isinstance(lark_error, UnexpectedToken)
@@ -90,8 +98,21 @@ class Parser:
             pretty_err += (
                 f"\nExpected one of the following:\n{'\n'.join(pretty_terminals)}"
             )
+        error = PrettyParserError(pretty_err)
 
-        return PrettyParserError(pretty_err)
+        pretty_terminals = []
+
+        for t in lark_error.state.value_stack:
+            match t:
+                case Token():
+                    pretty_terminals.append(repr(t))
+                case Tree():
+                    pretty_terminals.append(t.pretty())
+
+        error.add_note(
+            f"\nParser Input:\n\n{parse_text}\n\nPrevious Terminals:\n{'\n'.join(pretty_terminals)}"
+        )
+        return error
 
     def _prettify_terminals(self, terminal_names: list[str]) -> list[str]:
         """

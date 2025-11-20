@@ -5,6 +5,7 @@ from sympy import *
 
 from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import CommandHandler, CommandResult
@@ -26,17 +27,17 @@ class ConvertSympyResult(CommandResult):
 
 
 class ConvertSympyHandler(CommandHandler):
-    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
+    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
         super().__init__()
         self._compiler = compiler
 
     @override
     def handle(self, message: ConvertSympyModeMessage):
         message = ConvertSympyModeMessage.model_validate(message)
-
+        # TODO: how should multiple expressions be handled?
         return ConvertSympyResult(
             self._compiler.compile(
                 message.expression,
                 LmatEnvironment.create_definition_store(message.environment),
-            )
+            ).get_expr(-1)
         )

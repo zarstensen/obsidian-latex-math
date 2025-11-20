@@ -16,7 +16,7 @@ from lmat_cas_client.command_handlers.test_handlers.TestHangHandler import (
     TestHangHandler,
 )
 from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
 from lmat_cas_client.math_lib.setup import setup_mathlib
 
 if len(sys.argv) != 2:
@@ -33,17 +33,17 @@ setup_mathlib()
 
 client = LmatCasClient()
 
-client.register_handler("eval", EvalHandler(LatexToSympyCompiler()))
-client.register_handler("evalf", EvalfHandler(LatexToSympyCompiler()))
-client.register_handler("expand", ExpandHandler(LatexToSympyCompiler()))
-client.register_handler("factor", FactorHandler(LatexToSympyCompiler()))
-client.register_handler("apart", ApartHandler(LatexToSympyCompiler()))
-client.register_handler("solve", SolveHandler(LatexToSympyCompiler()))
-client.register_handler("solve-info", SolveInfoHandler(LatexToSympyCompiler()))
-client.register_handler("symbolsets", SymbolSetHandler(LatexToSympyCompiler()))
-client.register_handler("convert-sympy", ConvertSympyHandler(LatexToSympyCompiler()))
-client.register_handler("convert-units", ConvertUnitsHandler(LatexToSympyCompiler()))
-client.register_handler("truth-table", TruthTableHandler(LatexToSympyCompiler()))
+client.register_handler("eval", EvalHandler(LatexToCasExprCompiler()))
+client.register_handler("evalf", EvalfHandler(LatexToCasExprCompiler()))
+client.register_handler("expand", ExpandHandler(LatexToCasExprCompiler()))
+client.register_handler("factor", FactorHandler(LatexToCasExprCompiler()))
+client.register_handler("apart", ApartHandler(LatexToCasExprCompiler()))
+client.register_handler("solve", SolveHandler(LatexToCasExprCompiler()))
+client.register_handler("solve-info", SolveInfoHandler(LatexToCasExprCompiler()))
+client.register_handler("symbolsets", SymbolSetHandler(LatexToCasExprCompiler()))
+client.register_handler("convert-sympy", ConvertSympyHandler(LatexToCasExprCompiler()))
+client.register_handler("convert-units", ConvertUnitsHandler(LatexToCasExprCompiler()))
+client.register_handler("truth-table", TruthTableHandler(LatexToCasExprCompiler()))
 
 # test specific handlers
 
