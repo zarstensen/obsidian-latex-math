@@ -1,0 +1,147 @@
+%import .latex_math_grammar._IGNORE -> _LMAT_IGNORE
+%import .latex_math_grammar._L_FORMAT
+%import .latex_math_grammar._R_FORMAT
+%import .latex_math_grammar._WS
+%import .latex_math_grammar.ADD
+%import .latex_math_grammar.SUB
+%import .latex_math_grammar.LT
+%import .latex_math_grammar.LTE
+%import .latex_math_grammar.GT
+%import .latex_math_grammar.GTE
+%import .latex_math_grammar._L_BRACE
+%import .latex_math_grammar._R_BRACE
+%import .latex_math_grammar._CMD_OVERLINE
+%import .latex_math_grammar._UNDERSCORE
+%import .latex_math_grammar._COMMA
+// should these be aliased? it does not really make a difference, but i guess it makes sense to do it?
+%import .latex_math_grammar.combine_symbol -> combine_symbol
+%import .latex_math_grammar.undefined_function -> undefined_function
+%import .latex_math_grammar.relation -> relation
+
+// what is the left hand side?
+// - symbol
+// - symbol + function arg list
+// i think that is it?
+
+// what is the right hand side?
+// - relation
+// - set? (for assumptions)
+
+// what is the separator
+// - := (definition)
+// - \stackrel{def}{=}
+// - \stackrel{\mathrm{def}}{=}
+// - \vcentcoloneq(q?)
+// - =: (for flipping stuff?)
+// - \in (assumptions)
+// - \mapsto (undefined function assumptions)
+
+// what is a definition expression?
+// let def_expr represent a singular definition rule, then multiple def_expr are added via. the following methods.
+//
+// whitespace command: <--- And all of this stuff last [ ]
+// def_expr \quad def_expr (x := 5 \quad y := 10)
+//
+// chained with logical and
+// def_expr \land def_expr (x := 5 \land y := 10)
+//
+// system of expressions environments:
+// \begin{cases}
+// x &:= 5 \\
+// y &:= 10 \\
+// \end{cases}
+
+
+// some definitions examples:
+// == DEFINING A VARIABLE ==  <--- Start Here [ ]
+// x := 5
+// f (x, y) := x^2
+// ^ ^
+// | |
+// Symbol
+//   |
+//   Function Arguments
+// 
+// == DEFINING ASSUMPTIONS ON A SYMBOL == <--- Then Here [ ]
+//
+// x \in R (assume x to be Real)
+// x, y, z \in \mathbbm{Z} (assume x, y and z to be integers).
+//
+// == DEFINE SYMBOL TO BE AN UNDEFINED FUNCTION == <--- And Finally Here [ ]
+// f (x, y, z) \mapsto \mathbbm{R} (the symbol 'f', should be interpreted as a function taking 3 arguments, x, y and z, and its output always being a part of the real numbers set)
+//
+
+def_expr: _single_def_expr
+
+_single_def_expr: value_def_expr | assumption_def_expr 
+
+value_def_expr: (combine_symbol | undefined_function) _DEF_OP relation
+
+assumption_def_expr: combine_symbol (_COMMA combine_symbol)* _VAR_ASSUME_OP assumption_set
+
+assumption_set: COMPLEX
+    | ALGEBRAIC
+    | TRANSENDENTAL
+    | EXT_REAL
+    | REAL
+    | IMAGINARY
+    | RATIONAL
+    | IRRATIONAL
+    | INTEGER
+    | NONINTEGER
+    | EVEN
+    | ODD
+    | PRIME
+    | NONZERO
+    | EXT_NONZERO
+    | POSITIVE
+    | NONNEGATIVE
+    | NEGATIVE
+    | NONPOSITIVE
+    | EXT_POSITIVE
+    | EXT_NONNEGATIVE
+    | EXT_NEGATIVE
+    | EXT_NONPOSITIVE
+
+// ======== TERMINALS ========
+
+%ignore _LMAT_IGNORE
+%ignore _WS
+%ignore _L_FORMAT
+%ignore _R_FORMAT
+
+_DEF_OP: ":=" | /\\vcentcolonqq?/ | "\\stackrel{def}{=}" | "\\stackrel{\\mathrm{def}}{=}" | "\\triangleq"
+// use this when declaring assumptions on a variable
+_VAR_ASSUME_OP: "\\in"
+// use this when declaring assumptions on a function.
+_FUN_ASSUME_OP: /\\(long)?mapsto/
+
+// sets for assumptions
+_SET_FORMATTER: /\\(pmb|boldsymbol|mathbf|mathbbm?|mathcal|mathscr)/
+_CMD_SET_MINUS: "\setminus" | "\backslash" | "-"
+_CMD_SET: "\set"
+COMPLEX: _SET_FORMATTER _L_BRACE "C" _R_BRACE | "C"
+ALGEBRAIC: _CMD_OVERLINE _L_BRACE RATIONAL _R_BRACE
+TRANSENDENTAL: COMPLEX _CMD_SET_MINUS ALGEBRAIC
+EXT_REAL: _CMD_OVERLINE _L_BRACE REAL _R_BRACE
+REAL: _SET_FORMATTER _L_BRACE "R" _R_BRACE | "R"
+IMAGINARY: (_SET_FORMATTER _L_BRACE "I" _R_BRACE | "I") (_CMD_SET_MINUS _CMD_SET _L_BRACE "0" _R_BRACE)?
+RATIONAL: _SET_FORMATTER _L_BRACE "Q" _R_BRACE | "Q"
+IRRATIONAL: REAL _CMD_SET_MINUS RATIONAL
+INTEGER: _SET_FORMATTER _L_BRACE "Z" _R_BRACE | "Z"
+NONINTEGER: EXT_REAL _CMD_SET_MINUS INTEGER
+EVEN: _SET_FORMATTER _L_BRACE "E" _R_BRACE | "E"
+ODD: _SET_FORMATTER _L_BRACE "O" _R_BRACE | "O"
+PRIME: _SET_FORMATTER _L_BRACE "P" _R_BRACE | "P"
+NONZERO: REAL _CMD_SET_MINUS _CMD_SET _L_BRACE "0" _R_BRACE
+EXT_NONZERO: EXT_REAL _CMD_SET_MINUS _CMD_SET _L_BRACE "0" _R_BRACE
+POSITIVE: REAL _UNDERSCORE _L_BRACE (ADD | GT "0") _R_BRACE
+NONNEGATIVE: REAL _UNDERSCORE _L_BRACE GTE "0" _R_BRACE
+NEGATIVE: REAL _UNDERSCORE _L_BRACE (SUB | LT "0") _R_BRACE
+NONPOSITIVE: REAL _UNDERSCORE _L_BRACE LTE "0" _R_BRACE
+EXT_POSITIVE: EXT_REAL _UNDERSCORE _L_BRACE (ADD | GT "0") _R_BRACE
+EXT_NONNEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE GTE "0" _R_BRACE
+EXT_NEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE (SUB | LT "0") _R_BRACE
+EXT_NONPOSITIVE: EXT_REAL _UNDERSCORE _L_BRACE LTE "0" _R_BRACE
+
+

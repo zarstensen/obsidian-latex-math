@@ -58,7 +58,7 @@ class AssumptionDefinition(SympyDefinition):
 
     @override
     def dependencies(self) -> set[str]:
-        # assumptions have no dependencies, butSympyDefinition would return the symbol itself as such,
+        # assumptions have no dependencies, but SympyDefinition would return the symbol itself as such,
         # so we need to explicitly return an empty set here.
         return set()
 
@@ -86,7 +86,9 @@ class AstDefinition(Definition):
 
     @override
     def defined_value(self, definition_store: DefinitionStore):
-        return self._transformer.transform(self._ast_definition, definition_store)
+        return self._transformer.transform(
+            self._ast_definition, definition_store
+        ).get_expr(-1)
 
     @override
     def dependencies(self) -> set[str]:
@@ -140,7 +142,7 @@ class AstFunctionDefinition(FunctionDefinition):
 
         return self._transformer.transform(
             self._ast_body, definition_store.override(args_definitions)
-        )
+        ).get_expr(-1)
 
     @override
     def dependencies(self) -> set[str]:

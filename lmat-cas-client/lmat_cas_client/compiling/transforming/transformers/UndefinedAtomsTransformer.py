@@ -1,12 +1,11 @@
 from typing import Iterator
 
 from lark import Token, Transformer, v_args
-from sympy import Expr, Function, Symbol
-from sympy.physics.units import Quantity
-
 from lmat_cas_client.compiling import DefinitionStore
 from lmat_cas_client.compiling.Definitions import SympyDefinition
 from lmat_cas_client.math_lib.units import UnitUtils
+from sympy import Expr, Function, Symbol
+from sympy.physics.units import Quantity
 
 
 @v_args(inline=True)
@@ -50,14 +49,10 @@ class UndefinedAtomsTransformer(Transformer):
 
         return f"{formatter_text}{text}{primes}"
 
-    @v_args(inline=False)
-    def brace_surrounded_text(self, tokens):
-        return "".join(map(str, tokens))
-
     def unit(self, unit_symbol: str) -> Quantity | Symbol:
-        print(unit_symbol, flush=True)
+
         unit = UnitUtils.str_to_unit(unit_symbol)
-        print(unit, flush=True)
+
         if unit is not None:
             return unit
         else:

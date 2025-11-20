@@ -1,10 +1,8 @@
-from lark import Token, Transformer, v_args
+from lark import Transformer, v_args
 from sympy import *
 from sympy.logic.boolalg import *
 
-from lmat_cas_client.math_lib import Functions
-
-from .SystemOfExpr import SystemOfExpr
+# from .CasExprTransformer import CasExprs
 
 
 class PropositionExpr:
@@ -28,6 +26,8 @@ class PropositionsTransformer(Transformer):
     defined in the latex math grammar.
     """
 
+
+"""
     def CMD_TAUTOLOGY(self, _) -> Expr:
         return S.true
 
@@ -35,9 +35,9 @@ class PropositionsTransformer(Transformer):
         return S.false
 
     @v_args(meta=True, inline=True)
-    def proposition_chain(self, meta, *props: Expr) -> SystemOfExpr | PropositionExpr:
+    def proposition_chain(self, meta, *props: Expr) -> CasExprs | PropositionExpr:
         if len(props) > 1:
-            return SystemOfExpr([(PropositionExpr(prop), meta) for prop in props])
+            return CasExprs([(PropositionExpr(prop), meta) for prop in props])
         else:
             s = PropositionExpr(props[0])
             sympify(s)
@@ -97,3 +97,4 @@ class PropositionsTransformer(Transformer):
 
     def prop_not(self, arg: Expr) -> Expr:
         return Not(arg, evaluate=False)
+ """

@@ -1,11 +1,11 @@
 import sympy.physics.units as u
 from lmat_cas_client.command_handlers.SolveHandler import *
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
 from sympy import *
 
 
 class TestSolve:
-    compiler = LatexToSympyCompiler()
+    compiler = LatexToCasExprCompiler()
 
     def test_solve_with_domain(self):
         x = symbols("x")

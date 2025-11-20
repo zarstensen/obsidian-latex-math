@@ -9,10 +9,7 @@ from sympy.physics.units.unitsystem import UnitSystem
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
 from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
-    PropositionExpr,
-)
-from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
+from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
@@ -48,7 +45,7 @@ class EvaluateResult(CommandResult, ABC):
 
 
 class EvalHandlerBase(CommandHandler, ABC):
-    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
+    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
         super().__init__()
         self._compiler = compiler
 
@@ -61,33 +58,25 @@ class EvalHandlerBase(CommandHandler, ABC):
         message = EvaluateMessage.model_validate(message)
 
         definitions_store = LmatEnvironment.create_definition_store(message.environment)
-        sympy_expr = self._compiler.compile(message.expression, definitions_store)
-        expr_lines = None
 
-        # choose bottom / right most evaluatable expression.
-        while isinstance(sympy_expr, SystemOfExpr) or isinstance(
-            sympy_expr, Relational
-        ):
-            # for system of expressions, take the last one
-            if isinstance(sympy_expr, SystemOfExpr):
-                expr_lines = (
-                    sympy_expr.get_location(-1).line,
-                    sympy_expr.get_location(-1).end_line,
-                )
+        [*_, (sympy_expr, expr_meta)] = self._compiler.compile(
+            message.expression, definitions_store
+        ).expressions
 
-                if expr_lines[1] is None:
-                    expr_lines = (expr_lines[0], len(message.expression.splitlines()))
+        expr_lines = (
+            expr_meta.line,
+            expr_meta.end_line,
+        )
 
-                sympy_expr = sympy_expr.get_expr(-1)
+        if expr_lines[1] is None:
+            expr_lines = (expr_lines[0], len(message.expression.splitlines()))
 
-            # for equalities, take the right hand side.
-            if isinstance(sympy_expr, Relational):
-                sympy_expr = sympy_expr.rhs
+        # choose  right most evaluatable expression.
+        while isinstance(sympy_expr, Relational):
+            sympy_expr = sympy_expr.rhs
 
-        if isinstance(sympy_expr, PropositionExpr):
-            separator = r"\equiv"
-        else:
-            separator = "="
+        # TODO: the separator stuff should no longer be a thing?
+        separator = "="
 
         sympy_expr = self.evaluate(sympify(sympy_expr), message)
 

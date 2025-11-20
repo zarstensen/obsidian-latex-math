@@ -5,14 +5,14 @@ from lmat_cas_client.command_handlers.EvalfHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
 from lmat_cas_client.command_handlers.ExpandHandler import *
 from lmat_cas_client.command_handlers.FactorHandler import *
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
 from lmat_cas_client.LmatEnvironment import EnvDefinition
 from sympy import *
 
 
 ## Tests the evaluate mode.
 class TestEvaluate:
-    compiler = LatexToSympyCompiler()
+    compiler = LatexToCasExprCompiler()
 
     def test_simple_evaluate(self):
         handler = EvalHandler(self.compiler)

@@ -2,20 +2,19 @@ from typing import Iterator, Optional
 
 import sympy
 from lark import Token, v_args
-from sympy import *
-from sympy.core.function import UndefinedFunction
-from sympy.tensor.array import derive_by_array
-
 from lmat_cas_client.compiling.Definitions import SympyDefinition
 from lmat_cas_client.compiling.DefinitionStore import (
     DefinitionStore,
     FunctionDefinition,
 )
-from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
+from lmat_cas_client.compiling.transforming.transformers.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
+from sympy import *
+from sympy.core.function import UndefinedFunction
+from sympy.tensor.array import derive_by_array
 
 
 @v_args(inline=True)

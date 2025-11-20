@@ -7,7 +7,7 @@ from sympy.solvers.solveset import NonlinearError
 from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
+from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
@@ -61,7 +61,7 @@ class SolveResult(CommandResult):
 # along with a list of possible symbols to solve for in its symbols key.
 # if successfull its sends a message with status solved, and the result in the result key.
 class SolveHandler(CommandHandler):
-    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
+    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
         super().__init__()
         self._compiler = compiler
 
@@ -69,17 +69,12 @@ class SolveHandler(CommandHandler):
     def handle(self, message: SolveMessage) -> SolveResult:
         message = SolveMessage.model_validate(message)
 
-        equations = self._compiler.compile(
-            message.expression,
-            LmatEnvironment.create_definition_store(message.environment),
+        equations = list(
+            self._compiler.compile(
+                message.expression,
+                LmatEnvironment.create_definition_store(message.environment),
+            ).get_all_expr()
         )
-
-        # position information is not needed here,
-        # so extract the equations into a tuple, which sympy can work with.
-        if isinstance(equations, SystemOfExpr):
-            equations = equations.get_all_expr()
-        else:
-            equations = (equations,)
 
         # get a list of free symbols, by combining all the equations individual free symbols.
         free_symbols = set(
@@ -176,16 +171,12 @@ class SolveInfoHandler(CommandHandler):
     @override
     def handle(self, message: SolveInfoMessage) -> SolveInfoResult:
         message = SolveInfoMessage.model_validate(message)
-        equations = self._parser.compile(
-            message.expression,
-            LmatEnvironment.create_definition_store(message.environment),
+        equations = list(
+            self._parser.compile(
+                message.expression,
+                LmatEnvironment.create_definition_store(message.environment),
+            ).get_all_expr()
         )
-
-        # ok this is the number of expressions
-        if isinstance(equations, SystemOfExpr):
-            equations = equations.get_all_expr()
-        else:
-            equations = (equations,)
 
         # time for a full symbols list, and a default symbols list maybe?
         # or it should be ordered such that the first n symbols are the default symbols.
