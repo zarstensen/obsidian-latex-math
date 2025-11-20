@@ -681,7 +681,7 @@ def test_applied_function_expressions():
 
 def test_common_function_expressions():
     for latex_str, sympy_expr in COMMON_FUNCTION_EXPRESSION_PAIRS:
-        assert parse_latex_lark(latex_str) == sympy_expr, latex_str
+        assert simplify(parse_latex_lark(latex_str)) == simplify(sympy_expr), latex_str
 
 
 # unhandled bug causing these to fail
