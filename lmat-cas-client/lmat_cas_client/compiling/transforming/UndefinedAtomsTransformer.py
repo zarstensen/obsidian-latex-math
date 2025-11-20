@@ -55,9 +55,9 @@ class UndefinedAtomsTransformer(Transformer):
         return "".join(map(str, tokens))
 
     def unit(self, unit_symbol: str) -> Quantity | Symbol:
-        print(unit_symbol, flush=True)
+
         unit = UnitUtils.str_to_unit(unit_symbol)
-        print(unit, flush=True)
+
         if unit is not None:
             return unit
         else:
