@@ -603,3 +603,13 @@ class TestParse:
     )
     def test_physics_derivative(self, latex, expected_expr):
         assert self._parse_expr(latex) == simplify(expected_expr)
+
+    @pytest.mark.parametrize(
+        "latex,expected_expr",
+        [
+            (r"\varepsilon", Symbol(r"\varepsilon")),
+            (r"\va*repsilon", Symbol(r"\va*{r}") * Symbol("epsilon")),
+        ],
+    )
+    def test_regression_192(self, latex, expected_expr):
+        assert self._parse_expr(latex) == simplify(expected_expr)
