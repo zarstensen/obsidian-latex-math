@@ -17,6 +17,7 @@ from lmat_cas_client.command_handlers.test_handlers.TestHangHandler import (
 )
 from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
 from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.math_lib.setup import setup_mathlib
 
 if len(sys.argv) != 2:
     print(
@@ -28,6 +29,7 @@ if len(sys.argv) != 2:
 
 port = int(sys.argv[1])
 
+setup_mathlib()
 
 client = LmatCasClient()
 
