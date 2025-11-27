@@ -1,4 +1,4 @@
-import sympy.physics.units as units
+import lmat_cas_client.math_lib.units.UnitDefinitions as units
 from lmat_cas_client.command_handlers.ConvertUnitsHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
 from lmat_cas_client.command_handlers.SolveHandler import *
@@ -125,11 +125,11 @@ class TestUnitConversion:
     def test_preprocessed_quantity_names(self):
         handler = EvalHandler(self.compiler)
         result = handler.handle({
-            "expression": r"{e_0} \cdot \frac{{\mu_0}}{{avogadro_{constant}}}",
+            "expression": r"{e_0} \cdot \frac{{\mu_0}}{{avogadro_{constant}}} + {\ohm}",
             "environment": {},
         })
         assert simplify(result.sympy_expr) == auto_convert(
-            units.e0 * units.u0 / units.avogadro_constant
+            units.e0 * units.u0 / units.avogadro_constant + units.ohm
         )
 
     def test_custom_quanteties(self):
