@@ -1,3 +1,4 @@
+import lmat_cas_client.math_lib.units.UnitDefinitions as u
 import pytest
 from lmat_cas_client.command_handlers.ApartHandler import *
 from lmat_cas_client.command_handlers.EvalfHandler import *
@@ -677,3 +678,15 @@ class TestEvaluate:
         })
 
         assert result.sympy_expr == Symbol("f")
+
+    def test_exp_units(self):
+        handler = EvalfHandler(self.compiler)
+
+        result = handler.handle({"expression": "e^{m}", "environment": {}})
+        assert type(result.sympy_expr) is not exp
+
+        result = handler.handle({
+            "expression": r"\dv{t} e^{{m} \cdot t}",
+            "environment": {},
+        })
+        assert result.sympy_expr == u.meter * E ** (u.meter * S("t"))
