@@ -587,7 +587,9 @@ CONST_INFINITY: "\\infty"
 // Text formatting
 
 CMD_MATH: /\\math\w+/
-CMD_VEC: /\\vec(?!torunit)(?!torarrow)(?!torbold)/ | /\\va\*?/ | "\\vectorarrow"
+//         do not match \vec followed by tor, as many formatters starting with vector... would be matched by this instead.
+//                         do not match \var as \va{r}, as this means none of the \var... greek letters are usable.
+CMD_VEC: /\\vec(?!tor)/ | /\\va(?:\*|(?!r))/ | "\\vectorarrow"
 CMD_VECBOLD: "\\vectorbold" |/\\vb\*?/
 CMD_HAT: "\\hat"
 CMD_BOLD_FORMAT: "\\pmb"
