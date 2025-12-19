@@ -8,10 +8,14 @@ theme:
   palette:
     primary: grey
     accent: deep purple
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+    - navigation.tabs
 markdown_extensions:
   - footnotes
   - pymdownx.arithmatex:
       generic: true
-
 extra_javascript:
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js

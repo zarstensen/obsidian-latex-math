@@ -17,8 +17,8 @@ Math expressions are parsed and evaluated directly inside LaTeX math blocks, pro
 Start out by placing the cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse and evaluate the contents of the math block, and insert the result directly in your note!
 
 ![demo](readme-assets/frontpage-demo.gif)
-[The evaluate command](MISSING LINK) is bound to the `Alt + B` hotkey in the above demo.
-In general, all demo GIFs will make use of the [recommended hotkeys](#command-list).[^gifs-note]
+> [The evaluate command](MISSING LINK) is bound to the `Alt + B` hotkey in the above demo.
+> In general, all demo GIFs will make use of the [recommended hotkeys](#command-list).[^gifs-note]
 
 [^gifs-note]: All demo GIFs were produced with the [Obsidian Latex Suite](https://github.com/artisticat1/obsidian-latex-suite) plugin installed.
 Take a look at the [command list](#command-list) for a brief overview of what this plugin can do, or see the [features](#features) list for a more in-depth walkthrough of the plugin's advanced features.
