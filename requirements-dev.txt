@@ -6,3 +6,4 @@ tabulate~=0.9
 ruff~=0.12
 mypy~=1.19
 mkdocs-material~=9.7
+mkdocs-callouts~=1.16

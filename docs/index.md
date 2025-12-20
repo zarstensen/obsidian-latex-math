@@ -5,22 +5,25 @@ title: Home
 # LaTeX Math Documentation
 
 **LaTeX Math** is an intuitive, yet powerful, CAS (Computer Algebra System) plugin for the [Obsidian](https://obsidian.md/) note-taking app.
-Math expressions are parsed and evaluated directly inside LaTeX math blocks, providing a plug-and-play experience with a small / non-existent learning curve for newcomers to this plugin.
+Math expressions are parsed and evaluated directly inside LaTeX math blocks, providing a plug-and-play experience with a small initial learning curve for newcomers to this plugin[^learning-curve].
 
+[^learning-curve]: This of course assumes you are already somewhat familiar with LaTeX. But even if you aren't, LaTeX is *the* standard for notating digital math, so there is no loss in [learning it](https://www.reed.edu/academic_support/pdfs/qskills/latexcheatsheet.pdf)!
 
-<!-- - It can evaluate latex math blocks (what is a better name for this? math blocks? just math? or latex? or equations / expressions(probably not this)) -->
 <!-- **LaTeX Math** is a math CAS plugin for [Obsidian](https://obsidian.md/). plugin which adds mathematical evaluation of LaTeX math blocks to your notes, using [Sympy](https://www.sympy.org). -->
 
 
 ## Quick Usage
 
-Start out by placing the cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse and evaluate the contents of the math block, and insert the result directly in your note!
+Start out by placing your cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse and evaluate the contents of the math block, and insert the result directly in your note. It really is as simple as that!
 
-![demo](readme-assets/frontpage-demo.gif)
+![demo](assets/frontpage-demo.gif)
 > [The evaluate command](MISSING LINK) is bound to the `Alt + B` hotkey in the above demo.
 > In general, all demo GIFs will make use of the [recommended hotkeys](#command-list).[^gifs-note]
 
 [^gifs-note]: All demo GIFs were produced with the [Obsidian Latex Suite](https://github.com/artisticat1/obsidian-latex-suite) plugin installed.
+
+**LaTeX Math** has many more features to offer, so go take a look at the brief [feature overview]() before heading over to the [tutorial](tutorial/1-intro.md) to get you started properly using this plugin.
+
 Take a look at the [command list](#command-list) for a brief overview of what this plugin can do, or see the [features](#features) list for a more in-depth walkthrough of the plugin's advanced features.
 
 <!-- something something, latex math can do just more, something something see quick + detailed reference and extensive feature overview -->
