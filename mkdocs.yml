@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 site_name: LaTeX Math for Obsidian
 site_url: https://github.com/zarstensen/obsidian-latex-math
+repo_url: https://github.com/zarstensen/obsidian-latex-math
 theme:
   name: material
   font:
@@ -8,16 +9,20 @@ theme:
   palette:
     primary: grey
     accent: deep purple
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.instant
     - navigation.instant.prefetch
     - navigation.tracking
     - navigation.tabs
 markdown_extensions:
+  - footnotes
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.superfences
   - pymdownx.details
+  - pymdownx.keys
   - admonition
 plugins:
   - search

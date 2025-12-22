@@ -17,19 +17,20 @@ Math expressions are parsed and evaluated directly inside LaTeX math blocks, pro
 Start out by placing your cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse and evaluate the contents of the math block, and insert the result directly in your note. It really is as simple as that!
 
 ![demo](assets/frontpage-demo.gif)
-> [The evaluate command](MISSING LINK) is bound to the `Alt + B` hotkey in the above demo.
+> [The evaluate command](MISSING LINK) is bound to the ++alt+b++ hotkey in the above demo.
 > In general, all demo GIFs will make use of the [recommended hotkeys](#command-list).[^gifs-note]
 
 [^gifs-note]: All demo GIFs were produced with the [Obsidian Latex Suite](https://github.com/artisticat1/obsidian-latex-suite) plugin installed.
 
-**LaTeX Math** has many more features to offer, so go take a look at the brief [feature overview]() before heading over to the [tutorial](tutorial/1-intro.md) to get you started properly using this plugin.
+**LaTeX Math** has many more features to offer, so go take a look at the brief [feature showcase](reference/features.md) before heading over to the [tutorial](tutorial/1-intro.md) to get you started properly using this plugin.
 
-Take a look at the [command list](#command-list) for a brief overview of what this plugin can do, or see the [features](#features) list for a more in-depth walkthrough of the plugin's advanced features.
+WIP FROM HERE
+Take a look at the [command list](#command-list) for a brief overview of what this plugin can do, or see the [feature showcase](features.md) for a more in-depth walkthrough of the plugin's core features.
 
 <!-- something something, latex math can do just more, something something see quick + detailed reference and extensive feature overview -->
 
 Also see the [documentation](https://github.com/zarstensen/obsidian-latex-math/tree/main/docs), which goes more in depth about the features than this README.
-
+OK NO LONGER WIP
 ## Installation
 
 [**Click here**](https://obsidian.md/plugins?id=latex-math) to automatically open and install the latest version of this plugin in Obsidian.

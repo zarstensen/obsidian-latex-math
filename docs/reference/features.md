@@ -1,5 +1,5 @@
 
-# Feature Overview
+# Feature Showcase
 
 This page provides a brief overview of **LaTeX Math**'s main features, along with simple usage examples to get you started with using them.
 
@@ -12,7 +12,7 @@ The entire evaluate suite consists of the following commands: `Evaluate LaTeX ex
 
 <!-- TODO: update this one so it uses the newest version -->
 ![demo](assets/evaluate-demo.gif)
-> Hotkeys: alt + B: `Evalaute LaTeX Expression`; alt + F: `Evalf LaTeX expression`; alt + E: `Expand LaTeX expression`
+> ++alt+b++: `Evalaute LaTeX Expression`; ++alt+f++: `Evalf LaTeX expression`; ++alt+e++: `Expand LaTeX expression`
 
 A detailed walkthrough of the commands can be found in section [???](???) in the tutorial.
 
@@ -29,15 +29,11 @@ System of equations can also be solved, by placing them in an `align` or `cases`
 
 For more info on solving equations, check out the [???](???) tutorial or the [???](???) reference.
 
-<!-- The solution domain can be restricted for single equations in the solve equation modal, see the [relevant Sympy documentation](https://docs.sympy.org/latest/modules/sets.html#module-sympy.sets.fancysets) for a list of possible values.[^lmat-solve-domain]
-Restrict the solution domain of a system of equations with [symbol assumptions](#symbol-assumptions) on the free symbols.
-[^lmat-solve-domain]: The default solution domain for single equations can be set via. The `domain` key in the `solve` table in an `lmat` environment. -->
-
 ## Define Symbols and Functions
 
 Define symbol values or function bodies with the `:=` operator.
 
-Definitions persistence are location-based: any math block below a definition will use it; others will ignore it. Furthermore, all definitions are reset after an [`lmat`](???) code block.
+Definitions persistence are location-based. Any math block below a definition will use it; others will ignore it. Furthermore, all definitions are reset after an [`lmat`](???) code block.
 
 Only one symbol or function can be defined per math block.
 ![demo](assets/definitions-demo.gif)
@@ -47,12 +43,20 @@ To undefine a symbol or function, leave the right-hand side of the `:=` operator
 
 ## Use Units and Physical Constants
 
-Denote units or physical constants in equations by surrounding them with braces `{..}`.
-LaTeX Math automatically handles conversions between units, constants and their various prefixes. See the [syntax](https://github.com/zarstensen/obsidian-latex-math/blob/main/docs/SYNTAX.md#supported-units) document for a list of supported units and physical constants.
+Denote SI units and physical constants by wrapping their name in braces `{..}`. **LaTeX Math** automatically handles converting between units, but if you are not satisfied with the result, you can manually specify which units to convert to by running the `Convert units in LaTeX expression` command.
+> [!example] Units Example
+>
+> ```latex
+> 60 \frac{{km}}{{h}} \cdot 180 {s} 
+> -- Evaluatle LaTeX Expression --
+> 60 \frac{{km}}{{h}} \cdot 180 {s} = 3 {km}
+> ```
+
+See the [units and constants](https://github.com/zarstensen/obsidian-latex-math/blob/main/docs/SYNTAX.md#supported-units) page, for a list of supported units and physical constants.
 
 ## Enforce Symbol Assumptions
 
-Use an `lmat` code block to tell **LaTeX Math** about various assumptions it may make about specific symbols. This is used to further simplify expressions, such as roots, or limit the solution domain of equations. By default, all symbols are assumed to be complex numbers.
+Use `lmat` code blocks to tell **LaTeX Math** about various assumptions it should make about specific symbols. This enables further simplification of expressions, such as roots, or limits the solution domain when [solving](#solve-equations) equations. By default, all symbols are assumed to be *complex* numbers.
 
 `lmat` code blocks make use of the [TOML](https://toml.io) config format. To define assumptions for a symbol, assign the symbol's name to a list of assumptions LaTeX Math should make, under the `symbols` table. Like definitions, an `lmat` code block's persistence is based on its location. See below the demo GIF for a simple static `lmat` code block example.
 
@@ -73,16 +77,34 @@ See the [Sympy documentation](https://docs.sympy.org/latest/guides/assumptions.h
 
 ## Simplify Logical Propositions
 
-Simplify logical propositions using the [evaluate commands](#evaluate). Truth tables can be generated from a logical proposition using the `Create truth table from LaTeX expression` commands.
+Simplify logical propositions using the [evaluate commands](#evaluate-math-blocks). Truth tables can be generated from a logical proposition using the `Create truth table from LaTeX expression` commands.
+-math-blocks
+> [!example] Logic Example
+>
+> ```latex
+> (A \land B) \implies (A \lor C)
+> -- Evaluatle LaTeX Expression --
+> (A \land B) \implies (A \lor C) \equiv \mathrm{T}
+> ```
 
-See [SYNTAX.md/Logical Operators](https://github.com/zarstensen/obsidian-latex-math/blob/main/docs/SYNTAX.md#logical-operators) for a list of logical operators.
+See [SYNTAX.md/Logical Operators](https://github.com/zarstensen/obsidian-latex-math/blob/main/docs/SYNTAX.md#logical-operators) for a list of logical operators and constants.
 
-> [!TIP]
+> [!tip]
 > Want to check if two expressions are equal?
 >
-> Put an `\iff` in between them and upon [evaluation](#evaluate), **LaTeX Math** will insert `True` if they are symbolically equal or otherwise `False` if they are not.
+> Put an `\iff` in between them and upon [evaluation](#evaluate-math-blocks), **LaTeX Math** will insert `True` if they are symbolically equal or otherwise `False` if they are not.
 
 ## Convert To Sympy
 
-Quickly convert LaTeX to Sympy code to perform more advanced computations using the `Convert LaTeX expression to Sympy` command.
+Quickly convert math blocks into Sympy code with the `Convert LaTeX expression to Sympy` command.
 This will insert a python code block containing the equivalent Sympy code of the selected math block.
+
+> [!example] Sympy Example
+>
+> ````latex
+> \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}
+> -- Convert LaTeX expression to Sympy --
+> ```python
+> Matrix([[1, 2], [3, 4]])
+> ```
+> ````
