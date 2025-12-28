@@ -388,24 +388,30 @@ _prop_bool_value: CMD_TAUTOLOGY | CMD_CONTRADICTION
 // ================ Terminals ================
 
 // ignore escaped whitespace in latex code
-%ignore /(?<!\\)\\ /
 
 _WS: /[\s\t\n\r]+/
+
+_TEXT: CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
+// any tokens appearing in ANY terminals which are not ignored, should all be individually ignored, otherwise parse errors occur (see https://github.com/lark-parser/lark/issues/1571)
+_IGNORE: /(?<!\\)\\ /
+    | "\\," | "\\thinspace" | "\\:" | "\\medspace" | "\\;" | "\\thickspace"
+    | "\\quad" | "\\qquad"
+    | "\\!" | "\\negthinspace" | "\\negmedspace" | "\\negthickspace"   
+    | "\\vrule" | "\\vcenter" | "\\vbox" | "\\vskip" | "\\vspace" | "\\hfill"
+    | "\\*" | "\\-" | "\\." | "\\/" | "\\(" | "\\=" | "\\middle"
+    | "\\limits" | "\\nolimits"
+    | "~"
+    | "\\displaystyle"
+    | _TEXT
+
+
+_L_FORMAT: "\\left"
+_R_FORMAT: "\\right"
+
 %ignore _WS
-
-%ignore "\\," | "\\thinspace" | "\\:" | "\\medspace" | "\\;" | "\\thickspace"
-%ignore "\\quad" | "\\qquad"
-%ignore "\\!" | "\\negthinspace" | "\\negmedspace" | "\\negthickspace"
-%ignore "\\vrule" | "\\vcenter" | "\\vbox" | "\\vskip" | "\\vspace" | "\\hfill"
-%ignore "\\*" | "\\-" | "\\." | "\\/" | "\\(" | "\\=" | "\\middle"
-%ignore "~"
-
-_LR_FORMAT: "\\left" | "\\right"
-%ignore _LR_FORMAT
-%ignore "\\limits" | "\\nolimits"
-%ignore "\\displaystyle"
-
-%ignore _TEXT
+%ignore _R_FORMAT
+%ignore _L_FORMAT
+%ignore _IGNORE
 
 // basic binary operators
 ADD: "+"
@@ -532,8 +538,8 @@ FUNC_ASECH: CMD_OPERATOR _WS? _L_BRACE _WS? "arsech" _WS? _R_BRACE
 FUNC_ACOTH: CMD_OPERATOR _WS? _L_BRACE _WS? "arcoth" _WS? _R_BRACE
 
 _FUNC_SQRT: "\\sqrt"
-_FUNC_UPPER_GAMMA.1: "\\Gamma" _LR_FORMAT? _L_PAREN
-_FUNC_LOWER_GAMMA.1: "\\gamma" _LR_FORMAT? _L_PAREN
+_FUNC_UPPER_GAMMA.1: "\\Gamma" _L_FORMAT? _L_PAREN
+_FUNC_LOWER_GAMMA.1: "\\gamma" _L_FORMAT? _L_PAREN
 
 // matrix functions
 
@@ -568,9 +574,9 @@ _CMD_PERMUTATIONS: "P"
 _CMD_COMBINATIONS: "C"
 _CMD_DERANGEMENTS: "D"
 
-_FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _LR_FORMAT? _L_PAREN
-_FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _LR_FORMAT? _L_PAREN
-_FUNC_DERANGEMENTS.1: _CMD_DERANGEMENTS _LR_FORMAT? _L_PAREN
+_FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _L_FORMAT? _L_PAREN
+_FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _L_FORMAT? _L_PAREN
+_FUNC_DERANGEMENTS.1: _CMD_DERANGEMENTS _L_FORMAT? _L_PAREN
 
 // divisibility functions.
 
@@ -597,7 +603,6 @@ CMD_BOLD_FORMAT: "\\pmb"
 _cmd_format: CMD_MATH | CMD_VEC | CMD_VECBOLD | CMD_HAT | CMD_BOLD_FORMAT | DELTA_UPPER
 CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
 
-_TEXT: CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
 
 
 // mathrm is also included here so operatorname does not have to be used everywhere.
@@ -673,9 +678,9 @@ CMD_END_MATRIX: CMD_END _WS? MATRIX_ENV _WS? _R_BRACE
 CMD_BEGIN_VMATRIX: CMD_BEGIN _WS? VMATRIX_ENV _WS? _R_BRACE
 CMD_END_VMATRIX: CMD_END _WS? VMATRIX_ENV _WS? _R_BRACE
 
-CMD_BEGIN_ARRAY: ("\\left" _WS? _L_DELIMITER)? _WS? CMD_BEGIN _WS? ARRAY_ENV _WS? _R_BRACE
+CMD_BEGIN_ARRAY: (_L_FORMAT _WS? _L_DELIMITER)? _WS? CMD_BEGIN _WS? ARRAY_ENV _WS? _R_BRACE
 ARRAY_ENV_OPTIONS: _L_BRACE (/[clr|:\s]+/)? _R_BRACE
-CMD_END_ARRAY: CMD_END _WS? ARRAY_ENV _WS? _R_BRACE _WS? ("\\right" _WS? _R_DELIMITER)?
+CMD_END_ARRAY: CMD_END _WS? ARRAY_ENV _WS? _R_BRACE _WS? (_R_FORMAT _WS? _R_DELIMITER)?
 
 %declare _MATRIX_COL_DELIM
 %declare MATRIX_ROW_DELIM
