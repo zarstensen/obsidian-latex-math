@@ -1,0 +1,73 @@
+%import .cas_expr.substitute_symbol -> cas_expr__substitute_symbol
+// ======== Propositional Logic Structure
+
+// represents a chain of propositions, separated by equivalence symbols
+proposition_chain: _proposition (_PROP_OP_EQUIV _proposition)*
+
+// represents a single proposition in a series of chained propositions
+_proposition: _prop_bool_value | _delimited_proposition | prop_not | prop_xnor | prop_xor | prop_nor | prop_and | prop_nand | prop_or | prop_implies | prop_iff
+// represents a single proposition surrounded by parenthesess, brackets or braces.
+_delimited_proposition: _L_PAREN _proposition _R_PAREN | _L_BRACKET _proposition _R_BRACKET | _L_BRACE _proposition _R_BRACE
+
+// propositional operator presedence is based on wolfram alpha: https://www.wolframalpha.com/input?i=not+A+xor+B+nor++C+and+D+nand+E+or+F+implies+G+%3C%3D%3E+H
+
+prop_iff: prop_iff_arg (_PROP_OP_BIIMPLICATION prop_iff_arg)+
+?prop_iff_arg: prop_implies_arg | prop_implies
+
+!prop_implies: prop_implies_arg ((_PROP_OP_LR_IMPLICATION|_PROP_OP_NEG_LR_IMPLICATION|_PROP_OP_RL_IMPLICATION|_PROP_OP_NEG_RL_IMPLICATION) prop_implies_arg)+
+?prop_implies_arg: prop_or_arg | prop_or
+
+prop_or: prop_or_arg (_PROP_OP_OR prop_or_arg)+
+?prop_or_arg: prop_nand_arg | prop_nand
+
+prop_nand: prop_nand_arg (_PROP_OP_NAND prop_nand_arg)+
+?prop_nand_arg: prop_and_arg | prop_and
+
+prop_and: prop_and_arg (_PROP_OP_AND prop_and_arg)+
+?prop_and_arg: prop_nor_arg | prop_nor
+
+prop_nor: prop_nor_arg (_PROP_OP_NOR prop_nor_arg)+
+?prop_nor_arg: prop_xor_arg | prop_xor
+
+prop_xor: prop_xor_arg (_PROP_OP_XOR prop_xor_arg)+
+?prop_xor_arg: prop_xnor_arg | prop_xnor
+
+prop_xnor: prop_xnor_arg (_PROP_OP_XNOR prop_xnor_arg)+
+?prop_xnor_arg: prop_not_arg | prop_not
+
+prop_not: _PROP_OP_NOT prop_not_arg
+?prop_not_arg: _delimited_proposition | cas_expr__substitute_symbol | _prop_bool_value
+_prop_bool_value: CMD_TAUTOLOGY | CMD_CONTRADICTION
+
+// ======== propositional logic ========
+
+CMD_TAUTOLOGY.1: /\\(?:mathrm|operatorname)\s*{\s*(?:T|True|TRUE)\s*}/ | "T" | "\\top"
+CMD_CONTRADICTION.1: /\\(?:mathrm|operatorname)\s*{\s*(?:F|False|FALSE)\s*}/ | "F" | "\\bot"
+
+_CMD_DOT: "\\dot"
+
+_PROP_OP_BIIMPLICATION: "\\iff"
+    | /\\(?:[Ll]ongl|[Ll])eftrightarrow/
+    | /\\(?:leftright|rightleft)harpoons/
+_PROP_OP_LR_IMPLICATION: "\\implies"
+    | "\\to"
+    | /\\(?:[Ll]ongr|[Rr])ightarrow/
+_PROP_OP_NEG_LR_IMPLICATION: /\\n[Rr]ightarrow/
+_PROP_OP_RL_IMPLICATION: /\\(?:[Ll]ongl|[Ll])eftarrow/
+_PROP_OP_NEG_RL_IMPLICATION: /\\n[Ll]eftarrow/
+_PROP_OP_OR: /\\(big)?vee/
+    | "\\lor"
+_PROP_OP_NAND: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_AND | _L_BRACE _WS? _PROP_OP_AND _WS? _R_BRACE)
+_PROP_OP_AND: /\\(big)?wedge/
+    | "\\land"
+_PROP_OP_NOR: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
+_PROP_OP_XOR: /\\(big)?oplus/
+    | "\\veebar"
+    | _CMD_DOT _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
+_PROP_OP_XNOR: "\\odot"
+    | (_CMD_BAR|_CMD_OVERLINE) _WS? ( _PROP_OP_XOR | _L_BRACE _WS? (_PROP_OP_XOR) _WS? _R_BRACE)
+_PROP_OP_NOT: "\\neg"
+    | "\\sim"
+_PROP_OP_PREFIX_NOT: "\\not"
+
+_PROP_OP_EQUIV: "\\equiv"
