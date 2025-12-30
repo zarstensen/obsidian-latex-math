@@ -1,43 +1,43 @@
 %import .cas_expr.substitute_symbol -> cas_expr__substitute_symbol
-// ======== Propositional Logic Structure
+// ======== Propositional Logic Structure ========
 
 // represents a chain of propositions, separated by equivalence symbols
-proposition_chain: _proposition (_PROP_OP_EQUIV _proposition)*
+cas_logic_expression: _proposition (_EQUIV _proposition)*
 
 // represents a single proposition in a series of chained propositions
-_proposition: _prop_bool_value | _delimited_proposition | prop_not | prop_xnor | prop_xor | prop_nor | prop_and | prop_nand | prop_or | prop_implies | prop_iff
+_proposition: _bool_value | _delimited_proposition | not | xnor | xor | nor | and | nand | or | implies | iff
 // represents a single proposition surrounded by parenthesess, brackets or braces.
 _delimited_proposition: _L_PAREN _proposition _R_PAREN | _L_BRACKET _proposition _R_BRACKET | _L_BRACE _proposition _R_BRACE
 
 // propositional operator presedence is based on wolfram alpha: https://www.wolframalpha.com/input?i=not+A+xor+B+nor++C+and+D+nand+E+or+F+implies+G+%3C%3D%3E+H
 
-prop_iff: prop_iff_arg (_PROP_OP_BIIMPLICATION prop_iff_arg)+
-?prop_iff_arg: prop_implies_arg | prop_implies
+iff: iff_arg (_BIIMPLICATION iff_arg)+
+?iff_arg: implies_arg | implies
 
-!prop_implies: prop_implies_arg ((_PROP_OP_LR_IMPLICATION|_PROP_OP_NEG_LR_IMPLICATION|_PROP_OP_RL_IMPLICATION|_PROP_OP_NEG_RL_IMPLICATION) prop_implies_arg)+
-?prop_implies_arg: prop_or_arg | prop_or
+!implies: implies_arg ((_LR_IMPLICATION|_NEG_LR_IMPLICATION|_RL_IMPLICATION|_NEG_RL_IMPLICATION) implies_arg)+
+?implies_arg: or_arg | or
 
-prop_or: prop_or_arg (_PROP_OP_OR prop_or_arg)+
-?prop_or_arg: prop_nand_arg | prop_nand
+or: or_arg (_OR or_arg)+
+?or_arg: nand_arg | nand
 
-prop_nand: prop_nand_arg (_PROP_OP_NAND prop_nand_arg)+
-?prop_nand_arg: prop_and_arg | prop_and
+nand: nand_arg (_NAND nand_arg)+
+?nand_arg: and_arg | and
 
-prop_and: prop_and_arg (_PROP_OP_AND prop_and_arg)+
-?prop_and_arg: prop_nor_arg | prop_nor
+and: and_arg (_AND and_arg)+
+?and_arg: nor_arg | nor
 
-prop_nor: prop_nor_arg (_PROP_OP_NOR prop_nor_arg)+
-?prop_nor_arg: prop_xor_arg | prop_xor
+nor: nor_arg (_NOR nor_arg)+
+?nor_arg: xor_arg | xor
 
-prop_xor: prop_xor_arg (_PROP_OP_XOR prop_xor_arg)+
-?prop_xor_arg: prop_xnor_arg | prop_xnor
+xor: xor_arg (_XOR xor_arg)+
+?xor_arg: xnor_arg | xnor
 
-prop_xnor: prop_xnor_arg (_PROP_OP_XNOR prop_xnor_arg)+
-?prop_xnor_arg: prop_not_arg | prop_not
+xnor: xnor_arg (_XNOR xnor_arg)+
+?xnor_arg: not_arg | not
 
-prop_not: _PROP_OP_NOT prop_not_arg
-?prop_not_arg: _delimited_proposition | cas_expr__substitute_symbol | _prop_bool_value
-_prop_bool_value: CMD_TAUTOLOGY | CMD_CONTRADICTION
+not: _NOT not_arg
+?not_arg: _delimited_proposition | cas_expr__substitute_symbol | _bool_value
+_bool_value: CMD_TAUTOLOGY | CMD_CONTRADICTION
 
 // ======== propositional logic ========
 
@@ -46,28 +46,28 @@ CMD_CONTRADICTION.1: /\\(?:mathrm|operatorname)\s*{\s*(?:F|False|FALSE)\s*}/ | "
 
 _CMD_DOT: "\\dot"
 
-_PROP_OP_BIIMPLICATION: "\\iff"
+_BIIMPLICATION: "\\iff"
     | /\\(?:[Ll]ongl|[Ll])eftrightarrow/
     | /\\(?:leftright|rightleft)harpoons/
-_PROP_OP_LR_IMPLICATION: "\\implies"
+_LR_IMPLICATION: "\\implies"
     | "\\to"
     | /\\(?:[Ll]ongr|[Rr])ightarrow/
-_PROP_OP_NEG_LR_IMPLICATION: /\\n[Rr]ightarrow/
-_PROP_OP_RL_IMPLICATION: /\\(?:[Ll]ongl|[Ll])eftarrow/
-_PROP_OP_NEG_RL_IMPLICATION: /\\n[Ll]eftarrow/
-_PROP_OP_OR: /\\(big)?vee/
+_NEG_LR_IMPLICATION: /\\n[Rr]ightarrow/
+_RL_IMPLICATION: /\\(?:[Ll]ongl|[Ll])eftarrow/
+_NEG_RL_IMPLICATION: /\\n[Ll]eftarrow/
+_OR: /\\(big)?vee/
     | "\\lor"
-_PROP_OP_NAND: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_AND | _L_BRACE _WS? _PROP_OP_AND _WS? _R_BRACE)
-_PROP_OP_AND: /\\(big)?wedge/
+_NAND: (_CMD_BAR|_CMD_OVERLINE) _WS? (_AND | _L_BRACE _WS? _AND _WS? _R_BRACE)
+_AND: /\\(big)?wedge/
     | "\\land"
-_PROP_OP_NOR: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
-_PROP_OP_XOR: /\\(big)?oplus/
+_NOR: (_CMD_BAR|_CMD_OVERLINE) _WS? (_OR | _L_BRACE _WS? _OR _WS? _R_BRACE)
+_XOR: /\\(big)?oplus/
     | "\\veebar"
-    | _CMD_DOT _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
-_PROP_OP_XNOR: "\\odot"
-    | (_CMD_BAR|_CMD_OVERLINE) _WS? ( _PROP_OP_XOR | _L_BRACE _WS? (_PROP_OP_XOR) _WS? _R_BRACE)
-_PROP_OP_NOT: "\\neg"
+    | _CMD_DOT _WS? (_OR | _L_BRACE _WS? _OR _WS? _R_BRACE)
+_XNOR: "\\odot"
+    | (_CMD_BAR|_CMD_OVERLINE) _WS? ( _XOR | _L_BRACE _WS? (_XOR) _WS? _R_BRACE)
+_NOT: "\\neg"
     | "\\sim"
-_PROP_OP_PREFIX_NOT: "\\not"
+_PREFIX_NOT: "\\not"
 
-_PROP_OP_EQUIV: "\\equiv"
+_EQUIV: "\\equiv"

@@ -71,9 +71,9 @@
 // f (x, y, z) \mapsto \mathbbm{R} (the symbol 'f', should be interpreted as a function taking 3 arguments, x, y and z, and its output always being a part of the real numbers set)
 //
 
-def_expr: _single_def_expr
+cas_logic_expr_def: combine_symbol _DEF_OP cas_logic_expression
 
-_single_def_expr: value_def_expr | assumption_def_expr 
+cas_expr_def: value_def_expr | assumption_def_expr
 
 value_def_expr: (combine_symbol | undefined_function) _DEF_OP relation
 
