@@ -40,9 +40,9 @@ class FunctionDefinition(Definition):
     and applied_value should produce the output of the applied function.
     """
 
-    def __init__(self, variables: Iterable[str] = []):
+    def __init__(self, variables: Iterable[str] = None):
         super().__init__()
-        self._variables = tuple(variables)
+        self._variables = tuple(variables or ())
 
     @property
     def variables(self) -> tuple[str]:
@@ -87,6 +87,10 @@ class DefinitionStore:
     """
     The DefinitionStore is responsible for storing a series of definitions, identifying them by a string key, known as a 'definition name'.
     """
+
+    @classmethod
+    def empty(cls) -> Self:
+        return cls()
 
     def __init__(self, definitions: Optional[dict[str, Definition]] = None):
         """
@@ -204,7 +208,7 @@ class DefinitionStore:
         definition_names = tuple(definition_names)
 
         dependency_graph: dict[str, set[str]] = {}
-        in_deg_table: dict[int, str] = {}
+        in_deg_table: dict[str, int] = {}
 
         marked_definitions = set({})
 

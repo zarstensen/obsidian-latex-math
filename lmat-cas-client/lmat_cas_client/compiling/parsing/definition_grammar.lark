@@ -1,22 +1,22 @@
-%import .latex_math_grammar._IGNORE -> _LMAT_IGNORE
-%import .latex_math_grammar._L_FORMAT
-%import .latex_math_grammar._R_FORMAT
-%import .latex_math_grammar._WS
-%import .latex_math_grammar.ADD
-%import .latex_math_grammar.SUB
-%import .latex_math_grammar.LT
-%import .latex_math_grammar.LTE
-%import .latex_math_grammar.GT
-%import .latex_math_grammar.GTE
-%import .latex_math_grammar._L_BRACE
-%import .latex_math_grammar._R_BRACE
-%import .latex_math_grammar._CMD_OVERLINE
-%import .latex_math_grammar._UNDERSCORE
-%import .latex_math_grammar._COMMA
+%import .cas_expr._IGNORE -> _CAS_EXPR__IGNORE
+%import .cas_expr._L_FORMAT
+%import .cas_expr._R_FORMAT
+%import .cas_expr._WS
+%import .cas_expr.ADD
+%import .cas_expr.SUB
+%import .cas_expr.LT
+%import .cas_expr.LTE
+%import .cas_expr.GT
+%import .cas_expr.GTE
+%import .cas_expr._L_BRACE
+%import .cas_expr._R_BRACE
+%import .cas_expr._CMD_OVERLINE
+%import .cas_expr._UNDERSCORE // so these HAVE to be imported as rules, which is kind of dumb, actually really dumb
+%import .cas_expr._COMMA
 // should these be aliased? it does not really make a difference, but i guess it makes sense to do it?
-%import .latex_math_grammar.combine_symbol -> combine_symbol
-%import .latex_math_grammar.undefined_function -> undefined_function
-%import .latex_math_grammar.relation -> relation
+%import .cas_expr.substitute_symbol -> cas_expr__substitute_symbol
+%import .cas_expr.undefined_function -> cas_expr__undefined_function
+%import .cas_expr.relation -> cas_expr__relation
 
 // what is the left hand side?
 // - symbol
@@ -71,13 +71,15 @@
 // f (x, y, z) \mapsto \mathbbm{R} (the symbol 'f', should be interpreted as a function taking 3 arguments, x, y and z, and its output always being a part of the real numbers set)
 //
 
-cas_logic_expr_def: combine_symbol _DEF_OP cas_logic_expression
+cas_logic_expr_def: cas_expr__combine_symbol _DEF_OP 
 
-cas_expr_def: value_def_expr | assumption_def_expr
+?cas_expr_def: value_def_expr | assumption_def_expr
 
-value_def_expr: (combine_symbol | undefined_function) _DEF_OP relation
+value_def_expr:  def_lhs _DEF_OP cas_expr__relation
 
-assumption_def_expr: combine_symbol (_COMMA combine_symbol)* _VAR_ASSUME_OP assumption_set
+assumption_def_expr: def_lhs (_COMMA def_lhs)* _VAR_ASSUME_OP assumption_set
+
+def_lhs: cas_expr__substitute_symbol -> cas_expr__cas_expression
 
 assumption_set: COMPLEX
     | ALGEBRAIC
@@ -105,7 +107,7 @@ assumption_set: COMPLEX
 
 // ======== TERMINALS ========
 
-%ignore _LMAT_IGNORE
+%ignore _CAS_EXPR__IGNORE
 %ignore _WS
 %ignore _L_FORMAT
 %ignore _R_FORMAT

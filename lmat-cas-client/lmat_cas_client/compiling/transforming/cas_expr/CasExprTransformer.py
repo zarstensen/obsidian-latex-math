@@ -1,33 +1,32 @@
 import itertools
 from enum import Enum
-from typing import Iterator, NamedTuple, Self
+from typing import Iterator, NamedTuple, Optional, Self
 
-from lark import Token, v_args
+from lark import Token, Transformer, v_args
 from lark.tree import Meta
+from lmat_cas_client.compiling.definitions.DefinitionStore import (
+    DefinitionStore,
+)
+from lmat_cas_client.compiling.transforming.cas_expr.ConstantsTransformer import (
+    ConstantsTransformer,
+)
+from lmat_cas_client.compiling.transforming.cas_expr.FunctionsTransformer import (
+    BuiltInFunctionsTransformer,
+)
+from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
+    UndefinedAtomsTransformer,
+)
+from lmat_cas_client.compiling.transforming.ComposeTransformers import (
+    compose_transformers,
+)
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
+from lmat_cas_client.math_lib import MatrixUtils
 from sympy import *
 from sympy import Basic, Expr
 from sympy.core.numbers import Float, Integer
 from sympy.logic.boolalg import *
 
-from lmat_cas_client.compiling.DefinitionStore import (
-    DefinitionStore,
-)
-from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
-    PropositionsTransformer,
-)
-from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
-from lmat_cas_client.compiling.transforming.transformers.ConstantsTransformer import (
-    ConstantsTransformer,
-)
-from lmat_cas_client.compiling.transforming.transformers.FunctionsTransformer import (
-    BuiltInFunctionsTransformer,
-)
-from lmat_cas_client.compiling.transforming.transformers.UndefinedAtomsTransformer import (
-    UndefinedAtomsTransformer,
-)
-from lmat_cas_client.math_lib import MatrixUtils
-
-from .LatexMatrix import LatexMatrix
+from ..LatexMatrix import LatexMatrix
 
 
 class CasExpr(NamedTuple):
@@ -51,7 +50,7 @@ class CasExpr(NamedTuple):
         return len(self.expressions)
 
     # retreive the expression at the given index
-    def get_expr(self, expression_index: int):
+    def get_expr(self, expression_index: int) -> Basic:
         (expr, _) = self.expressions[expression_index]
         return expr
 
@@ -69,9 +68,7 @@ class CasExpr(NamedTuple):
         return map(self.get_location, range(len(self)))
 
 
-class CasExprTransformer(
-    BuiltInFunctionsTransformer, ConstantsTransformer, PropositionsTransformer
-):
+class CasExprTransformer(Transformer):
     """
     The SympyTransformer class provides functions for transforming
     rules defined in latex_math_grammar.lark into sympy expressions.
@@ -79,10 +76,6 @@ class CasExprTransformer(
 
     class Delim(Enum):
         MatDelim = 1
-
-    def __init__(self, definition_store: DefinitionStore):
-        UndefinedAtomsTransformer.__init__(self, definition_store)
-        BuiltInFunctionsTransformer.__init__(self, definition_store)
 
     @v_args(inline=True)
     def NUMERIC_DIGIT(self, digit: Token):
@@ -94,6 +87,7 @@ class CasExprTransformer(
 
         if "." in number_str:
             return Float(number_str)
+
         return Integer(number_str)
 
     @v_args(inline=True)
@@ -114,18 +108,28 @@ class CasExprTransformer(
 
         return Integer(int(binary_number_str, 2))
 
-    @v_args(inline=True)
-    def cas_expression(self, cas_expr: CasExpr) -> CasExpr:
-        return cas_expr
+    @v_args(meta=True, inline=True)
+    def cas_expression(
+        self, meta: Meta, cas_expr: CasExpr | list[CasExpr] | Basic
+    ) -> CasExpr:
+        match cas_expr:
+            case CasExpr():
+                return cas_expr  # nothing to do, input is already CasExpr
+            case [*cas_exprs]:
+                return CasExpr.from_cas_exprs(cas_exprs)
+            case sympy_expr:
+                return CasExpr([(sympy_expr, meta)])
 
     def sor_env(self, relations: list[CasExpr | Delim]) -> CasExpr:
-        return CasExpr.from_cas_exprs([
-            next(row)  # the row iterator should only contain 1 element
-            for is_delim, row in itertools.groupby(
-                relations, lambda t: t == self.Delim.MatDelim
-            )
-            if not is_delim
-        ])
+        return CasExpr.from_cas_exprs(
+            [
+                next(row)  # the row iterator should only contain 1 element
+                for is_delim, row in itertools.groupby(
+                    relations, lambda t: t == self.Delim.MatDelim
+                )
+                if not is_delim
+            ]
+        )
 
     def sor_and_chain(self, relations: list[CasExpr]) -> CasExpr:
         return CasExpr.from_cas_exprs(relations)
@@ -301,8 +305,17 @@ class CasExprTransformer(
         )
 
 
-cas_expr_tansformer_runner = TransformerRunner[[DefinitionStore], CasExpr](
-    CasExprTransformer
+def cas_expr_transformer(store: DefinitionStore):
+    return compose_transformers(
+        UndefinedAtomsTransformer(store),
+        ConstantsTransformer(),
+        BuiltInFunctionsTransformer(store),
+        CasExprTransformer(),
+    )
+
+
+cas_expr_transformer_runner = TransformerRunner[[DefinitionStore], CasExpr](
+    cas_expr_transformer
 )
 
-__all__ = ["cas_expr_tansformer_runner"]
+__all__ = ["cas_expr_transformer_runner"]

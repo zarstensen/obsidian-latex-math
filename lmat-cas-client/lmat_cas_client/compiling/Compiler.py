@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Any, override
+from typing import Any, Optional, override
 
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.definitions.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.parsing.CasExprParser import (
     cas_expr_parser,
 )
-from lmat_cas_client.compiling.parsing.DefinitionsParser import definition_parser
-from lmat_cas_client.compiling.transforming.CasExprTransformer import (
+from lmat_cas_client.compiling.parsing.DefinitionsParser import cas_expr_def_parser
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
     CasExpr,
-    cas_expr_tansformer_runner,
+    cas_expr_transformer_runner,
 )
 from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
     definitions_transformer_runner,
@@ -54,11 +54,22 @@ class LatexToCasExprCompiler(Compiler[[DefinitionStore], CasExpr]):
 
         def_store.assert_acyclic_dependencies(dependencies)
 
-        return cas_expr_tansformer_runner.transform(ast, def_store)
+        return cas_expr_transformer_runner.transform(ast, def_store)
 
 
 class LatexToDefinitionCompiler(Compiler[[], Any]):
+    def __init__(
+        self,
+        expr_transformer: ExprTransformer,
+        deps_transformer: DependenciesTransformer,
+    ):
+        super().__init__()
+        self._expr_transformer = expr_transformer
+        self._deps_transformer = deps_transformer
+
     @override
     def compile(self, latex_str: str) -> Any:
-        ast = definition_parser.parse(latex_str)
-        return definitions_transformer_runner.transform(ast)
+        ast = cas_expr_def_parser.parse(latex_str)
+        return definitions_transformer_runner.transform(
+            ast, self._expr_transformer, self._deps_transformer
+        )

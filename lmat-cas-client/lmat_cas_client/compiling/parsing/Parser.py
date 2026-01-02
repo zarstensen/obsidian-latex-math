@@ -145,3 +145,16 @@ class Parser:
             pretty_terminals.append(term_name.replace("_", " ").capitalize().strip())
 
         return pretty_terminals
+
+
+lark_parser_defaults = {
+    "parser": "lalr",
+    "lexer": "contextual",
+    "debug": False,
+    "cache": True,
+    "propagate_positions": True,
+    "maybe_placeholders": True,
+    "regex": True,
+}
+
+__all__ = ["lark_parser_defaults"]

@@ -1,8 +1,8 @@
 import pytest
 from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
-from lmat_cas_client.compiling.DefinitionStore import CyclicDependencyError
+from lmat_cas_client.compiling.definitions.DefinitionStore import CyclicDependencyError
 from lmat_cas_client.compiling.parsing import PrettyParserError
-from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
 from lmat_cas_client.LmatEnvironment import EnvDefinition, LmatEnvironment
 from sympy import *

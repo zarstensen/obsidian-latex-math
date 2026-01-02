@@ -1,33 +1,16 @@
-from lark import Transformer, v_args
+from lark import Token, Transformer, v_args
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from sympy import *
 from sympy.logic.boolalg import *
 
-# from .CasExprTransformer import CasExprs
-
-
-class PropositionExpr:
-    """
-    return type for the PropositionsTransformer.
-    Simply wraps a propositional expression,
-    is primarily used to detect if an expression came from PropositionsTransformer.
-    """
-
-    def __init__(self, expr):
-        self.expr = expr
-
-    def _sympy_(self):
-        return self.expr
-
 
 @v_args(inline=True)
-class PropositionsTransformer(Transformer):
+class CasLogicTransformer(Transformer):
     """
     The FucntionsTransformer holds the implementation of various mathematical function rules,
     defined in the latex math grammar.
     """
 
-
-"""
     def CMD_TAUTOLOGY(self, _) -> Expr:
         return S.true
 
@@ -35,19 +18,14 @@ class PropositionsTransformer(Transformer):
         return S.false
 
     @v_args(meta=True, inline=True)
-    def proposition_chain(self, meta, *props: Expr) -> CasExprs | PropositionExpr:
-        if len(props) > 1:
-            return CasExprs([(PropositionExpr(prop), meta) for prop in props])
-        else:
-            s = PropositionExpr(props[0])
-            sympify(s)
-            return PropositionExpr(props[0])
+    def cas_logic_expr(self, meta, *props: Expr) -> CasExpr:
+        return CasExpr([(prop, meta) for prop in props])
 
     def prop_iff(self, *args: tuple[Expr]) -> Expr:
-        return Functions.SymbolicIff(*args)
+        return Equivalent(*args)
 
     def prop_negated_iff(self, *args: tuple[Expr]) -> Expr:
-        return Not(Functions.SymbolicIff(*args))
+        return Not(Equivalent(*args))
 
     def prop_implies(self, *args: tuple[Expr | Token]) -> Expr:
         args = list(reversed(args))
@@ -58,15 +36,15 @@ class PropositionsTransformer(Transformer):
             right = args.pop()
 
             match op_token.type:
-                case "_PROP_OP_LR_IMPLICATION":
+                case "_LR_IMPLICATION":
                     implication = Implies(left, right, evaluate=False)
-                case "_PROP_OP_NEG_LR_IMPLICATION":
+                case "_NEG_LR_IMPLICATION":
                     implication = Not(
                         Implies(left, right, evaluate=False), evaluate=False
                     )
-                case "_PROP_OP_RL_IMPLICATION":
+                case "_RL_IMPLICATION":
                     implication = Implies(right, left, evaluate=False)
-                case "_PROP_OP_NEG_RL_IMPLICATION":
+                case "_NEG_RL_IMPLICATION":
                     implication = Not(
                         Implies(right, left, evaluate=False), evaluate=False
                     )
@@ -97,4 +75,3 @@ class PropositionsTransformer(Transformer):
 
     def prop_not(self, arg: Expr) -> Expr:
         return Not(arg, evaluate=False)
- """

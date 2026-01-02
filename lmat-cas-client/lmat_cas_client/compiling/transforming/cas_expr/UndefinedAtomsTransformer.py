@@ -1,7 +1,7 @@
 from typing import Iterator
 
 from lark import Token, Transformer, v_args
-from lmat_cas_client.compiling import DefinitionStore
+from lmat_cas_client.compiling.definitions import DefinitionStore
 from lmat_cas_client.compiling.Definitions import SympyDefinition
 from lmat_cas_client.math_lib.units import UnitUtils
 from sympy import Expr, Function, Symbol

@@ -6,7 +6,7 @@ from sympy.logic.boolalg import BooleanAtom
 
 from lmat_cas_client.compiling.Compiler import Compiler
 from lmat_cas_client.compiling.Definitions import AssumptionDefinition
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.definitions.DefinitionStore import DefinitionStore
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import *

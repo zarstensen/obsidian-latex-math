@@ -8,8 +8,8 @@ from sympy.physics.units.unitsystem import UnitSystem
 
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
 from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
+from lmat_cas_client.compiling.definitions.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 

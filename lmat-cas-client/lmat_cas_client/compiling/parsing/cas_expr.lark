@@ -67,7 +67,7 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
 substitute_symbol: combine_symbol
 combine_symbol: indexed_symbol | _non_indexed_symbol
 
-!single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
+single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.

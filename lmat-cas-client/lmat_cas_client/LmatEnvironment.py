@@ -10,12 +10,12 @@ from lmat_cas_client.compiling.Definitions import (
     AstDefinition,
     AstFunctionDefinition,
 )
-from lmat_cas_client.compiling.DefinitionStore import (
+from lmat_cas_client.compiling.definitions.DefinitionStore import (
     DefinitionStore,
 )
 from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
-from lmat_cas_client.compiling.transforming.CasExprTransformer import (
-    cas_expr_tansformer_runner,
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
+    cas_expr_transformer_runner,
 )
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     dependencies_transformer_runner,
@@ -57,7 +57,7 @@ class LmatEnvironment(BaseModel):
 
         for definition in environment.definitions:
             definition_id = latex_to_sympy_compiler.compile(
-                definition.name_expr, DefinitionStore()
+                definition.name_expr, DefinitionStore.empty()
             )
             # its not going to be like this for long anyways, so no point in making it pretty.
 
@@ -69,7 +69,7 @@ class LmatEnvironment(BaseModel):
                         definitions[def_symbol.name] = None
                     else:
                         definitions[def_symbol.name] = AstDefinition(
-                            expr_transformer=cas_expr_tansformer_runner,
+                            expr_transformer=cas_expr_transformer_runner,
                             dependencies_transformer=dependencies_transformer_runner,
                             ast_definition=cas_expr_parser.parse(definition.value_expr),
                         )
@@ -78,7 +78,7 @@ class LmatEnvironment(BaseModel):
                         definitions[def_function.name] = None
                     else:
                         definitions[def_function.name] = AstFunctionDefinition(
-                            expr_transformer=cas_expr_tansformer_runner,
+                            expr_transformer=cas_expr_transformer_runner,
                             dependencies_transformer=dependencies_transformer_runner,
                             func_name=def_function.name,
                             ast_body=cas_expr_parser.parse(definition.value_expr),

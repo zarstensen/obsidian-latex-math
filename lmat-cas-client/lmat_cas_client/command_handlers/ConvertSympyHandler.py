@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from sympy import *
 
 from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
+from lmat_cas_client.compiling.definitions.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import CommandHandler, CommandResult
