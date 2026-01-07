@@ -5,7 +5,7 @@ from lark import Discard, Token, v_args
 from sympy import Expr, Function, Symbol
 from sympy.physics.units import Quantity
 
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.definition.EmptyResolver import EmptyResolver
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.compiling.transforming.transformers.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
@@ -20,7 +20,7 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     """
 
     def __init__(self):
-        UndefinedAtomsTransformer.__init__(self, DefinitionStore())
+        UndefinedAtomsTransformer.__init__(self, EmptyResolver())
 
     def cas_expression(self, dependencies: list[Symbol | Function] = []) -> set[str]:
         return set(dependency.name for dependency in dependencies)

@@ -6,7 +6,7 @@ from sympy.solvers.solveset import NonlinearError
 
 from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.definition.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex

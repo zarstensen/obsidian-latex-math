@@ -1,14 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Any, override
 
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    DefinitionStore,
+    assert_acyclic_dependencies,
+)
+from lmat_cas_client.compiling.definition.DefinitionStoreResolver import (
+    DefinitionStoreResolver,
+)
 from lmat_cas_client.compiling.parsing.CasExprParser import (
     cas_expr_parser,
 )
 from lmat_cas_client.compiling.parsing.DefinitionsParser import definition_parser
 from lmat_cas_client.compiling.transforming.CasExprTransformer import (
     CasExpr,
-    cas_expr_tansformer_runner,
+    cas_expr_transformer_runner,
 )
 from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
     definitions_transformer_runner,
@@ -52,9 +58,11 @@ class LatexToCasExprCompiler(Compiler[[DefinitionStore], CasExpr]):
 
         dependencies = dependencies_transformer_runner.transform(ast)
 
-        def_store.assert_acyclic_dependencies(dependencies)
+        assert_acyclic_dependencies(def_store, dependencies)
 
-        return cas_expr_tansformer_runner.transform(ast, def_store)
+        return cas_expr_transformer_runner.transform(
+            ast, DefinitionStoreResolver(def_store, cas_expr_transformer_runner)
+        )
 
 
 class LatexToDefinitionCompiler(Compiler[[], Any]):
