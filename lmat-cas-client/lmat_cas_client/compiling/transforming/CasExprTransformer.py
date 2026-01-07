@@ -9,8 +9,8 @@ from sympy import Basic, Expr
 from sympy.core.numbers import Float, Integer
 from sympy.logic.boolalg import *
 
-from lmat_cas_client.compiling.DefinitionStore import (
-    DefinitionStore,
+from lmat_cas_client.compiling.definition.Resolver import (
+    DefinitionResolver,
 )
 from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
     PropositionsTransformer,
@@ -51,7 +51,7 @@ class CasExpr(NamedTuple):
         return len(self.expressions)
 
     # retreive the expression at the given index
-    def get_expr(self, expression_index: int):
+    def get_expr(self, expression_index: int) -> Basic:
         (expr, _) = self.expressions[expression_index]
         return expr
 
@@ -80,9 +80,9 @@ class CasExprTransformer(
     class Delim(Enum):
         MatDelim = 1
 
-    def __init__(self, definition_store: DefinitionStore):
-        UndefinedAtomsTransformer.__init__(self, definition_store)
-        BuiltInFunctionsTransformer.__init__(self, definition_store)
+    def __init__(self, definition_resolver: DefinitionResolver):
+        UndefinedAtomsTransformer.__init__(self, definition_resolver)
+        BuiltInFunctionsTransformer.__init__(self, definition_resolver)
 
     @v_args(inline=True)
     def NUMERIC_DIGIT(self, digit: Token):
@@ -301,8 +301,8 @@ class CasExprTransformer(
         )
 
 
-cas_expr_tansformer_runner = TransformerRunner[[DefinitionStore], CasExpr](
+cas_expr_transformer_runner = TransformerRunner[[DefinitionResolver], CasExpr](
     CasExprTransformer
 )
 
-__all__ = ["cas_expr_tansformer_runner"]
+__all__ = ["cas_expr_transformer_runner"]

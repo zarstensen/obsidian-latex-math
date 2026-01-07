@@ -1,8 +1,15 @@
 from typing import Iterator
 
 from lark import Token, Transformer, v_args
-from lmat_cas_client.compiling import DefinitionStore
-from lmat_cas_client.compiling.Definitions import SympyDefinition
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    SymbolDefinition,
+    SympyDef,
+)
+from lmat_cas_client.compiling.definition.Resolver import (
+    DefinitionResolver,
+    FunctionResToken,
+    SymbolResToken,
+)
 from lmat_cas_client.math_lib.units import UnitUtils
 from sympy import Expr, Function, Symbol
 from sympy.physics.units import Quantity
@@ -14,18 +21,20 @@ class UndefinedAtomsTransformer(Transformer):
     Handles transformation of rules relating to user defined (or undefined for that matter) symbols or functions.
     """
 
-    def __init__(self, definition_store: DefinitionStore):
-        self.__definition_store = definition_store
+    def __init__(self, definition_resolver: DefinitionResolver):
+        self.__definition_store = definition_resolver
 
     def combine_symbol(self, *symbol_strings: str) -> str:
         return "".join(map(str, symbol_strings))
 
     def substitute_symbol(self, symbol_name: str) -> Symbol | Expr:
-        definition = self.__definition_store.get_definition(
-            str(symbol_name), default=SympyDefinition(Symbol(symbol_name))
-        )
-
-        return definition.defined_value(self.__definition_store)
+        match self.__definition_store.get_resolver_token(str(symbol_name)):
+            case SymbolResToken() as token:
+                return self.__definition_store.resolve_value(token)
+            case FunctionResToken() as token:
+                return self.__definition_store.resolve_unapplied(token)
+            case _:
+                return Symbol(symbol_name)
 
     def indexed_symbol(
         self, symbol: Expr, index: Expr | str, primes: str | None
@@ -61,13 +70,10 @@ class UndefinedAtomsTransformer(Transformer):
     def undefined_function(
         self, func_name: str, func_args: Iterator[Expr] = None
     ) -> Function | Expr:
-        func_definition = self.__definition_store.get_definition(func_name)
-
-        if func_definition is not None and isinstance(
-            func_definition, DefinitionStore.FunctionDefinition
-        ):
-            return func_definition.applied_value(
-                self.__definition_store, [SympyDefinition(arg) for arg in func_args]
-            )
-        else:
-            return Function(func_name)(*func_args)
+        match self.__definition_store.get_resolver_token(func_name):
+            case FunctionResToken() as token:
+                return self.__definition_store.resolve_applied(
+                    token, map(lambda a: SymbolDefinition(SympyDef(a)), func_args)
+                )
+            case _:
+                return Function(func_name)(*func_args)
