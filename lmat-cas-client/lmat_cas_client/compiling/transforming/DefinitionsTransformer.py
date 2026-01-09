@@ -2,18 +2,16 @@ from typing import Any
 
 from lark import Token, Transformer, Tree, Visitor, v_args
 from regex import Regex
-from sympy import Basic
 
-from lmat_cas_client.compiling.definitions.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.Definitions import AstDefinition
-from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
-    dependencies_transformer_runner,
-)
-from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
+from lmat_cas_client.compiling.definition.DefinitionStore import DefinitionStore
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
     CasExpr,
     cas_expr_transformer_runner,
 )
+from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
+    dependencies_transformer_runner,
+)
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 
 
 class AstNamespaceRemover(Visitor):
@@ -62,9 +60,10 @@ class DefinitionsTransformer(Transformer):
         if len(def_val) != 1 or not hasattr(def_val.get_expr(-1), "name"):
             return ValueError("AAAAAA PANIC AAAAAAAAA")
 
-        return def_val.get_expr(-1).name, AstDefinition(
-            cas_expr_transformer_runner, dependencies_transformer_runner, value_ast
-        )
+        return "OO"
+        # return def_val.get_expr(-1).name, AstDefinition(
+        #     cas_expr_transformer_runner, dependencies_transformer_runner, value_ast
+        # )
 
 
 definitions_transformer_runner = TransformerRunner[

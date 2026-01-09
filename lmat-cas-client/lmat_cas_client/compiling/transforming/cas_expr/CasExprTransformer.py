@@ -1,12 +1,13 @@
 import itertools
 from enum import Enum
-from typing import Iterator, NamedTuple, Optional, Self
+from typing import Iterator, NamedTuple, Self
 
 from lark import Token, Transformer, v_args
 from lark.tree import Meta
-from lmat_cas_client.compiling.definitions.DefinitionStore import (
-    DefinitionStore,
+from lmat_cas_client.compiling.definition.Resolver import (
+    DefinitionResolver,
 )
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.compiling.transforming.cas_expr.ConstantsTransformer import (
     ConstantsTransformer,
 )
@@ -19,7 +20,6 @@ from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer i
 from lmat_cas_client.compiling.transforming.ComposeTransformers import (
     compose_transformers,
 )
-from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.math_lib import MatrixUtils
 from sympy import *
 from sympy import Basic, Expr
@@ -305,17 +305,18 @@ class CasExprTransformer(Transformer):
         )
 
 
-def cas_expr_transformer(store: DefinitionStore):
+def cas_expr_transformer(resolver: DefinitionResolver):
     return compose_transformers(
-        UndefinedAtomsTransformer(store),
+        UndefinedAtomsTransformer(resolver),
         ConstantsTransformer(),
-        BuiltInFunctionsTransformer(store),
+        BuiltInFunctionsTransformer(resolver),
         CasExprTransformer(),
     )
 
 
-cas_expr_transformer_runner = TransformerRunner[[DefinitionStore], CasExpr](
-    cas_expr_transformer
+cas_expr_transformer_runner: TransformerRunner[[DefinitionResolver], CasExpr] = (
+    TransformerRunner(cas_expr_transformer)
 )
+
 
 __all__ = ["cas_expr_transformer_runner"]

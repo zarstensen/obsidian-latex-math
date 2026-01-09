@@ -1,8 +1,9 @@
 import os
+
 from lark import Lark
+
 from lmat_cas_client.compiling.parsing.CasExprParser import latex_comment_remover
 from lmat_cas_client.compiling.parsing.Parser import Parser, lark_parser_defaults
-
 
 GRAMMAR_FILE = "cas_logic_expr.lark"
 

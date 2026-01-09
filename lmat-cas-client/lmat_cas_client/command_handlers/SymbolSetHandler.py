@@ -5,8 +5,9 @@ from sympy import *
 from sympy.logic.boolalg import BooleanAtom
 
 from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.Definitions import AssumptionDefinition
-from lmat_cas_client.compiling.definitions.DefinitionStore import DefinitionStore
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    DefinitionStore,
+)
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 from .CommandHandler import *
@@ -79,15 +80,18 @@ class SymbolSetHandler(CommandHandler):
 
         set_symbols = {set: [] for set in SETS}
 
+        return SymbolSetResult(set_symbols)
+
+        # this handler wont matter after refactor, so no point in refactoring it...
         # loop over sets and figure out which symbol belongs to which sets.
         for symbol in environment.symbols:
             # all definitions should be guaranteed to be assumptions,
             # but just in case we check it here.
 
-            symbol_definition = definition_store.get_definition(symbol)
+            symbol_definition = definition_store[symbol]
 
-            if not isinstance(symbol_definition, AssumptionDefinition):
-                continue
+            # if not isinstance(symbol_definition, AssumptionDefinition):
+            #     continue
 
             sympy_symbol = symbol_definition.defined_value(definition_store)
 

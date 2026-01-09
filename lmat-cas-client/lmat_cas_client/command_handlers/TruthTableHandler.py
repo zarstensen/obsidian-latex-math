@@ -8,11 +8,10 @@ from tabulate import tabulate
 
 from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.definitions.DefinitionStore import DefinitionStore
-
-# from lmat_cas_client.compiling.transforming.cas_logic_expr.PropositionsTransformer import (
-#     PropositionExpr,
-# )
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    DefinitionStore,
+)
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
@@ -96,7 +95,7 @@ class TruthTableResultLatex(TruthTableResult):
 # TruthTableHandler attempts to generate a truth table from the given expression.
 # Expects a PropositionExpr so will fail if it is not.
 class TruthTableHandler(CommandHandler):
-    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
+    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
         super().__init__()
         self._compiler = compiler
 

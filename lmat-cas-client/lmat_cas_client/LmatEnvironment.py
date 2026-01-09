@@ -1,22 +1,20 @@
-from typing import Optional, Self
+from typing import ChainMap, Optional, Self
 
 from pydantic import BaseModel, Field
-from sympy import Symbol
+from sympy import Function, Symbol
 from sympy.core.function import AppliedUndef
 
 from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
-from lmat_cas_client.compiling.Definitions import (
-    AssumptionDefinition,
-    AstDefinition,
-    AstFunctionDefinition,
-)
-from lmat_cas_client.compiling.definitions.DefinitionStore import (
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    AstDef,
+    AstFunDef,
     DefinitionStore,
+    EmptyDefinition,
+    FunctionDefinition,
+    SymbolDefinition,
+    SympyDef,
 )
 from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
-    cas_expr_transformer_runner,
-)
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     dependencies_transformer_runner,
 )
@@ -44,21 +42,22 @@ class LmatEnvironment(BaseModel):
     def create_definition_store(environment: Self) -> DefinitionStore:
         environment = LmatEnvironment.model_validate(environment)
 
-        definitions = {}
+        definition_store: DefinitionStore = {}
 
         for symbol_name, assumption_expr in environment.symbols.items():
-            definitions[symbol_name] = AssumptionDefinition(
-                Symbol(
-                    symbol_name, **{assumption: True for assumption in assumption_expr}
+            definition_store[symbol_name] = SymbolDefinition(
+                SympyDef(
+                    Symbol(
+                        symbol_name,
+                        **{assumption: True for assumption in assumption_expr},
+                    )
                 )
             )
 
         latex_to_sympy_compiler = LatexToCasExprCompiler()
 
         for definition in environment.definitions:
-            definition_id = latex_to_sympy_compiler.compile(
-                definition.name_expr, DefinitionStore.empty()
-            )
+            definition_id = latex_to_sympy_compiler.compile(definition.name_expr, {})
             # its not going to be like this for long anyways, so no point in making it pretty.
 
             definition_id = definition_id.get_expr(-1)
@@ -66,25 +65,28 @@ class LmatEnvironment(BaseModel):
             match definition_id:
                 case Symbol() as def_symbol:
                     if definition.value_expr == "":
-                        definitions[def_symbol.name] = None
+                        definition_store[def_symbol.name] = EmptyDefinition()
                     else:
-                        definitions[def_symbol.name] = AstDefinition(
-                            expr_transformer=cas_expr_transformer_runner,
-                            dependencies_transformer=dependencies_transformer_runner,
-                            ast_definition=cas_expr_parser.parse(definition.value_expr),
+                        ast = cas_expr_parser.parse(definition.value_expr)
+                        definition_store[def_symbol.name] = SymbolDefinition(
+                            AstDef(ast),
+                            deps=dependencies_transformer_runner.transform(ast),
                         )
                 case AppliedUndef() as def_function:
                     if definition.value_expr == "":
-                        definitions[def_function.name] = None
+                        definition_store[def_function.name] = EmptyDefinition()
                     else:
-                        definitions[def_function.name] = AstFunctionDefinition(
-                            expr_transformer=cas_expr_transformer_runner,
-                            dependencies_transformer=dependencies_transformer_runner,
-                            func_name=def_function.name,
-                            ast_body=cas_expr_parser.parse(definition.value_expr),
-                            variables=[arg.name for arg in def_function.args],
+                        ast = cas_expr_parser.parse(definition.value_expr)
+                        definition_store[def_function.name] = FunctionDefinition(
+                            AstFunDef(ast, Function(def_function.name)),
+                            deps=dependencies_transformer_runner.transform(
+                                ast
+                            ),  # TODO remove params from this set.
+                            params=[arg.name for arg in def_function.args],
                         )
                 case _:
                     pass
 
-        return StandardDefinitionStore.override(definitions)
+        def_store = ChainMap(definition_store, StandardDefinitionStore)
+
+        return def_store

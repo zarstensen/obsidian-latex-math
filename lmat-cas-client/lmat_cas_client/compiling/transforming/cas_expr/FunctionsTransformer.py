@@ -2,13 +2,9 @@ from typing import Iterator, Optional
 
 import sympy
 from lark import Token, Transformer, v_args
-from lmat_cas_client.compiling.Definitions import SympyDefinition
-from lmat_cas_client.compiling.definitions.DefinitionStore import (
-    DefinitionStore,
-    FunctionDefinition,
-)
-from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
-    UndefinedAtomsTransformer,
+from lmat_cas_client.compiling.definition.Resolver import (
+    DefinitionResolver,
+    FunctionResToken,
 )
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
@@ -24,8 +20,8 @@ class BuiltInFunctionsTransformer(Transformer):
     defined in the latex math grammar.
     """
 
-    def __init__(self, definitions_store: DefinitionStore):
-        self.__definition_store = definitions_store
+    def __init__(self, definition_resolver: DefinitionResolver):
+        self.__definition_resolver = definition_resolver
 
     def trig_function(
         self, func_token: Token, exponent: Expr | None, arg: Expr
@@ -395,7 +391,7 @@ class BuiltInFunctionsTransformer(Transformer):
 
     # Helper Methods
 
-    # tries to raise arg to the given exponent, exept if it is None,
+    # tries to raise arg to the given exponent, except if it is None,
     # or doing so results in no change to the resulting expression.
     def _try_raise_exponent(self, arg: Expr, exponent: Expr | None) -> Expr:
         if exponent is not None and exponent != 1:
@@ -411,46 +407,37 @@ class BuiltInFunctionsTransformer(Transformer):
     def _expr_as_function(
         self, expr: Expr, target_variables: int | Range | None = None
     ) -> tuple[Expr, tuple[Symbol]]:
-        variables = None
+        params = None
         body = None
 
         if isinstance(expr, UndefinedFunction):
-            func_def: FunctionDefinition = self.__definition_store.get_definition(
-                expr.name
-            )
+            match self.__definition_resolver.get_resolver_token(expr.name):
+                case FunctionResToken() as token:
+                    body = self.__definition_resolver.resolve_body(token)
+                    params = self.__definition_resolver.resolve_params(token)
 
-            if isinstance(func_def, FunctionDefinition):
-                variables = [
-                    self.__definition_store.get_definition(
-                        var_name, default=SympyDefinition(Symbol(var_name))
-                    ).defined_value(self.__definition_store)
-                    for var_name in func_def.variables
-                ]
-
-                body = func_def.applied_value(self.__definition_store)
-
-        if variables is None or body is None:
-            variables = symbols_variable_order(expr.free_symbols)
+        if params is None or body is None:
+            params = symbols_variable_order(expr.free_symbols)
             body = expr
 
             match target_variables:
                 case Range() as target_variable_range:
-                    variables = variables[: max(target_variable_range)]
+                    params = params[: max(target_variable_range)]
                 case int() as target_variable_count:
-                    variables = variables[:target_variable_count]
+                    params = params[:target_variable_count]
 
         # verify result
         match target_variables:
             case int() as target_variable_count:
-                if len(variables) != target_variables:
+                if len(params) != target_variables:
                     raise RuntimeError(
-                        f"Expected {target_variable_count} variables, but only found {len(variables)} ({', '.join(map(str, variables))})"
+                        f"Expected {target_variable_count} variables, but only found {len(params)} ({', '.join(map(str, params))})"
                     )
             case Range() as target_variable_range:
-                if len(variables) not in target_variable_range:
+                if len(params) not in target_variable_range:
                     raise RuntimeError(
-                        f"Expected {min(target_variable_range)} - {max(target_variable_range)} variables, but only found {len(variables)} ({', '.join(map(str, variables))})"
+                        f"Expected {min(target_variable_range)} - {max(target_variable_range)} variables, but only found {len(params)} ({', '.join(map(str, params))})"
                     )
 
         # return result
-        return body, variables
+        return body, params

@@ -1,6 +1,6 @@
 import pytest
 from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
-from lmat_cas_client.compiling.definitions.DefinitionStore import CyclicDependencyError
+from lmat_cas_client.compiling.definition.DefinitionStore import CyclicDependencyError
 from lmat_cas_client.compiling.parsing import PrettyParserError
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
@@ -75,10 +75,12 @@ class TestLatexToSympyCompiler:
     def test_matrix(self):
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}"
-        ) == Matrix([
-            [1],
-            [2],
-        ])
+        ) == Matrix(
+            [
+                [1],
+                [2],
+            ]
+        )
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 & 2 \end{bmatrix}"
         ) == Matrix([[1, 2]])
@@ -131,8 +133,9 @@ class TestLatexToSympyCompiler:
         assert self._parse_single_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert self._parse_single_expr(
-            r"""
+        assert (
+            self._parse_single_expr(
+                r"""
             \begin{bmatrix}
             10 \\
             20
@@ -142,27 +145,35 @@ class TestLatexToSympyCompiler:
             40
             \end{bmatrix}
             """
-        ) == Matrix([[10], [20]]) * Matrix([[30, 40]])
+            )
+            == Matrix([[10], [20]]) * Matrix([[30, 40]])
+        )
 
-        assert self._parse_single_expr(
-            r"""
+        assert (
+            self._parse_single_expr(
+                r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             """
-        ) == a * Matrix([[30, 40]])
+            )
+            == a * Matrix([[30, 40]])
+        )
 
-        assert self._parse_single_expr(
-            r"""
+        assert (
+            self._parse_single_expr(
+                r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
             """
-        ) == a * Matrix([[30, 40]])
+            )
+            == a * Matrix([[30, 40]])
+        )
 
         # powers
         assert self._parse_single_expr(r"b a^2") == a**2 * b
