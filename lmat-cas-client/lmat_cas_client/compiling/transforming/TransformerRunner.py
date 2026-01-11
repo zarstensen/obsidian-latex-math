@@ -9,7 +9,7 @@ class TransformerRunner[**PTransform, TRes: Transformer]:
     Constructs a new Transformer instance from the given Transformer factory, and transforms a given tree with the newly constructed instance.
     """
 
-    def __init__(self, transformer_factory: Callable[PTransform, TRes]):
+    def __init__(self, transformer_factory: Callable[PTransform, Transformer]):
         self._transformer_factory = transformer_factory
 
     def transform(

@@ -11,15 +11,21 @@ from lmat_cas_client.compiling.definition.DefinitionStoreResolver import (
 from lmat_cas_client.compiling.parsing.CasExprParser import (
     cas_expr_parser,
 )
-from lmat_cas_client.compiling.parsing.DefinitionsParser import definition_parser
-from lmat_cas_client.compiling.transforming.CasExprTransformer import (
+from lmat_cas_client.compiling.parsing.CasLogicExprParser import cas_logic_expr_parser
+from lmat_cas_client.compiling.parsing.DefinitionsParser import cas_expr_def_parser
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
     CasExpr,
+    CasExprTransformer,
     cas_expr_transformer_runner,
+)
+from lmat_cas_client.compiling.transforming.cas_logic_expr.PropositionsTransformer import (
+    cas_logic_expr_transformer_runner,
 )
 from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
     definitions_transformer_runner,
 )
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
+    DependenciesTransformer,
     dependencies_transformer_runner,
 )
 
@@ -65,8 +71,33 @@ class LatexToCasExprCompiler(Compiler[[DefinitionStore], CasExpr]):
         )
 
 
+class LatexToLogicCasExprComipler(Compiler[[DefinitionStore], CasExpr]):
+    @override
+    def compile(self, latex_str: str, def_store: DefinitionStore) -> CasExpr:
+        ast = cas_logic_expr_parser.parse(latex_str)
+
+        dependencies = dependencies_transformer_runner.transform(ast)
+
+        assert_acyclic_dependencies(def_store, dependencies)
+
+        return cas_logic_expr_transformer_runner.transform(
+            ast, DefinitionStoreResolver(def_store, cas_logic_expr_transformer_runner)
+        )
+
+
 class LatexToDefinitionCompiler(Compiler[[], Any]):
+    def __init__(
+        self,
+        expr_transformer: CasExprTransformer,
+        deps_transformer: DependenciesTransformer,
+    ):
+        super().__init__()
+        self._expr_transformer = expr_transformer
+        self._deps_transformer = deps_transformer
+
     @override
     def compile(self, latex_str: str) -> Any:
-        ast = definition_parser.parse(latex_str)
-        return definitions_transformer_runner.transform(ast)
+        ast = cas_expr_def_parser.parse(latex_str)
+        return definitions_transformer_runner.transform(
+            ast, self._expr_transformer, self._deps_transformer
+        )

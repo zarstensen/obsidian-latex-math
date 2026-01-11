@@ -8,11 +8,11 @@ from tabulate import tabulate
 
 from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.definition.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
-from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
-    PropositionExpr,
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    DefinitionStore,
 )
+from lmat_cas_client.compiling.parsing.CasLogicExprParser import cas_logic_expr_parser
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
@@ -60,14 +60,16 @@ class TruthTableResultMarkdown(TruthTableResult):
         headers = [*map(lmat_latex, self.columns), self.serialized_proposition]
         headers = [f"${header}$" for header in headers]
 
-        return CommandResult.result({
-            "truth_table": tabulate(
-                markdown_table_contents,
-                headers=headers,
-                tablefmt="pipe",
-                colalign=("center" for _ in range(len(self.columns) + 1)),
-            )
-        })
+        return CommandResult.result(
+            {
+                "truth_table": tabulate(
+                    markdown_table_contents,
+                    headers=headers,
+                    tablefmt="pipe",
+                    colalign=("center" for _ in range(len(self.columns) + 1)),
+                )
+            }
+        )
 
 
 # implementation for LATEX_ARRAY
@@ -84,9 +86,11 @@ class TruthTableResultLatex(TruthTableResult):
 
         headers = rf"{'&'.join(map(lmat_latex, self.columns))} & {self.serialized_proposition}"
 
-        return CommandResult.result({
-            "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{array_contents}\end{{array}}"
-        })
+        return CommandResult.result(
+            {
+                "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{array_contents}\end{{array}}"
+            }
+        )
 
 
 # TruthTableHandler attempts to generate a truth table from the given expression.
@@ -100,13 +104,13 @@ class TruthTableHandler(CommandHandler):
     def handle(self, message: TruthTableMessage) -> TruthTableResult:
         message = TruthTableMessage.model_validate(message)
 
-        definitions_store = LmatEnvironment.create_definition_store(message.environment)
+        definitions_store = LmatEnvironment.create_definition_store(
+            message.environment, cas_logic_expr_parser
+        )
         sympy_expr = self._compiler.compile(message.expression, definitions_store)
 
-        if not isinstance(sympy_expr, PropositionExpr):
-            raise HandlerError(
-                f"Expression must be a proposition, was {type(sympy_expr)}"
-            )
+        # if not isinstance(sympy_expr, PropositionExpr):
+        raise HandlerError(f"Expression must be a proposition, was {type(sympy_expr)}")
 
         sympy_expr = sympify(sympy_expr)
 

@@ -6,8 +6,11 @@ from sympy.solvers.solveset import NonlinearError
 
 from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.definition.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    DefinitionStore,
+)
+from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
@@ -72,7 +75,9 @@ class SolveHandler(CommandHandler):
         equations = list(
             self._compiler.compile(
                 message.expression,
-                LmatEnvironment.create_definition_store(message.environment),
+                LmatEnvironment.create_definition_store(
+                    message.environment, cas_expr_parser
+                ),
             ).get_all_expr()
         )
 
@@ -174,7 +179,9 @@ class SolveInfoHandler(CommandHandler):
         equations = list(
             self._parser.compile(
                 message.expression,
-                LmatEnvironment.create_definition_store(message.environment),
+                LmatEnvironment.create_definition_store(
+                    message.environment, cas_expr_parser
+                ),
             ).get_all_expr()
         )
 
