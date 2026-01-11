@@ -2,7 +2,7 @@ from collections import ChainMap
 from collections.abc import Iterable
 from typing import Any, MutableMapping, Optional, Self, override
 
-from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from sympy import Basic, Symbol
 from traitlets import Bool
@@ -175,9 +175,9 @@ class DefinitionStoreResolver(DefinitionResolver):
             case AstFunDef(body_ast, _):
                 cas_expr = self._transformer.transform(
                     body_ast,
-                    self._override_args({
-                        p: a for p, a in zip(function_definition.params, arguments)
-                    }),
+                    self._override_args(
+                        {p: a for p, a in zip(function_definition.params, arguments)}
+                    ),
                 )
                 return self._cached(cas_expr.get_expr(-1), key=cache_key, id=def_id)
             case _:

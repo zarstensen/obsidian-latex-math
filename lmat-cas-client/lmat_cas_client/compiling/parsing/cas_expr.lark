@@ -67,7 +67,7 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
 substitute_symbol: combine_symbol
 combine_symbol: indexed_symbol | _non_indexed_symbol
 
-!single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
+single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
@@ -192,8 +192,7 @@ limit_direction: _L_BRACE (ADD|SUB) _R_BRACE
     | ADD
     | SUB
 
-_lim_approach_symbol: _PROP_OP_LR_IMPLICATION
-limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _lim_approach_symbol basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
+limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _RIGHT_ARROW basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
 // prioritize delimited expressions over terms, such that e.g. \sum_{j = 0}^5 (j) j is parsed as Sum(j, (j, 0, 5)) * j and not Sum(j ** 2, (j, 0, 5)).
 _delimited_arg.1: _delimitedfactor
@@ -357,54 +356,6 @@ sor_and_chain: relation (_PROP_OP_AND relation)*
 
 _system_of_relations: sor_env | sor_and_chain
 
-// system_of_relations_expr: relation
-// system_of_relations_delim: _SOR_EXPR_DELIM -> matrix_like_delim
-// _system_of_relations_body: system_of_relations_delim? system_of_relations_expr (system_of_relations_delim system_of_relations_expr)* system_of_relations_delim?
-// system_of_relations: _CMD_BEGIN_ALIGN _system_of_relations_body _CMD_END_ALIGN
-//     | _CMD_BEGIN_CASES _system_of_relations_body _CMD_END_CASES
-
-
-// ======== Propositional Logic Structure
-
-// represents a chain of propositions, separated by equivalence symbols
-proposition_chain: _proposition | (_proposition|relation) (_PROP_OP_EQUIV (_proposition|relation))+
-
-// represents a single proposition in a series of chained propositions
-_proposition: _prop_bool_value | _delimited_proposition | prop_not | prop_xnor | prop_xor | prop_nor | prop_and | prop_nand | prop_or | prop_implies | prop_iff
-// represents a single proposition surrounded by parenthesess, brackets or braces.
-_delimited_proposition: _L_PAREN _proposition _R_PAREN | _L_BRACKET _proposition _R_BRACKET | _L_BRACE _proposition _R_BRACE
-
-// propositional operator presedence is based on wolfram alpha: https://www.wolframalpha.com/input?i=not+A+xor+B+nor++C+and+D+nand+E+or+F+implies+G+%3C%3D%3E+H
-
-prop_iff: prop_iff_arg (_PROP_OP_BIIMPLICATION prop_iff_arg)+
-?prop_iff_arg: prop_implies_arg | prop_implies
-
-!prop_implies: prop_implies_arg ((_PROP_OP_LR_IMPLICATION|_PROP_OP_NEG_LR_IMPLICATION|_PROP_OP_RL_IMPLICATION|_PROP_OP_NEG_RL_IMPLICATION) prop_implies_arg)+
-?prop_implies_arg: prop_or_arg | prop_or
-
-prop_or: prop_or_arg (_PROP_OP_OR prop_or_arg)+
-?prop_or_arg: prop_nand_arg | prop_nand
-
-prop_nand: prop_nand_arg (_PROP_OP_NAND prop_nand_arg)+
-?prop_nand_arg: prop_and_arg | prop_and
-
-prop_and: prop_and_arg (_PROP_OP_AND prop_and_arg)+
-?prop_and_arg: prop_nor_arg | prop_nor
-
-prop_nor: prop_nor_arg (_PROP_OP_NOR prop_nor_arg)+
-?prop_nor_arg: prop_xor_arg | prop_xor
-
-prop_xor: prop_xor_arg (_PROP_OP_XOR prop_xor_arg)+
-?prop_xor_arg: prop_xnor_arg | prop_xnor
-
-prop_xnor: prop_xnor_arg (_PROP_OP_XNOR prop_xnor_arg)+
-?prop_xnor_arg: prop_not_arg | prop_not
-
-prop_not: _PROP_OP_NOT prop_not_arg
-?prop_not_arg: _delimited_proposition | relation | _prop_bool_value
-
-_prop_bool_value: CMD_TAUTOLOGY | CMD_CONTRADICTION
-
 // ================ Terminals ================
 
 // ignore escaped whitespace in latex code
@@ -498,6 +449,8 @@ _FUNC_LIMIT:  /\\lim(?!its)/
 _FUNC_INTEGRAL:  "\\int" | "\\intop"
 _FUNC_SUM:  "\\sum"
 _FUNC_PRODUCT: "\\prod"
+_RIGHT_ARROW: /\\(?:to|(?:long)?rightarrow)/
+
 
 // common functions
 _FUNC_EXP:  "\\exp"
@@ -711,36 +664,5 @@ _CMD_BEGIN_CASES: CMD_BEGIN _WS? "cases" _WS? _R_BRACE
 _CMD_END_ALIGN: CMD_END _WS? "align" _WS? _R_BRACE
 _CMD_END_CASES: CMD_END _WS? "cases" _WS? _R_BRACE
 
-// ======== propositional logic ========
-
-CMD_TAUTOLOGY.1: /\\(?:mathrm|operatorname)\s*{\s*(?:T|True|TRUE)\s*}/ | "\\top"
-CMD_CONTRADICTION.1: /\\(?:mathrm|operatorname)\s*{\s*(?:F|False|FALSE)\s*}/ | "\\bot"
-
-_CMD_DOT: "\\dot"
-
-_PROP_OP_BIIMPLICATION: "\\iff"
-    | /\\(?:[Ll]ongl|[Ll])eftrightarrow/
-    | /\\(?:leftright|rightleft)harpoons/
-// have to increase priority due to _LIM_APPROACH_SYMBOL
-_PROP_OP_LR_IMPLICATION.1: "\\implies"
-    | "\\to"
-    | /\\(?:[Ll]ongr|[Rr])ightarrow/
-_PROP_OP_NEG_LR_IMPLICATION: /\\n[Rr]ightarrow/
-_PROP_OP_RL_IMPLICATION: /\\(?:[Ll]ongl|[Ll])eftarrow/
-_PROP_OP_NEG_RL_IMPLICATION: /\\n[Ll]eftarrow/
-_PROP_OP_OR: /\\(big)?vee/
-    | "\\lor"
-_PROP_OP_NAND: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_AND | _L_BRACE _WS? _PROP_OP_AND _WS? _R_BRACE)
 _PROP_OP_AND: /\\(big)?wedge/
     | "\\land"
-_PROP_OP_NOR: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
-_PROP_OP_XOR: /\\(big)?oplus/
-    | "\\veebar"
-    | _CMD_DOT _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
-_PROP_OP_XNOR: "\\odot"
-    | (_CMD_BAR|_CMD_OVERLINE) _WS? ( _PROP_OP_XOR | _L_BRACE _WS? (_PROP_OP_XOR) _WS? _R_BRACE)
-_PROP_OP_NOT: "\\neg"
-    | "\\sim"
-_PROP_OP_PREFIX_NOT: "\\not"
-
-_PROP_OP_EQUIV: "\\equiv"

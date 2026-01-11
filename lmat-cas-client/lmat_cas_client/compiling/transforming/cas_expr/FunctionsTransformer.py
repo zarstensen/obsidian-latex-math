@@ -1,13 +1,10 @@
 from typing import Iterator, Optional
 
 import sympy
-from lark import Token, v_args
+from lark import Token, Transformer, v_args
 from lmat_cas_client.compiling.definition.Resolver import (
     DefinitionResolver,
     FunctionResToken,
-)
-from lmat_cas_client.compiling.transforming.transformers.UndefinedAtomsTransformer import (
-    UndefinedAtomsTransformer,
 )
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
@@ -17,7 +14,7 @@ from sympy.tensor.array import derive_by_array
 
 
 @v_args(inline=True)
-class BuiltInFunctionsTransformer(UndefinedAtomsTransformer):
+class BuiltInFunctionsTransformer(Transformer):
     """
     The FucntionsTransformer holds the implementation of various mathematical function rules,
     defined in the latex math grammar.

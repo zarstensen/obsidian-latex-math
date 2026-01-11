@@ -1,6 +1,7 @@
 from typing import ChainMap, Optional, Self
 
 from pydantic import BaseModel, Field
+from pytest import Parser
 from sympy import Function, Symbol
 from sympy.core.function import AppliedUndef
 
@@ -14,6 +15,7 @@ from lmat_cas_client.compiling.definition.DefinitionStore import (
     SymbolDefinition,
     SympyDef,
 )
+from lmat_cas_client.compiling.definition.DefinitionStoreResolver import AstTransformer
 from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     dependencies_transformer_runner,
@@ -39,7 +41,9 @@ class LmatEnvironment(BaseModel):
 
     # Create a definition store populated with definitions based on the environments symbols, variables and functions fields.
     @staticmethod
-    def create_definition_store(environment: Self) -> DefinitionStore:
+    def create_definition_store(
+        environment: Self, expr_parser: Parser
+    ) -> DefinitionStore:
         environment = LmatEnvironment.model_validate(environment)
 
         definition_store: DefinitionStore = {}
@@ -67,7 +71,7 @@ class LmatEnvironment(BaseModel):
                     if definition.value_expr == "":
                         definition_store[def_symbol.name] = EmptyDefinition()
                     else:
-                        ast = cas_expr_parser.parse(definition.value_expr)
+                        ast = expr_parser.parse(definition.value_expr)
                         definition_store[def_symbol.name] = SymbolDefinition(
                             AstDef(ast),
                             deps=dependencies_transformer_runner.transform(ast),
@@ -76,7 +80,7 @@ class LmatEnvironment(BaseModel):
                     if definition.value_expr == "":
                         definition_store[def_function.name] = EmptyDefinition()
                     else:
-                        ast = cas_expr_parser.parse(definition.value_expr)
+                        ast = expr_parser.parse(definition.value_expr)
                         definition_store[def_function.name] = FunctionDefinition(
                             AstFunDef(ast, Function(def_function.name)),
                             deps=dependencies_transformer_runner.transform(

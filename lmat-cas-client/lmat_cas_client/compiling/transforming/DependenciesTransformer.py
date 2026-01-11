@@ -6,10 +6,10 @@ from sympy import Expr, Function, Symbol
 from sympy.physics.units import Quantity
 
 from lmat_cas_client.compiling.definition.EmptyResolver import EmptyResolver
-from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
-from lmat_cas_client.compiling.transforming.transformers.UndefinedAtomsTransformer import (
+from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 
 
 @v_args(inline=True)
@@ -23,6 +23,11 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
         UndefinedAtomsTransformer.__init__(self, EmptyResolver())
 
     def cas_expression(self, dependencies: list[Symbol | Function] = []) -> set[str]:
+        return set(dependency.name for dependency in dependencies)
+
+    def cas_logic_expression(
+        self, dependencies: list[Symbol | Function] = []
+    ) -> set[str]:
         return set(dependency.name for dependency in dependencies)
 
     def __default__(self, _data, children, _meta):

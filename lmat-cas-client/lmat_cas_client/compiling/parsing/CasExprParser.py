@@ -8,7 +8,7 @@ from lark.lexer import TerminalDef
 from regex import Regex
 from sympy import *
 
-from lmat_cas_client.compiling.parsing.Parser import Parser
+from lmat_cas_client.compiling.parsing.Parser import Parser, lark_parser_defaults
 
 
 # Represents a scope to be handled by the ScopePostLexer.
@@ -129,7 +129,7 @@ class CasExprPostLexer(PostLex):
         self._grammar_namespace = grammar_namespace
 
         if grammar_namespace != "":
-            self._namespace_regex = Regex(f"_?({grammar_namespace}).*")
+            self._namespace_regex = Regex(f"(_)?{grammar_namespace}(.*)")
 
         self.initialize_scopes()
 
@@ -204,32 +204,59 @@ class CasExprPostLexer(PostLex):
 
     def process(self, stream: Iterator[Token]) -> Iterator[Token]:
 
-        buffer = []
+        non_namespace_tokens = set()
 
         def filtered_iterator() -> Iterator[Token]:
             for item in stream:
                 if self._namespace_regex is not None and self._namespace_regex.match(
                     item.type
                 ):
-                    buffer.append(item)
+                    yield item.update(self._namespace_regex.sub(r"\1\2", item.type))
                 else:
-                    if self._namespace_regex is not None:
-                        yield item.update(self._namespace_regex.sub("", item.type))
-                    else:
-                        yield item
+                    non_namespace_tokens.add(item)
+                    yield item
 
         processed = self._process_scope(filtered_iterator(), LexerScope(), None, None)
 
         for item in processed:
-            while len(buffer) > 0:
-                yield buffer.pop()
-
-            if item.type.startswith("_"):
+            if item in non_namespace_tokens:
+                pass
+            elif item.type.startswith("_"):
                 item = item.update(f"_{self._grammar_namespace}{item.type[1:]}")
             else:
                 item = item.update(f"{self._grammar_namespace}{item.type}")
 
             yield item
+        # buffer = []
+
+        # def filtered_iterator() -> Iterator[Token]:
+        #     for item in stream:
+        #         if (
+        #             self._namespace_regex is not None
+        #             and not self._namespace_regex.match(item.type)
+        #         ):
+        #             # instead of this, change the type here and then remove it later? probably?
+        #             # idk if this will work anyways, what is the strat even if it does not work?
+        #             # lets not think about that and just DO IT! >:(
+        #             buffer.append(item)
+        #         else:
+        #             if self._namespace_regex is not None:
+        #                 yield item.update(self._namespace_regex.sub(r"\1\2", item.type))
+        #             else:
+        #                 yield item
+
+        # processed = self._process_scope(filtered_iterator(), LexerScope(), None, None)
+
+        # for item in processed:
+        #     while len(buffer) > 0:
+        #         yield buffer.pop()
+
+        #     if item.type.startswith("_"):
+        #         item = item.update(f"_{self._grammar_namespace}{item.type[1:]}")
+        #     else:
+        #         item = item.update(f"{self._grammar_namespace}{item.type}")
+
+        #     yield item
 
     def _process_scope(
         self,
@@ -294,15 +321,9 @@ cas_expr_parser = Parser(
     Lark.open(
         os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
         rel_to=os.path.dirname(__file__),
-        parser="lalr",
         start="cas_expression",
-        lexer="contextual",
-        debug=False,
-        cache=True,
-        propagate_positions=True,
-        maybe_placeholders=True,
-        regex=True,
         postlex=CasExprPostLexer(),
+        **lark_parser_defaults,
     ),
     pre_processor=latex_comment_remover,
 )

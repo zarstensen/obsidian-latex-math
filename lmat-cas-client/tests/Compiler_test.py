@@ -1,8 +1,13 @@
 import pytest
-from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
+from lmat_cas_client.compiling.Compiler import (
+    LatexToCasExprCompiler,
+    LatexToLogicCasExprComipler,
+)
 from lmat_cas_client.compiling.definition.DefinitionStore import CyclicDependencyError
 from lmat_cas_client.compiling.parsing import PrettyParserError
-from lmat_cas_client.compiling.transforming.CasExprTransformer import CasExpr
+from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
+from lmat_cas_client.compiling.parsing.CasLogicExprParser import cas_logic_expr_parser
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
 from lmat_cas_client.LmatEnvironment import EnvDefinition, LmatEnvironment
 from sympy import *
@@ -10,13 +15,13 @@ from sympy import Expr
 from sympy.logic.boolalg import *
 
 
-class TestLatexToSympyCompiler:
+class TestLatexToCasExprCompiler:
     compiler = LatexToCasExprCompiler()
 
     def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> CasExpr:
         environment = LmatEnvironment.model_validate(environment)
         return self.compiler.compile(
-            expr, LmatEnvironment.create_definition_store(environment)
+            expr, LmatEnvironment.create_definition_store(environment, cas_expr_parser)
         )
 
     def _parse_single_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
@@ -75,10 +80,12 @@ class TestLatexToSympyCompiler:
     def test_matrix(self):
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}"
-        ) == Matrix([
-            [1],
-            [2],
-        ])
+        ) == Matrix(
+            [
+                [1],
+                [2],
+            ]
+        )
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 & 2 \end{bmatrix}"
         ) == Matrix([[1, 2]])
@@ -131,8 +138,9 @@ class TestLatexToSympyCompiler:
         assert self._parse_single_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert self._parse_single_expr(
-            r"""
+        assert (
+            self._parse_single_expr(
+                r"""
             \begin{bmatrix}
             10 \\
             20
@@ -142,27 +150,35 @@ class TestLatexToSympyCompiler:
             40
             \end{bmatrix}
             """
-        ) == Matrix([[10], [20]]) * Matrix([[30, 40]])
+            )
+            == Matrix([[10], [20]]) * Matrix([[30, 40]])
+        )
 
-        assert self._parse_single_expr(
-            r"""
+        assert (
+            self._parse_single_expr(
+                r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             """
-        ) == a * Matrix([[30, 40]])
+            )
+            == a * Matrix([[30, 40]])
+        )
 
-        assert self._parse_single_expr(
-            r"""
+        assert (
+            self._parse_single_expr(
+                r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
             """
-        ) == a * Matrix([[30, 40]])
+            )
+            == a * Matrix([[30, 40]])
+        )
 
         # powers
         assert self._parse_single_expr(r"b a^2") == a**2 * b
@@ -398,91 +414,6 @@ class TestLatexToSympyCompiler:
 
         assert abs(result - (0.25 - 0.005)) <= 1e-14
 
-    def test_propositions_presedence(self):
-        a, b, c, d, e, f, g, h, i = symbols("A B C D E F G H I")
-
-        # test presedence
-        result = self._parse_single_expr(
-            r"\neg A \odot B \oplus C \bar \vee D \wedge E \overline \wedge F \vee G \implies H \iff I"
-        )
-        assert simplify(result) == simplify(
-            Equivalent(
-                Implies(Or(Nand(And(Nor(Xor(Xnor(Not(a), b), c), d), e), f), g), h), i
-            )
-        )
-
-        result = self._parse_single_expr(
-            r"A \iff B \Longleftrightarrow C \longleftrightarrow D \leftrightharpoons E \rightleftharpoons F "
-        )
-        assert simplify(result) == simplify(Equivalent(a, b, c, d, e, f))
-
-        result = self._parse_single_expr(
-            r"A \implies B \to C \Longrightarrow D \longrightarrow E \nRightarrow F \rightarrow G"
-        )
-        assert simplify(result) == simplify(
-            Not(((((a >> b) >> c) >> d) >> e) >> f) >> g
-        )
-
-        result = self._parse_single_expr(
-            r"A \Longleftarrow B \longleftarrow C \Leftarrow D \leftarrow E"
-        )
-        assert simplify(result) == simplify((((a << b) << c) << d) << e)
-
-        result = self._parse_single_expr(r"A \vee B")
-        assert simplify(result) == simplify(Or(a, b))
-
-        result = self._parse_single_expr(r"A \bar \wedge B \overline \wedge C")
-        assert simplify(result) == simplify(Nand(a, b, c))
-
-        result = self._parse_single_expr(r"A \wedge B")
-        assert simplify(result) == simplify(And(a, b))
-
-        result = self._parse_single_expr(r"A \bar \vee B \overline \vee C")
-        assert simplify(result) == simplify(Nor(a, b, c))
-
-        result = self._parse_single_expr(r"A \oplus B")
-        assert simplify(result) == simplify(Xor(a, b))
-
-        result = self._parse_single_expr(r"A \odot B")
-        assert simplify(result) == simplify(Xnor(a, b))
-
-        result = self._parse_single_expr(r"\neg A")
-        assert simplify(result) == simplify(Not(a))
-
-        result = self._parse_single_expr(r"\mathrm{T} \implies \mathrm{F}")
-        assert simplify(result) == simplify(S.true >> S.false)
-
-        result = self._parse_single_expr(r"(A \iff B) \wedge (C \iff D)")
-        assert simplify(result) == simplify(And(Equivalent(a, b), Equivalent(c, d)))
-
-    def test_symbolic_iff(self):
-        result = self._parse_single_expr(
-            r"\sqrt{\fracc3} \iff \frac{\sqrt{3}}{3} \sqrt{c}"
-        )
-        assert sympify(result)
-
-        result = self._parse_single_expr(r"3 \iff 5")
-        assert not sympify(result)
-
-        a = Symbol("A")
-        result = self._parse_single_expr(r"(c^2 \iff c) \vee A")
-        assert simplify(result.expr) == a
-
-    def test_proposition_variables(self):
-        result = self._parse_single_expr(
-            r"P \implies Q",
-            {
-                "definitions": [
-                    EnvDefinition(name_expr="P", value_expr=r"A \wedge B"),
-                    EnvDefinition(name_expr="Q", value_expr=r"B \vee A"),
-                ]
-            },
-        )
-
-        a, b = symbols("A B")
-
-        assert simplify(result) == simplify(Implies(And(a, b), Or(b, a)))
-
     def test_regression_101(self):
         x, y = symbols("x y")
 
@@ -622,3 +553,104 @@ class TestLatexToSympyCompiler:
     )
     def test_regression_192(self, latex, expected_expr):
         assert self._parse_single_expr(latex) == simplify(expected_expr)
+
+
+class TestLatexToLogicCompiler:
+    compiler = LatexToLogicCasExprComipler()
+
+    def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> CasExpr:
+        environment = LmatEnvironment.model_validate(environment)
+        return self.compiler.compile(
+            expr,
+            LmatEnvironment.create_definition_store(environment, cas_logic_expr_parser),
+        )
+
+    def _parse_single_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
+        return self._parse_expr(expr, environment).get_expr(-1)
+
+    def test_propositions_presedence(self):
+        a, b, c, d, e, f, g, h, i = symbols("A B C D E F G H I")
+
+        # test presedence
+        result = self._parse_single_expr(
+            r"\neg A \odot B \oplus C \bar \vee D \wedge E \overline \wedge F \vee G \implies H \iff I"
+        )
+        assert simplify(result) == simplify(
+            Equivalent(
+                Implies(Or(Nand(And(Nor(Xor(Xnor(Not(a), b), c), d), e), f), g), h), i
+            )
+        )
+
+        result = self._parse_single_expr(
+            r"A \iff B \Longleftrightarrow C \longleftrightarrow D \leftrightharpoons E \rightleftharpoons F "
+        )
+        assert simplify(result) == simplify(Equivalent(a, b, c, d, e, f))
+
+        result = self._parse_single_expr(
+            r"A \implies B \to C \Longrightarrow D \longrightarrow E \nRightarrow F \rightarrow G"
+        )
+        assert simplify(result) == simplify(
+            Not(((((a >> b) >> c) >> d) >> e) >> f) >> g
+        )
+
+        result = self._parse_single_expr(
+            r"A \Longleftarrow B \longleftarrow C \Leftarrow D \leftarrow E"
+        )
+        assert simplify(result) == simplify((((a << b) << c) << d) << e)
+
+        result = self._parse_single_expr(r"A \vee B")
+        assert simplify(result) == simplify(Or(a, b))
+
+        result = self._parse_single_expr(r"A \bar \wedge B \overline \wedge C")
+        assert simplify(result) == simplify(Nand(a, b, c))
+
+        result = self._parse_single_expr(r"A \wedge B")
+        assert simplify(result) == simplify(And(a, b))
+
+        result = self._parse_single_expr(r"A \bar \vee B \overline \vee C")
+        assert simplify(result) == simplify(Nor(a, b, c))
+
+        result = self._parse_single_expr(r"A \oplus B")
+        assert simplify(result) == simplify(Xor(a, b))
+
+        result = self._parse_single_expr(r"A \odot B")
+        assert simplify(result) == simplify(Xnor(a, b))
+
+        result = self._parse_single_expr(r"\neg A")
+        assert simplify(result) == simplify(Not(a))
+
+        result = self._parse_single_expr(r"\mathrm{T} \implies \mathrm{F}")
+        assert simplify(result) == simplify(S.true >> S.false)
+
+        result = self._parse_single_expr(r"(A \iff B) \wedge (C \iff D)")
+        assert simplify(result) == simplify(And(Equivalent(a, b), Equivalent(c, d)))
+
+        # TODO: this is no longer the respondibility of this part.
+
+    # def test_symbolic_iff(self):
+    #     result = self._parse_single_expr(
+    #         r"\sqrt{\fracc3} \iff \frac{\sqrt{3}}{3} \sqrt{c}"
+    #     )
+    #     assert sympify(result)
+
+    #     result = self._parse_single_expr(r"3 \iff 5")
+    #     assert not sympify(result)
+
+    #     a = Symbol("A")
+    #     result = self._parse_single_expr(r"(c^2 \iff c) \vee A")
+    #     assert simplify(result.expr) == a
+
+    def test_proposition_variables(self):
+        result = self._parse_single_expr(
+            r"P \implies Q",
+            {
+                "definitions": [
+                    EnvDefinition(name_expr="P", value_expr=r"A \wedge B"),
+                    EnvDefinition(name_expr="Q", value_expr=r"B \vee A"),
+                ]
+            },
+        )
+
+        a, b = symbols("A B")
+
+        assert simplify(result) == simplify(Implies(And(a, b), Or(b, a)))
