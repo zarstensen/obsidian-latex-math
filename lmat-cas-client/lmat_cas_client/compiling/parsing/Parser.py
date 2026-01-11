@@ -25,14 +25,15 @@ class Parser:
     """
 
     def __init__(
-        self, lark_parser: Lark, pre_processor: Optional[Callable[[str], str]]
+        self,
+        lark_parser: Lark,
+        *,
+        pre_processor: Optional[Callable[[str], str]] = None,
+        post_processor: Optional[Callable[[Tree], Tree]] = None,
     ):
-        if pre_processor is None:
 
-            def pre_processor(t):
-                return t  # default pre processor simply does nothign to the input.
-
-        self._pre_processor = pre_processor
+        self._pre_processor = pre_processor or (lambda s: s)
+        self._post_processor = post_processor or (lambda t: t)
         self._lark_parser = lark_parser
 
     @property
@@ -56,9 +57,11 @@ class Parser:
         pre_processed_text = self._pre_processor(text)
 
         try:
-            return self._lark_parser.parse(pre_processed_text, *args, **kwargs)
+            ast_result = self._lark_parser.parse(pre_processed_text, *args, **kwargs)
         except UnexpectedInput as e:
             raise self._prettify_unexpected_input(e, pre_processed_text) from e
+
+        return self._post_processor(ast_result)
 
     _PARSE_ERR_PRETTY_STR_SPAN = 30
     # Maximum number of expected tokens to show to the user.

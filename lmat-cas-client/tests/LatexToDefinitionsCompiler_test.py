@@ -4,12 +4,11 @@ from lmat_cas_client.compiling.Compiler import (
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     Definition,
 )
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
+    cas_expr_transformer_runner,
+)
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     dependencies_transformer_runner,
-)
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
-    CasExprTransformer,
-    cas_expr_transformer_runner,
 )
 
 

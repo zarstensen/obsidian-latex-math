@@ -11,11 +11,15 @@ from lmat_cas_client.compiling.definition.DefinitionStoreResolver import (
 from lmat_cas_client.compiling.parsing.CasExprParser import (
     cas_expr_parser,
 )
+from lmat_cas_client.compiling.parsing.CasLogicExprParser import cas_logic_expr_parser
 from lmat_cas_client.compiling.parsing.DefinitionsParser import cas_expr_def_parser
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
     CasExpr,
     CasExprTransformer,
     cas_expr_transformer_runner,
+)
+from lmat_cas_client.compiling.transforming.cas_logic_expr.PropositionsTransformer import (
+    cas_logic_expr_transformer_runner,
 )
 from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
     definitions_transformer_runner,
@@ -64,6 +68,20 @@ class LatexToCasExprCompiler(Compiler[[DefinitionStore], CasExpr]):
 
         return cas_expr_transformer_runner.transform(
             ast, DefinitionStoreResolver(def_store, cas_expr_transformer_runner)
+        )
+
+
+class LatexToLogicCasExprComipler(Compiler[[DefinitionStore], CasExpr]):
+    @override
+    def compile(self, latex_str: str, def_store: DefinitionStore) -> CasExpr:
+        ast = cas_logic_expr_parser.parse(latex_str)
+
+        dependencies = dependencies_transformer_runner.transform(ast)
+
+        assert_acyclic_dependencies(def_store, dependencies)
+
+        return cas_logic_expr_transformer_runner.transform(
+            ast, DefinitionStoreResolver(def_store, cas_logic_expr_transformer_runner)
         )
 
 

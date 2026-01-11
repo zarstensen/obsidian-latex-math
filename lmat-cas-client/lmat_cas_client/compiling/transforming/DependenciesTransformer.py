@@ -25,6 +25,11 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     def cas_expression(self, dependencies: list[Symbol | Function] = []) -> set[str]:
         return set(dependency.name for dependency in dependencies)
 
+    def cas_logic_expression(
+        self, dependencies: list[Symbol | Function] = []
+    ) -> set[str]:
+        return set(dependency.name for dependency in dependencies)
+
     def __default__(self, _data, children, _meta):
         symbols = []
 

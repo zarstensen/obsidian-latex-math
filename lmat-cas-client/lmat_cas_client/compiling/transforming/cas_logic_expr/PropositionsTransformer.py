@@ -1,5 +1,13 @@
 from lark import Token, Transformer, v_args
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
+from lmat_cas_client.compiling.definition.Resolver import DefinitionResolver
+from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
+    CasExpr,
+    cas_expr_transformer,
+)
+from lmat_cas_client.compiling.transforming.ComposeTransformers import (
+    compose_transformers,
+)
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from sympy import *
 from sympy.logic.boolalg import *
 
@@ -14,11 +22,11 @@ class CasLogicTransformer(Transformer):
     def CMD_TAUTOLOGY(self, _) -> Expr:
         return S.true
 
-    def CMD_CONTRADICTION(self, _) -> Expr:
+    def CMD_FALSUM(self, _) -> Expr:
         return S.false
 
     @v_args(meta=True, inline=True)
-    def cas_logic_expr(self, meta, *props: Expr) -> CasExpr:
+    def cas_logic_expression(self, meta, *props: Expr) -> CasExpr:
         return CasExpr([(prop, meta) for prop in props])
 
     def prop_iff(self, *args: tuple[Expr]) -> Expr:
@@ -75,3 +83,13 @@ class CasLogicTransformer(Transformer):
 
     def prop_not(self, arg: Expr) -> Expr:
         return Not(arg, evaluate=False)
+
+
+cas_logic_expr_transformer_runner = TransformerRunner[[DefinitionResolver], CasExpr](
+    lambda drs: compose_transformers(
+        CasLogicTransformer(),
+        cas_expr_transformer(drs),
+    )
+)
+
+__all__ = ["cas_logic_expr_transformer_runner"]
