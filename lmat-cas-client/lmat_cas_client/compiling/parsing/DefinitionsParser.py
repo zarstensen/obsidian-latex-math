@@ -7,36 +7,47 @@ from lmat_cas_client.compiling.parsing.CasExprParser import (
     latex_comment_remover,
 )
 from lmat_cas_client.compiling.parsing.Parser import Parser, lark_parser_defaults
+from lmat_cas_client.compiling.transforming.ComposeTransformers import (
+    AstNamespacesRemover,
+)
 
-GRAMMAR_FILE = "definition_grammar.lark"
+GRAMMAR_FILE = "cas_def.lark"
 
 
-# there should be 2 of these.
 cas_expr_def_parser = Parser(
     Lark.open(
         os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
         rel_to=os.path.dirname(__file__),
         postlex=CasExprPostLexer("cas_expr__"),
-        start="cas_expr_def",  # and also one for cas_logic_def_expression
+        start="cas_expr_def",
         **lark_parser_defaults,
     ),
     pre_processor=latex_comment_remover,
+    post_processor=AstNamespacesRemover(
+        "cas_expr"
+    ).visit,  # remove the cas_expr namespace from the ast,
+    # so the ast's present in the Definition's do not contain a cas_expr__ prefix.
+)
+"""
+Parser instance for parsing a latex string into a DefinitionStore.
+"""
+
+cas_logic_expr_def_parser = Parser(
+    Lark.open(
+        os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
+        rel_to=os.path.dirname(__file__),
+        postlex=CasExprPostLexer("cas_expr__"),
+        start="cas_logic_expr_def",
+        **lark_parser_defaults,
+    ),
+    pre_processor=latex_comment_remover,
+    post_processor=AstNamespacesRemover("cas_expr", "cas_logic_expr").visit,
+    # same as for cas_expr_def_parser, except we also need to remove the logic namespace.
 )
 
-# there should be 2 of these.
-# cas_logic_expr_def_parser = Parser(
-#     Lark.open(
-#         os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
-#         rel_to=os.path.dirname(__file__),
-#         postlex=CasExprPostLexer("cas_expr__"),
-#         start="cas_logic_expr_def",  # and also one for cas_logic_def_expression
-#         **lark_parser_defaults,
-#     ),
-#     pre_processor=latex_comment_remover,
-# )
-
 """
-PrettyParser instance capable of parsing a latex math string.
+Parser instance for parsing a latex string into a DefinitionStore.
+The latex string is expected to be logic expressions.
 """
 
-__all__ = ["cas_expr_def_parser"]
+__all__ = ["cas_expr_def_parser", "cas_logic_expr_def_parser"]

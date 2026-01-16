@@ -3,15 +3,12 @@ from typing import override
 from pydantic import BaseModel
 from sympy import *
 
-from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.definition.DefinitionStore import (
-    DefinitionStore,
+from lmat_cas_client.compiling.Compiler import (
+    lmat_env_to_definition_store,
 )
-from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
-from .CommandHandler import CommandHandler, CommandResult
+from .CommandHandler import CommandResult, CompilingCommandHandler
 
 
 class ConvertSympyModeMessage(BaseModel):
@@ -29,20 +26,16 @@ class ConvertSympyResult(CommandResult):
         return CommandResult.result(dict(code=str(sympify(self.sympy_expr))))
 
 
-class ConvertSympyHandler(CommandHandler):
-    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
-        super().__init__()
-        self._compiler = compiler
-
+class ConvertSympyHandler(CompilingCommandHandler):
     @override
     def handle(self, message: ConvertSympyModeMessage):
         message = ConvertSympyModeMessage.model_validate(message)
         # TODO: how should multiple expressions be handled?
         return ConvertSympyResult(
-            self._compiler.compile(
+            self._cas_expr_compiler.compile(
                 message.expression,
-                LmatEnvironment.create_definition_store(
-                    message.environment, cas_expr_parser
+                lmat_env_to_definition_store(
+                    message.environment, self._def_store_compiler
                 ),
             ).get_expr(-1)
         )

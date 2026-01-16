@@ -5,12 +5,9 @@ from sympy import *
 from sympy.solvers.solveset import NonlinearError
 
 from lmat_cas_client.Client import HandlerError
-from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.definition.DefinitionStore import (
-    DefinitionStore,
+from lmat_cas_client.compiling.Compiler import (
+    lmat_env_to_definition_store,
 )
-from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
@@ -63,21 +60,18 @@ class SolveResult(CommandResult):
 # if a symbol is not given, and the expression is multivariate, this mode sends a response with status multivariate_equation,
 # along with a list of possible symbols to solve for in its symbols key.
 # if successfull its sends a message with status solved, and the result in the result key.
-class SolveHandler(CommandHandler):
-    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
-        super().__init__()
-        self._compiler = compiler
-
+class SolveHandler(CompilingCommandHandler):
     @override
     def handle(self, message: SolveMessage) -> SolveResult:
         message = SolveMessage.model_validate(message)
 
+        definition_store = lmat_env_to_definition_store(
+            message.environment, self._def_store_compiler
+        )
+
         equations = list(
-            self._compiler.compile(
-                message.expression,
-                LmatEnvironment.create_definition_store(
-                    message.environment, cas_expr_parser
-                ),
+            self._cas_expr_compiler.compile(
+                message.expression, definition_store
             ).get_all_expr()
         )
 
@@ -168,20 +162,16 @@ class SolveInfoResult(CommandResult):
 
 # retreive equation info needed for configuring a solution through the solve command.
 # returns number of required symbols, and a list of symbols to choose from.
-class SolveInfoHandler(CommandHandler):
-    def __init__(self, parser: Compiler[[DefinitionStore], Expr]):
-        super().__init__()
-        self._parser = parser
-
+class SolveInfoHandler(CompilingCommandHandler):
     @override
     def handle(self, message: SolveInfoMessage) -> SolveInfoResult:
         message = SolveInfoMessage.model_validate(message)
+        definition_store = lmat_env_to_definition_store(
+            message.environment, self._def_store_compiler
+        )
         equations = list(
-            self._parser.compile(
-                message.expression,
-                LmatEnvironment.create_definition_store(
-                    message.environment, cas_expr_parser
-                ),
+            self._cas_expr_compiler.compile(
+                message.expression, definition_store
             ).get_all_expr()
         )
 

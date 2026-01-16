@@ -11,7 +11,6 @@ from lmat_cas_client.command_handlers.EvalHandler import EvalHandler
 from lmat_cas_client.command_handlers.ExpandHandler import ExpandHandler
 from lmat_cas_client.command_handlers.FactorHandler import FactorHandler
 from lmat_cas_client.command_handlers.SolveHandler import SolveHandler, SolveInfoHandler
-from lmat_cas_client.command_handlers.SymbolSetHandler import SymbolSetHandler
 from lmat_cas_client.command_handlers.test_handlers.TestHangHandler import (
     TestHangHandler,
 )
@@ -40,7 +39,6 @@ client.register_handler("factor", FactorHandler(LatexToCasExprCompiler()))
 client.register_handler("apart", ApartHandler(LatexToCasExprCompiler()))
 client.register_handler("solve", SolveHandler(LatexToCasExprCompiler()))
 client.register_handler("solve-info", SolveInfoHandler(LatexToCasExprCompiler()))
-client.register_handler("symbolsets", SymbolSetHandler(LatexToCasExprCompiler()))
 client.register_handler("convert-sympy", ConvertSympyHandler(LatexToCasExprCompiler()))
 client.register_handler("convert-units", ConvertUnitsHandler(LatexToCasExprCompiler()))
 client.register_handler("truth-table", TruthTableHandler(LatexToCasExprCompiler()))
