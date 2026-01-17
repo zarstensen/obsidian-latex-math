@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, ChainMap, override
 
+from lark import LarkError
+
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     DefinitionStore,
     assert_acyclic_dependencies,
@@ -140,7 +142,7 @@ def lmat_env_to_definition_store(
     for definition_str in env.definitionsv2:
         try:
             stores.append(compiler.compile(definition_str))
-        except IOError:
+        except LarkError:
             # TODO: how can we distinguish between not-a-definition latex and definition with error latex?
             # right now we just assume that any latex which produces a parse error is not intended to be a definition.
             pass

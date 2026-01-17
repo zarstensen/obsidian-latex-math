@@ -114,14 +114,14 @@ _DEF_SPACE.1: /\\q?quad/ | "\\enspace"
 
 _DEF_OP: ":=" | /\\vcentcolonqq?/ | "\\stackrel{def}{=}" | "\\stackrel{\\mathrm{def}}{=}" | "\\triangleq"
 // use this when declaring assumptions on a variable
-_VAR_ASSUME_OP: "\\in"
+_VAR_ASSUME_OP: /\\in(?!t)/
 // use this when declaring assumptions on a function.
 _FUN_ASSUME_OP: /\\(long)?mapsto/
 
 // sets for assumptions
 _SET_FORMATTER: /\\(pmb|boldsymbol|mathbf|mathbbm?|mathcal|mathscr)/
-_CMD_SET_MINUS: "\setminus" | "\backslash" | "-"
-_CMD_SET: "\set"
+_CMD_SET_MINUS: "\\setminus" | "\\backslash" | "-"
+_CMD_SET: "\\set"
 COMPLEX: _SET_FORMATTER _L_BRACE "C" _R_BRACE | "C"
 ALGEBRAIC: _CMD_OVERLINE _L_BRACE RATIONAL _R_BRACE
 TRANSCENDENTAL: COMPLEX _WS? _CMD_SET_MINUS _WS? ALGEBRAIC

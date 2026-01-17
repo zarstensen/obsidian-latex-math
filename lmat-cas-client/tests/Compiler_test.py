@@ -82,12 +82,10 @@ class TestLatexToCasExprCompiler:
     def test_matrix(self):
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}"
-        ) == Matrix(
-            [
-                [1],
-                [2],
-            ]
-        )
+        ) == Matrix([
+            [1],
+            [2],
+        ])
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 & 2 \end{bmatrix}"
         ) == Matrix([[1, 2]])
@@ -140,9 +138,8 @@ class TestLatexToCasExprCompiler:
         assert self._parse_single_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             \begin{bmatrix}
             10 \\
             20
@@ -152,35 +149,27 @@ class TestLatexToCasExprCompiler:
             40
             \end{bmatrix}
             """
-            )
-            == Matrix([[10], [20]]) * Matrix([[30, 40]])
-        )
+        ) == Matrix([[10], [20]]) * Matrix([[30, 40]])
 
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
         # powers
         assert self._parse_single_expr(r"b a^2") == a**2 * b

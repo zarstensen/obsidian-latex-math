@@ -10,15 +10,12 @@ import { HandlerInterrupter } from '/services/HandlerInterrupter';
 import { CasClientExtractor } from './services/CasClientExtractor';
 import { ExecutableSpawner, SourceCodeSpawner } from './services/CasClientSpawner';
 import { CasServer, ClientResponse, UnixTimestampMillis } from './services/CasServer';
-import { LmatCodeBlockRenderer } from './controllers/LmatCodeBlockRenderer';
 import { LmatSettingsTab } from '/views/LmatSettingsTab';
 import { EvaluateStatusBar } from '/views/LmatStatusBar';
 import { ConfirmModal } from '/views/modals/ConfirmModal';
 import { SuccessResponseVerifier } from './services/ResponseVerifier';
 import { EvaluateMode } from '/models/cas/messages/EvaluateMessage';
 import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
-import { CasCommandRequester } from './services/CasCommandRequester';
-import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
 import { mathjaxLoadLatexPackages } from './utils/MathJaxPackageLoader';
 
 interface LatexMathPluginSettings {
@@ -52,16 +49,10 @@ export default class LatexMathPlugin extends Plugin {
         await this.setupStatusBar(new HandlerInterrupter(this.cas_server, response_verifier));
 
 
-        // add code block renderer
-        const lmat_code_block_renderer = new LmatCodeBlockRenderer(
-            new CasCommandRequester(this.cas_server, this.spawn_cas_client_promise, response_verifier, SymbolSetMessage)
-        );
-
-        this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
-
         // add commands
         this.addCommands(new Map([
             [new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate LaTeX expression'],
+            [new EvaluateCommand(EvaluateMode.EVAL_LOGIC, response_verifier), 'Evaluate LaTeX logic expression'],
             [new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf LaTeX expression'],
             [new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand LaTeX expression'],
             [new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor LaTeX expression'],
@@ -130,7 +121,7 @@ export default class LatexMathPlugin extends Plugin {
 
 
     private async setupStatusBar(handler_interrupter: HandlerInterrupter): Promise<EvaluateStatusBar> {
-        const status_bar = new EvaluateStatusBar(await this.addStatusBarItem());
+        const status_bar = new EvaluateStatusBar(this.addStatusBarItem());
 
         status_bar.show(false);
 
