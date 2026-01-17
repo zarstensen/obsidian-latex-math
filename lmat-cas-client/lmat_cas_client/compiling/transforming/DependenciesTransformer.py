@@ -35,8 +35,8 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
         return symbols
 
     @override
-    def substitute_symbol(self, symbol: str) -> set[str]:
-        return set((symbol,))
+    def substitute_symbol(self, symbol: Symbol) -> set[str]:
+        return set((symbol.name,))
 
     @override
     def unit(self, unit_symbol: Symbol) -> set[str]:
@@ -52,12 +52,12 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
 
     @override
     def undefined_function(
-        self, func_name: str, func_args: Iterator[set[str]]
+        self, func_name: Symbol, func_args: Iterator[set[str]]
     ) -> set[str]:
         # include both the function itself, and all arguments to the function as dependencies.
         # e.g. f(x, 1, y) should produce { 'f', 'x', 'y' }
 
-        return set((func_name, *func_args))
+        return set((func_name.name, *func_args))
 
     @v_args(inline=False)
     def list_of_expressions(self, tokens: Iterator[set[str]]) -> set[str]:

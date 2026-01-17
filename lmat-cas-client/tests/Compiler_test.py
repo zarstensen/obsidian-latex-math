@@ -349,6 +349,11 @@ class TestLatexToCasExprCompiler:
                 {"definitionsv2": [r"x := y \quad y := x \land f (x, y) := x y"]},
             )
 
+        result = self._parse_single_expr(
+            "f(1, 2)",
+            {"definitionsv2": [r"x := y \quad y := x \land f (x, y) := x y"]},
+        )
+
         with pytest.raises(CyclicDependencyError):
             result = self._parse_single_expr(
                 "f(10)",

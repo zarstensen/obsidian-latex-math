@@ -149,7 +149,7 @@ class BuiltInFunctionsTransformer(Transformer):
         return [*arg_list]
 
     def derivative_symbols_first(
-        self, power: Optional[Expr], symbols: Iterator[tuple[Expr, Expr]], expr: Expr
+        self, power: Optional[Expr], symbols: Iterator[tuple[Symbol, int]], expr: Expr
     ):
         exponent_sum = sum(s[1] for s in symbols)
 

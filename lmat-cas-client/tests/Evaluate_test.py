@@ -318,6 +318,16 @@ class TestEvaluate:
 
         assert result.sympy_expr == x
 
+    def test_function_assumptions(self):
+        handler = EvalHandler(self.expr_compiler, self.store_compiler)
+
+        result = handler.handle({
+            "expression": r"\dv{f(x)}{x}",
+            "environment": {"definitionsv2": [r"f (x) \mapsto \mathbb{C}"]},
+        })
+
+        assert result.sympy_expr != 0
+
     def test_gradient(self):
         handler = EvalHandler(self.expr_compiler, self.store_compiler)
 
@@ -379,6 +389,12 @@ class TestEvaluate:
         })
         x = symbols("x")
         assert result.sympy_expr == 60 * x**2 + 72 * x
+
+    def test_partial_derivative(self):
+        handler = EvalHandler(self.expr_compiler, self.store_compiler)
+        result = handler.handle({"expression": "\n\\dv{x} x\n", "environment": {}})
+
+        assert result.sympy_expr == 1
 
     def test_function(self):
         handler = EvalHandler(self.expr_compiler, self.store_compiler)
