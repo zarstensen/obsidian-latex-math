@@ -8,8 +8,8 @@ export type Definition = { name_expr: string, value_expr: string };
 // it contains information about symbol assumptions, variable definitions, units, and solution domains.
 export class LmatEnvironment {
 
-    public static fromCodeBlock(code_block: string | undefined, definitions: Definition[]) {
-        if(!code_block) {
+    public static fromCodeBlock(code_block: string | undefined, definitions: string[]) {
+        if (!code_block) {
             return new LmatEnvironment({}, definitions);
         }
 
@@ -49,20 +49,20 @@ export class LmatEnvironment {
                 const code_block_contents = editor.getRange(editor.offsetToPos(section.position.start.offset), editor.offsetToPos(section.position.end.offset));
                 return this.LMAT_BLOCK_REGEX.test(code_block_contents);
             });
-        
+
         // find the closest lmat code block
 
         let closest_section = undefined;
 
-        for(const section of sections) {
-            if(section.position.end.offset < editor.posToOffset(position)) {
+        for (const section of sections) {
+            if (section.position.end.offset < editor.posToOffset(position)) {
                 closest_section = section;
             } else {
                 break;
             }
         }
 
-        if(!closest_section) {
+        if (!closest_section) {
             return new LmatEnvironment(undefined, this.parseDefinitions(editor.getRange(editor.offsetToPos(0), position)));
         }
 
@@ -76,19 +76,11 @@ export class LmatEnvironment {
     }
 
     public static parseDefinitions(search_string: string) {
-        const definitions: Definition[] = [ ];
+        const definitions: string[] = [];
+        const definition_matches = search_string.matchAll(this.LMAT_POTENTIAL_DEFINITION_REGEX);
 
-        const definition_matches = search_string.matchAll(this.LMAT_DEFINITION_REGEX);
-
-        for(const def of definition_matches) {
-            const def_name = (def.groups?.definition_name ?? "").trim();
-            const def_expr = (def.groups?.definition_expr ?? "").trim();
-
-            if(def_name === "") {
-                continue;
-            }
-
-            definitions.push({ name_expr: def_name, value_expr: def_expr });
+        for (const def of definition_matches) {
+            definitions.push(def[1]);
         }
 
         return definitions;
@@ -100,7 +92,7 @@ export class LmatEnvironment {
          * which sympy will take into account when evaluating any expression, containing this symbol.
          */
         public symbols: { [symbol: string]: string[] } = {},
-        public definitions: Definition[] = [],
+        public definitionsv2: string[] = [],
         /**
          * the unit system to use when converting between units.
          * if left undefined, SI is used as the default system.
@@ -115,5 +107,9 @@ export class LmatEnvironment {
     // regex for extracting the contents of an lmat code block.
     private static readonly LMAT_BLOCK_REGEX = /^```lmat\s*(?:\r\n|\r|\n)([\s\S]*?)```$/;
 
-    private static readonly LMAT_DEFINITION_REGEX = /(?<!\\)(?:\\{2})*\$(?<definition_name>(?:(?<!\\)\\(?:\\{2})*\$|[^$])*):=(?<definition_expr>.*?)(?<!\\)(?:\\{2})*\$/gs; 
+    private static readonly ESC_DOLLAR_REGEX = String.raw`(?<!\\)\\(?:\\{2})*\$`;
+    private static readonly NO_ESC_DOLLAR_REGEX = String.raw`(?<!\\)(?:\\{2})*\$`;
+    private static readonly DEF_OP_REGEX = String.raw`(?::=|\\vcentcolonqq?|\\stackrel{def}{=}|\\stackrel{\\mathrm{def}}{=}|\\triangleq|\\in(?!t)|\\(long)?mapsto)`;
+
+    private static readonly LMAT_POTENTIAL_DEFINITION_REGEX = new RegExp(`${this.NO_ESC_DOLLAR_REGEX}((?:${this.ESC_DOLLAR_REGEX}|[^$])*?${this.DEF_OP_REGEX}.*?)${this.NO_ESC_DOLLAR_REGEX}`, "gs");
 }

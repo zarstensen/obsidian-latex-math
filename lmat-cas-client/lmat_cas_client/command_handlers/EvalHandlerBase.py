@@ -6,17 +6,14 @@ from sympy import *
 from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
-from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
-from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.definition.DefinitionStore import (
-    DefinitionStore,
+from lmat_cas_client.compiling.Compiler import (
+    lmat_env_to_definition_store,
 )
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
-from .CommandHandler import CommandHandler, CommandResult
+from .CommandHandler import CommandResult, CompilingCommandHandler
 
 
 class EvaluateMessage(BaseModel):
@@ -47,10 +44,12 @@ class EvaluateResult(CommandResult, ABC):
         )
 
 
-class EvalHandlerBase(CommandHandler, ABC):
-    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
-        super().__init__()
-        self._compiler = compiler
+class EvalHandlerBase(CompilingCommandHandler, ABC):
+    """
+    Base class command handler for all the evaluate suite command handlers.
+    All implementing classes need to implement an evaluate method,
+    this base class takes rest of all of the remaining logic.
+    """
 
     @abstractmethod
     def evaluate(self, sympy_expr: Expr, message: EvaluateMessage) -> Expr:
@@ -60,11 +59,11 @@ class EvalHandlerBase(CommandHandler, ABC):
     def handle(self, message: EvaluateMessage) -> EvaluateResult:
         message = EvaluateMessage.model_validate(message)
 
-        definitions_store = LmatEnvironment.create_definition_store(
-            message.environment, cas_expr_parser
+        definitions_store = lmat_env_to_definition_store(
+            message.environment, self._def_store_compiler
         )
 
-        [*_, (sympy_expr, expr_meta)] = self._compiler.compile(
+        [*_, (sympy_expr, expr_meta)] = self._cas_expr_compiler.compile(
             message.expression, definitions_store
         ).expressions
 

@@ -1,8 +1,8 @@
 from itertools import chain
 from typing import Iterator, override
 
-from lark import Discard, Token, v_args
-from sympy import Expr, Function, Symbol
+from lark import Discard, v_args
+from sympy import Symbol
 from sympy.physics.units import Quantity
 
 from lmat_cas_client.compiling.definition.EmptyResolver import EmptyResolver
@@ -22,51 +22,49 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     def __init__(self):
         UndefinedAtomsTransformer.__init__(self, EmptyResolver())
 
-    def cas_expression(self, dependencies: list[Symbol | Function] = []) -> set[str]:
-        return set(dependency.name for dependency in dependencies)
-
-    def cas_logic_expression(
-        self, dependencies: list[Symbol | Function] = []
-    ) -> set[str]:
-        return set(dependency.name for dependency in dependencies)
-
-    def __default__(self, _data, children, _meta):
-        symbols = []
+    def __default__(self, _data, children, _meta) -> set[str]:
+        symbols = set()
 
         for child in children:
-            if child is None or isinstance(child, Token):
-                continue
-            elif isinstance(child, list) or isinstance(child, tuple):
-                symbols.extend(child)
-            else:
-                symbols.append(child)
-
-        if len(symbols) == 0:
-            return Discard
+            match child:
+                case str() if type(child) is str:
+                    symbols.add(child)
+                case set() if all(isinstance(e, str) for e in child):
+                    symbols.update(child)
 
         return symbols
 
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol:
-        symbol_or_unit = super().unit(unit_symbol)
+    @override
+    def substitute_symbol(self, symbol: Symbol) -> set[str]:
+        return set((symbol.name,))
 
-        if isinstance(symbol_or_unit, Quantity):
-            return Discard
+    @override
+    def unit(self, unit_symbol: Symbol) -> set[str]:
+        symbol_or_unit: set[str] | Quantity = super().unit(unit_symbol)
 
-        return symbol_or_unit
+        match symbol_or_unit:
+            case Quantity():
+                return Discard
+            case set():
+                return symbol_or_unit
+            case _:
+                assert False
 
     @override
     def undefined_function(
-        self, func_name: str, func_args: Iterator[Expr]
-    ) -> Function | Expr:
+        self, func_name: Symbol, func_args: Iterator[set[str]]
+    ) -> set[str]:
         # include both the function itself, and all arguments to the function as dependencies.
-        # e.g. f(x, 1, y) should produce [ 'f', 'x', 'y' ]
+        # e.g. f(x, 1, y) should produce { 'f', 'x', 'y' }
 
-        return [Function(func_name), *func_args]
+        return set((func_name.name, *func_args))
 
     @v_args(inline=False)
-    def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
-        return list(chain.from_iterable(tokens))
+    def list_of_expressions(self, tokens: Iterator[set[str]]) -> set[str]:
+        return set(chain.from_iterable(tokens))
 
+
+type DepsTransformer = TransformerRunner[[], set[str]]
 
 dependencies_transformer_runner = TransformerRunner[[], set[str]](
     DependenciesTransformer

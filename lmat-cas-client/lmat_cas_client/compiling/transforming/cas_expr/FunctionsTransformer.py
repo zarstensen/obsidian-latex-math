@@ -149,7 +149,7 @@ class BuiltInFunctionsTransformer(Transformer):
         return [*arg_list]
 
     def derivative_symbols_first(
-        self, power: Optional[Expr], symbols: Iterator[tuple[Expr, Expr]], expr: Expr
+        self, power: Optional[Expr], symbols: Iterator[tuple[Symbol, int]], expr: Expr
     ):
         exponent_sum = sum(s[1] for s in symbols)
 
@@ -284,7 +284,8 @@ class BuiltInFunctionsTransformer(Transformer):
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
         exponents_str = exponent.value
         exponents_str = (
-            exponents_str.replace("{", "")
+            exponents_str
+            .replace("{", "")
             .replace("}", "")
             .replace("\\ast", "H")
             .replace("*", "H")

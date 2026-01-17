@@ -1,14 +1,25 @@
-from collections.abc import Iterable
-from typing import Iterator, Optional, override
+from typing import Iterator
 
 from lark import Token, Transformer, Tree, Visitor
 from regex import Regex
 
 
 class AstNamespacesRemover(Visitor):
+    """
+    Remove the given grammar namespaces from some AST.
+    These namespaces are added when lark imports stuff from other files,
+    e.g. %import a.rule_a is aliased to a__rule_a, however this confuses
+    the parser, unless merge_transformers is used, but merge transformers
+    does not allow for the transformers to cyclicly depend on each other.
+
+    for this to work, the simplest solution is just to remove this namespace,
+    ensure no collisions manually (rarely happens anyways), and combine all of the transformers
+    into one big transformer, via. reflection (see compose_transformers).
+    """
+
     def __init__(self, *namespaces: str):
         self._rem_regex = Regex(
-            rf"^(_)?(?:{'|'.join(namespace for namespace in namespaces)})__(.*)$"
+            rf"^(_)?(?:(?:{'|'.join(namespace for namespace in namespaces)})__)+(.*)$"
         )
 
     def __default__(self, node: Tree):
@@ -24,12 +35,24 @@ class AstNamespacesRemover(Visitor):
                     new_children.append(
                         child.update(self._rem_regex.sub(r"\1\2", child.type))
                     )
+                case None:
+                    new_children.append(None)
+                case _:
+                    raise ValueError("Unknown node type")
 
         node.children = new_children
         return node
 
 
 def compose_transformers(*transformers: Iterator[Transformer]):
+    """
+    Compose a series of transformers into a singular transformer,
+    no namespaces are added to any of the transformers.
+
+    rule handlers are prioritized from right to left,
+    so if 2 rule handlers of the same name exists in the transformers list,
+    the one in the transformer furthest to the right, is picked.
+    """
     composed_transformer = Transformer()
 
     for transformer in transformers:

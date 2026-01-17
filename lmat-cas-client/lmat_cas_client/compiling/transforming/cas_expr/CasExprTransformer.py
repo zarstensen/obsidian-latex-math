@@ -121,15 +121,13 @@ class CasExprTransformer(Transformer):
                 return CasExpr([(sympy_expr, meta)])
 
     def sor_env(self, relations: list[CasExpr | Delim]) -> CasExpr:
-        return CasExpr.from_cas_exprs(
-            [
-                next(row)  # the row iterator should only contain 1 element
-                for is_delim, row in itertools.groupby(
-                    relations, lambda t: t == self.Delim.MatDelim
-                )
-                if not is_delim
-            ]
-        )
+        return CasExpr.from_cas_exprs([
+            next(row)  # the row iterator should only contain 1 element
+            for is_delim, row in itertools.groupby(
+                relations, lambda t: t == self.Delim.MatDelim
+            )
+            if not is_delim
+        ])
 
     def sor_and_chain(self, relations: list[CasExpr]) -> CasExpr:
         return CasExpr.from_cas_exprs(relations)

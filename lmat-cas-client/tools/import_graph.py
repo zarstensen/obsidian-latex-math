@@ -46,7 +46,7 @@ def normalize_import(current_module: str, imported: str) -> str:
         parts = current_module.split(".")
         if dots > len(parts):
             return ""
-        base = parts[: -dots]
+        base = parts[:-dots]
         if suffix:
             return ".".join(base + [suffix])
         return ".".join(base)

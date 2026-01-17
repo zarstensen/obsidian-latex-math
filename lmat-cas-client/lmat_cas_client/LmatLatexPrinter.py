@@ -105,9 +105,11 @@ class LmatLatexPrinter(LatexPrinter):
         constants, non_constants = sift(args, lambda a: a.is_number, binary=True)
         units, symbols = sift(
             non_constants,
-            lambda s: isinstance(s, Quantity)
-            or isinstance(s, Pow)
-            and isinstance(s.base, Quantity),
+            lambda s: (
+                isinstance(s, Quantity)
+                or isinstance(s, Pow)
+                and isinstance(s.base, Quantity)
+            ),
             binary=True,
         )
 
