@@ -3,6 +3,7 @@ import { LmatEnvironment } from "../LmatEnvironment";
 
 export enum EvaluateMode {
     EVAL = 'eval',
+    EVAL_LOGIC = 'eval-logic',
     EVALF = 'evalf',
     EXPAND = 'expand',
     FACTOR = 'factor',

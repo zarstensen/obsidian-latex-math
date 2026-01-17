@@ -1,22 +1,10 @@
 %import .cas_expr._IGNORE -> _CAS_EXPR__IGNORE
-%import .cas_expr._L_FORMAT
-%import .cas_expr._R_FORMAT
-%import .cas_expr._WS
-%import .cas_expr.ADD
-%import .cas_expr.SUB
-%import .cas_expr.LT
-%import .cas_expr.LTE
-%import .cas_expr.GT
-%import .cas_expr.GTE
-%import .cas_expr._L_BRACE
-%import .cas_expr._R_BRACE
-%import .cas_expr._CMD_OVERLINE
-%import .cas_expr._UNDERSCORE // so these HAVE to be imported as rules, which is kind of dumb, actually really dumb
-%import .cas_expr._COMMA
+%import .cas_expr (_L_FORMAT, _R_FORMAT, _WS, ADD, SUB, LT, LTE, GT, GTE, _L_BRACE, _R_BRACE, _L_PAREN, _R_PAREN, _CMD_OVERLINE, _UNDERSCORE, _COMMA, _PROP_OP_AND)
 // should these be aliased? it does not really make a difference, but i guess it makes sense to do it?
 %import .cas_expr.substitute_symbol -> cas_expr__substitute_symbol
 %import .cas_expr.undefined_function -> cas_expr__undefined_function
-%import .cas_expr.relation -> cas_expr__relation
+%import .cas_expr.relation
+%import .cas_logic_expr.cas_logic_expression
 
 // what is the left hand side?
 // - symbol
@@ -71,19 +59,29 @@
 // f (x, y, z) \mapsto \mathbbm{R} (the symbol 'f', should be interpreted as a function taking 3 arguments, x, y and z, and its output always being a part of the real numbers set)
 //
 
-cas_logic_expr_def: cas_expr__combine_symbol _DEF_OP 
+cas_logic_expr_def: symbol_cas_logic_expr_def (_DEF_SPACE symbol_cas_logic_expr_def)* -> cas_expr_def
 
-?cas_expr_def: value_def_expr | assumption_def_expr
+cas_expr_def: _definition ((_PROP_OP_AND|_DEF_SPACE) _definition)*
 
-value_def_expr:  def_lhs _DEF_OP cas_expr__relation
+_definition: symbol_cas_expr_def | function_def | assumption_def | function_assumption_def
 
-assumption_def_expr: def_lhs (_COMMA def_lhs)* _VAR_ASSUME_OP assumption_set
+symbol_cas_logic_expr_def: symbol _DEF_OP cas_logic_expression -> symbol_cas_expr_def
 
-def_lhs: cas_expr__substitute_symbol -> cas_expr__cas_expression
+symbol_cas_expr_def: symbol _DEF_OP [relation]
+
+function_def: symbol function_params _DEF_OP [relation]
+
+assumption_def: symbol (_COMMA symbol)* _VAR_ASSUME_OP assumption_set
+
+function_assumption_def: symbol function_params _FUN_ASSUME_OP assumption_set
+
+function_params: _L_PAREN symbol (_COMMA symbol)* _R_PAREN
+
+?symbol: cas_expr__combine_symbol
 
 assumption_set: COMPLEX
     | ALGEBRAIC
-    | TRANSENDENTAL
+    | TRANSCENDENTAL
     | EXT_REAL
     | REAL
     | IMAGINARY
@@ -112,38 +110,40 @@ assumption_set: COMPLEX
 %ignore _L_FORMAT
 %ignore _R_FORMAT
 
+_DEF_SPACE.1: /\\q?quad/ | "\\enspace"
+
 _DEF_OP: ":=" | /\\vcentcolonqq?/ | "\\stackrel{def}{=}" | "\\stackrel{\\mathrm{def}}{=}" | "\\triangleq"
 // use this when declaring assumptions on a variable
-_VAR_ASSUME_OP: "\\in"
+_VAR_ASSUME_OP: /\\in(?!t)/
 // use this when declaring assumptions on a function.
 _FUN_ASSUME_OP: /\\(long)?mapsto/
 
 // sets for assumptions
 _SET_FORMATTER: /\\(pmb|boldsymbol|mathbf|mathbbm?|mathcal|mathscr)/
-_CMD_SET_MINUS: "\setminus" | "\backslash" | "-"
-_CMD_SET: "\set"
+_CMD_SET_MINUS: "\\setminus" | "\\backslash" | "-"
+_CMD_SET: "\\set"
 COMPLEX: _SET_FORMATTER _L_BRACE "C" _R_BRACE | "C"
 ALGEBRAIC: _CMD_OVERLINE _L_BRACE RATIONAL _R_BRACE
-TRANSENDENTAL: COMPLEX _CMD_SET_MINUS ALGEBRAIC
+TRANSCENDENTAL: COMPLEX _WS? _CMD_SET_MINUS _WS? ALGEBRAIC
 EXT_REAL: _CMD_OVERLINE _L_BRACE REAL _R_BRACE
 REAL: _SET_FORMATTER _L_BRACE "R" _R_BRACE | "R"
-IMAGINARY: (_SET_FORMATTER _L_BRACE "I" _R_BRACE | "I") (_CMD_SET_MINUS _CMD_SET _L_BRACE "0" _R_BRACE)?
+IMAGINARY: (_SET_FORMATTER _L_BRACE "I" _R_BRACE | "I") (_WS? _CMD_SET_MINUS _WS? _CMD_SET _L_BRACE "0" _R_BRACE)?
 RATIONAL: _SET_FORMATTER _L_BRACE "Q" _R_BRACE | "Q"
-IRRATIONAL: REAL _CMD_SET_MINUS RATIONAL
+IRRATIONAL: REAL _WS? _CMD_SET_MINUS _WS? RATIONAL
 INTEGER: _SET_FORMATTER _L_BRACE "Z" _R_BRACE | "Z"
-NONINTEGER: EXT_REAL _CMD_SET_MINUS INTEGER
+NONINTEGER: EXT_REAL _WS? _CMD_SET_MINUS _WS? INTEGER
 EVEN: _SET_FORMATTER _L_BRACE "E" _R_BRACE | "E"
 ODD: _SET_FORMATTER _L_BRACE "O" _R_BRACE | "O"
 PRIME: _SET_FORMATTER _L_BRACE "P" _R_BRACE | "P"
-NONZERO: REAL _CMD_SET_MINUS _CMD_SET _L_BRACE "0" _R_BRACE
-EXT_NONZERO: EXT_REAL _CMD_SET_MINUS _CMD_SET _L_BRACE "0" _R_BRACE
-POSITIVE: REAL _UNDERSCORE _L_BRACE (ADD | GT "0") _R_BRACE
-NONNEGATIVE: REAL _UNDERSCORE _L_BRACE GTE "0" _R_BRACE
+NONZERO: REAL _WS? _CMD_SET_MINUS _WS? _CMD_SET _L_BRACE "0" _R_BRACE
+EXT_NONZERO: EXT_REAL _WS? _CMD_SET_MINUS _WS? _CMD_SET _L_BRACE "0" _R_BRACE
+POSITIVE: REAL _UNDERSCORE _L_BRACE (_WS? ADD _WS? | _WS? GT _WS? "0" _WS?) _R_BRACE
+NONNEGATIVE: REAL _UNDERSCORE _L_BRACE _WS? GTE _WS? "0" _WS? _R_BRACE
 NEGATIVE: REAL _UNDERSCORE _L_BRACE (SUB | LT "0") _R_BRACE
-NONPOSITIVE: REAL _UNDERSCORE _L_BRACE LTE "0" _R_BRACE
-EXT_POSITIVE: EXT_REAL _UNDERSCORE _L_BRACE (ADD | GT "0") _R_BRACE
-EXT_NONNEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE GTE "0" _R_BRACE
-EXT_NEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE (SUB | LT "0") _R_BRACE
-EXT_NONPOSITIVE: EXT_REAL _UNDERSCORE _L_BRACE LTE "0" _R_BRACE
+NONPOSITIVE: REAL _UNDERSCORE _L_BRACE _WS? LTE _WS? "0" _WS? _R_BRACE
+EXT_POSITIVE: EXT_REAL _UNDERSCORE _L_BRACE (_WS? ADD _WS? | _WS? GT _WS? "0" _WS?) _R_BRACE
+EXT_NONNEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE _WS? GTE _WS? "0" _WS? _R_BRACE
+EXT_NEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE (_WS? SUB _WS? | _WS? LT _WS? "0" _WS?) _R_BRACE
+EXT_NONPOSITIVE: EXT_REAL _UNDERSCORE _L_BRACE _WS? LTE _WS? "0" _WS? _R_BRACE
 
 

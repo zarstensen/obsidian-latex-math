@@ -1,27 +1,29 @@
 import pytest
 from lmat_cas_client.compiling.Compiler import (
     LatexToCasExprCompiler,
-    LatexToLogicCasExprComipler,
+    LatexToDefStoreCompiler,
+    LatexToLogicCasExprCompiler,
+    LatexToLogicDefStoreCompiler,
+    lmat_env_to_definition_store,
 )
 from lmat_cas_client.compiling.definition.DefinitionStore import CyclicDependencyError
 from lmat_cas_client.compiling.parsing import PrettyParserError
-from lmat_cas_client.compiling.parsing.CasExprParser import cas_expr_parser
-from lmat_cas_client.compiling.parsing.CasLogicExprParser import cas_logic_expr_parser
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
-from lmat_cas_client.LmatEnvironment import EnvDefinition, LmatEnvironment
+from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from sympy import *
 from sympy import Expr
 from sympy.logic.boolalg import *
 
 
 class TestLatexToCasExprCompiler:
-    compiler = LatexToCasExprCompiler()
+    expr_compiler = LatexToCasExprCompiler()
+    store_compiler = LatexToDefStoreCompiler()
 
     def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> CasExpr:
         environment = LmatEnvironment.model_validate(environment)
-        return self.compiler.compile(
-            expr, LmatEnvironment.create_definition_store(environment, cas_expr_parser)
+        return self.expr_compiler.compile(
+            expr, lmat_env_to_definition_store(environment, self.store_compiler)
         )
 
     def _parse_single_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
@@ -80,12 +82,10 @@ class TestLatexToCasExprCompiler:
     def test_matrix(self):
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}"
-        ) == Matrix(
-            [
-                [1],
-                [2],
-            ]
-        )
+        ) == Matrix([
+            [1],
+            [2],
+        ])
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 & 2 \end{bmatrix}"
         ) == Matrix([[1, 2]])
@@ -138,9 +138,8 @@ class TestLatexToCasExprCompiler:
         assert self._parse_single_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             \begin{bmatrix}
             10 \\
             20
@@ -150,35 +149,27 @@ class TestLatexToCasExprCompiler:
             40
             \end{bmatrix}
             """
-            )
-            == Matrix([[10], [20]]) * Matrix([[30, 40]])
-        )
+        ) == Matrix([[10], [20]]) * Matrix([[30, 40]])
 
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
         # powers
         assert self._parse_single_expr(r"b a^2") == a**2 * b
@@ -266,16 +257,13 @@ class TestLatexToCasExprCompiler:
         result = self._parse_single_expr(
             r"A A^\ast",
             {
-                "definitions": [
-                    EnvDefinition(
-                        name_expr="A",
-                        value_expr=r"""
-                        \begin{bmatrix}
-                        1 & 2 \\
-                        i & 2 i
-                        \end{bmatrix}
-                        """,
-                    )
+                "definitionsv2": [
+                    r"""
+                    A := \begin{bmatrix}
+                         1 & 2 \\
+                         i & 2 i
+                         \end{bmatrix}
+                    """
                 ]
             },
         )
@@ -306,7 +294,7 @@ class TestLatexToCasExprCompiler:
         assert result == delta_f(x) + 2 * delta_v
 
     def test_definitions(self):
-        result = self._parse_single_expr(r"x", {"symbols": {"x": ["real"]}})
+        result = self._parse_single_expr(r"x", {"definitionsv2": [r"x \in \mathbb{R}"]})
         assert result == symbols("x", real=True)
 
         x = symbols("x", real=True)
@@ -314,10 +302,10 @@ class TestLatexToCasExprCompiler:
         result = self._parse_single_expr(
             r"a + b",
             {
-                "symbols": {"x": ["real"], "y": ["positive"]},
-                "definitions": [
-                    EnvDefinition(name_expr="a", value_expr="x + y"),
-                    EnvDefinition(name_expr="b", value_expr="y"),
+                "definitionsv2": [
+                    r"x \in \mathbbm{R}",
+                    r"y \in \mathscr{R}_{+}",
+                    r"a := x + y \quad b := y",
                 ],
             },
         )
@@ -329,12 +317,12 @@ class TestLatexToCasExprCompiler:
         result = self._parse_single_expr(
             "a + b + x + y",
             {
-                "definitions": [
-                    EnvDefinition(name_expr="x", value_expr="y^2 - z"),
-                    EnvDefinition(name_expr="y", value_expr="50"),
-                    EnvDefinition(name_expr="z", value_expr="2 y"),
-                    EnvDefinition(name_expr="A", value_expr="B"),
-                    EnvDefinition(name_expr="B", value_expr="A + z"),
+                "definitionsv2": [
+                    r"x := y^2 - z",
+                    r"y := 50",
+                    r"z := 2 y",
+                    r"A := B",
+                    r"B := A + z",
                 ]
             },
         )
@@ -345,12 +333,12 @@ class TestLatexToCasExprCompiler:
             result = self._parse_single_expr(
                 "A + B + x + y",
                 {
-                    "definitions": [
-                        EnvDefinition(name_expr="x", value_expr="y^2 - z"),
-                        EnvDefinition(name_expr="y", value_expr="50"),
-                        EnvDefinition(name_expr="z", value_expr="2 y"),
-                        EnvDefinition(name_expr="A", value_expr="B"),
-                        EnvDefinition(name_expr="B", value_expr="A + z"),
+                    "definitionsv2": [
+                        r"x := y^2 - z",
+                        r"y := 50",
+                        r"z := 2 y",
+                        r"A := B",
+                        r"B := A + z",
                     ]
                 },
             )
@@ -358,24 +346,18 @@ class TestLatexToCasExprCompiler:
         with pytest.raises(CyclicDependencyError):
             result = self._parse_single_expr(
                 "f(1, x)",
-                {
-                    "definitions": [
-                        EnvDefinition(name_expr="x", value_expr="y"),
-                        EnvDefinition(name_expr="y", value_expr="x"),
-                        EnvDefinition(name_expr="f(x, y)", value_expr="x y"),
-                    ]
-                },
+                {"definitionsv2": [r"x := y \quad y := x \land f (x, y) := x y"]},
             )
+
+        result = self._parse_single_expr(
+            "f(1, 2)",
+            {"definitionsv2": [r"x := y \quad y := x \land f (x, y) := x y"]},
+        )
 
         with pytest.raises(CyclicDependencyError):
             result = self._parse_single_expr(
                 "f(10)",
-                {
-                    "definitions": [
-                        EnvDefinition(name_expr="f(x)", value_expr="g(x)"),
-                        EnvDefinition(name_expr="g(x)", value_expr="f(x)"),
-                    ]
-                },
+                {"definitionsv2": [r"f (x) := g(x)", r"g (x) := f(x)"]},
             )
 
     def test_brace_units(self):
@@ -556,13 +538,14 @@ class TestLatexToCasExprCompiler:
 
 
 class TestLatexToLogicCompiler:
-    compiler = LatexToLogicCasExprComipler()
+    compiler = LatexToLogicCasExprCompiler()
+    store_compiler = LatexToLogicDefStoreCompiler()
 
     def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> CasExpr:
         environment = LmatEnvironment.model_validate(environment)
         return self.compiler.compile(
             expr,
-            LmatEnvironment.create_definition_store(environment, cas_logic_expr_parser),
+            lmat_env_to_definition_store(environment, self.store_compiler),
         )
 
     def _parse_single_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
@@ -644,10 +627,14 @@ class TestLatexToLogicCompiler:
         result = self._parse_single_expr(
             r"P \implies Q",
             {
-                "definitions": [
-                    EnvDefinition(name_expr="P", value_expr=r"A \wedge B"),
-                    EnvDefinition(name_expr="Q", value_expr=r"B \vee A"),
-                ]
+                "definitionsv2": [
+                    r"P := A \land B",
+                    r"Q := B \vee A",
+                ],
+                # "definitions": [
+                #     EnvDefinition(name_expr="P", value_expr=r"A \wedge B"),
+                #     EnvDefinition(name_expr="Q", value_expr=r"B \vee A"),
+                # ],
             },
         )
 

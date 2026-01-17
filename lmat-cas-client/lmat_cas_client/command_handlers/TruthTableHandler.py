@@ -7,12 +7,9 @@ from sympy.logic.boolalg import Boolean, as_Boolean, truth_table
 from tabulate import tabulate
 
 from lmat_cas_client.Client import HandlerError
-from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.definition.DefinitionStore import (
-    DefinitionStore,
+from lmat_cas_client.compiling.Compiler import (
+    lmat_env_to_definition_store,
 )
-from lmat_cas_client.compiling.parsing.CasLogicExprParser import cas_logic_expr_parser
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
@@ -60,16 +57,14 @@ class TruthTableResultMarkdown(TruthTableResult):
         headers = [*map(lmat_latex, self.columns), self.serialized_proposition]
         headers = [f"${header}$" for header in headers]
 
-        return CommandResult.result(
-            {
-                "truth_table": tabulate(
-                    markdown_table_contents,
-                    headers=headers,
-                    tablefmt="pipe",
-                    colalign=("center" for _ in range(len(self.columns) + 1)),
-                )
-            }
-        )
+        return CommandResult.result({
+            "truth_table": tabulate(
+                markdown_table_contents,
+                headers=headers,
+                tablefmt="pipe",
+                colalign=("center" for _ in range(len(self.columns) + 1)),
+            )
+        })
 
 
 # implementation for LATEX_ARRAY
@@ -86,33 +81,23 @@ class TruthTableResultLatex(TruthTableResult):
 
         headers = rf"{'&'.join(map(lmat_latex, self.columns))} & {self.serialized_proposition}"
 
-        return CommandResult.result(
-            {
-                "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{array_contents}\end{{array}}"
-            }
-        )
+        return CommandResult.result({
+            "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{array_contents}\end{{array}}"
+        })
 
 
 # TruthTableHandler attempts to generate a truth table from the given expression.
-# Expects a PropositionExpr so will fail if it is not.
-class TruthTableHandler(CommandHandler):
-    def __init__(self, compiler: Compiler[[DefinitionStore], CasExpr]):
-        super().__init__()
-        self._compiler = compiler
-
+class TruthTableHandler(CompilingCommandHandler):
     @override
     def handle(self, message: TruthTableMessage) -> TruthTableResult:
         message = TruthTableMessage.model_validate(message)
 
-        definitions_store = LmatEnvironment.create_definition_store(
-            message.environment, cas_logic_expr_parser
+        definitions_store = lmat_env_to_definition_store(
+            message.environment, self._def_store_compiler
         )
-        sympy_expr = self._compiler.compile(message.expression, definitions_store)
-
-        # if not isinstance(sympy_expr, PropositionExpr):
-        raise HandlerError(f"Expression must be a proposition, was {type(sympy_expr)}")
-
-        sympy_expr = sympify(sympy_expr)
+        sympy_expr = self._cas_expr_compiler.compile(
+            message.expression, definitions_store
+        ).get_expr(-1)
 
         columns = sorted(sympy_expr.free_symbols, key=str)
 

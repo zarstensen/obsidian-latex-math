@@ -6,6 +6,7 @@ from typing import Mapping
 from attr import field, frozen
 from lark import Tree
 from sympy import Basic
+from sympy.core.function import UndefinedFunction
 
 
 @frozen
@@ -30,12 +31,17 @@ class AstFunDef:
     """Like AstDef but for an applyable function with a body and an uneavluated value.
     e.g. f(x) = x^2
           ^      ^
-        uneval.  |
+        unappl.  |
                 body
     """
 
     body: Tree
-    unevaluated: Basic
+    unapplied: Basic
+
+
+@frozen
+class SympyUndefFunDef:
+    undef_fun: UndefinedFunction
 
 
 type SymDefVal = AstDef | SympyDef
@@ -43,7 +49,7 @@ type SymDefVal = AstDef | SympyDef
 UnionType representing all symbol-like definitions definable in a DefinitionStore
 """
 
-type FunDefVal = AstFunDef
+type FunDefVal = AstFunDef | SympyUndefFunDef
 """
 UnionType representing all function-like definitions definable in a DefinitionStore
 """
@@ -151,7 +157,7 @@ def resolve_dependencies(
         definition_names (Iterable[str])
 
     Returns:
-        tuple[bool, tuple[str]]
+        OrderedDeps | CyclicDeps: OrderedDeps on success, CyclicDeps on failure.
     """
 
     # The general strategy here is to first build a digraph 'G = (N, D)', where each node 'n E N' is a definition,

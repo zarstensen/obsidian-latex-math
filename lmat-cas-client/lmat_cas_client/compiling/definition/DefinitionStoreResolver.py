@@ -5,17 +5,16 @@ from typing import Any, MutableMapping, Optional, Self, override
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from sympy import Basic, Symbol
-from traitlets import Bool
 
 from .DefinitionStore import (
     AstDef,
     AstFunDef,
-    Definition,
     DefinitionStore,
     EmptyDefinition,
     FunctionDefinition,
     SymbolDefinition,
     SympyDef,
+    SympyUndefFunDef,
 )
 from .Resolver import (
     DefinitionResolver,
@@ -116,6 +115,10 @@ class DefinitionStoreResolver(DefinitionResolver):
                     body_ast, self._override_args({})
                 )
                 return self._cached(cas_expr.get_expr(-1), key=cache_key, id=def_id)
+            case SympyUndefFunDef(fun):
+                # Undefined function's body is exactly the same as its applied value,
+                # except its arguments are just its parameters.
+                return fun(*self.resolve_params(token))
             case _:
                 assert False, "Failed to resolve body"
 
@@ -146,11 +149,15 @@ class DefinitionStoreResolver(DefinitionResolver):
         match function_definition.value:
             case AstFunDef(_, unapplied):
                 return unapplied
+            case SympyUndefFunDef(fun):
+                return fun
             case _:
                 assert False, "Failed to resolve body"
 
     @override
-    def resolve_applied(self, token: FunctionResToken, arguments: Iterable[Definition]):
+    def resolve_applied(
+        self, token: FunctionResToken, arguments: Iterable[SymbolDefinition]
+    ):
         match token:
             case FunctionResToken(def_id):
                 pass
@@ -171,15 +178,27 @@ class DefinitionStoreResolver(DefinitionResolver):
                 f"Received too {'many' if len(function_definition.params) < len(arguments) else 'few'} arguments!\nExpected {len(function_definition.params)} for parameters {function_definition.params}, got {len(arguments)} arguments"
             )
 
+        arg_resolver = self._override_args({
+            p: a for p, a in zip(function_definition.params, arguments)
+        })
         match function_definition.value:
             case AstFunDef(body_ast, _):
-                cas_expr = self._transformer.transform(
-                    body_ast,
-                    self._override_args(
-                        {p: a for p, a in zip(function_definition.params, arguments)}
-                    ),
-                )
+                cas_expr = self._transformer.transform(body_ast, arg_resolver)
                 return self._cached(cas_expr.get_expr(-1), key=cache_key, id=def_id)
+            case SympyUndefFunDef(fun):
+                # Create new resolver with arguments set to definition, then ask for the value
+
+                args = []
+
+                for param_name in function_definition.params:
+                    token = arg_resolver.get_resolver_token(param_name)
+                    match token:
+                        case SymbolResToken():
+                            args.append(arg_resolver.resolve_value(token))
+                        case FunctionResToken():
+                            args.append(arg_resolver.resolve_unapplied(token))
+
+                return fun(*args)
             case _:
                 assert False, "Failed to resolve body"
 
@@ -201,7 +220,7 @@ class DefinitionStoreResolver(DefinitionResolver):
             pass  # if key is unhashable, simply dont cache.
         return value
 
-    def _is_cached(self, key: Any, *, id: str) -> Bool:
+    def _is_cached(self, key: Any, *, id: str) -> bool:
         try:
             return id not in self._args_store and key in self._cache
         except TypeError:

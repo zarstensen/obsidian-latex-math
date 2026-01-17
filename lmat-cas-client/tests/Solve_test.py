@@ -1,16 +1,20 @@
 import sympy.physics.units as u
 from lmat_cas_client.command_handlers.SolveHandler import *
-from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
+from lmat_cas_client.compiling.Compiler import (
+    LatexToCasExprCompiler,
+    LatexToDefStoreCompiler,
+)
 from sympy import *
 
 
 class TestSolve:
-    compiler = LatexToCasExprCompiler()
+    cas_expr_compiler = LatexToCasExprCompiler()
+    def_store_compiler = LatexToDefStoreCompiler()
 
     def test_solve_with_domain(self):
         x = symbols("x")
 
-        handler = SolveHandler(self.compiler)
+        handler = SolveHandler(self.cas_expr_compiler, self.def_store_compiler)
         result = handler.handle({
             "expression": r"\sin(x) = 0",
             "environment": {"solve_domain": "Interval.Ropen(0, 2 * pi)"},
@@ -23,7 +27,7 @@ class TestSolve:
     def test_solve_soe(self):
         x, y, z = symbols("x y z")
 
-        handler = SolveHandler(self.compiler)
+        handler = SolveHandler(self.cas_expr_compiler, self.def_store_compiler)
 
         result = handler.handle({
             "expression": r"""
@@ -57,7 +61,7 @@ class TestSolve:
     def test_solve_multivariate(self):
         x, y, z = symbols("x y z")
 
-        handler = SolveHandler(self.compiler)
+        handler = SolveHandler(self.cas_expr_compiler, self.def_store_compiler)
 
         result = handler.handle({
             "expression": r"""
@@ -88,7 +92,7 @@ class TestSolve:
         assert result.symbols == [y, z]
 
     def test_solve_simplify(self):
-        handler = SolveHandler(self.compiler)
+        handler = SolveHandler(self.cas_expr_compiler, self.def_store_compiler)
 
         result = handler.handle({
             "expression": r"x^2 = 5 {kW} {h}",
@@ -101,7 +105,7 @@ class TestSolve:
         )
 
     def test_solve_info(self):
-        handler = SolveInfoHandler(self.compiler)
+        handler = SolveInfoHandler(self.cas_expr_compiler, self.def_store_compiler)
 
         x, a = symbols("x a")
 
@@ -110,7 +114,7 @@ class TestSolve:
         assert result.symbols == [x, a]
         assert result.equation_count == 1
 
-        handler = SolveInfoHandler(self.compiler)
+        handler = SolveInfoHandler(self.cas_expr_compiler, self.def_store_compiler)
 
         x, t, u, a, b, c = symbols("x t u a b c")
 
