@@ -12,6 +12,8 @@ from lmat_cas_client.compiling.transforming.cas_expr.ConstantsTransformer import
 )
 from lmat_cas_client.compiling.transforming.cas_expr.FunctionsTransformer import (
     BuiltInFunctionsTransformer,
+    ImplicitMulStrategy,
+    implicit_mul_strategy,
 )
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
@@ -223,15 +225,18 @@ class CasExprTransformer(Transformer):
 
         return result
 
-    def implicit_multiplication(self, factors: list[Expr]) -> Expr:
-        result = S.One
+    @v_args(inline=True)
+    @implicit_mul_strategy(ImplicitMulStrategy.MULT)
+    def implicit_multiplication(self, *factors: Expr) -> Expr:
+        result = factors[0]
 
-        for token in factors:
-            result *= token
+        for factor in factors[1:]:
+            result *= factor
 
         return result
 
     @v_args(inline=True)
+    @implicit_mul_strategy(ImplicitMulStrategy.RHS)
     def exponentiation(self, base: Expr, exponent: Expr) -> Expr:
         # special matrix notation.
         if isinstance(exponent, Symbol) and MatrixUtils.is_matrix(base):

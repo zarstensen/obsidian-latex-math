@@ -183,8 +183,10 @@ class TestLatexToCasExprCompiler:
         f, x = symbols("f x")
 
         assert self._parse_single_expr("f (x)") == f * x
-        assert self._parse_single_expr("f(x)") == Function("f")(x)
-        assert self._parse_single_expr(r"f\left(x\right)") == Function("f")(x)
+        assert self._parse_single_expr("f(x)") == f * x
+        assert self._parse_single_expr(
+            r"f\left(x\right)", {"definitionsv2": [r"f(x) \mapsto C"]}
+        ) == Function("f", complex=True)(x)
         assert self._parse_single_expr(r"f   \left(x\right)") == f * x
 
     def test_partial_relations(self):
@@ -286,10 +288,13 @@ class TestLatexToCasExprCompiler:
 
     def test_delta_symbols(self):
         delta_v = Symbol(r"\Delta{v}")
-        delta_f = Function(r"\Delta{f}")
+        delta_f = Function(r"\Delta{f}", real=True)
         x = Symbol("x")
 
-        result = self._parse_single_expr(r"\Delta   f(x) + \Delta v + \Delta       v")
+        result = self._parse_single_expr(
+            r"\Delta   f(x) + \Delta v + \Delta       v",
+            {"definitionsv2": ["\Delta  f(x) \mapsto R"]},
+        )
 
         assert result == delta_f(x) + 2 * delta_v
 
@@ -519,12 +524,17 @@ class TestLatexToCasExprCompiler:
         )
     )
 
+    def _assert_compiles_to(self, latex: str, expected_expr: Expr) -> None:
+        assert simplify(self._parse_single_expr(latex).doit()) == simplify(
+            expected_expr
+        )
+
     @pytest.mark.parametrize(
         "latex,expected_expr",
         derivative_test_cases + partial_derivative_test_cases,
     )
     def test_physics_derivative(self, latex, expected_expr):
-        assert self._parse_single_expr(latex) == simplify(expected_expr)
+        self._assert_compiles_to(latex, expected_expr)
 
     @pytest.mark.parametrize(
         "latex,expected_expr",
@@ -534,7 +544,39 @@ class TestLatexToCasExprCompiler:
         ],
     )
     def test_regression_192(self, latex, expected_expr):
-        assert self._parse_single_expr(latex) == simplify(expected_expr)
+        self._assert_compiles_to(latex, expected_expr)
+
+    @pytest.mark.parametrize(
+        "latex,expected_expr",
+        [
+            (r"\sin f(x)", sympify("sin(f) * x")),
+            (r"\log g(y + z)", sympify("log(g) * (y + z)")),
+            (r"\log_5 g(y + z)", sympify("log(g, 5) * (y + z)")),
+            (r"\exp h(x^2)", sympify("exp(h) * x^2")),
+            (
+                r"f(6)! - gee(3)\% + h(1)\textperthousand",
+                sympify("720 * f - 0.03 * gee + 0.001 * h"),
+            ),
+            (
+                r"\lim_{x \to 5} f(x)",
+                Limit(S("f"), S("x"), 5) * S("x"),
+            ),
+            (
+                r"\Re f(x) + \Im f(x) + \arg f(x) + \operatorname{sgn} f(x)",
+                (re(S("f")) + im(S("f")) + arg(S("f")) + sign(S("f"))) * S("x"),
+            ),
+            (r"f(x^2)'", sympify("f * 2 * x")),
+            (r"\sum_{x=0}^5 f(x)", sympify("f * 15")),
+            (r"f(\begin{matrix} 1 & 0 \end{matrix})^T", S("f") * Matrix([1, 0])),
+            #
+            (r"f(g(h(j(x))))", sympify("f * g * h * j * x")),
+            (r"\Re g(\sin f(x)^2)!", re(S("g")) * factorial(sin(S("f")) * S("x") ** 2)),
+        ],
+    )
+    def test_maybe_applied_implicit_multiplication(
+        self, latex: str, expected_expr: Expr
+    ):
+        self._assert_compiles_to(latex, expected_expr)
 
 
 class TestLatexToLogicCompiler:

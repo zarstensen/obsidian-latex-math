@@ -18,7 +18,7 @@ expression: (_align* (ADD|SUB))? term ((ADD|SUB) term)*
 term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_CROSS|OPERATOR_DIV) (_align* (ADD|SUB))? implicit_multiplication)*
 
 // factors with no operator between them are implicitly multiplied together.
-?implicit_multiplication: _align* factor (_align* factor)* _align*
+implicit_multiplication: _align* factor (_align* factor)* _align*
 
 // a factor is either a number, a constant, a symbol, or a function.
 // here exponentiation, fractions, binomials are loosly seen as functions.
@@ -99,7 +99,13 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 
 // ======== Functions ========
 
-undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PAREN
+// matches a potential function application, anything of the form,
+// f (x, y, ....)      where 'f' is some symbol.
+// if 'f' turns out to *not* be a symbol, this should just be interpreted as an implicit
+// multiplication between 'f' and the singular argument in its parameter list.
+// If there is more than one argument in its parameter list, a syntax error should be
+// raised
+maybe_function_application: combine_symbol (_L_PAREN list_of_expressions _R_PAREN | _L_BRACE _L_PAREN list_of_expressions _R_PAREN _R_BRACE)
 
 
 // groups all functions which cannot be used as an argument to other functions.
@@ -118,7 +124,7 @@ undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PARE
     | _derivative
     | _postfix_function_arg
 
-?named_function: undefined_function
+?named_function: maybe_function_application
     | trig_function
     | _log
     | exponential
@@ -132,7 +138,7 @@ undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PARE
 
 // matches a special kind of argument, defined by the fact that fractions and binomials can be passed without surrounding them with braces.
 substitute_single_letter_symbol.1: single_letter_symbol -> substitute_symbol
-?function_special_arg: braces_expression | parenthesees_expression | named_function | _delimited_function | frac | binom | substitute_single_letter_symbol | _digit
+?function_special_arg: braces_expression | frac | binom | substitute_single_letter_symbol | _digit
 
 
 // named functions
@@ -419,8 +425,6 @@ _L_BAR: _BAR
 %declare _R_BAR
 _L_DOUBLE_BAR: _DOUBLE_BAR
 %declare _R_DOUBLE_BAR
-
-_UNDEF_FUNC_START.1: /(?<! )(?<! \\left)\(/
 
 _L_DELIMITER: _DOT | _L_ANGLE | L_BRACE_LITERAL | _L_BRACKET | _L_CEIL | _L_FLOOR | _L_PAREN
 _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOOR | _R_PAREN

@@ -51,7 +51,7 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
                 assert False
 
     @override
-    def undefined_function(
+    def maybe_function_application(
         self, func_name: Symbol, func_args: Iterator[set[str]]
     ) -> set[str]:
         # include both the function itself, and all arguments to the function as dependencies.

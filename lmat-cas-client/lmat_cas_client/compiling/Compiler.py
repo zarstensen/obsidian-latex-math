@@ -137,6 +137,7 @@ def lmat_env_to_definition_store(
     in the environment, compiling them, and chaining them into a singular
     definition store.
     """
+    env = LmatEnvironment.model_validate(env)
     stores = [StandardDefinitionStore]
 
     for definition_str in env.definitionsv2:
