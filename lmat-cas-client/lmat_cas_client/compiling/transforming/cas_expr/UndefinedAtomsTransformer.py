@@ -1,5 +1,7 @@
+from ctypes import ArgumentError
 from typing import Iterator
 
+from attr import frozen
 from lark import Token, Transformer, v_args
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     SymbolDefinition,
@@ -11,8 +13,39 @@ from lmat_cas_client.compiling.definition.Resolver import (
     SymbolResToken,
 )
 from lmat_cas_client.math_lib.units import UnitUtils
-from sympy import Expr, Function, Number, Symbol
+from sympy import Expr, Number, Symbol
 from sympy.physics.units import Quantity
+
+
+@frozen
+class ImplicitMul:
+    """
+    This is needed for when a maybe_function_application rule does *not* apply the function,
+    then the expression should be interpreted as an implicit multiplication between the
+    function head and body.
+    However, this needs to happen at a higher level scope, so we need this special class
+    to represent this, and then only higher up in the implicit_multiplication handler,
+    actually perform the implicit multiplication.
+
+    An example of where this is problematic can be seen here:
+
+    \sin f (x)
+
+    *if* f is a function, then this should be interpreted as
+
+    \sin(f(x))
+
+    *if* f is NOT a function, then this should be interpreted as
+
+    \sin(f) * x
+
+    The parser currently parses this as the first case,
+    but this transformer injects this class when f is not a function,
+    so we can bubble up to the second case in the rule handlers.
+    """
+
+    lhs: Expr
+    rhs: Expr
 
 
 @v_args(inline=True)
@@ -72,13 +105,25 @@ class UndefinedAtomsTransformer(Transformer):
         else:
             return self.substitute_symbol(unit_symbol)
 
-    def undefined_function(
+    def maybe_function_application(
         self, func_head: Symbol, func_args: Iterator[Expr] = None
-    ) -> Function | Expr:
+    ) -> Expr | ImplicitMul:
         match self.__definition_store.get_resolver_token(func_head.name):
             case FunctionResToken() as token:
                 return self.__definition_store.resolve_applied(
                     token, map(lambda a: SymbolDefinition(SympyDef(a)), func_args)
                 )
             case _:
-                return Function(func_head.name)(*func_args)
+                # if it is not a defined function,
+                # we must interpret it as an implicit multiplication between func_head and func_args,
+                # IF func_args only contains 1 parameter, otherwise what the user has written, does not make sense,
+                # you cannot have an implicit multiplication between a symbol, and a function argument list.
+                if len(func_args) != 1:
+                    raise ArgumentError(
+                        f"Cannot multiply symbol {func_head} with argument list ({','.join(map(str, func_args))})!"
+                        f"\nIf you want {func_head} to be an undefined function, place a function assumption somewhere above this function."
+                        "\ne.g."
+                        f"\n${func_head}(x, y, ...) \\mapsto \\mathbb{{C}}$"
+                    )
+
+                return ImplicitMul(self.substitute_symbol(func_head), func_args[0])

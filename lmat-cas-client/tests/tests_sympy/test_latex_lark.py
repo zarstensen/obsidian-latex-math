@@ -5,8 +5,12 @@
 # This is here to ensure feature parity(ish) with their latex parser.
 # some tests have been slightly modified or disabled, due to fundamental differences in the parsers functionality (multi letter symbols is an exmaple of this)
 
-from lmat_cas_client.compiling.Compiler import LatexToCasExprCompiler
-from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
+from lmat_cas_client.compiling.Compiler import (
+    LatexToCasExprCompiler,
+    LatexToDefStoreCompiler,
+    lmat_env_to_definition_store,
+)
+from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from sympy import (
     Add,
     Expr,
@@ -90,10 +94,12 @@ def _MatMul(a, b):
     return MatMul(a, b, evaluate=False)
 
 
-def parse_latex_lark(latex_str):
+def parse_latex_lark(latex_str, lmat_env: LmatEnvironment = {}):
     return (
         LatexToCasExprCompiler()
-        .compile(latex_str, StandardDefinitionStore)
+        .compile(
+            latex_str, lmat_env_to_definition_store(lmat_env, LatexToDefStoreCompiler())
+        )
         .get_expr(-1)
     )
 
@@ -296,22 +302,36 @@ INTEGRAL_EXPRESSION_PAIRS = [
 ]
 
 DERIVATIVE_EXPRESSION_PAIRS = [
-    (r"\frac{\dd}{\dd x} x", Derivative(x, x)),
-    (r"\frac{\differential}{\partial x} x", Derivative(x, x)),
-    (r"\frac{\partial}{\differential t} x", Derivative(x, t)),
-    (r"\frac{\dd}{\dd x^2} x^3", Derivative(x**3, (x, 2))),
-    (r"\frac{\dd x y}{\dd x \dd y}", Derivative(x * y, (x, 1), (y, 1))),
-    (r"\frac{\dd}{\dd x} ( \tan x )", Derivative(tan(x), x)),
-    (r"\frac{\dd f(x)}{\dd x}", Derivative(f(x), x)),
-    (r"\frac{\dd\theta(x)}{\dd x}", Derivative(Function(r"\theta")(x), x)),
-    (r"\frac{\dd[3]\theta(x)}{\dd x^3}", Derivative(Function(r"\theta")(x), x, x, x)),
+    (r"\frac{\dd}{\dd x} x", Derivative(x, x), {}),
+    (r"\frac{\differential}{\partial x} x", Derivative(x, x), {}),
+    (r"\frac{\partial}{\differential t} x", Derivative(x, t), {}),
+    (r"\frac{\dd}{\dd x^2} x^3", Derivative(x**3, (x, 2)), {}),
+    (r"\frac{\dd x y}{\dd x \dd y}", Derivative(x * y, (x, 1), (y, 1)), {}),
+    (r"\frac{\dd}{\dd x} ( \tan x )", Derivative(tan(x), x), {}),
+    (
+        r"\frac{\dd f(x)}{\dd x}",
+        Derivative(Function("f", real=True)(x), x),
+        {"definitionsv2": [r"f(x) \mapsto R"]},
+    ),
+    (
+        r"\frac{\dd\theta(x)}{\dd x}",
+        Derivative(Function(r"\theta", real=True)(x), x),
+        {"definitionsv2": [r"\theta(x) \mapsto R"]},
+    ),
+    (
+        r"\frac{\dd[3]\theta(x)}{\dd x^3}",
+        Derivative(Function(r"\theta", real=True)(x), x, x, x),
+        {"definitionsv2": [r"\theta(x) \mapsto R"]},
+    ),
     (
         r"\frac{\partial^3\theta(x)}{\dd x^3}",
-        Derivative(Function(r"\theta")(x), x, x, x),
+        Derivative(Function(r"\theta", real=True)(x), x, x, x),
+        {"definitionsv2": [r"\theta(x) \mapsto R"]},
     ),
     (
         r"\frac{\dd[2]\theta(x) \cdot y}{\dd x \dd y}",
-        Derivative(Function(r"\theta")(x) * y, x, y),
+        Derivative(Function(r"\theta", real=True)(x) * y, x, y),
+        {"definitionsv2": [r"\theta(x) \mapsto R"]},
     ),
 ]
 
@@ -380,14 +400,38 @@ UNEVALUATED_PRODUCT_EXPRESSION_PAIRS = [
 ]
 
 APPLIED_FUNCTION_EXPRESSION_PAIRS = [
-    (r"f(x)", f(x)),
-    (r"f(x, y)", f(x, y)),
-    (r"f(x, y, z)", f(x, y, z)),
-    (r"f'_1(x)", Function("f_{1}'")(x)),
-    (r"f_{1}''(x+y)", Function("f_{1}''")(x + y)),
+    (
+        r"f(x)",
+        Function("f", integer=True)(x),
+        {"definitionsv2": [r"f(x) \mapsto Z"]},
+    ),
+    (
+        r"f(x, y)",
+        Function("f", real=True)(x, y),
+        {"definitionsv2": [r"f(x, y) \mapsto R"]},
+    ),
+    (
+        r"f(x, y, z)",
+        Function("f", complex=True)(x, y, z),
+        {"definitionsv2": [r"f(x, y, z) \mapsto C"]},
+    ),
+    (
+        r"f'_1(x)",
+        Function("f_{1}'", real=True)(x),
+        {"definitionsv2": [r"f_{1}'(x) \mapsto R"]},
+    ),
+    (
+        r"f_{1}''(x+y)",
+        Function("f_{1}''", real=True)(x + y),
+        {"definitionsv2": [r"f_{1}''(x) \mapsto R"]},
+    ),
     (
         r"h_{\theta}(x_0, x_1)",
-        Function("h_{\\theta}")(Symbol("x_{0}"), Symbol("x_{1}")),
+        Function("h_{\\theta}", real=True)(
+            Symbol("x_{0}"),
+            Symbol("x_{1}"),
+        ),
+        {"definitionsv2": [r"h_{\theta}(x, y) \mapsto R"]},
     ),
 ]
 
@@ -632,10 +676,10 @@ def test_integral_expressions():
 
 def test_derivative_expressions():
     expected_failures = {5, 6}
-    for i, (latex_str, sympy_expr) in enumerate(DERIVATIVE_EXPRESSION_PAIRS):
+    for i, (latex_str, sympy_expr, lmat_env) in enumerate(DERIVATIVE_EXPRESSION_PAIRS):
         if i in expected_failures:
             continue
-        assert parse_latex_lark(latex_str) == simplify(sympy_expr), latex_str
+        assert parse_latex_lark(latex_str, lmat_env) == simplify(sympy_expr), latex_str
 
 
 def test_trigonometric_expressions():
@@ -677,10 +721,12 @@ def test_applied_function_expressions():
         4,
     }  # 0 is ambiguous, and the others require not-yet-added features
     # not sure why 1, and 2 are failing
-    for i, (latex_str, sympy_expr) in enumerate(APPLIED_FUNCTION_EXPRESSION_PAIRS):
+    for i, (latex_str, sympy_expr, lmat_env) in enumerate(
+        APPLIED_FUNCTION_EXPRESSION_PAIRS
+    ):
         if i in expected_failures:
             continue
-        assert parse_latex_lark(latex_str) == simplify(sympy_expr), latex_str
+        assert parse_latex_lark(latex_str, lmat_env) == simplify(sympy_expr), latex_str
 
 
 def test_common_function_expressions():
