@@ -1,7 +1,10 @@
+from typing import override
+
 from sympy import *
 from sympy.physics.units import convert_to
 
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
+from lmat_cas_client.command_handlers.CommandHandler import MessageLike
 
 from .EvalHandlerBase import EvalHandlerBase, EvaluateMessage, EvaluateResult
 
@@ -12,12 +15,15 @@ class ConvertMessage(EvaluateMessage):
 
 # Tries to convert the sympy expressions units to the provided units in message.target_units.
 class ConvertUnitsHandler(EvalHandlerBase):
-    def handle(self, message: ConvertMessage) -> EvaluateResult:
+    @override
+    def handle(self, message: EvaluateMessage | MessageLike) -> EvaluateResult:
         message = ConvertMessage.model_validate(message)
         message.environment.unit_system = "SI"
         return super().handle(message)
 
-    def evaluate(self, sympy_expr: Expr, message: ConvertMessage):
+    @override
+    def evaluate(self, sympy_expr: Expr, message: EvaluateMessage):
+        message = ConvertMessage.model_validate(message)
         target_units = []
 
         for target_unit_str in message.target_units:

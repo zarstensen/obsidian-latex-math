@@ -1,3 +1,4 @@
+# mypy: disable-error-code="union-attr"
 from lmat_cas_client.compiling.Compiler import (
     LatexToDefStoreCompiler,
     LatexToLogicDefStoreCompiler,

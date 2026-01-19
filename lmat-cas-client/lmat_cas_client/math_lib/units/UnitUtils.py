@@ -1,5 +1,6 @@
 import sys
 from copy import copy
+from typing import Iterable, MutableMapping
 
 import sympy.physics.units as u
 from sympy import Add, Expr, MatrixBase, Rel
@@ -10,7 +11,7 @@ from sympy.physics.units.unitsystem import UnitSystem
 from . import UnitDefinitions
 
 # Maps an alias to its corresponding Quantity object.
-UNIT_ALIAS_MAP = {}
+UNIT_ALIAS_MAP: MutableMapping[str, Quantity] = {}
 
 __defined_units_quantities = {
     unit_name: getattr(UnitDefinitions, unit_name)
@@ -26,7 +27,7 @@ def __preprocess_quantity_str(alias: str) -> str:
     return alias.replace("_", "").replace("{", "").replace("}", "")
 
 
-def __add_unit_aliases(str_units: list[tuple[str, Quantity]]):
+def __add_unit_aliases(str_units: Iterable[tuple[str, Quantity]]):
     for alias, unit in str_units:
         alias = __preprocess_quantity_str(alias)
         if alias not in UNIT_ALIAS_MAP:
@@ -88,7 +89,7 @@ __add_unit_aliases([
 ])
 
 
-def auto_convert(sympy_expr: Expr, unit_system: UnitSystem = SI) -> Expr:
+def auto_convert(sympy_expr: Expr, unit_system_in: UnitSystem | str = SI) -> Expr:
     """
     attempt to automatically convert the units in the given sympy expression.
     this convertion method prioritizes as few units as possible raised to the lowest power possible (or lowest root possible).
@@ -96,6 +97,7 @@ def auto_convert(sympy_expr: Expr, unit_system: UnitSystem = SI) -> Expr:
     Returns:
         Expr: input expression, with its units converted.
     """
+    unit_system: UnitSystem = UnitSystem.get_unit_system(unit_system_in)
 
     if isinstance(sympy_expr, MatrixBase):
         new_matrix_contents = []
@@ -109,13 +111,13 @@ def auto_convert(sympy_expr: Expr, unit_system: UnitSystem = SI) -> Expr:
         return sympy_expr
 
     if not isinstance(sympy_expr, Add):
-        sympy_expr = [sympy_expr]
+        sympy_expr_args = [sympy_expr]
     else:
-        sympy_expr = list(sympy_expr.args)
+        sympy_expr_args = list(sympy_expr.args)
 
     converted_expressions = []
 
-    for expr in sympy_expr:
+    for expr in sympy_expr_args:
         curr_complexity = get_unit_complexity(expr)
 
         # unit complexity cannot be determined for expression for some reason.
@@ -126,7 +128,9 @@ def auto_convert(sympy_expr: Expr, unit_system: UnitSystem = SI) -> Expr:
         # Conver to using all base units of system.
         for units in [unit_system._base_units, *unit_system.get_units_non_prefixed()]:
             converted_expr = u.convert_to(expr, units)
-            converted_expr_complexity = get_unit_complexity(converted_expr)
+            converted_expr_complexity = (
+                get_unit_complexity(converted_expr) or sys.maxsize
+            )
 
             if converted_expr_complexity < curr_complexity:
                 curr_complexity = converted_expr_complexity
@@ -146,13 +150,13 @@ def str_to_unit(unit_str: str) -> Quantity | None:
         return None
     else:
         unit = copy(UNIT_ALIAS_MAP[unit_str])
-        unit._latex_repr = unit_str
+        unit._latex_repr = unit_str  # type: ignore[attr-defined]
         return unit
 
 
 #
 #
-def get_unit_complexity(expression: Expr) -> int:
+def get_unit_complexity(expression: Expr) -> int | None:
     """
     get the 'complexity' of a unit.
     complexity is defined as the sum of all units raised power absolute value (or 1/power if 0 < power < 1).

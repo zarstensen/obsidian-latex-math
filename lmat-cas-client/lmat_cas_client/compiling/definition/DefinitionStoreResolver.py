@@ -1,6 +1,6 @@
 from collections import ChainMap
 from collections.abc import Iterable
-from typing import Any, MutableMapping, Optional, Self, override
+from typing import Any, MutableMapping, Optional, cast, override
 
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
@@ -9,6 +9,7 @@ from sympy import Basic, Symbol
 from .DefinitionStore import (
     AstDef,
     AstFunDef,
+    Definition,
     DefinitionStore,
     EmptyDefinition,
     FunctionDefinition,
@@ -38,7 +39,7 @@ class DefinitionStoreResolver(DefinitionResolver):
         global_store: DefinitionStore,
         transformer: AstTransformer,
         args_store: Optional[DefinitionStore] = None,
-        cache: Optional[MutableMapping[str, Basic]] = None,
+        cache: Optional[MutableMapping[Any, Basic]] = None,
     ):
         super().__init__()
 
@@ -83,7 +84,9 @@ class DefinitionStoreResolver(DefinitionResolver):
             return self._cache[cache_key]
 
         # resolve value
-        symbol_definition: SymbolDefinition = self._combined_store[def_id]
+        symbol_definition: SymbolDefinition = cast(
+            SymbolDefinition, self._combined_store[def_id]
+        )
 
         match symbol_definition.value:
             case SympyDef(expr):
@@ -107,7 +110,9 @@ class DefinitionStoreResolver(DefinitionResolver):
         if self._is_cached(cache_key, id=def_id):
             return self._cache[cache_key]
 
-        function_definition: FunctionDefinition = self._combined_store[def_id]
+        function_definition: FunctionDefinition = cast(
+            FunctionDefinition, self._combined_store[def_id]
+        )
 
         match function_definition.value:
             case AstFunDef(body_ast, _):
@@ -130,7 +135,9 @@ class DefinitionStoreResolver(DefinitionResolver):
             case _:
                 assert False, "Token is not of the correct type"
 
-        function_definition: FunctionDefinition = self._combined_store[def_id]
+        function_definition: FunctionDefinition = cast(
+            FunctionDefinition, self._combined_store[def_id]
+        )
         return tuple(map(lambda s: Symbol(s), function_definition.params))
 
     @override
@@ -144,7 +151,9 @@ class DefinitionStoreResolver(DefinitionResolver):
         # resolve_unapplied is uncached for now.
         # not realy a reason to cache currently.
 
-        function_definition: FunctionDefinition = self._combined_store[def_id]
+        function_definition: FunctionDefinition = cast(
+            FunctionDefinition, self._combined_store[def_id]
+        )
 
         match function_definition.value:
             case AstFunDef(_, unapplied):
@@ -155,9 +164,7 @@ class DefinitionStoreResolver(DefinitionResolver):
                 assert False, "Failed to resolve body"
 
     @override
-    def resolve_applied(
-        self, token: FunctionResToken, arguments: Iterable[SymbolDefinition]
-    ):
+    def resolve_applied(self, token: FunctionResToken, arguments: Iterable[Definition]):
         match token:
             case FunctionResToken(def_id):
                 pass
@@ -171,7 +178,9 @@ class DefinitionStoreResolver(DefinitionResolver):
         if self._is_cached(cache_key, id=def_id):
             return self._cache[cache_key]
 
-        function_definition: FunctionDefinition = self._combined_store[def_id]
+        function_definition: FunctionDefinition = cast(
+            FunctionDefinition, self._combined_store[def_id]
+        )
 
         if len(function_definition.params) != len(arguments):
             raise ValueError(
@@ -191,12 +200,12 @@ class DefinitionStoreResolver(DefinitionResolver):
                 args = []
 
                 for param_name in function_definition.params:
-                    token = arg_resolver.get_resolver_token(param_name)
-                    match token:
+                    param_token = arg_resolver.get_resolver_token(param_name)
+                    match param_token:
                         case SymbolResToken():
-                            args.append(arg_resolver.resolve_value(token))
+                            args.append(arg_resolver.resolve_value(param_token))
                         case FunctionResToken():
-                            args.append(arg_resolver.resolve_unapplied(token))
+                            args.append(arg_resolver.resolve_unapplied(param_token))
 
                 return fun(*args)
             case _:
@@ -226,7 +235,7 @@ class DefinitionStoreResolver(DefinitionResolver):
         except TypeError:
             return False
 
-    def _override_args(self, new_args: DefinitionStore) -> Self:
+    def _override_args(self, new_args: DefinitionStore) -> "DefinitionStoreResolver":
         """
         Return a clone of the current instance with a new args_store.
         """

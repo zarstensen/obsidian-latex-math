@@ -5,6 +5,7 @@ from typing import override
 from lmat_cas_client.command_handlers.CommandHandler import (
     CommandHandler,
     CommandResult,
+    MessageLike,
 )
 from lmat_cas_client.command_handlers.EvalHandlerBase import EvaluateResult
 from pydantic import BaseModel
@@ -30,6 +31,6 @@ class TestHangHandler(CommandHandler, ABC):
         super().__init__()
 
     @override
-    def handle(self, message: TestHangMessage) -> EvaluateResult:
+    def handle(self, message: TestHangMessage | MessageLike) -> EvaluateResult:  # type: ignore[return]
         message = TestHangMessage.model_validate(message)
         time.sleep(message.hang_time * 1000)

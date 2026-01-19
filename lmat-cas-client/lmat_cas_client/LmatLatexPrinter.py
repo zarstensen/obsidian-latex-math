@@ -1,5 +1,6 @@
 import re as regex
 from functools import reduce
+from typing import cast
 
 from sympy import *
 from sympy.logic.boolalg import BooleanFalse, BooleanTrue
@@ -19,7 +20,7 @@ def _quantity_latex(self, _printer):
         return f"{{{self.args[1] if len(self.args) >= 2 else self.args[0]}}}"
 
 
-Quantity._latex = _quantity_latex
+Quantity._latex = _quantity_latex  # type: ignore[method-assign]
 
 
 # Convert a sympy expression to a formatted latex string.
@@ -45,13 +46,13 @@ class LmatLatexPrinter(LatexPrinter):
 
         return f"{expr.env_begin}{r' \\ '.join(contents)}{expr.env_end}"
 
-    def _print_BooleanTrue(self, _: BooleanTrue):
+    def _print_BooleanTrue(self, _: bool | BooleanTrue | BooleanFalse):
         return r"\mathrm{T}"
 
-    def _print_BooleanFalse(self, _: BooleanFalse):
+    def _print_BooleanFalse(self, _: bool | BooleanTrue | BooleanFalse):
         return r"\mathrm{F}"
 
-    def _print_Mul(self, expr: Mul):
+    def _print_Mul(self, expr: Expr):
         # try to split any fraction up into at most 3 distinct fractions.
         # one for all constant values, one for all symbols, and finally one for all units.
 
@@ -71,7 +72,7 @@ class LmatLatexPrinter(LatexPrinter):
         else:
             const_value = num_const / den_const
 
-        sym_value = None
+        sym_value: Expr | float | None = None
         if num_sym != 1 or den_sym != 1:
             sym_value = num_sym / den_sym
 
@@ -80,10 +81,9 @@ class LmatLatexPrinter(LatexPrinter):
             unit_value = num_unit / den_unit
 
         result = self._settings["mul_symbol_latex"].join([
-            super()._print_Mul(e)
-            for e in filter(
-                lambda x: x is not None, [const_value, sym_value, unit_value]
-            )
+            super()._print_Mul(cast(Expr, e))
+            for e in [const_value, sym_value, unit_value]
+            if e is not None
         ])
 
         return result
@@ -93,12 +93,12 @@ class LmatLatexPrinter(LatexPrinter):
     # the second contains all symbols in the passed expression,
     # the third contains all units in the passed expressions.
     def _filter_expr(self, expr: Expr):
-        args = []
+        args: tuple[Basic, ...] = tuple([])
 
         if expr.is_Mul:
             args = expr.args
         elif isinstance(expr, Quantity) or isinstance(expr, Pow) or expr.is_number:
-            args = [expr]
+            args = (expr,)
         else:
             return (1, expr, 1)
 
@@ -120,5 +120,5 @@ class LmatLatexPrinter(LatexPrinter):
         )
 
 
-def lmat_latex(expr: Expr) -> str:
+def lmat_latex(expr: Basic) -> str:
     return LmatLatexPrinter().doprint(expr)

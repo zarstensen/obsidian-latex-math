@@ -17,10 +17,10 @@ def derangements(n: Expr):
 
 def taylor(
     expression: Expr,
-    degree: Expr,
-    variables: list[Symbol],
-    arguments: list[Expr],
-    expansion_point: tuple[Expr],
+    degree_expr: Expr,
+    variables: tuple[Symbol, ...],
+    arguments: tuple[Expr, ...],
+    expansion_point: tuple[Expr, ...],
 ):
     if len(variables) != len(arguments):
         raise RuntimeError(
@@ -31,13 +31,15 @@ def taylor(
 
     dimension = len(variables)  # or len(arguments)
 
-    # degree must be a positive natural number.
-    degree = simplify(degree)
+    # degree_expr must be a positive natural number.
+    degree_expr = simplify(degree_expr)
 
-    if not int_valued(degree) or degree < 0:
+    if not int_valued(degree_expr) or degree_expr < 0:
         raise RuntimeError(
-            f"Degree of taylor series must be a natural number.\nWas [{degree}]"
+            f"Degree_expr of taylor series must be a natural number.\nWas [{degree_expr}]"
         )
+
+    degree = int(degree_expr)
 
     if len(expansion_point) != dimension:
         raise RuntimeError(
@@ -60,28 +62,28 @@ def taylor(
         taylor_pol_terms.append([])
 
         for prev_derivative in taylor_pol_terms[-2]:
-            for arg in variables:
-                new_derivative = prev_derivative.diff(arg)
+            for var in variables:
+                new_derivative = prev_derivative.diff(var)
                 taylor_pol_terms[-1].append(new_derivative)
 
     # The expansion point is now substituted into all directional derivates.
 
-    exp_point_subs = dict()
+    exp_point_subs: dict[Basic | complex, Expr | complex] = {}
 
     for variable, exp_scalar in zip(variables, expansion_point):
         exp_point_subs[variable] = exp_scalar
 
     for diff in taylor_pol_terms:
-        for i, d in enumerate(diff):
-            diff[i] = d.subs(exp_point_subs)
+        for i, diff_order in enumerate(diff):
+            diff[i] = diff_order.subs(exp_point_subs)
 
     # The (x - x_d)^n terms are now multiplied onto the derivatives.
     for i in range(0, degree):
         for j in range(i, degree):
-            for k, arg in enumerate(variables):
+            for k, var in enumerate(variables):
                 step = dimension**j
                 for n in range(step):
-                    taylor_pol_terms[j + 1][k * step + n] *= arg - exp_point_subs[arg]
+                    taylor_pol_terms[j + 1][k * step + n] *= var - exp_point_subs[var]
 
     # construct taylor polynomial by scaling each sum row by 1/n! and adding them together.
     taylor_polynomial = taylor_pol_terms[0][0]
@@ -92,7 +94,7 @@ def taylor(
         )
 
     # finally substitute the args into the computed taylor polynomial
-    args_subs = dict()
+    args_subs: dict[Basic | complex, Expr | complex] = {}
 
     for variable, arg in zip(variables, arguments):
         args_subs[variable] = arg
@@ -109,10 +111,12 @@ def taylor(
 # Therefore this is more akin to a universal quantification combined with an iff in the symbolic case.
 class SymbolicIff(Function):
     @classmethod
-    def eval(cls, *args: Expr) -> Expr:
+    def eval(cls, *args: Expr) -> Basic:
         try:
             args_bool = (as_Boolean(arg) for arg in args)
             return Equivalent(*args_bool)
         except TypeError:
             simplified_args = [simplify(arg) for arg in args]
-            return all(a.equals(b) for a, b in combinations(simplified_args, 2))
+            return sympify(
+                all(a.equals(b) for a, b in combinations(simplified_args, 2))
+            )

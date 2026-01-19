@@ -1,3 +1,4 @@
+# type: ignore
 from lmat_cas_client.ggb_plot.GeogebraPrinter import print_geogebra
 from sympy import *
 

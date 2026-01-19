@@ -1,5 +1,6 @@
+# mypy: disable-error-code="override"
 from itertools import chain
-from typing import Iterator, override
+from typing import Any, Iterable, override
 
 from lark import Discard, v_args
 from sympy import Symbol
@@ -40,19 +41,16 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
 
     @override
     def unit(self, unit_symbol: Symbol) -> set[str]:
-        symbol_or_unit: set[str] | Quantity = super().unit(unit_symbol)
+        unit: Any | Quantity = super().unit(unit_symbol)
 
-        match symbol_or_unit:
-            case Quantity():
-                return Discard
-            case set():
-                return symbol_or_unit
-            case _:
-                assert False
+        if isinstance(unit, Quantity):
+            return Discard  # type: ignore[return-value]
+
+        return set((unit_symbol.name,))
 
     @override
     def maybe_function_application(
-        self, func_name: Symbol, func_args: Iterator[set[str]]
+        self, func_name: Symbol, func_args: Iterable[str]
     ) -> set[str]:
         # include both the function itself, and all arguments to the function as dependencies.
         # e.g. f(x, 1, y) should produce { 'f', 'x', 'y' }
@@ -60,7 +58,7 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
         return set((func_name.name, *func_args))
 
     @v_args(inline=False)
-    def list_of_expressions(self, tokens: Iterator[set[str]]) -> set[str]:
+    def list_of_expressions(self, tokens: Iterable[set[str]]) -> set[str]:
         return set(chain.from_iterable(tokens))
 
 

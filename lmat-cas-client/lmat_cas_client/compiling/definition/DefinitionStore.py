@@ -1,7 +1,7 @@
 from abc import ABC
 from collections import deque
 from collections.abc import Iterable
-from typing import Mapping
+from typing import MutableMapping
 
 from attr import field, frozen
 from lark import Tree
@@ -106,7 +106,7 @@ class EmptyDefinition(Definition):
     pass
 
 
-type DefinitionStore = Mapping[str, Definition]
+type DefinitionStore = MutableMapping[str, Definition]
 """
 The DefinitionStore is any mapping between a set of definition id's (str keys) and a corresponding Definition type.
 """
@@ -118,14 +118,14 @@ class CyclicDependencyError(Exception):
     The problematic definitions are stored in the cyclic_dependencies field.
     """
 
-    def __init__(self, cyclic_dependencies: set[str], *args):
+    def __init__(self, cyclic_dependencies: frozenset[str], *args):
         super().__init__(*args)
         self.cyclic_dependencies = cyclic_dependencies
 
 
 @frozen
 class OrderedDeps:
-    deps: tuple[str]
+    deps: tuple[str, ...]
 
 
 @frozen
@@ -138,7 +138,7 @@ type DepsResolveResult = OrderedDeps | CyclicDeps
 
 def resolve_dependencies(
     def_store: DefinitionStore, definition_names: Iterable[str]
-) -> tuple[bool, tuple[str]]:
+) -> OrderedDeps | CyclicDeps:
     """
     produce a list containing all elements of 'definition_names', as well as their dependencies such that
     every name in the list, only depends on definitions to the left of it self.
@@ -179,7 +179,7 @@ def resolve_dependencies(
     definition_names = tuple(definition_names)
 
     dependency_graph: dict[str, set[str]] = {}
-    in_deg_table: dict[int, str] = {}
+    in_deg_table: dict[str, int] = {}
 
     marked_definitions = set({})
 
@@ -245,7 +245,7 @@ def resolve_dependencies(
 
 def assert_acyclic_dependencies(
     def_store: DefinitionStore, definition_names: Iterable[str]
-) -> tuple[str]:
+) -> tuple[str, ...]:
     """
     same as resolve_dependencies, but throws an exception if dependencies are cyclic.
 

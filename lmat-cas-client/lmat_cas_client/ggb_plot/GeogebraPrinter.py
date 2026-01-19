@@ -1,3 +1,4 @@
+# type: ignore
 from sympy import Equality, MatrixBase
 from sympy.core.function import DefinedFunction, Function
 from sympy.core.relational import Relational
