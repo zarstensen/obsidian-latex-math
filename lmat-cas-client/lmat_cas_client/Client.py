@@ -17,6 +17,7 @@ class ThreadKill(Exception):
 
 class KillableThread(Thread):
     def kill(self):
+        assert self.ident is not None
         ctypes.pythonapi.PyThreadState_SetAsyncExc(
             ctypes.c_long(self.ident), ctypes.py_object(ThreadKill)
         )
@@ -41,7 +42,7 @@ class LmatCasClient:
 
     def __init__(self):
         self.command_handlers: dict[str, CommandHandler] = {}
-        self.command_handler_threads: dict[str, Thread] = {}
+        self.command_handler_threads: dict[str, KillableThread] = {}
 
         self.pending_message_responses: set[str] = set()
 
@@ -57,6 +58,9 @@ class LmatCasClient:
 
     # Start the message loop, this is required to run, before any handlers will be called.
     async def run_message_loop(self):
+        assert self.connection is not None, (
+            "did not connect before starting message loop"
+        )
         while True:
             try:
                 message = jsonpickle.decode(await self.connection.recv())
@@ -150,6 +154,7 @@ class LmatCasClient:
 
     # Send the given json dumpable object back to the plugin.
     async def _respond(self, status: str, uid: str, message: dict):
+        assert self.connection is not None, "cannot respond with no connection"
         if uid not in self.pending_message_responses:
             raise ValueError(f"Response not pending for message with uid '{uid}'")
 

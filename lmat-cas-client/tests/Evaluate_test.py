@@ -734,7 +734,7 @@ class TestEvaluate:
             },
         })
 
-        assert result.sympy_expr == S("e") + Symbol(r"\pi")
+        assert result.sympy_expr == Symbol("e") + Symbol(r"\pi")
 
     def test_regression_168(self):
         handler = EvalHandler(self.expr_compiler, self.store_compiler)

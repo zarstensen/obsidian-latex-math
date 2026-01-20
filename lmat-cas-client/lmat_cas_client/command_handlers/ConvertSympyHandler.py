@@ -8,7 +8,7 @@ from lmat_cas_client.compiling.Compiler import (
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
-from .CommandHandler import CommandResult, CompilingCommandHandler
+from .CommandHandler import CommandResult, CompilingCommandHandler, MessageLike
 
 
 class ConvertSympyModeMessage(BaseModel):
@@ -22,13 +22,13 @@ class ConvertSympyResult(CommandResult):
         self.sympy_expr = sympy_expr
 
     @override
-    def getResponsePayload(self) -> dict:
+    def getResponsePayload(self) -> tuple[str, dict]:
         return CommandResult.result(dict(code=str(sympify(self.sympy_expr))))
 
 
 class ConvertSympyHandler(CompilingCommandHandler):
     @override
-    def handle(self, message: ConvertSympyModeMessage):
+    def handle(self, message: ConvertSympyModeMessage | MessageLike):
         message = ConvertSympyModeMessage.model_validate(message)
         # TODO: how should multiple expressions be handled?
         return ConvertSympyResult(

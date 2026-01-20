@@ -1,6 +1,8 @@
+from collections.abc import Iterable
 from typing import override
 
 from lmat_cas_client.compiling.definition.Resolver import (
+    Definition,
     DefinitionResolver,
     FunctionResToken,
     SymbolResToken,
@@ -34,5 +36,7 @@ class EmptyResolver(DefinitionResolver):
         raise NotImplementedError()
 
     @override
-    def resolve_applied(self, _token: FunctionResToken) -> Basic:
+    def resolve_applied(
+        self, _token: FunctionResToken, _params: Iterable[Definition]
+    ) -> Basic:
         raise NotImplementedError()

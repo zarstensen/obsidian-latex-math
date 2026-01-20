@@ -1,3 +1,6 @@
+# mypy: disable-error-code="attr-defined"
+from typing import Any
+
 import pytest
 from lmat_cas_client.compiling.Compiler import (
     LatexToCasExprCompiler,
@@ -20,13 +23,17 @@ class TestLatexToCasExprCompiler:
     expr_compiler = LatexToCasExprCompiler()
     store_compiler = LatexToDefStoreCompiler()
 
-    def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> CasExpr:
+    def _parse_expr(
+        self, expr, environment: LmatEnvironment | Any = LmatEnvironment()
+    ) -> CasExpr:
         environment = LmatEnvironment.model_validate(environment)
         return self.expr_compiler.compile(
             expr, lmat_env_to_definition_store(environment, self.store_compiler)
         )
 
-    def _parse_single_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
+    def _parse_single_expr(
+        self, expr, environment: LmatEnvironment | Any = LmatEnvironment()
+    ) -> Basic:
         return self._parse_expr(expr, environment).get_expr(-1)
 
     def test_comments(self):
@@ -399,7 +406,7 @@ class TestLatexToCasExprCompiler:
     def test_percent_permille(self):
         result = self._parse_single_expr(r"25\% - 5\textperthousand")
 
-        assert abs(result - (0.25 - 0.005)) <= 1e-14
+        assert abs(result - (0.25 - 0.005)) <= 1e-14  # type: ignore[operator]
 
     def test_regression_101(self):
         x, y = symbols("x y")
@@ -505,16 +512,25 @@ class TestLatexToCasExprCompiler:
         )
 
     derivative_test_cases = [
-        (r"\dv{x} x", Derivative(S("x"), S("x"))),
-        (r"\dv*{x} x", Derivative(S("x"), S("x"))),
-        (r"\dv*{z}{z}", Derivative(S("z"), S("z"))),
-        (r"\dv{x}{x}", Derivative(S("x"), S("x"))),
-        (r"\dv[5]{x^7}{x}", Derivative(S("x") ** 7, (S("x"), 5))),
-        (r"\dv[5]{x} x^7", Derivative(S("x") ** 7, (S("x"), 5))),
-        (r"\dv*[3]{x} x^7 + y", Derivative(S("x") ** 7, (S("x"), 3)) + S("y")),
-        (r"\dv*[3]{x} {x^7 + y}", Derivative(S("x") ** 7 + S("y"), (S("x"), 3))),
-        (r"\dv[3]{x^5 + y} {x}", Derivative(S("x") ** 5 + S("y"), (S("x"), 3))),
-        (r"\dv[2]{x^7}{x} y", Derivative(S("x") ** 7, (S("x"), 2)) * S("y")),
+        (r"\dv{x} x", Derivative(Symbol("x"), Symbol("x"))),
+        (r"\dv[5]{x^7}{x}", Derivative(Symbol("x") ** 7, (Symbol("x"), 5))),
+        (r"\dv[5]{x} x^7", Derivative(Symbol("x") ** 7, (Symbol("x"), 5))),
+        (
+            r"\dv*[3]{x} x^7 + y",
+            Derivative(Symbol("x") ** 7, (Symbol("x"), 3)) + Symbol("y"),
+        ),
+        (
+            r"\dv*[3]{x} {x^7 + y}",
+            Derivative(Symbol("x") ** 7 + Symbol("y"), (Symbol("x"), 3)),
+        ),
+        (
+            r"\dv[3]{x^5 + y} {x}",
+            Derivative(Symbol("x") ** 5 + Symbol("y"), (Symbol("x"), 3)),
+        ),
+        (
+            r"\dv[2]{x^7}{x} y",
+            Derivative(Symbol("x") ** 7, (Symbol("x"), 2)) * Symbol("y"),
+        ),
     ]
 
     partial_derivative_test_cases = list(
@@ -559,18 +575,27 @@ class TestLatexToCasExprCompiler:
             ),
             (
                 r"\lim_{x \to 5} f(x)",
-                Limit(S("f"), S("x"), 5) * S("x"),
+                Limit(Symbol("f"), Symbol("x"), 5) * Symbol("x"),
             ),
             (
                 r"\Re f(x) + \Im f(x) + \arg f(x) + \operatorname{sgn} f(x)",
-                (re(S("f")) + im(S("f")) + arg(S("f")) + sign(S("f"))) * S("x"),
+                (
+                    re(Symbol("f"))
+                    + im(Symbol("f"))
+                    + arg(Symbol("f"))
+                    + sign(Symbol("f"))
+                )
+                * Symbol("x"),
             ),
             (r"f(x^2)'", sympify("f * 2 * x")),
             (r"\sum_{x=0}^5 f(x)", sympify("f * 15")),
-            (r"f(\begin{matrix} 1 & 0 \end{matrix})^T", S("f") * Matrix([1, 0])),
+            (r"f(\begin{matrix} 1 & 0 \end{matrix})^T", Symbol("f") * Matrix([1, 0])),
             #
             (r"f(g(h(j(x))))", sympify("f * g * h * j * x")),
-            (r"\Re g(\sin f(x)^2)!", re(S("g")) * factorial(sin(S("f")) * S("x") ** 2)),
+            (
+                r"\Re g(\sin f(x)^2)!",
+                re(Symbol("g")) * factorial(sin(Symbol("f")) * Symbol("x") ** 2),
+            ),
         ],
     )
     def test_maybe_applied_implicit_multiplication(
@@ -583,14 +608,18 @@ class TestLatexToLogicCompiler:
     compiler = LatexToLogicCasExprCompiler()
     store_compiler = LatexToLogicDefStoreCompiler()
 
-    def _parse_expr(self, expr, environment: LmatEnvironment = {}) -> CasExpr:
+    def _parse_expr(
+        self, expr, environment: LmatEnvironment | Any = LmatEnvironment()
+    ) -> CasExpr:
         environment = LmatEnvironment.model_validate(environment)
         return self.compiler.compile(
             expr,
             lmat_env_to_definition_store(environment, self.store_compiler),
         )
 
-    def _parse_single_expr(self, expr, environment: LmatEnvironment = {}) -> Expr:
+    def _parse_single_expr(
+        self, expr, environment: LmatEnvironment | Any = LmatEnvironment()
+    ) -> Basic:
         return self._parse_expr(expr, environment).get_expr(-1)
 
     def test_propositions_presedence(self):

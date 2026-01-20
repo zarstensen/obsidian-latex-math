@@ -5,6 +5,8 @@
 # This is here to ensure feature parity(ish) with their latex parser.
 # some tests have been slightly modified or disabled, due to fundamental differences in the parsers functionality (multi letter symbols is an exmaple of this)
 
+from typing import Any
+
 from lmat_cas_client.compiling.Compiler import (
     LatexToCasExprCompiler,
     LatexToDefStoreCompiler,
@@ -94,7 +96,7 @@ def _MatMul(a, b):
     return MatMul(a, b, evaluate=False)
 
 
-def parse_latex_lark(latex_str, lmat_env: LmatEnvironment = {}):
+def parse_latex_lark(latex_str, lmat_env: LmatEnvironment | Any = LmatEnvironment()):
     return (
         LatexToCasExprCompiler()
         .compile(

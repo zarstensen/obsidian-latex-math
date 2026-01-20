@@ -1,5 +1,5 @@
 from ctypes import ArgumentError
-from typing import Iterator
+from typing import List, cast
 
 from attr import frozen
 from lark import Token, Transformer, v_args
@@ -63,9 +63,9 @@ class UndefinedAtomsTransformer(Transformer):
     def substitute_symbol(self, substitute_symbol: Symbol) -> Symbol | Expr:
         match self.__definition_store.get_resolver_token(substitute_symbol.name):
             case SymbolResToken() as token:
-                return self.__definition_store.resolve_value(token)
+                return cast(Expr, self.__definition_store.resolve_value(token))
             case FunctionResToken() as token:
-                return self.__definition_store.resolve_unapplied(token)
+                return cast(Expr, self.__definition_store.resolve_unapplied(token))
             case _:
                 return substitute_symbol
 
@@ -96,7 +96,7 @@ class UndefinedAtomsTransformer(Transformer):
 
         return Symbol(f"{formatter_text}{symbol_contents}{primes}")
 
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol:
+    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol | Expr:
 
         unit = UnitUtils.str_to_unit(unit_symbol.name)
 
@@ -106,12 +106,15 @@ class UndefinedAtomsTransformer(Transformer):
             return self.substitute_symbol(unit_symbol)
 
     def maybe_function_application(
-        self, func_head: Symbol, func_args: Iterator[Expr] = None
+        self, func_head: Symbol, func_args: List[Expr]
     ) -> Expr | ImplicitMul:
         match self.__definition_store.get_resolver_token(func_head.name):
             case FunctionResToken() as token:
-                return self.__definition_store.resolve_applied(
-                    token, map(lambda a: SymbolDefinition(SympyDef(a)), func_args)
+                return cast(
+                    Expr,
+                    self.__definition_store.resolve_applied(
+                        token, map(lambda a: SymbolDefinition(SympyDef(a)), func_args)
+                    ),
                 )
             case _:
                 # if it is not a defined function,

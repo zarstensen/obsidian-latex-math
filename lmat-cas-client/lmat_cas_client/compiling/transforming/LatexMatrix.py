@@ -7,10 +7,12 @@ class LatexMatrix(Matrix):
     The LatexMatrix class stores additional info about the eventual latex representation of a sympy matrix.
     """
 
-    env_begin: str = None
-    env_end: str = None
+    env_begin: str | None = None
+    env_end: str | None = None
 
-    def __new__(cls, *args, env_begin: str = None, env_end: str = None, **kwargs):
+    def __new__(
+        cls, *args, env_begin: str | None = None, env_end: str | None = None, **kwargs
+    ):
         # only the class type is propagated during matrix computations,
         # so a custom class is created for each new instance, which stores the latex strings.
         lmat_cls = type(

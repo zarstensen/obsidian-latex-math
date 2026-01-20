@@ -1,6 +1,6 @@
 import os
 import re as regex
-from typing import Callable, Iterator
+from typing import Callable, Iterator, cast
 
 from lark import Lark, Token
 from lark.lark import PostLex
@@ -22,8 +22,8 @@ class LexerScope:
         self,
         scope_pairs: list[
             tuple[
-                regex.Pattern,
-                regex.Pattern | Callable[[regex.Match[str]], regex.Pattern],
+                str | regex.Pattern,
+                str | regex.Pattern | Callable[[regex.Match[str]], str | regex.Pattern],
             ]
         ] = [],
         replace_tokens: dict[str, str | list[TerminalDef]] = {},
@@ -32,18 +32,20 @@ class LexerScope:
         self.replace_tokens = replace_tokens
 
     def token_handler(
-        self, token_stream: Iterator[Token], _scope_start_token: Token
+        self, token_stream: Iterator[Token], _scope_start_token: Token | None
     ) -> Iterator[Token]:
         for t in token_stream:
             # try to replace the token
             if t.type in self.replace_tokens:
                 if isinstance(self.replace_tokens[t.type], str):
-                    yield Token(self.replace_tokens[t.type], t.value)
+                    yield Token(cast(str, self.replace_tokens[t.type]), t.value)
                     continue
 
                 for replace_token in self.replace_tokens[t.type]:
-                    if regex.fullmatch(replace_token.pattern.to_regexp(), t.value):
-                        yield Token(replace_token.name, t.value)
+                    if regex.fullmatch(
+                        cast(TerminalDef, replace_token).pattern.to_regexp(), t.value
+                    ):
+                        yield Token(cast(TerminalDef, replace_token).name, t.value)
                         break
                 else:
                     # no tokens could replace it anyways, so just return the original one.
@@ -58,7 +60,7 @@ class MultiArgScope(LexerScope):
         self.arg_count = arg_count
 
     def token_handler(
-        self, token_stream: Iterator[Token], scope_start_token: Token
+        self, token_stream: Iterator[Token], scope_start_token: Token | None
     ) -> Iterator[Token]:
         for _ in range(1, self.arg_count):
             token = next(super().token_handler(token_stream, scope_start_token), None)
@@ -80,8 +82,9 @@ class MultiArgScope(LexerScope):
 
 class MatrixScope(LexerScope):
     def token_handler(
-        self, token_stream: Iterator[Token], scope_start_token: Token
+        self, token_stream: Iterator[Token], scope_start_token: Token | None
     ) -> Iterator[Token]:
+        assert scope_start_token is not None
         ignore_regex = r"(\\left\s*(\\)?.|\\right\s*(\\)?.|\s)"
         expected_end_token_type = scope_start_token.type.replace("BEGIN", "END")
         expected_end_token_value = regex.sub(
@@ -139,7 +142,7 @@ class CasExprPostLexer(PostLex):
         Args:
             parser (Lark): lark parser to retreive terminals from.
         """
-        self.scopes = [
+        self.scopes: list[LexerScope] = [
             # Scope for inner products,
             # is here so we dont go into the abs scope below.
             LexerScope(
@@ -294,7 +297,9 @@ class CasExprPostLexer(PostLex):
                         end_terminal = (
                             scope_pair[1]
                             if isinstance(scope_pair[1], str)
-                            else scope_pair[1](match)
+                            else cast(Callable[[regex.Match], str], scope_pair[1])(
+                                match
+                            )
                         )
                         yield from self._process_scope(
                             stream, new_scope, token, end_terminal

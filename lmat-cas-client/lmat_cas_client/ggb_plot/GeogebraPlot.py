@@ -1,3 +1,4 @@
+# type: ignore
 import zipfile
 from typing import Iterable
 from xml.etree import ElementTree

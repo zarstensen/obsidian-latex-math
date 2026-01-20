@@ -1,6 +1,6 @@
 import itertools
 from enum import Enum
-from typing import Iterator, NamedTuple, Self
+from typing import Iterable, Iterator, NamedTuple, cast
 
 from lark import Token, Transformer, v_args
 from lark.tree import Meta
@@ -36,16 +36,18 @@ class CasExpr(NamedTuple):
     The CasExpr class represents a series of sympy expressions and their original locations in some source text.
     """
 
-    expressions: tuple[Basic, Meta]
+    expressions: tuple[tuple[Basic, Meta], ...]
 
     @staticmethod
-    def from_cas_exprs(systems: Iterator[tuple[Basic, Meta] | Self]) -> Self:
-        expressions = []
+    def from_cas_exprs(
+        systems: Iterable["CasExpr"],
+    ) -> "CasExpr":
+        expressions: list[tuple[Basic, Meta]] = []
 
         for system in systems:
             expressions.extend(system.expressions)
 
-        return CasExpr(expressions)
+        return CasExpr(tuple(expressions))
 
     # retreive number of expressions in the system
     def __len__(self):
@@ -117,14 +119,14 @@ class CasExprTransformer(Transformer):
         match cas_expr:
             case CasExpr():
                 return cas_expr  # nothing to do, input is already CasExpr
-            case [*cas_exprs]:
+            case list() as cas_exprs:
                 return CasExpr.from_cas_exprs(cas_exprs)
             case sympy_expr:
-                return CasExpr([(sympy_expr, meta)])
+                return CasExpr(tuple([(cast(Basic, sympy_expr), meta)]))
 
     def sor_env(self, relations: list[CasExpr | Delim]) -> CasExpr:
         return CasExpr.from_cas_exprs([
-            next(row)  # the row iterator should only contain 1 element
+            cast(CasExpr, next(row))  # the row iterator should only contain 1 element
             for is_delim, row in itertools.groupby(
                 relations, lambda t: t == self.Delim.MatDelim
             )
@@ -135,15 +137,15 @@ class CasExprTransformer(Transformer):
         return CasExpr.from_cas_exprs(relations)
 
     @v_args(meta=True)
-    def relation(self, meta, tokens: list[Expr | Token]) -> CasExpr:
+    def relation(self, meta: Meta, tokens: list[Expr | Token]) -> CasExpr:
         if len(tokens) == 1:
-            return CasExpr([(tokens[0], meta)])
+            return CasExpr(tuple([(cast(Expr, tokens[0]), meta)]))
         # construct a list of relations which later will be used to construct
         # a chained relation object.
         # a = b = c should produce [a = b, b = c],
         # that way when we chain them with and's (a = b & b = c),
         # it should be logically equivalent to a = b = c
-        prev_expr = Dummy()
+        prev_expr: Expr = Dummy()
         relation_type = None
 
         relations = []
@@ -162,16 +164,13 @@ class CasExprTransformer(Transformer):
         if relation_type is not None:
             relations.append(self._create_relation(prev_expr, Dummy(), relation_type))
 
-        return CasExpr([(relation, meta) for relation in relations])
+        return CasExpr(tuple((relation, meta) for relation in relations))
 
     def expression(self, tokens: list[Expr | Token]) -> Expr:
         # construct a sum between the given sympy expressions,
         # with the sign that separates them in the tokens list.
 
-        signs = [
-            self.SIGN_DICT[t.type]
-            for t in filter(lambda t: isinstance(t, Token), tokens)
-        ]
+        signs = [self.SIGN_DICT[t.type] for t in tokens if isinstance(t, Token)]
         values = list(filter(lambda t: not isinstance(t, Token), tokens))
 
         # if no first sign was specified, it is implicitly '+'.
@@ -183,7 +182,9 @@ class CasExprTransformer(Transformer):
                 f"Error, too few signs were present in expression, expected {len(values) - 1} - {len(values)} got {len(signs)}"
             )
 
-        result = signs[0] * values[0] if signs[0] != S.One else values[0]
+        result: Expr = (
+            signs[0] * values[0] if signs[0] != S.One else cast(Expr, values[0])
+        )
 
         # TODO: perhaps scalars should be autoconverted to 0d matrices here,
         # if it is attempted to sum a matrix and a scalar.
@@ -197,25 +198,25 @@ class CasExprTransformer(Transformer):
         # tokens is a list of sympy expressions, representing factors,
         # separated by a multiplication / division token.
 
-        result = tokens[0]
+        result: Expr = cast(Expr, tokens[0])
 
         i = 1
         while i < len(tokens):
-            operator = tokens[i]
+            operator: Token = cast(Token, tokens[i])
 
             i += 1
 
-            sign = S.One
+            sign: Integer = S.One
 
             if isinstance(tokens[i], Token):
-                sign = self.SIGN_DICT[tokens[i].type]
+                sign = self.SIGN_DICT[cast(Token, tokens[i]).type]
                 i += 1
 
-            factor = tokens[i]
+            factor: Expr = cast(Expr, tokens[i])
             i += 1
 
             if operator.type == "OPERATOR_CROSS" and MatrixUtils.is_matrix(result):
-                result = result.cross(sign * factor)
+                result = cast(MatrixBase, result).cross(sign * factor)
             elif operator.type in ("OPERATOR_CROSS", "OPERATOR_MUL"):
                 result *= sign * factor
             elif operator.type == "OPERATOR_DIV":
@@ -250,7 +251,7 @@ class CasExprTransformer(Transformer):
     @v_args(inline=True)
     def matrix_body(self, *body: Expr | Token) -> list[list[Expr]]:
         return [
-            list(row)
+            list(cast(Iterator[Expr], row))
             for is_delim, row in itertools.groupby(
                 body, lambda t: t == self.Delim.MatDelim
             )

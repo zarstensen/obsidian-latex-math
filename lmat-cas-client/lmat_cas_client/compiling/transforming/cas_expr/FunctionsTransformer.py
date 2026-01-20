@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator, Optional, cast
 
 import sympy
 from lark import Token, Transformer, v_args
@@ -104,7 +105,7 @@ class BuiltInFunctionsTransformer(Transformer):
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     def trig_function(
-        self, func_token: Token, exponent: Expr | None, arg: Expr
+        self, func_token: Token, exponent: Expr | int | None, arg: Expr
     ) -> Expr:
         func_type = func_token.type.replace("FUNC_", "").lower()
 
@@ -182,7 +183,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def permille(self, arg: Expr) -> Expr:
         return Mul(arg, 1000**-1)
 
-    def upper_gamma(self, s: Expr, x: Expr = 0) -> Expr:
+    def upper_gamma(self, s: Expr, x: Expr | int = 0) -> Expr:
         return uppergamma(s, x)
 
     def lower_gamma(self, s: Expr, x: Expr) -> Expr:
@@ -219,7 +220,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def abs(self, arg: Expr) -> Expr:
         # if arg is a matrix, this notation actually means taking its determinant.
         if MatrixUtils.is_matrix(arg):
-            return arg.det()
+            return cast(MatrixBase, arg).det()
 
         return Abs(arg)
 
@@ -242,7 +243,7 @@ class BuiltInFunctionsTransformer(Transformer):
         return [*arg_list]
 
     def derivative_symbols_first(
-        self, power: Optional[Expr], symbols: Iterator[tuple[Symbol, int]], expr: Expr
+        self, power: Optional[Expr], symbols: Iterable[tuple[Symbol, int]], expr: Expr
     ):
         exponent_sum = sum(s[1] for s in symbols)
 
@@ -254,22 +255,22 @@ class BuiltInFunctionsTransformer(Transformer):
         return diff(expr, *symbols)
 
     def derivative_func_first(
-        self, power: Optional[Expr], expr: Expr, symbols: Iterator[tuple[Expr, Expr]]
+        self, power: Optional[Expr], expr: Expr, symbols: Iterable[tuple[Symbol, int]]
     ):
         return self.derivative_symbols_first(power, symbols, expr)
 
     def derivative_phys_symbols_first(
-        self, power: Optional[Expr], symbol: Expr, expr: Expr
+        self, power: Optional[Expr], symbol: Symbol, expr: Expr
     ):
         return self.derivative_symbols_first(
-            power, [(symbol, power if power is not None else 1)], expr
+            power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
     def derivative_phys_func_first(
-        self, power: Optional[Expr], expr: Expr, symbol: Expr
+        self, power: Optional[Expr], expr: Expr, symbol: Symbol
     ):
         return self.derivative_symbols_first(
-            power, [(symbol, power if power is not None else 1)], expr
+            power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
     @implicit_mul_strategy(ImplicitMulStrategy.RHS)
@@ -281,12 +282,16 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             return diff(body, variables[0], primes.value.count("'"), evaluate=False)
 
-    def integral_no_bounds(self, expr: Expr | None, symbol: Expr):
+    def integral_no_bounds(self, expr: Expr | int | None, symbol: Expr):
         expr = 1 if expr is None else expr
         return integrate(expr, symbol)
 
     def integral_lower_bound_first(
-        self, lower_bound: Expr, upper_bound: Expr, expr: Expr | None, symbol: Expr
+        self,
+        lower_bound: Expr,
+        upper_bound: Expr,
+        expr: Expr | int | None,
+        symbol: Expr,
     ):
         expr = 1 if expr is None else expr
         return integrate(expr, (symbol, lower_bound, upper_bound))
@@ -407,7 +412,7 @@ class BuiltInFunctionsTransformer(Transformer):
     # Linear Alg Specific Implementations
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def gradient(self, exponent: Expr | None, expr: Expr) -> Expr:
+    def gradient(self, exponent: Expr | None, expr: Expr) -> MatrixBase:
         body, variables = self._expr_as_function(expr)
         return self._try_raise_exponent(
             Matrix(derive_by_array(body, variables)), exponent
@@ -431,28 +436,30 @@ class BuiltInFunctionsTransformer(Transformer):
 
         gradients = []
 
-        for item in matrix:
+        for item in matrix:  # type: ignore[attr-defined]
             gradients.append(Matrix([derive_by_array(item, variables)]))
 
         return self._try_raise_exponent(Matrix.vstack(*gradients), exponent)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def taylor(self, degree: Expr, expr: Expr, exp_point: Expr | None, *args: Expr):
+    def taylor(
+        self, degree: Expr, expr: Expr, exp_point: Expr | int | None, *args: Expr
+    ):
         degree = simplify(degree)
 
         # make sure expansion point is a tuple
-        exp_point = 0 if exp_point is None else simplify(exp_point)
+        exp_point = 0 if exp_point is None else simplify(sympify(exp_point))
 
         if not MatrixUtils.is_matrix(exp_point):
-            exp_point = (exp_point,) * len(args)
+            exp_point_elems = (exp_point,) * len(args)
         else:
-            exp_point = tuple(exp_point)
+            exp_point_elems = tuple(exp_point)  # type: ignore[arg-type]
 
         # Make sure all arguments are scalars, or the first argument is a vector
         args = tuple(map(simplify, args))
 
         if len(args) == 1 and MatrixUtils.is_matrix(args[0]):
-            args_mat: MatrixBase = args[0]
+            args_mat: MatrixBase = cast(MatrixBase, args[0])
 
             if args_mat.shape[0] != 1 and args_mat.shape[1] != 1:
                 raise RuntimeError(
@@ -460,7 +467,7 @@ class BuiltInFunctionsTransformer(Transformer):
                     f"Was a {args_mat.shape} matrix."
                 )
 
-            args = tuple(map(simplify, args_mat))
+            args = tuple(map(simplify, args_mat))  # type: ignore[call-overload]
 
         for i, arg in enumerate(args):
             if MatrixUtils.is_matrix(arg):
@@ -470,7 +477,9 @@ class BuiltInFunctionsTransformer(Transformer):
 
         expr, variables = self._expr_as_function(expr, len(args))
 
-        return Functions.taylor(expr, degree, variables, args, exp_point)
+        return Functions.taylor(
+            expr, degree, variables, args, cast(tuple[Expr], exp_point_elems)
+        )
 
     # Combinatorial Functions
 
@@ -499,7 +508,9 @@ class BuiltInFunctionsTransformer(Transformer):
 
     # tries to raise arg to the given exponent, except if it is None,
     # or doing so results in no change to the resulting expression.
-    def _try_raise_exponent(self, arg: Expr, exponent: Expr | None) -> Expr:
+    def _try_raise_exponent[T: Expr | MatrixBase](
+        self, arg: T, exponent: Expr | int | None
+    ) -> T:
         if exponent is not None and exponent != 1:
             return pow(arg, exponent)
         else:
@@ -511,8 +522,8 @@ class BuiltInFunctionsTransformer(Transformer):
     # If the expression has an entry in the definition store, its function definition body and variables is used.
     # Otherwise the expression itself is used as the body, and the variables are extracted from its free symbols.
     def _expr_as_function(
-        self, expr: Expr, target_variables: int | Range | None = None
-    ) -> tuple[Expr, tuple[Symbol]]:
+        self, expr: Expr, target_variables: int | range | None = None
+    ) -> tuple[Expr, tuple[Symbol, ...]]:
         params = None
         body = None
 
@@ -523,7 +534,7 @@ class BuiltInFunctionsTransformer(Transformer):
                     params = self.__definition_resolver.resolve_params(token)
 
         if params is None or body is None:
-            params = symbols_variable_order(expr.free_symbols)
+            params = symbols_variable_order(cast(set[Symbol], expr.free_symbols))
             body = expr
 
             match target_variables:
@@ -546,4 +557,4 @@ class BuiltInFunctionsTransformer(Transformer):
                     )
 
         # return result
-        return body, params
+        return body, tuple(params)
