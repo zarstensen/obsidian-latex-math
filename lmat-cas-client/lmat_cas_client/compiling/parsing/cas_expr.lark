@@ -272,7 +272,7 @@ permille_func_arg: factor_func_postfix_arg _PERMILLE -> permille
 derivative_prime: factor_func_arg PRIMES
 derivative_prime_func_arg: factor_func_postfix_arg PRIMES -> derivative_prime
 
-modulo: factor_func_arg _FUNC_MOD factor_func_arg
+modulo: (factor_func_arg | modulo) _FUNC_MOD factor_func_arg
 
 // core functions
 // TODO: just add 2 more terminals, which match cases where arguments are not delimited,
@@ -556,7 +556,7 @@ _FUNC_DERANGEMENTS.1: _CMD_DERANGEMENTS _L_FORMAT? _L_PAREN
 
 _FUNC_GCD: "\\gcd"
 _FUNC_LCM: CMD_OPERATOR _WS? _L_BRACE _WS? "lcm" _WS? _R_BRACE
-_FUNC_MOD: "\\mod"
+_FUNC_MOD: /\\b?mod/
 
 // TODO: use a bit more elaborate regex here, so more complex strings are allowed in the index.
 // UNDEFINED_FUNC_START: (SINGLE_LETTER_SYMBOL|MULTI_LETTER_SYMBOL) (_WS? _UNDERSCORE _WS? _L_BRACE /\s*[^{}]+\s*/ _R_BRACE)? _LR_FORMAT? _L_PAREN
