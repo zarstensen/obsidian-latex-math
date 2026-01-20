@@ -603,6 +603,21 @@ class TestLatexToCasExprCompiler:
     ):
         self._assert_compiles_to(latex, expected_expr)
 
+    @pytest.mark.parametrize(
+        "latex,expected_expr",
+        [
+            (
+                r"a \mod b \mod c \bmod d \bmod f",
+                Mod(
+                    Mod(Mod(Mod(Symbol("a"), Symbol("b")), Symbol("c")), Symbol("d")),
+                    Symbol("f"),
+                ),
+            )
+        ],
+    )
+    def test_mod_chaining(self, latex: str, expected_expr: Expr):
+        self._assert_compiles_to(latex, expected_expr)
+
 
 class TestLatexToLogicCompiler:
     compiler = LatexToLogicCasExprCompiler()
