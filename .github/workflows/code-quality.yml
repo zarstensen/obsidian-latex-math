@@ -22,6 +22,9 @@ jobs:
       - name: Run Ruff Format Check
         run: ruff format --check --preview --output-format=github
 
+      - name: Mypy Check
+        run: mypy . --install-types --non-interactive
+
   plugin-code-check:
     runs-on: ubuntu-latest
     steps:

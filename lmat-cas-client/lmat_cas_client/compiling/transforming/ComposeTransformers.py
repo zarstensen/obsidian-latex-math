@@ -1,6 +1,5 @@
-from typing import Iterator
-
 from lark import Token, Transformer, Tree, Visitor
+from lark.tree import Branch
 from regex import Regex
 
 
@@ -25,7 +24,7 @@ class AstNamespacesRemover(Visitor):
     def __default__(self, node: Tree):
         node.data = self._rem_regex.sub(r"\1\2", node.data)
 
-        new_children = []
+        new_children: list[Branch] = []
 
         for child in node.children:
             match child:
@@ -44,7 +43,7 @@ class AstNamespacesRemover(Visitor):
         return node
 
 
-def compose_transformers(*transformers: Iterator[Transformer]):
+def compose_transformers(*transformers: Transformer):
     """
     Compose a series of transformers into a singular transformer,
     no namespaces are added to any of the transformers.
@@ -53,7 +52,7 @@ def compose_transformers(*transformers: Iterator[Transformer]):
     so if 2 rule handlers of the same name exists in the transformers list,
     the one in the transformer furthest to the right, is picked.
     """
-    composed_transformer = Transformer()
+    composed_transformer: Transformer = Transformer()
 
     for transformer in transformers:
         for method_name in dir(transformer):

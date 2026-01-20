@@ -1,4 +1,4 @@
-from typing import Any, override
+from typing import Any, cast, override
 
 from pydantic import BaseModel
 from sympy import *
@@ -33,7 +33,7 @@ class SolveResult(CommandResult):
         self.symbols = symbols
 
     @override
-    def getResponsePayload(self) -> dict:
+    def getResponsePayload(self) -> tuple[str, dict]:
         solutions_set = self.solution
 
         if len(self.symbols) == 1:
@@ -62,7 +62,7 @@ class SolveResult(CommandResult):
 # if successfull its sends a message with status solved, and the result in the result key.
 class SolveHandler(CompilingCommandHandler):
     @override
-    def handle(self, message: SolveMessage) -> SolveResult:
+    def handle(self, message: SolveMessage | MessageLike) -> SolveResult:
         message = SolveMessage.model_validate(message)
 
         definition_store = lmat_env_to_definition_store(
@@ -91,7 +91,7 @@ class SolveHandler(CompilingCommandHandler):
         ):
             solve_domain = sympify(message.environment.solve_domain)
 
-        symbols = [None] * len(message.symbols)
+        symbols: list[Symbol | None] = [None] * len(message.symbols)
 
         if len(message.symbols) != len(equations):
             raise HandlerError("Incorrect number of symbols provided.")
@@ -99,7 +99,7 @@ class SolveHandler(CompilingCommandHandler):
         for free_symbol in free_symbols:
             if str(free_symbol) in message.symbols:
                 symbol_index = message.symbols.index(str(free_symbol))
-                symbols[symbol_index] = free_symbol
+                symbols[symbol_index] = cast(Symbol, free_symbol)
 
         if None in symbols:
             raise HandlerError(f"No such symbols: {message.symbols}")
@@ -148,7 +148,7 @@ class SolveInfoResult(CommandResult):
         self.equation_count = equation_count
 
     @override
-    def getResponsePayload(self) -> dict:
+    def getResponsePayload(self) -> tuple[str, dict]:
         return CommandResult.result(
             dict(
                 required_symbols=self.equation_count,
@@ -164,7 +164,7 @@ class SolveInfoResult(CommandResult):
 # returns number of required symbols, and a list of symbols to choose from.
 class SolveInfoHandler(CompilingCommandHandler):
     @override
-    def handle(self, message: SolveInfoMessage) -> SolveInfoResult:
+    def handle(self, message: SolveInfoMessage | MessageLike) -> SolveInfoResult:
         message = SolveInfoMessage.model_validate(message)
         definition_store = lmat_env_to_definition_store(
             message.environment, self._def_store_compiler
@@ -179,7 +179,9 @@ class SolveInfoHandler(CompilingCommandHandler):
         # or it should be ordered such that the first n symbols are the default symbols.
 
         symbols = set(
-            symbol for equation in equations for symbol in equation.free_symbols
+            cast(Symbol, symbol)
+            for equation in equations
+            for symbol in equation.free_symbols
         )
         ordered_symbols = symbols_variable_order(symbols)
 

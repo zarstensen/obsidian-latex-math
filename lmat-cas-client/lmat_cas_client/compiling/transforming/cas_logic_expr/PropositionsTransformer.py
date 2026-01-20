@@ -1,4 +1,7 @@
+from typing import cast
+
 from lark import Token, Transformer, v_args
+from lark.tree import Meta
 from lmat_cas_client.compiling.definition.Resolver import DefinitionResolver
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
     CasExpr,
@@ -26,22 +29,22 @@ class CasLogicTransformer(Transformer):
         return S.false
 
     @v_args(meta=True, inline=True)
-    def cas_logic_expression(self, meta, *props: Expr) -> CasExpr:
-        return CasExpr([(prop, meta) for prop in props])
+    def cas_logic_expression(self, meta: Meta, *props: Basic) -> CasExpr:
+        return CasExpr(tuple([(prop, meta) for prop in props]))
 
-    def prop_iff(self, *args: tuple[Expr]) -> Expr:
+    def prop_iff(self, *args: tuple[Expr]) -> Basic:
         return Equivalent(*args)
 
-    def prop_negated_iff(self, *args: tuple[Expr]) -> Expr:
+    def prop_negated_iff(self, *args: tuple[Expr]) -> BooleanFunction:
         return Not(Equivalent(*args))
 
-    def prop_implies(self, *args: tuple[Expr | Token]) -> Expr:
-        args = list(reversed(args))
+    def prop_implies(self, *args: Expr | Token) -> Expr:
+        reversed_args = list(reversed(args))
 
-        while len(args) > 1:
-            left = args.pop()
-            op_token = args.pop()
-            right = args.pop()
+        while len(reversed_args) > 1:
+            left: Expr = cast(Expr, reversed_args.pop())
+            op_token: Token = cast(Token, reversed_args.pop())
+            right: Expr = cast(Expr, reversed_args.pop())
 
             match op_token.type:
                 case "_LR_IMPLICATION":
@@ -59,30 +62,30 @@ class CasLogicTransformer(Transformer):
                 case _:
                     raise ValueError(f"Unexpected token: {repr(op_token)}")
 
-            args.append(implication)
+            reversed_args.append(implication)
 
-        return args[0]
+        return cast(Expr, reversed_args[0])
 
-    def prop_or(self, *args: tuple[Expr]) -> Expr:
-        return Or(*args, evaluate=False)
+    def prop_or(self, *args: Boolean) -> BooleanFunction:
+        return Or(*args)
 
-    def prop_nand(self, *args: tuple[Expr]) -> Expr:
-        return Nand(*args, evaluate=False)
+    def prop_nand(self, *args: Boolean) -> BooleanFunction:
+        return Nand(*args)
 
-    def prop_and(self, *args: tuple[Expr]) -> Expr:
-        return And(*args, evaluate=False)
+    def prop_and(self, *args: Boolean) -> BooleanFunction:
+        return And(*args)
 
-    def prop_nor(self, *args: tuple[Expr]) -> Expr:
-        return Nor(*args, evaluate=False)
+    def prop_nor(self, *args: Boolean) -> BooleanFunction:
+        return Nor(*args)
 
-    def prop_xor(self, *args: tuple[Expr]) -> Expr:
-        return Xor(*args, evaluate=False)
+    def prop_xor(self, *args: Boolean) -> BooleanFunction:
+        return Xor(*args)
 
-    def prop_xnor(self, *args: tuple[Expr]) -> Expr:
-        return Xnor(*args, evaluate=False)
+    def prop_xnor(self, *args: Boolean) -> BooleanFunction:
+        return Xnor(*args)
 
-    def prop_not(self, arg: Expr) -> Expr:
-        return Not(arg, evaluate=False)
+    def prop_not(self, arg: Boolean) -> BooleanFunction:
+        return Not(arg)
 
 
 cas_logic_expr_transformer_runner = TransformerRunner[[DefinitionResolver], CasExpr](

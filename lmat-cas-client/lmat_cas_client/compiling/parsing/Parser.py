@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Iterable, Optional
 
 import regex
 from lark import (
@@ -117,7 +117,7 @@ class Parser:
         )
         return error
 
-    def _prettify_terminals(self, terminal_names: list[str]) -> list[str]:
+    def _prettify_terminals(self, terminal_names: Iterable[str]) -> list[str]:
         """
         Returns a list of user readable (pretty) strings derived from the given list of terminals.
         If the terminal pattern is simply a string equality check, this string is returned,

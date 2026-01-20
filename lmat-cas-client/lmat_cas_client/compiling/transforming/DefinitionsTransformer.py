@@ -1,4 +1,5 @@
-from typing import ChainMap, Mapping, Optional
+from collections.abc import Iterable
+from typing import ChainMap, Mapping, Optional, cast
 
 from lark import Token, Transformer, Tree, v_args
 from sympy import Function, Symbol
@@ -77,7 +78,9 @@ class DefinitionsTransformer(Transformer):
     def symbol_cas_expr_def(
         self, def_ast: Tree, value_ast: Optional[Tree] = None
     ) -> DefinitionStore:
-        def_val: Symbol = self._expr_transformer.transform(def_ast, EmptyResolver)
+        def_val: Symbol = cast(
+            Symbol, self._expr_transformer.transform(def_ast, EmptyResolver())
+        )
 
         if value_ast is None:
             return {def_val.name: EmptyDefinition()}
@@ -85,17 +88,20 @@ class DefinitionsTransformer(Transformer):
         return {
             def_val.name: SymbolDefinition(
                 AstDef(value_ast),
-                deps=self._dependencies_transformer.transform(value_ast),
+                deps=self._dependencies_transformer.transform(value_ast),  # type: ignore[arg-type]
             )
         }
 
     def assumption_def(self, *args: Tree | Mapping[str, bool]) -> DefinitionStore:
-        [*symbs, assum] = args
+        symbs: Iterable[Tree] = cast(tuple[Tree], args[:-1])
+        assum: Mapping[str, bool] = cast(Mapping[str, bool], args[-1])
 
-        store = {}
+        store: DefinitionStore = {}
 
         for symb in symbs:
-            def_val: Symbol = self._expr_transformer.transform(symb, EmptyResolver)
+            def_val: Symbol = cast(
+                Symbol, self._expr_transformer.transform(symb, EmptyResolver())
+            )
             store[def_val.name] = SymbolDefinition(
                 SympyDef(Symbol(def_val.name, **assum))
             )
@@ -105,7 +111,9 @@ class DefinitionsTransformer(Transformer):
     def function_def(
         self, func_ast: Tree, params: tuple[str], body_ast: Optional[Tree] = None
     ) -> DefinitionStore:
-        func: Symbol = self._expr_transformer.transform(func_ast, EmptyResolver())
+        func: Symbol = cast(
+            Symbol, self._expr_transformer.transform(func_ast, EmptyResolver())
+        )
 
         if body_ast is None:
             return {func.name: EmptyDefinition()}
@@ -114,7 +122,7 @@ class DefinitionsTransformer(Transformer):
             func.name: FunctionDefinition(
                 AstFunDef(body_ast, Function(func.name)),
                 params=params,
-                deps=self._dependencies_transformer.transform(body_ast).difference(
+                deps=self._dependencies_transformer.transform(body_ast).difference(  # type: ignore[arg-type]
                     params
                 ),
             )
@@ -123,7 +131,9 @@ class DefinitionsTransformer(Transformer):
     def function_assumption_def(
         self, func_ast: Tree, params: tuple[str], assumptions: Mapping[str, bool]
     ) -> DefinitionStore:
-        func: Symbol = self._expr_transformer.transform(func_ast, EmptyResolver())
+        func: Symbol = cast(
+            Symbol, self._expr_transformer.transform(func_ast, EmptyResolver())
+        )
 
         return {
             func.name: FunctionDefinition(
@@ -131,9 +141,10 @@ class DefinitionsTransformer(Transformer):
             )
         }
 
-    def function_params(self, *params: Symbol) -> tuple[str]:
+    def function_params(self, *params: Tree) -> tuple[str, ...]:
         return tuple(
-            self._expr_transformer.transform(p, EmptyResolver()).name for p in params
+            cast(Symbol, self._expr_transformer.transform(p, EmptyResolver())).name
+            for p in params
         )
 
     def assumption_set(self, assum_set_term: Token):

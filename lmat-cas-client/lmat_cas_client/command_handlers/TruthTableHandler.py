@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import override
+from typing import Iterable, override
 
 from pydantic import BaseModel
 from sympy import *
@@ -34,19 +34,20 @@ class TruthTableMessage(BaseModel):
 class TruthTableResult(CommandResult):
     def __init__(
         self,
-        columns: tuple[Expr],
+        columns: Iterable[Basic],
         serialized_proposition: str,
-        truth_table: tuple[tuple[Boolean]],
+        truth_table: Iterable[Iterable[Boolean]],
     ):
         super().__init__()
-        self.columns = columns
+        self.columns = tuple(columns)
         self.serialized_proposition = serialized_proposition
-        self.truth_table = truth_table
+        self.truth_table = tuple(tuple(row) for row in truth_table)
 
 
 # implementation for MARKDOWN
 class TruthTableResultMarkdown(TruthTableResult):
-    def getResponsePayload(self) -> dict:
+    @override
+    def getResponsePayload(self) -> tuple[str, dict]:
         markdown_table_contents = []
 
         # create true false strings, last column are bold to make it visually distinguishable.
@@ -69,27 +70,27 @@ class TruthTableResultMarkdown(TruthTableResult):
 
 # implementation for LATEX_ARRAY
 class TruthTableResultLatex(TruthTableResult):
-    def getResponsePayload(self) -> dict:
-        array_contents = []
+    def getResponsePayload(self) -> tuple[str, dict]:
+        table_rows = []
 
         for row in self.truth_table:
-            array_contents.append("&".join(map(lmat_latex, row)))
+            table_rows.append("&".join(map(lmat_latex, row)))  # type: ignore[arg-type]
 
-        array_contents = r"\\ \hline ".join(array_contents)
+        table_contents = r"\\ \hline ".join(table_rows)
 
         array_options = rf"{{{':'.join(('c' for _ in self.columns))}|c}}"
 
         headers = rf"{'&'.join(map(lmat_latex, self.columns))} & {self.serialized_proposition}"
 
         return CommandResult.result({
-            "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{array_contents}\end{{array}}"
+            "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{table_contents}\end{{array}}"
         })
 
 
 # TruthTableHandler attempts to generate a truth table from the given expression.
 class TruthTableHandler(CompilingCommandHandler):
     @override
-    def handle(self, message: TruthTableMessage) -> TruthTableResult:
+    def handle(self, message: TruthTableMessage | MessageLike) -> TruthTableResult:
         message = TruthTableMessage.model_validate(message)
 
         definitions_store = lmat_env_to_definition_store(
@@ -108,7 +109,7 @@ class TruthTableHandler(CompilingCommandHandler):
         for row in reversed(tuple(truth_table(sympy_expr, columns))):
             truth_table_data.append([*map(as_Boolean, row[0]), row[1]])
 
-        result_cls = None
+        result_cls: type[TruthTableResult] | None = None
 
         # Select result class dependant on requested table format
         match message.truth_table_format:

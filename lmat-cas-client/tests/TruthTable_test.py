@@ -8,7 +8,7 @@ from sympy import *
 
 class TestTruthTable:
     handler = TruthTableHandler(
-        LatexToLogicCasExprCompiler(), LatexToLogicDefStoreCompiler
+        LatexToLogicCasExprCompiler(), LatexToLogicDefStoreCompiler()
     )
 
     def test_truth_table(self):
@@ -20,10 +20,10 @@ class TestTruthTable:
             "truth_table_format": "md",
         })
 
-        assert result.columns == [p, q]
-        assert result.truth_table == [
-            [True, True, True],
-            [True, False, False],
-            [False, True, False],
-            [False, False, False],
-        ]
+        assert result.columns == (p, q)
+        assert result.truth_table == (
+            (True, True, True),
+            (True, False, False),
+            (False, True, False),
+            (False, False, False),
+        )

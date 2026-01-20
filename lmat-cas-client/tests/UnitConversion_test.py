@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type"
 import lmat_cas_client.math_lib.units.UnitDefinitions as units
 from lmat_cas_client.command_handlers.ConvertUnitsHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *

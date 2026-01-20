@@ -1,0 +1,40 @@
+[tool.pytest.ini_options]
+pythonpath = ["./lmat-cas-client/lmat_cas_client"]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+
+extend-select = [
+    # imports
+    "I",
+    "F401",
+    # single newline at end of file
+    "W292",
+    "W391",
+    # unneeded whitespace
+    "W291",
+    "W293",
+]
+
+extend-ignore = ["F405", "F403"]
+
+extend-safe-fixes = ["W291"]
+
+[tool.mypy]
+
+check_untyped_defs = true
+cache_fine_grained = true
+
+[[tool.mypy.overrides]]
+module = "sympy.*"
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = "jsonpickle.*"
+follow_untyped_imports = true
+# [tool.pyright]
+# include = ["lmat-cas-client"]
+
+# reportAssignmentType = false

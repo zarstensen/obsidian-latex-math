@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Mapping
 
 from lmat_cas_client.compiling.Compiler import CasExprCompiler, DefStoreCompiler
 
@@ -21,6 +21,9 @@ class CommandResult(ABC):
         return ("result", value)
 
 
+MessageLike = Mapping[str, Any]
+
+
 class CommandHandler(ABC):
     """
     CommandHandler should be inherited by objects wanting to implement a handler.
@@ -28,7 +31,7 @@ class CommandHandler(ABC):
     """
 
     @abstractmethod
-    def handle(self, message: Any) -> CommandResult:
+    def handle(self, message: Any | MessageLike) -> CommandResult:
         pass
 
 
