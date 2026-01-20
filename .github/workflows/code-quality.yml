@@ -23,7 +23,7 @@ jobs:
         run: ruff format --check --preview --output-format=github
 
       - name: Mypy Check
-        run: mypy . --output=json | jq -r '"::error title=Mypy issue,file=\(.file),line=\(.line),col=\(.column)::\(.message)"'
+        run: mypy . --install-types --non-interactive
 
   plugin-code-check:
     runs-on: ubuntu-latest
