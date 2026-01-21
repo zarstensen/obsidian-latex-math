@@ -384,17 +384,233 @@ class TestLatexToCasExprCompiler:
         result = self._parse_single_expr(r"{km} + \sin{x} + \frac{a}{{J}} + b")
         assert result == u.km + sin(x) + a / u.joule + b
 
-    def test_hessian(self):
-        result = self._parse_single_expr(r"\mathbf{H}(x^2 + y^2)")
+    @pytest.mark.parametrize(
+        "latex,environment,expected_expr",
+        [
+            # Standard expressions with parentheses notation
+            (
+                r"\mathbf{H}(x^2 + y^2)",
+                {},
+                Matrix([[2, 0], [0, 2]]),
+            ),
+            (
+                r"\mathbf{H}(y x^5 + \sin(y))",
+                {},
+                Matrix([
+                    [20 * Symbol("x") ** 3 * Symbol("y"), 5 * Symbol("x") ** 4],
+                    [5 * Symbol("x") ** 4, -sin(Symbol("y"))],
+                ]),
+            ),
+            # Indexed notation
+            (
+                r"\mathbf{H}_{x^2 + y^2}",
+                {},
+                Matrix([[2, 0], [0, 2]]),
+            ),
+            # With evaluation point - parentheses notation
+            (
+                r"\mathbf{H}(x^2 + y^2)(1, 2)",
+                {},
+                Matrix([[2, 0], [0, 2]]),
+            ),
+            # With evaluation point - indexed notation
+            (
+                r"\mathbf{H}_{x^2 + y^2}(0, 0)",
+                {},
+                Matrix([[2, 0], [0, 2]]),
+            ),
+            # With function definition - parentheses notation
+            (
+                r"\mathbf{H}(f)",
+                {"definitionsv2": [r"f(x, y, z) := \log(x) + e^y"]},
+                Matrix([
+                    [-1 / Symbol("x") ** 2, 0, 0],
+                    [0, exp(Symbol("y")), 0],
+                    [0, 0, 0],
+                ]),
+            ),
+            # With function definition - indexed notation
+            (
+                r"\mathbf{H}_{f}",
+                {"definitionsv2": [r"f(x, y) := x^3 y + y^2"]},
+                Matrix([
+                    [6 * Symbol("x") * Symbol("y"), 3 * Symbol("x") ** 2],
+                    [3 * Symbol("x") ** 2, 2],
+                ]),
+            ),
+            # With function definition and evaluation point
+            (
+                r"\mathbf{H}(f)(1, 1)",
+                {"definitionsv2": [r"f(x, y) := x^3 y + y^2"]},
+                Matrix([[6, 3], [3, 2]]),
+            ),
+        ],
+    )
+    def test_hessian(self, latex: str, environment: dict, expected_expr: Expr):
+        result = self._parse_single_expr(latex, environment)
+        assert simplify(result.doit()) == simplify(expected_expr)
 
-        assert result.doit() == Matrix([[2, 0], [0, 2]])
+    @pytest.mark.parametrize(
+        "latex,environment,expected_expr",
+        [
+            # Standard expressions with parentheses notation
+            (
+                r"\mathbf{J}(\begin{bmatrix} x + y \\ x \\ y\end{bmatrix})",
+                {},
+                Matrix([[1, 1], [1, 0], [0, 1]]),
+            ),
+            (
+                r"\mathbf{J}(\begin{bmatrix} x^2 \\ y \\ x * y \end{bmatrix})",
+                {},
+                Matrix([[2 * Symbol("x"), 0], [0, 1], [Symbol("y"), Symbol("x")]]),
+            ),
+            # Indexed notation
+            (
+                r"\mathbf{J}_{\begin{bmatrix} x^2 \\ y^2 \end{bmatrix}}",
+                {},
+                Matrix([[2 * Symbol("x"), 0], [0, 2 * Symbol("y")]]),
+            ),
+            # Row vector
+            (
+                r"\mathbf{J}(\begin{bmatrix} x^2 & y^2 \end{bmatrix})",
+                {},
+                Matrix([[2 * Symbol("x"), 0], [0, 2 * Symbol("y")]]),
+            ),
+            # With evaluation point - parentheses notation
+            (
+                r"\mathbf{J}(\begin{bmatrix} x^2 \\ y \end{bmatrix})(2, 3)",
+                {},
+                Matrix([[4, 0], [0, 1]]),
+            ),
+            # With evaluation point - indexed notation
+            (
+                r"\mathbf{J}_{\begin{bmatrix} x + y \\ x - y \end{bmatrix}}(1, 1)",
+                {},
+                Matrix([[1, 1], [1, -1]]),
+            ),
+            # With function definition - parentheses notation
+            (
+                r"\mathbf{J}(f)",
+                {
+                    "definitionsv2": [
+                        r"f(x, y, z) := \begin{bmatrix}\log(x)\\ \sin(y) \\ \cos(x) * \sin(y) \end{bmatrix}"
+                    ]
+                },
+                Matrix([
+                    [1 / Symbol("x"), 0, 0],
+                    [0, cos(Symbol("y")), 0],
+                    [
+                        -sin(Symbol("x")) * sin(Symbol("y")),
+                        cos(Symbol("x")) * cos(Symbol("y")),
+                        0,
+                    ],
+                ]),
+            ),
+            # With function definition - indexed notation
+            (
+                r"\mathbf{J}_{f}",
+                {
+                    "definitionsv2": [
+                        r"f(x, y) := \begin{bmatrix} x^2 y \\ x + y \end{bmatrix}"
+                    ]
+                },
+                Matrix([[2 * Symbol("x") * Symbol("y"), Symbol("x") ** 2], [1, 1]]),
+            ),
+            # With function definition and evaluation point
+            (
+                r"\mathbf{J}(f)(1, 2)",
+                {
+                    "definitionsv2": [
+                        r"f(x, y) := \begin{bmatrix} x y^2 \\ x^2 + y \end{bmatrix}"
+                    ]
+                },
+                Matrix([[4, 4], [2, 1]]),
+            ),
+        ],
+    )
+    def test_jacobian(self, latex: str, environment: dict, expected_expr: Expr):
+        result = self._parse_single_expr(latex, environment)
+        assert simplify(result.doit()) == simplify(expected_expr)
 
-    def test_jacobian(self):
-        result = self._parse_single_expr(
-            r"\mathbf{J}(\begin{bmatrix} x + y \\ x \\ y\end{bmatrix})"
-        )
-
-        assert result.doit() == Matrix([[1, 1], [1, 0], [0, 1]])
+    @pytest.mark.parametrize(
+        "latex,environment,expected_expr",
+        [
+            # Standard expressions with parentheses notation
+            (
+                r"\nabla(x^2 + y^2)",
+                {},
+                Matrix([2 * Symbol("x"), 2 * Symbol("y")]),
+            ),
+            (
+                r"\nabla(x^3 y + y^2)",
+                {},
+                Matrix([
+                    3 * Symbol("x") ** 2 * Symbol("y"),
+                    Symbol("x") ** 3 + 2 * Symbol("y"),
+                ]),
+            ),
+            (
+                r"\grad(x^2 + y^2 + z^2)",
+                {},
+                Matrix([2 * Symbol("x"), 2 * Symbol("y"), 2 * Symbol("z")]),
+            ),
+            # Indexed notation
+            (
+                r"\nabla_{x^2 + y^2}",
+                {},
+                Matrix([2 * Symbol("x"), 2 * Symbol("y")]),
+            ),
+            # With evaluation point - parentheses notation
+            (
+                r"\nabla(x^2 + y^2)(1, 2)",
+                {},
+                Matrix([2, 4]),
+            ),
+            # With evaluation point - indexed notation
+            (
+                r"\nabla_{x^2 + y^2}(2, 3)",
+                {},
+                Matrix([4, 6]),
+            ),
+            # With function definition - parentheses notation
+            (
+                r"\nabla(f)",
+                {"definitionsv2": [r"f(x, y) := x^3 + y^2 + \sin(x)"]},
+                Matrix([3 * Symbol("x") ** 2 + cos(Symbol("x")), 2 * Symbol("y")]),
+            ),
+            # With function definition - indexed notation
+            (
+                r"\nabla_{f}",
+                {"definitionsv2": [r"f(x, y) := \log(x) + e^y"]},
+                Matrix([1 / Symbol("x"), exp(Symbol("y"))]),
+            ),
+            # With function definition and evaluation point
+            (
+                r"\nabla(f)(1, 0)",
+                {"definitionsv2": [r"f(x, y) := x^2 y + y^3"]},
+                Matrix([0, 1]),
+            ),
+            # Three-variable function
+            (
+                r"\grad(f)",
+                {"definitionsv2": [r"f(x, y, z) := x^2 + y^2 + z^2"]},
+                Matrix([2 * Symbol("x"), 2 * Symbol("y"), 2 * Symbol("z")]),
+            ),
+            # Complex expression
+            (
+                r"\nabla(x y z)",
+                {},
+                Matrix([
+                    Symbol("y") * Symbol("z"),
+                    Symbol("x") * Symbol("z"),
+                    Symbol("x") * Symbol("y"),
+                ]),
+            ),
+        ],
+    )
+    def test_gradient(self, latex: str, environment: dict, expected_expr: Expr):
+        result = self._parse_single_expr(latex, environment)
+        assert simplify(result.doit()) == simplify(expected_expr)
 
     def test_rref(self):
         result = self._parse_single_expr(

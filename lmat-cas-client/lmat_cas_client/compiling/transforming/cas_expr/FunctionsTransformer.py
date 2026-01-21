@@ -24,7 +24,7 @@ class ImplicitMulStrategy(Enum):
     """
 
     LHS = 0
-    """
+    r"""
     Indicates the current rule handler should perform work
     on the left hand side (lhs) of the implicit multiplication,
     e.g. sin should use this, as the sin in \sin f(x) should be applied to
@@ -93,6 +93,33 @@ def implicit_mul_strategy(strategy: ImplicitMulStrategy):
     return _decorator
 
 
+def _try_raise_exponent(arg: Expr, exponent: Expr | int | None):
+    if exponent is not None and exponent != 1:
+        return pow(arg, exponent)
+    else:
+        return arg
+
+
+def func_exp(*, exp_pos: int = 1):
+    """
+    decorator for all rule handlers which handle a function,
+    which supports applying an exponentiation, by raising the function head to some power,
+    i.e. f^y(x)
+    """
+
+    def _decorator(handler):
+        def _wrapped(*args: Any, **kwargs: Any):
+            assert len(args) > exp_pos
+            no_exp_args = list(args)
+            exponent = no_exp_args.pop(exp_pos)
+
+            return _try_raise_exponent(handler(*no_exp_args, **kwargs), exponent)
+
+        return _wrapped
+
+    return _decorator
+
+
 @v_args(inline=True)
 class BuiltInFunctionsTransformer(Transformer):
     """
@@ -124,7 +151,7 @@ class BuiltInFunctionsTransformer(Transformer):
         # find func name in sympy module, the tokens are named after their sympy equivalents.
         trig_func = getattr(sympy, func_type)
 
-        return self._try_raise_exponent(trig_func(arg), exponent)
+        return _try_raise_exponent(trig_func(arg), exponent)
 
     def frac(self, numerator: Expr, denominator: Expr) -> Expr:
         return numerator * denominator**-1
@@ -142,9 +169,8 @@ class BuiltInFunctionsTransformer(Transformer):
         return conjugate(arg)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def log_implicit_base(
-        self, func_token: Token, exponent: Expr | None, arg: Expr
-    ) -> Expr:
+    @func_exp(exp_pos=2)
+    def log_implicit_base(self, func_token: Token, arg: Expr) -> Expr:
         log_type = func_token.type
         base = 10 if log_type == "FUNC_LG" else None
 
@@ -153,23 +179,23 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             log_val = log(arg)
 
-        return self._try_raise_exponent(log_val, exponent)
+        return log_val
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def log_explicit_base(
-        self, _func_token: Token, base: Expr, exponent: Expr | None, arg: Expr
-    ) -> Expr:
-        return self._try_raise_exponent(log(arg, base), exponent)
+    @func_exp(exp_pos=3)
+    def log_explicit_base(self, _func_token: Token, base: Expr, arg: Expr) -> Expr:
+        return log(arg, base)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     def log_explicit_base_exponent_first(
-        self, func_token: Token, exponent: Expr | None, base: Expr, arg: Expr
+        self, func_token: Token, exponent, base: Expr, arg: Expr
     ) -> Expr:
         return self.log_explicit_base(func_token, base, exponent, arg)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def exponential(self, exponent: Expr | None, arg: Expr) -> Expr:
-        return self._try_raise_exponent(exp(arg), exponent)
+    @func_exp()
+    def exponential(self, arg: Expr) -> Expr:
+        return exp(arg)
 
     @implicit_mul_strategy(ImplicitMulStrategy.RHS)
     def factorial(self, arg: Expr) -> Expr:
@@ -198,20 +224,24 @@ class BuiltInFunctionsTransformer(Transformer):
         return limit(arg, symbol, approach_value, direction)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def real_part(self, exponent: Expr | None, val: Expr) -> Expr:
-        return self._try_raise_exponent(re(val), exponent)
+    @func_exp()
+    def real_part(self, val: Expr) -> Expr:
+        return re(val)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def imaginary_part(self, exponent: Expr | None, val: Expr) -> Expr:
-        return self._try_raise_exponent(im(val), exponent)
+    @func_exp()
+    def imaginary_part(self, val: Expr) -> Expr:
+        return im(val)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def argument(self, exponent: Expr | None, val: Expr) -> Expr:
-        return self._try_raise_exponent(arg(val), exponent)
+    @func_exp()
+    def argument(self, val: Expr) -> Expr:
+        return arg(val)
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def sign(self, exponent: Expr | None, val: Expr) -> Expr:
-        return self._try_raise_exponent(sign(val), exponent)
+    @func_exp()
+    def sign(self, val: Expr) -> Expr:
+        return sign(val)
 
     def limit_direction(self, direction_token: Token) -> str:
         return direction_token.value
@@ -358,32 +388,29 @@ class BuiltInFunctionsTransformer(Transformer):
         )
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def determinant(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(MatrixUtils.ensure_matrix(mat).det(), exponent)
+    @func_exp()
+    def determinant(self, mat: Expr) -> Expr:
+        return MatrixUtils.ensure_matrix(mat).det()
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def trace(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(
-            MatrixUtils.ensure_matrix(mat).trace(), exponent
-        )
+    @func_exp()
+    def trace(self, mat: Expr) -> Expr:
+        return MatrixUtils.ensure_matrix(mat).trace()
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def adjugate(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(
-            MatrixUtils.ensure_matrix(mat).adjugate(), exponent
-        )
+    @func_exp()
+    def adjugate(self, mat: Expr) -> Expr:
+        return MatrixUtils.ensure_matrix(mat).adjugate()
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def rref(self, exponent: Expr | None, mat: Expr) -> Expr:
-        return self._try_raise_exponent(
-            MatrixUtils.ensure_matrix(mat).rref()[0], exponent
-        )
+    @func_exp()
+    def rref(self, mat: Expr) -> Expr:
+        return MatrixUtils.ensure_matrix(mat).rref()[0]
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def unitvec(self, exponent: Expr | None, vector: Expr) -> Expr:
-        return self._try_raise_exponent(
-            MatrixUtils.ensure_matrix(vector).normalized(), exponent
-        )
+    @func_exp()
+    def unitvec(self, vector: Expr) -> Expr:
+        return MatrixUtils.ensure_matrix(vector).normalized()
 
     @implicit_mul_strategy(ImplicitMulStrategy.RHS)
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
@@ -412,20 +439,37 @@ class BuiltInFunctionsTransformer(Transformer):
     # Linear Alg Specific Implementations
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def gradient(self, exponent: Expr | None, expr: Expr) -> MatrixBase:
-        body, variables = self._expr_as_function(expr)
-        return self._try_raise_exponent(
-            Matrix(derive_by_array(body, variables)), exponent
+    @func_exp()
+    def gradient(self, expr: Expr, eval_point: None | list[Expr]) -> MatrixBase:
+        body, variables = self._expr_as_function(
+            expr, len(eval_point) if eval_point is not None else None
         )
+        res = Matrix(derive_by_array(body, variables))
+
+        if eval_point:
+            return res.subs({v: p for v, p in zip(variables, eval_point)})
+        else:
+            return res
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def hessian(self, exponent: Expr | None, expr: Expr) -> Expr:
-        body, variables = self._expr_as_function(expr)
-        return self._try_raise_exponent(hessian(body, variables), exponent)
+    @func_exp()
+    def hessian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
+        body, variables = self._expr_as_function(
+            expr, len(eval_point) if eval_point is not None else None
+        )
+        res = hessian(body, variables)
+
+        if eval_point:
+            return res.subs({v: p for v, p in zip(variables, eval_point)})
+        else:
+            return res
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
-    def jacobian(self, exponent: Expr | None, expr: Expr) -> Expr:
-        body, variables = self._expr_as_function(expr)
+    @func_exp()
+    def jacobian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
+        body, variables = self._expr_as_function(
+            expr, len(eval_point) if eval_point is not None else None
+        )
         matrix = MatrixUtils.ensure_matrix(body)
 
         if not matrix.rows == 1 and not matrix.cols == 1:
@@ -439,46 +483,62 @@ class BuiltInFunctionsTransformer(Transformer):
         for item in matrix:  # type: ignore[attr-defined]
             gradients.append(Matrix([derive_by_array(item, variables)]))
 
-        return self._try_raise_exponent(Matrix.vstack(*gradients), exponent)
+        jacobian = Matrix.vstack(*gradients)
+
+        if eval_point:
+            return jacobian.subs({v: p for v, p in zip(variables, eval_point)})
+        else:
+            return jacobian
 
     @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     def taylor(
-        self, degree: Expr, expr: Expr, exp_point: Expr | int | None, *args: Expr
+        self,
+        degree: Expr,
+        expr: Expr,
+        exp_point: Expr | int | None,
+        args: Optional[list[Expr]],
     ):
         degree = simplify(degree)
+
+        expr, variables = self._expr_as_function(
+            expr, len(args) if args is not None else None
+        )
 
         # make sure expansion point is a tuple
         exp_point = 0 if exp_point is None else simplify(sympify(exp_point))
 
         if not MatrixUtils.is_matrix(exp_point):
-            exp_point_elems = (exp_point,) * len(args)
+            exp_point_elems = (exp_point,) * len(variables)
         else:
             exp_point_elems = tuple(exp_point)  # type: ignore[arg-type]
 
         # Make sure all arguments are scalars, or the first argument is a vector
-        args = tuple(map(simplify, args))
+        if args is not None:
+            args = list(map(simplify, args))
 
-        if len(args) == 1 and MatrixUtils.is_matrix(args[0]):
-            args_mat: MatrixBase = cast(MatrixBase, args[0])
+            if len(args) == 1 and MatrixUtils.is_matrix(args[0]):
+                args_mat: MatrixBase = cast(MatrixBase, args[0])
 
-            if args_mat.shape[0] != 1 and args_mat.shape[1] != 1:
-                raise RuntimeError(
-                    "Variables matrix must be a n-dimensional vector.\n"
-                    f"Was a {args_mat.shape} matrix."
-                )
+                if args_mat.shape[0] != 1 and args_mat.shape[1] != 1:
+                    raise RuntimeError(
+                        "Variables matrix must be a n-dimensional vector.\n"
+                        f"Was a {args_mat.shape} matrix."
+                    )
 
-            args = tuple(map(simplify, args_mat))  # type: ignore[call-overload]
+                args = list(map(simplify, args_mat))  # type: ignore[call-overload]
 
-        for i, arg in enumerate(args):
-            if MatrixUtils.is_matrix(arg):
-                raise RuntimeError(
-                    f"All arguments must be scalars.\nArgument [{i}] was [{type(arg)}]"
-                )
-
-        expr, variables = self._expr_as_function(expr, len(args))
+            for i, arg in enumerate(args):
+                if MatrixUtils.is_matrix(arg):
+                    raise RuntimeError(
+                        f"All arguments must be scalars.\nArgument [{i}] was [{type(arg)}]"
+                    )
 
         return Functions.taylor(
-            expr, degree, variables, args, cast(tuple[Expr], exp_point_elems)
+            expr,
+            degree,
+            variables,
+            tuple(args or variables),
+            cast(tuple[Expr], exp_point_elems),
         )
 
     # Combinatorial Functions
@@ -505,16 +565,6 @@ class BuiltInFunctionsTransformer(Transformer):
         return Mod(a, b)
 
     # Helper Methods
-
-    # tries to raise arg to the given exponent, except if it is None,
-    # or doing so results in no change to the resulting expression.
-    def _try_raise_exponent[T: Expr | MatrixBase](
-        self, arg: T, exponent: Expr | int | None
-    ) -> T:
-        if exponent is not None and exponent != 1:
-            return pow(arg, exponent)
-        else:
-            return arg
 
     # from the given expression, return a function body expression, and a tuple of variables the function body expects.
     # the target_variables parameter can be set to hint the function how many variables should be expected from the expression.
