@@ -1,3 +1,4 @@
+from typing import override
 from lark import Token, Transformer, Tree, Visitor
 from lark.tree import Branch
 from regex import Regex
@@ -21,6 +22,7 @@ class AstNamespacesRemover(Visitor):
             rf"^(_)?(?:(?:{'|'.join(namespace for namespace in namespaces)})__)+(.*)$"
         )
 
+    @override
     def __default__(self, node: Tree):
         node.data = self._rem_regex.sub(r"\1\2", node.data)
 
@@ -34,10 +36,8 @@ class AstNamespacesRemover(Visitor):
                     new_children.append(
                         child.update(self._rem_regex.sub(r"\1\2", child.type))
                     )
-                case None:
-                    new_children.append(None)
                 case _:
-                    raise ValueError("Unknown node type")
+                    new_children.append(child)
 
         node.children = new_children
         return node

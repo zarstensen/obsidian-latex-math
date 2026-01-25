@@ -1,6 +1,6 @@
 # mypy: disable-error-code="override"
 from itertools import chain
-from typing import Any, Iterable, override
+from typing import Any, Iterable, Optional, override
 
 from lark import Discard, v_args
 from sympy import Symbol
@@ -23,6 +23,7 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     def __init__(self):
         UndefinedAtomsTransformer.__init__(self, EmptyResolver())
 
+    @override
     def __default__(self, _data, children, _meta) -> set[str]:
         symbols = set()
 
@@ -60,6 +61,36 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     @v_args(inline=False)
     def list_of_expressions(self, tokens: Iterable[set[str]]) -> set[str]:
         return set(chain.from_iterable(tokens))
+
+    @override
+    def index_range(self, beg: Optional[set[str]], end: Optional[set[str]]) -> set[str]:
+        return (beg or set()).union(end or set())
+
+    @override
+    def index_all(self) -> set[str]:
+        return set()
+
+    @override
+    def index_singular(self, index: set[str]) -> set[str]:
+        return index
+
+    @override
+    @UndefinedAtomsTransformer._index_symbol_prime
+    def complement_2d_indexing(self, index_str: str, *_args):
+        return set()
+
+    @override
+    @UndefinedAtomsTransformer._index_symbol_prime
+    def standard_2d_indexing(self, index_str: str, *_args):
+        return set()
+
+    @override
+    @UndefinedAtomsTransformer._index_symbol_prime
+    def standard_1d_indexing(
+        self, index_str: set[str], index_target: set[str], index: set[str]
+    ):
+        # this depends on both the indexed symbol + the non indexed version, and all the indexes as individual symbols.
+        return set()
 
 
 type DepsTransformer = TransformerRunner[[], set[str]]

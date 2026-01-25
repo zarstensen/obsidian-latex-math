@@ -1,8 +1,8 @@
 from ctypes import ArgumentError
-from typing import List, cast
+from typing import List, Optional, cast, override
 
 from attr import frozen
-from lark import Token, Transformer, v_args
+from lark import Discard, Token, Transformer, Tree, Visitor, v_args
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     SymbolDefinition,
     SympyDef,
@@ -13,7 +13,7 @@ from lmat_cas_client.compiling.definition.Resolver import (
     SymbolResToken,
 )
 from lmat_cas_client.math_lib.units import UnitUtils
-from sympy import Expr, Number, Symbol
+from sympy import N, Expr, MatrixBase, Number, Symbol
 from sympy.physics.units import Quantity
 
 
@@ -46,6 +46,20 @@ class ImplicitMul:
 
     lhs: Expr
     rhs: Expr
+
+
+@frozen
+class RangeIndex:
+    beg: Optional[Expr]
+    end: Optional[Expr]
+
+
+class SingularIndex(RangeIndex):
+    def __init__(self, index: Expr):
+        super().__init__(beg=index, end=index + 1)
+
+
+ALL_INDEX = RangeIndex(beg=None, end=None)
 
 
 @v_args(inline=True)
@@ -130,3 +144,144 @@ class UndefinedAtomsTransformer(Transformer):
                     )
 
                 return ImplicitMul(self.substitute_symbol(func_head), func_args[0])
+
+    def index_range(self, begin: Optional[Expr], end: Optional[Expr]):
+        return RangeIndex(begin, end)
+
+    def index_all(self):
+        return ALL_INDEX
+
+    def index_singular(self, index: Expr):
+        return SingularIndex(index)
+
+    def indicies_2d(
+        self,
+        row_index: Optional[RangeIndex] = None,
+        col_index: Optional[RangeIndex] = None,
+    ):
+        return row_index or ALL_INDEX, col_index or ALL_INDEX
+
+    @staticmethod
+    def _index_symbol_prime(handler):
+        def _wrapper(
+            self: "UndefinedAtomsTransformer",
+            index_str: str,
+            index_target: Expr,
+            *args,
+        ):
+            match index_target, args:
+                case Symbol() as symbol, [*new_args, Token() | None as primes] if (
+                    primes is None or primes.type == "PRIMES"
+                ):
+                    return handler(
+                        self,
+                        index_str,
+                        self.substitute_symbol(
+                            Symbol(
+                                f"{symbol.name}{primes.value if primes is not None else ''}"
+                            )
+                        ),
+                        *new_args,
+                    )
+                case _:
+                    return handler(self, index_str, index_target, *args)
+
+        return _wrapper
+
+    @staticmethod
+    def _index_fallback(handler):
+        def _wrapper(
+            self: "UndefinedAtomsTransformer", index_str: str, index_target: Expr, *args
+        ):
+            if hasattr(index_target, "__getitem__"):
+                return handler(self, index_target, *args)
+            elif isinstance(index_target, Symbol):
+                return self.substitute_symbol(
+                    Symbol(f"{index_target.name}_{{{index_str.strip()}}}")
+                )
+            else:
+                assert False, "AAAAAAAA"
+
+        return _wrapper
+
+    @_index_symbol_prime
+    @_index_fallback
+    def complement_2d_indexing(
+        self, index_target: MatrixBase, indicies: tuple[RangeIndex, RangeIndex]
+    ):
+        row, col = indicies
+
+        if row != ALL_INDEX:
+            for _ in range((row.end or index_target.shape[0]) - (row.beg or 0)):
+                index_target.row_del(row.beg or 0)
+
+        if col != ALL_INDEX:
+            for _ in range((col.end or index_target.shape[1]) - (col.beg or 0)):
+                index_target.col_del(col.beg or 0)
+
+        return index_target
+
+    @_index_symbol_prime
+    @_index_fallback
+    def standard_2d_indexing(
+        self, index_target: MatrixBase, indicies: tuple[RangeIndex, RangeIndex]
+    ):
+
+        row, col = indicies
+
+        index_value: MatrixBase = index_target[
+            row.beg : row.end,  # type: ignore[misc]
+            col.beg : col.end,  # type: ignore[misc]
+        ]
+
+        if isinstance(row, SingularIndex) and isinstance(col, SingularIndex):
+            return index_value[0]
+
+        return index_value
+
+    @_index_symbol_prime
+    @_index_fallback
+    def standard_1d_indexing(
+        self, index_target: MatrixBase, index: Optional[RangeIndex | int | Symbol]
+    ):
+        match index:
+            case None:
+                index = ALL_INDEX
+            case RangeIndex():
+                pass
+            case _:
+                index = SingularIndex(cast(Expr, index))
+
+        index_value: MatrixBase = index_target[index.beg : index.end, :]  # type: ignore[misc]
+
+        if isinstance(index, SingularIndex) and index_target.shape[1] == 1:
+            return index_value[0]
+
+        return index_value
+
+
+class IndexInjector(Visitor):
+    INDEX_RULES = [
+        "standard_2d_indexing",
+        "standard_1d_indexing",
+        "complement_2d_indexing",
+    ]
+
+    def __init__(self, src_text):
+        self._src_text = src_text
+
+    @override
+    def __default__(self, node: Tree):
+        if node.data not in self.INDEX_RULES:
+            return node
+
+        match node.children:
+            case [_, index_node, *_] if isinstance(index_node, Tree):
+                index_meta = index_node.meta
+            case _:
+                assert False, "rule is not a valid index rule"
+
+        node.children.insert(
+            0, self._src_text[index_meta.start_pos : index_meta.end_pos]
+        )
+        return node

@@ -58,18 +58,21 @@ class TruthTableResultMarkdown(TruthTableResult):
         headers = [*map(lmat_latex, self.columns), self.serialized_proposition]
         headers = [f"${header}$" for header in headers]
 
-        return CommandResult.result({
-            "truth_table": tabulate(
-                markdown_table_contents,
-                headers=headers,
-                tablefmt="pipe",
-                colalign=("center" for _ in range(len(self.columns) + 1)),
-            )
-        })
+        return CommandResult.result(
+            {
+                "truth_table": tabulate(
+                    markdown_table_contents,
+                    headers=headers,
+                    tablefmt="pipe",
+                    colalign=("center" for _ in range(len(self.columns) + 1)),
+                )
+            }
+        )
 
 
 # implementation for LATEX_ARRAY
 class TruthTableResultLatex(TruthTableResult):
+    @override
     def getResponsePayload(self) -> tuple[str, dict]:
         table_rows = []
 
@@ -82,9 +85,11 @@ class TruthTableResultLatex(TruthTableResult):
 
         headers = rf"{'&'.join(map(lmat_latex, self.columns))} & {self.serialized_proposition}"
 
-        return CommandResult.result({
-            "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{table_contents}\end{{array}}"
-        })
+        return CommandResult.result(
+            {
+                "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{table_contents}\end{{array}}"
+            }
+        )
 
 
 # TruthTableHandler attempts to generate a truth table from the given expression.

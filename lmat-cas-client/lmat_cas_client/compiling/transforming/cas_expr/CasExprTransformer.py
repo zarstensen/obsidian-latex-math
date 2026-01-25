@@ -1,6 +1,6 @@
 import itertools
 from enum import Enum
-from typing import Iterable, Iterator, NamedTuple, cast
+from typing import Iterable, Iterator, NamedTuple, cast, override
 
 from lark import Token, Transformer, v_args
 from lark.tree import Meta
@@ -50,6 +50,7 @@ class CasExpr(NamedTuple):
         return CasExpr(tuple(expressions))
 
     # retreive number of expressions in the system
+    @override
     def __len__(self):
         return len(self.expressions)
 
@@ -125,13 +126,17 @@ class CasExprTransformer(Transformer):
                 return CasExpr(tuple([(cast(Basic, sympy_expr), meta)]))
 
     def sor_env(self, relations: list[CasExpr | Delim]) -> CasExpr:
-        return CasExpr.from_cas_exprs([
-            cast(CasExpr, next(row))  # the row iterator should only contain 1 element
-            for is_delim, row in itertools.groupby(
-                relations, lambda t: t == self.Delim.MatDelim
-            )
-            if not is_delim
-        ])
+        return CasExpr.from_cas_exprs(
+            [
+                cast(
+                    CasExpr, next(row)
+                )  # the row iterator should only contain 1 element
+                for is_delim, row in itertools.groupby(
+                    relations, lambda t: t == self.Delim.MatDelim
+                )
+                if not is_delim
+            ]
+        )
 
     def sor_and_chain(self, relations: list[CasExpr]) -> CasExpr:
         return CasExpr.from_cas_exprs(relations)

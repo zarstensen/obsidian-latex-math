@@ -7,6 +7,7 @@ from lmat_cas_client.compiling.parsing.Parser import Parser, lark_parser_default
 from lmat_cas_client.compiling.transforming.ComposeTransformers import (
     AstNamespacesRemover,
 )
+from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import IndexInjector
 
 GRAMMAR_FILE = "cas_logic_expr.lark"
 
@@ -18,7 +19,9 @@ cas_logic_expr_parser = Parser(
         **lark_parser_defaults,
     ),
     pre_processor=latex_comment_remover,
-    post_processor=AstNamespacesRemover("cas_expr").visit,
+    post_processor=lambda s, t: IndexInjector(s).visit(
+        AstNamespacesRemover("cas_expr").visit(t)
+    ),
 )
 
 """

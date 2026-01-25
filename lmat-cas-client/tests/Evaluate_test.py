@@ -669,7 +669,7 @@ class TestEvaluate:
         ) ** 2 * sin(1)
 
         result = handler.handle({
-            "expression": r"T_{3,\sin{x} + \cos{y} + \tan{z}}(x, y, z)",
+            "expression": r"T_{3,\sin{x} + \cos{y} + \tan{z}}",
             "environment": {"definitionsv2": []},
         })
 

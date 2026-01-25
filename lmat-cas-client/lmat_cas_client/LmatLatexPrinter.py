@@ -1,6 +1,6 @@
 import re as regex
 from functools import reduce
-from typing import cast
+from typing import cast, override
 
 from sympy import *
 from sympy.logic.boolalg import BooleanFalse, BooleanTrue
@@ -31,6 +31,7 @@ class LmatLatexPrinter(LatexPrinter):
             settings["mul_symbol"] = r" \, "
         super().__init__(settings)
 
+    @override
     def doprint(self, expr):
         # remove all \text latex, we do not want this.
         return regex.sub(r"\\text\{(.*?)\}", r"\1", super().doprint(expr))
@@ -46,12 +47,15 @@ class LmatLatexPrinter(LatexPrinter):
 
         return f"{expr.env_begin}{r' \\ '.join(contents)}{expr.env_end}"
 
+    @override
     def _print_BooleanTrue(self, _: bool | BooleanTrue | BooleanFalse):
         return r"\mathrm{T}"
 
+    @override
     def _print_BooleanFalse(self, _: bool | BooleanTrue | BooleanFalse):
         return r"\mathrm{F}"
 
+    @override
     def _print_Mul(self, expr: Expr):
         # try to split any fraction up into at most 3 distinct fractions.
         # one for all constant values, one for all symbols, and finally one for all units.
@@ -80,11 +84,13 @@ class LmatLatexPrinter(LatexPrinter):
         if num_unit != 1 or den_unit != 1:
             unit_value = num_unit / den_unit
 
-        result = self._settings["mul_symbol_latex"].join([
-            super()._print_Mul(cast(Expr, e))
-            for e in [const_value, sym_value, unit_value]
-            if e is not None
-        ])
+        result = self._settings["mul_symbol_latex"].join(
+            [
+                super()._print_Mul(cast(Expr, e))
+                for e in [const_value, sym_value, unit_value]
+                if e is not None
+            ]
+        )
 
         return result
 

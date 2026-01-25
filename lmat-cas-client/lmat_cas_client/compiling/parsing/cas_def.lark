@@ -77,7 +77,7 @@ function_assumption_def: symbol function_params _FUN_ASSUME_OP assumption_set
 
 function_params: _L_PAREN symbol (_COMMA symbol)* _R_PAREN
 
-?symbol: cas_expr__combine_symbol
+?symbol: _cas_expr__symbol
 
 assumption_set: COMPLEX
     | ALGEBRAIC
