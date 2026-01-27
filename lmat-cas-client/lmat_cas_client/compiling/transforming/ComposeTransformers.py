@@ -1,4 +1,5 @@
 from typing import override
+
 from lark import Token, Transformer, Tree, Visitor
 from lark.tree import Branch
 from regex import Regex

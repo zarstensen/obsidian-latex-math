@@ -89,12 +89,10 @@ class TestLatexToCasExprCompiler:
     def test_matrix(self):
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 \\ 2 \end{bmatrix}"
-        ) == Matrix(
-            [
-                [1],
-                [2],
-            ]
-        )
+        ) == Matrix([
+            [1],
+            [2],
+        ])
         assert self._parse_single_expr(
             r"\begin{bmatrix} 1 & 2 \end{bmatrix}"
         ) == Matrix([[1, 2]])
@@ -147,9 +145,8 @@ class TestLatexToCasExprCompiler:
         assert self._parse_single_expr(r"c \frac{a}{b}") == a / b * c
 
         # matricies
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             \begin{bmatrix}
             10 \\
             20
@@ -159,35 +156,27 @@ class TestLatexToCasExprCompiler:
             40
             \end{bmatrix}
             """
-            )
-            == Matrix([[10], [20]]) * Matrix([[30, 40]])
-        )
+        ) == Matrix([[10], [20]]) * Matrix([[30, 40]])
 
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             a
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
-        assert (
-            self._parse_single_expr(
-                r"""
+        assert self._parse_single_expr(
+            r"""
             \begin{bmatrix}
             30 &
             40
             \end{bmatrix}
             a
             """
-            )
-            == a * Matrix([[30, 40]])
-        )
+        ) == a * Matrix([[30, 40]])
 
         # powers
         assert self._parse_single_expr(r"b a^2") == a**2 * b
@@ -407,12 +396,10 @@ class TestLatexToCasExprCompiler:
             (
                 r"\mathbf{H}(y x^5 + \sin(y))",
                 {},
-                Matrix(
-                    [
-                        [20 * Symbol("x") ** 3 * Symbol("y"), 5 * Symbol("x") ** 4],
-                        [5 * Symbol("x") ** 4, -sin(Symbol("y"))],
-                    ]
-                ),
+                Matrix([
+                    [20 * Symbol("x") ** 3 * Symbol("y"), 5 * Symbol("x") ** 4],
+                    [5 * Symbol("x") ** 4, -sin(Symbol("y"))],
+                ]),
             ),
             # Indexed notation
             (
@@ -436,24 +423,20 @@ class TestLatexToCasExprCompiler:
             (
                 r"\mathbf{H}(f)",
                 {"definitionsv2": [r"f(x, y, z) := \log(x) + e^y"]},
-                Matrix(
-                    [
-                        [-1 / Symbol("x") ** 2, 0, 0],
-                        [0, exp(Symbol("y")), 0],
-                        [0, 0, 0],
-                    ]
-                ),
+                Matrix([
+                    [-1 / Symbol("x") ** 2, 0, 0],
+                    [0, exp(Symbol("y")), 0],
+                    [0, 0, 0],
+                ]),
             ),
             # With function definition - indexed notation
             (
                 r"\mathbf{H}_{f}",
                 {"definitionsv2": [r"f(x, y) := x^3 y + y^2"]},
-                Matrix(
-                    [
-                        [6 * Symbol("x") * Symbol("y"), 3 * Symbol("x") ** 2],
-                        [3 * Symbol("x") ** 2, 2],
-                    ]
-                ),
+                Matrix([
+                    [6 * Symbol("x") * Symbol("y"), 3 * Symbol("x") ** 2],
+                    [3 * Symbol("x") ** 2, 2],
+                ]),
             ),
             # With function definition and evaluation point
             (
@@ -513,17 +496,15 @@ class TestLatexToCasExprCompiler:
                         r"f(x, y, z) := \begin{bmatrix}\log(x)\\ \sin(y) \\ \cos(x) * \sin(y) \end{bmatrix}"
                     ]
                 },
-                Matrix(
+                Matrix([
+                    [1 / Symbol("x"), 0, 0],
+                    [0, cos(Symbol("y")), 0],
                     [
-                        [1 / Symbol("x"), 0, 0],
-                        [0, cos(Symbol("y")), 0],
-                        [
-                            -sin(Symbol("x")) * sin(Symbol("y")),
-                            cos(Symbol("x")) * cos(Symbol("y")),
-                            0,
-                        ],
-                    ]
-                ),
+                        -sin(Symbol("x")) * sin(Symbol("y")),
+                        cos(Symbol("x")) * cos(Symbol("y")),
+                        0,
+                    ],
+                ]),
             ),
             # With function definition - indexed notation
             (
@@ -563,12 +544,10 @@ class TestLatexToCasExprCompiler:
             (
                 r"\nabla(x^3 y + y^2)",
                 {},
-                Matrix(
-                    [
-                        3 * Symbol("x") ** 2 * Symbol("y"),
-                        Symbol("x") ** 3 + 2 * Symbol("y"),
-                    ]
-                ),
+                Matrix([
+                    3 * Symbol("x") ** 2 * Symbol("y"),
+                    Symbol("x") ** 3 + 2 * Symbol("y"),
+                ]),
             ),
             (
                 r"\grad(x^2 + y^2 + z^2)",
@@ -621,13 +600,11 @@ class TestLatexToCasExprCompiler:
             (
                 r"\nabla(x y z)",
                 {},
-                Matrix(
-                    [
-                        Symbol("y") * Symbol("z"),
-                        Symbol("x") * Symbol("z"),
-                        Symbol("x") * Symbol("y"),
-                    ]
-                ),
+                Matrix([
+                    Symbol("y") * Symbol("z"),
+                    Symbol("x") * Symbol("z"),
+                    Symbol("x") * Symbol("y"),
+                ]),
             ),
         ],
     )

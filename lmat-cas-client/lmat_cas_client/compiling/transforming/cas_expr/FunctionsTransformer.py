@@ -11,6 +11,7 @@ from lmat_cas_client.compiling.definition.Resolver import (
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
     ImplicitMul,
 )
+from lmat_cas_client.compiling.transforming.Ir import MultStrat, ir_strat
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from sympy import *
@@ -130,7 +131,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def __init__(self, definition_resolver: DefinitionResolver):
         self.__definition_resolver = definition_resolver
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
+    @ir_strat(arg=MultStrat.LHS)
     def trig_function(
         self, func_token: Token, exponent: Expr | int | None, arg: Expr
     ) -> Expr:
@@ -168,8 +169,8 @@ class BuiltInFunctionsTransformer(Transformer):
     def conjugate(self, arg: Expr) -> Expr:
         return conjugate(arg)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp(exp_pos=2)
+    @ir_strat(arg=MultStrat.LHS)
     def log_implicit_base(self, func_token: Token, arg: Expr) -> Expr:
         log_type = func_token.type
         base = 10 if log_type == "FUNC_LG" else None
@@ -181,31 +182,31 @@ class BuiltInFunctionsTransformer(Transformer):
 
         return log_val
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp(exp_pos=3)
+    @ir_strat(arg=MultStrat.LHS)
     def log_explicit_base(self, _func_token: Token, base: Expr, arg: Expr) -> Expr:
         return log(arg, base)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
+    @ir_strat(arg=MultStrat.LHS)
     def log_explicit_base_exponent_first(
         self, func_token: Token, exponent, base: Expr, arg: Expr
     ) -> Expr:
         return self.log_explicit_base(func_token, base, exponent, arg)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(arg=MultStrat.LHS)
     def exponential(self, arg: Expr) -> Expr:
         return exp(arg)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.RHS)
+    @ir_strat(arg=MultStrat.RHS)
     def factorial(self, arg: Expr) -> Expr:
         return factorial(arg)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.RHS)
+    @ir_strat(arg=MultStrat.RHS)
     def percent(self, arg: Expr) -> Expr:
         return Mul(arg, 100**-1)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.RHS)
+    @ir_strat(arg=MultStrat.RHS)
     def permille(self, arg: Expr) -> Expr:
         return Mul(arg, 1000**-1)
 
@@ -215,7 +216,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def lower_gamma(self, s: Expr, x: Expr) -> Expr:
         return lowergamma(s, x)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
+    @ir_strat(arg=MultStrat.LHS)
     def limit(
         self, symbol: Expr, approach_value: Expr, direction: str | None, arg: Expr
     ) -> Expr:
@@ -223,30 +224,30 @@ class BuiltInFunctionsTransformer(Transformer):
         direction = "+-" if direction is None else direction
         return limit(arg, symbol, approach_value, direction)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(val=MultStrat.LHS)
     def real_part(self, val: Expr) -> Expr:
         return re(val)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(val=MultStrat.LHS)
     def imaginary_part(self, val: Expr) -> Expr:
         return im(val)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(val=MultStrat.LHS)
     def argument(self, val: Expr) -> Expr:
         return arg(val)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(val=MultStrat.LHS)
     def sign(self, val: Expr) -> Expr:
         return sign(val)
 
     def limit_direction(self, direction_token: Token) -> str:
         return direction_token.value
 
-    @implicit_mul_strategy(ImplicitMulStrategy.MULT)
+    @ir_strat()
     def abs(self, arg: Expr) -> Expr:
         # if arg is a matrix, this notation actually means taking its determinant.
         if MatrixUtils.is_matrix(arg):
@@ -303,7 +304,7 @@ class BuiltInFunctionsTransformer(Transformer):
             power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
-    @implicit_mul_strategy(ImplicitMulStrategy.RHS)
+    @ir_strat(expr=MultStrat.RHS)
     def derivative_prime(self, expr: Expr, primes: Token):
         body, variables = self._expr_as_function(expr, range(0, 2))
 
@@ -387,32 +388,32 @@ class BuiltInFunctionsTransformer(Transformer):
             MatrixUtils.ensure_matrix(rhs), conjugate_convention="right"
         )
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(mat=MultStrat.LHS)
     def determinant(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).det()
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(mat=MultStrat.LHS)
     def trace(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).trace()
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(mat=MultStrat.LHS)
     def adjugate(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).adjugate()
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(mat=MultStrat.LHS)
     def rref(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).rref()[0]
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(vector=MultStrat.LHS)
     def unitvec(self, vector: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(vector).normalized()
 
-    @implicit_mul_strategy(ImplicitMulStrategy.RHS)
+    @ir_strat(mat=MultStrat.RHS)
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
         exponents_str = exponent.value
         exponents_str = (
@@ -438,8 +439,8 @@ class BuiltInFunctionsTransformer(Transformer):
 
     # Linear Alg Specific Implementations
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(expr=MultStrat.LHS)
     def gradient(self, expr: Expr, eval_point: None | list[Expr]) -> MatrixBase:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -451,8 +452,8 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             return res
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(expr=MultStrat.LHS)
     def hessian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -464,8 +465,8 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             return res
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
     @func_exp()
+    @ir_strat(expr=MultStrat.LHS)
     def jacobian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -490,7 +491,7 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             return jacobian
 
-    @implicit_mul_strategy(ImplicitMulStrategy.LHS)
+    @ir_strat(expr=MultStrat.LHS)
     def taylor(
         self,
         degree: Expr,
@@ -560,7 +561,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def lcm(self, a: Expr, b: Expr) -> Expr:
         return lcm(a, b)
 
-    @implicit_mul_strategy(ImplicitMulStrategy.MULT)
+    @ir_strat()
     def modulo(self, a: Expr, b: Expr) -> Expr:
         return Mod(a, b)
 

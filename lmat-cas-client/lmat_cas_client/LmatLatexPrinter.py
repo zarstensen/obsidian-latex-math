@@ -84,13 +84,11 @@ class LmatLatexPrinter(LatexPrinter):
         if num_unit != 1 or den_unit != 1:
             unit_value = num_unit / den_unit
 
-        result = self._settings["mul_symbol_latex"].join(
-            [
-                super()._print_Mul(cast(Expr, e))
-                for e in [const_value, sym_value, unit_value]
-                if e is not None
-            ]
-        )
+        result = self._settings["mul_symbol_latex"].join([
+            super()._print_Mul(cast(Expr, e))
+            for e in [const_value, sym_value, unit_value]
+            if e is not None
+        ])
 
         return result
 

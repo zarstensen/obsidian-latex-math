@@ -2,7 +2,7 @@ from ctypes import ArgumentError
 from typing import List, Optional, cast, override
 
 from attr import frozen
-from lark import Discard, Token, Transformer, Tree, Visitor, v_args
+from lark import Token, Transformer, Tree, Visitor, v_args
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     SymbolDefinition,
     SympyDef,
@@ -12,8 +12,9 @@ from lmat_cas_client.compiling.definition.Resolver import (
     FunctionResToken,
     SymbolResToken,
 )
+from lmat_cas_client.compiling.transforming.Ir import IrStrategies, MultIr
 from lmat_cas_client.math_lib.units import UnitUtils
-from sympy import N, Expr, MatrixBase, Number, Symbol
+from sympy import Expr, MatrixBase, Number, Symbol
 from sympy.physics.units import Quantity
 
 
@@ -103,12 +104,11 @@ class UndefinedAtomsTransformer(Transformer):
         self, formatter: Token, symbol_contents: str, primes: str | None
     ) -> Symbol:
         formatter_text = str(formatter)
-        primes = "" if primes is None else primes
 
         if not symbol_contents.startswith("{") and not symbol_contents.endswith("}"):
             symbol_contents = f"{{{str(symbol_contents)}}}"
 
-        return Symbol(f"{formatter_text}{symbol_contents}{primes}")
+        return Symbol(f"{formatter_text}{symbol_contents}{primes or ''}")
 
     def unit(self, unit_symbol: Symbol) -> Quantity | Symbol | Expr:
 
@@ -121,7 +121,7 @@ class UndefinedAtomsTransformer(Transformer):
 
     def maybe_function_application(
         self, func_head: Symbol, func_args: List[Expr]
-    ) -> Expr | ImplicitMul:
+    ) -> Expr | IrStrategies:
         match self.__definition_store.get_resolver_token(func_head.name):
             case FunctionResToken() as token:
                 return cast(
@@ -143,7 +143,9 @@ class UndefinedAtomsTransformer(Transformer):
                         f"\n${func_head}(x, y, ...) \\mapsto \\mathbb{{C}}$"
                     )
 
-                return ImplicitMul(self.substitute_symbol(func_head), func_args[0])
+                return MultIr(
+                    self.substitute_symbol(func_head), func_args[0]
+                ).strategies()
 
     def index_range(self, begin: Optional[Expr], end: Optional[Expr]):
         return RangeIndex(begin, end)

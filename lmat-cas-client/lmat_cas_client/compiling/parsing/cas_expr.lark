@@ -71,7 +71,7 @@ multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
 // this could for example be \mathit
-formatted_symbol: _cmd_format (BRACE_SURROUNDED_TEXT | SINGLE_LETTER_SYMBOL) [PRIMES] -> combine_symbol
+formatted_symbol: _cmd_format (BRACE_SURROUNDED_TEXT | SINGLE_LETTER_SYMBOL) [PRIMES]
 
 _symbol: single_letter_symbol | multi_letter_symbol | formatted_symbol
 
