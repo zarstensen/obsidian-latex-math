@@ -19,6 +19,7 @@ from lmat_cas_client.compiling.definition.EmptyResolver import EmptyResolver
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     DepsTransformer,
 )
+from lmat_cas_client.compiling.transforming.Ir import SymbolStrat, try_resolve_ir
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 
 _SET_TERM_TO_ASSUMPTION = {
@@ -79,7 +80,11 @@ class DefinitionsTransformer(Transformer):
         self, def_ast: Tree, value_ast: Optional[Tree] = None
     ) -> DefinitionStore:
         def_val: Symbol = cast(
-            Symbol, self._expr_transformer.transform(def_ast, EmptyResolver())
+            Symbol,
+            try_resolve_ir(
+                self._expr_transformer.transform(def_ast, EmptyResolver()),
+                [SymbolStrat.SYMBOL],
+            )[0],
         )
 
         if value_ast is None:
@@ -100,7 +105,11 @@ class DefinitionsTransformer(Transformer):
 
         for symb in symbs:
             def_val: Symbol = cast(
-                Symbol, self._expr_transformer.transform(symb, EmptyResolver())
+                Symbol,
+                try_resolve_ir(
+                    self._expr_transformer.transform(symb, EmptyResolver()),
+                    [SymbolStrat.SYMBOL],
+                )[0],
             )
             store[def_val.name] = SymbolDefinition(
                 SympyDef(Symbol(def_val.name, **assum))
@@ -112,7 +121,11 @@ class DefinitionsTransformer(Transformer):
         self, func_ast: Tree, params: tuple[str], body_ast: Optional[Tree] = None
     ) -> DefinitionStore:
         func: Symbol = cast(
-            Symbol, self._expr_transformer.transform(func_ast, EmptyResolver())
+            Symbol,
+            try_resolve_ir(
+                self._expr_transformer.transform(func_ast, EmptyResolver()),
+                [SymbolStrat.SYMBOL],
+            )[0],
         )
 
         if body_ast is None:
@@ -132,7 +145,11 @@ class DefinitionsTransformer(Transformer):
         self, func_ast: Tree, params: tuple[str], assumptions: Mapping[str, bool]
     ) -> DefinitionStore:
         func: Symbol = cast(
-            Symbol, self._expr_transformer.transform(func_ast, EmptyResolver())
+            Symbol,
+            try_resolve_ir(
+                self._expr_transformer.transform(func_ast, EmptyResolver()),
+                [SymbolStrat.SYMBOL],
+            )[0],
         )
 
         return {
@@ -143,7 +160,13 @@ class DefinitionsTransformer(Transformer):
 
     def function_params(self, *params: Tree) -> tuple[str, ...]:
         return tuple(
-            cast(Symbol, self._expr_transformer.transform(p, EmptyResolver())).name
+            cast(
+                Symbol,
+                try_resolve_ir(
+                    self._expr_transformer.transform(p, EmptyResolver()),
+                    [SymbolStrat.SYMBOL],
+                )[0],
+            ).name
             for p in params
         )
 

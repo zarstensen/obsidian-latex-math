@@ -7,6 +7,7 @@ from sympy import Symbol
 from sympy.physics.units import Quantity
 
 from lmat_cas_client.compiling.definition.EmptyResolver import EmptyResolver
+from lmat_cas_client.compiling.transforming.Ir import SymbolStrat, ir_strat
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
     UndefinedAtomsTransformer,
 )
@@ -50,13 +51,14 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
         return set((unit_symbol.name,))
 
     @override
+    @ir_strat(func_head=SymbolStrat.SYMBOL)
     def maybe_function_application(
-        self, func_name: Symbol, func_args: Iterable[str]
+        self, func_name: set[str], func_args: Iterable[str]
     ) -> set[str]:
         # include both the function itself, and all arguments to the function as dependencies.
         # e.g. f(x, 1, y) should produce { 'f', 'x', 'y' }
 
-        return set((func_name.name, *func_args))
+        return func_name.union(set([*func_args]))
 
     @v_args(inline=False)
     def list_of_expressions(self, tokens: Iterable[set[str]]) -> set[str]:
@@ -87,7 +89,7 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     @override
     @UndefinedAtomsTransformer._index_symbol_prime
     def standard_1d_indexing(
-        self, index_str: set[str], index_target: set[str], index: set[str]
+        self, index_str: set[str], index_target: set[str], index: set[str], *ar
     ):
         # this depends on both the indexed symbol + the non indexed version, and all the indexes as individual symbols.
         return set()

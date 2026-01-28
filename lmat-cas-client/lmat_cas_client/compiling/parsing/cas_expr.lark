@@ -39,7 +39,7 @@ implicit_multiplication: _align* factor (_align* factor)* _align*
     | basefactor_arg
 
 // matches all base factors in an exponentiation, which may be passed to a mathematical function as an argument.
-?basefactor_arg: substitute_symbol
+?basefactor_arg: _symbol
     | function_as_arg
     | _number
     | matrix_notation
@@ -63,8 +63,6 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
     | (unit|_delimitedfactor|function_noarg) _CARET (ADJOINT_TRANSPOSE_EXPONENT|ADJOINT_TRANSPOSE_EXPONENTS) -> exp_transpose
 
 // ======== Symbols ========
-
-substitute_symbol: _symbol
 
 single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
@@ -133,8 +131,7 @@ maybe_function_application: _symbol (_L_PAREN list_of_expressions _R_PAREN | _L_
     | _divisibility_functions
 
 // matches a special kind of argument, defined by the fact that fractions and binomials can be passed without surrounding them with braces.
-substitute_single_letter_symbol.1: single_letter_symbol -> substitute_symbol
-?function_special_arg: braces_expression | frac | binom | substitute_single_letter_symbol | digit
+?function_special_arg: braces_expression | frac | binom | single_letter_symbol | digit
 
 
 // named functions
@@ -194,14 +191,14 @@ limit_direction: _L_BRACE (ADD|SUB) _R_BRACE
     | ADD
     | SUB
 
-limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _RIGHT_ARROW basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
+limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE _symbol _RIGHT_ARROW basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
 // prioritize delimited expressions over terms, such that e.g. \sum_{j = 0}^5 (j) j is parsed as Sum(j, (j, 0, 5)) * j and not Sum(j ** 2, (j, 0, 5)).
 _delimited_arg.1: _delimitedfactor
 _delimited_arg_or_term: _delimited_arg | term
 
-_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg _delimited_arg_or_term
-_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _delimited_arg_or_term
+_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE _symbol EQUAL expression _R_BRACE _CARET function_special_arg _delimited_arg_or_term
+_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE _symbol EQUAL expression _R_BRACE _delimited_arg_or_term
 
 _series_function: sum | product
 
@@ -230,11 +227,11 @@ abs: _L_BAR expression _R_BAR
 norm: _L_DOUBLE_BAR expression _R_DOUBLE_BAR
 floor: _L_FLOOR expression _R_FLOOR
 ceil: _L_CEIL expression _R_CEIL
-sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|substitute_single_letter_symbol|digit)
-conjugate: _FUNC_CONJUGATE (braces_expression|substitute_single_letter_symbol|digit)
+sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|single_letter_symbol|digit)
+conjugate: _FUNC_CONJUGATE (braces_expression|single_letter_symbol|digit)
 
 // match a single argument in a list of latex style arguments (that is \command{arg1}{arg2}...{argN})
-_multiarg_func_arg: (braces_expression|substitute_single_letter_symbol|digit)
+_multiarg_func_arg: (braces_expression|single_letter_symbol|digit)
 // terminals signifying the delimiters and end of multiple arguments in a latex style argument list.
 // due to lalr's limited lookahead, a custom post lexer needs to insert this token when parsing.
 %declare _MULTIARG_DELIMITER
@@ -324,7 +321,8 @@ _paren_2d_indicies: _L_PAREN bare_2d_indicies_semicolon _R_PAREN
 complement_2d_indexing: factor_func_arg _UNDERSCORE _L_BRACE (bare_2d_indicies_semicolon | _paren_2d_indicies) _R_BRACE 
     | _symbol _UNDERSCORE _L_BRACE (bare_2d_indicies_semicolon | _paren_2d_indicies) _R_BRACE [ PRIMES ]
 standard_2d_indexing: factor_func_arg _UNDERSCORE _L_BRACE (bare_2d_indicies_comma | _bracket_2d_indicies) _R_BRACE
-    | _symbol _UNDERSCORE _L_BRACE (bare_2d_indicies_comma | _bracket_2d_indicies) _R_BRACE [ PRIMES ]
+    | _symbol _UNDERSCORE _L_BRACE (bare_2d_indicies_comma | _bracket_2d_indicies) _R_BRACE [ PRIMES ] // THESE SHOULD BE DIFFERENT RULES OMG
+    // and then they have ir_strat set to Symbol for the first param, wow almost like this is what i was thinking when i originally designed this...
 standard_1d_indexing: factor_func_arg _UNDERSCORE (single_letter_symbol | digit | _L_BRACE index _R_BRACE)
     | _symbol  _UNDERSCORE (single_letter_symbol | digit | _L_BRACE index _R_BRACE) [ PRIMES ]
 ?indexing: complement_2d_indexing | standard_2d_indexing | standard_1d_indexing

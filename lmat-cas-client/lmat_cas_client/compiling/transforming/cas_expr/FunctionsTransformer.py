@@ -255,24 +255,31 @@ class BuiltInFunctionsTransformer(Transformer):
 
         return Abs(arg)
 
+    @ir_strat()
     def floor(self, arg: Expr):
         return floor(arg)
 
+    @ir_strat()
     def ceil(self, arg: Expr):
         return ceiling(arg)
 
+    @ir_strat()
     def max(self, args: Iterator[Expr]):
         return Max(*args)
 
+    @ir_strat()
     def min(self, args: Iterator[Expr]):
         return Min(*args)
 
+    @ir_strat()
     def diff_symbol_exponent(self, symbol, exponent: Expr | None):
         return (symbol, 1 if exponent is None else exponent)
 
+    @ir_strat()
     def diff_symbol_arg_list(self, *arg_list: tuple[Expr, Expr]):
         return [*arg_list]
 
+    @ir_strat()
     def derivative_symbols_first(
         self, power: Optional[Expr], symbols: Iterable[tuple[Symbol, int]], expr: Expr
     ):
@@ -285,11 +292,13 @@ class BuiltInFunctionsTransformer(Transformer):
 
         return diff(expr, *symbols)
 
+    @ir_strat()
     def derivative_func_first(
         self, power: Optional[Expr], expr: Expr, symbols: Iterable[tuple[Symbol, int]]
     ):
         return self.derivative_symbols_first(power, symbols, expr)
 
+    @ir_strat()
     def derivative_phys_symbols_first(
         self, power: Optional[Expr], symbol: Symbol, expr: Expr
     ):
@@ -297,6 +306,7 @@ class BuiltInFunctionsTransformer(Transformer):
             power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
+    @ir_strat()
     def derivative_phys_func_first(
         self, power: Optional[Expr], expr: Expr, symbol: Symbol
     ):
@@ -313,10 +323,12 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             return diff(body, variables[0], primes.value.count("'"), evaluate=False)
 
+    @ir_strat()
     def integral_no_bounds(self, expr: Expr | int | None, symbol: Expr):
         expr = 1 if expr is None else expr
         return integrate(expr, symbol)
 
+    @ir_strat()
     def integral_lower_bound_first(
         self,
         lower_bound: Expr,
@@ -327,6 +339,7 @@ class BuiltInFunctionsTransformer(Transformer):
         expr = 1 if expr is None else expr
         return integrate(expr, (symbol, lower_bound, upper_bound))
 
+    @ir_strat()
     def integral_upper_bound_first(
         self, upper_bound: Expr, lower_bound: Expr, expr: Expr | None, symbol: Expr
     ):
@@ -334,6 +347,7 @@ class BuiltInFunctionsTransformer(Transformer):
 
     # Series Specific Implementations
 
+    @ir_strat()
     def sum_start_iter_first(
         self,
         iter_symbol: Expr,
@@ -344,6 +358,7 @@ class BuiltInFunctionsTransformer(Transformer):
     ) -> Expr:
         return Sum(expression, (iter_symbol, start_iter, end_iter))
 
+    @ir_strat()
     def sum_end_iter_first(
         self,
         end_iter: Expr,
@@ -356,6 +371,7 @@ class BuiltInFunctionsTransformer(Transformer):
             iter_symbol, separator, start_iter, end_iter, expression
         )
 
+    @ir_strat()
     def product_start_iter_first(
         self,
         iter_symbol: Expr,
@@ -366,6 +382,7 @@ class BuiltInFunctionsTransformer(Transformer):
     ) -> Expr:
         return Product(expression, (iter_symbol, start_iter, end_iter))
 
+    @ir_strat()
     def product_end_iter_first(
         self,
         end_iter: Expr,
@@ -380,9 +397,11 @@ class BuiltInFunctionsTransformer(Transformer):
 
     # Matrix Specific Implementations
 
+    @ir_strat()
     def norm(self, arg: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(arg).norm()
 
+    @ir_strat()
     def inner_product(self, lhs: Expr, rhs: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(lhs).dot(
             MatrixUtils.ensure_matrix(rhs), conjugate_convention="right"
@@ -417,8 +436,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
         exponents_str = exponent.value
         exponents_str = (
-            exponents_str
-            .replace("{", "")
+            exponents_str.replace("{", "")
             .replace("}", "")
             .replace("\\ast", "H")
             .replace("*", "H")
@@ -544,20 +562,25 @@ class BuiltInFunctionsTransformer(Transformer):
 
     # Combinatorial Functions
 
+    @ir_strat()
     def permutations(self, n: Expr, k: Expr):
         return Functions.permutations(n, k)
 
+    @ir_strat()
     def combinations(self, n: Expr, k: Expr):
         return binomial(n, k)
 
+    @ir_strat()
     def derangements(self, n: Expr):
         return Functions.derangements(n)
 
     # Divisibility Functions
 
+    @ir_strat()
     def gcd(self, a: Expr, b: Expr) -> Expr:
         return gcd(a, b)
 
+    @ir_strat()
     def lcm(self, a: Expr, b: Expr) -> Expr:
         return lcm(a, b)
 

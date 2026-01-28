@@ -2,17 +2,26 @@ import inspect
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from inspect import BoundArguments, Parameter, Signature
+from tokenize import maybe
 from typing import (
     Any,
     Callable,
     Iterable,
     Mapping,
     Optional,
+    cast,
     override,
 )
 
 from attr import frozen
-from sympy import Expr
+from sympy import Expr, Symbol
+
+from lmat_cas_client.compiling.definition.Resolver import (
+    DefinitionResolver,
+    FunctionResToken,
+    ResolverToken,
+    SymbolResToken,
+)
 
 
 @frozen
@@ -84,22 +93,22 @@ class IrStrategies:
         """
         return strat_kind in self._strategies
 
-    def get_prioritized(self, ordered_strats: Iterable[ResolveStrategyKind]):
+    def get_prioritized(
+        self,
+        ordered_strats: Iterable[ResolveStrategyKind],
+        implicit_strat: ImplicitStrat = ImplicitStrat.DEFAULT,
+    ):
         """
-        return the IrResolveStrategy of the first strat enum in ordered_strat,
+        Return the IrResolveStrategy of the first strat enum in ordered_strat,
         which is present in the current IrStrategies object.
-
-        Pass an ImplicitStrat to guarantee a successfull call.
         """
-        for strat in ordered_strats:
+        for strat in (*ordered_strats, implicit_strat):
             if strat not in self:
                 continue
 
             return self[strat]
 
-        raise ValueError(
-            "No such strategies were found! make sure to pass an ImplicitStrat to guarantee this exception is not thrown."
-        )
+        assert False, "No strats were found"
 
 
 class Ir(ABC):
@@ -119,6 +128,19 @@ class Ir(ABC):
     @abstractmethod
     def strategies(self) -> IrStrategies:
         pass
+
+
+def try_resolve_ir(
+    maybe_ir_strats: Any,
+    strategies: Iterable[ResolveStrategyKind],
+    implicit_strat: ImplicitStrat = ImplicitStrat.DEFAULT,
+):
+    match maybe_ir_strats:
+        case IrStrategies():
+            strat = maybe_ir_strats.get_prioritized(strategies, implicit_strat)
+            return strat.resolve(), strat.post_resolve
+        case _:
+            return maybe_ir_strats, None
 
 
 # need a decorator, which takes positional arguments (by name?) an applies some strategy / multiple strategies prioritized in some order, maybe a default strategy,
@@ -289,4 +311,34 @@ class IndexIr(Ir):
                 IndexStrat.SYMBOL: IrResolveStrategy(lambda: None),
             },
             IndexStrat.INDEX_VALUE,
+        )
+
+
+class SymbolStrat(ResolveStrategyKind):
+    SUBSTITUTE = auto()
+    SYMBOL = auto()
+
+
+@frozen
+class SymbolIr(Ir):
+    resolver: DefinitionResolver
+    symbol: Symbol
+
+    @override
+    def strategies(self):
+        def substitute():
+            match self.resolver.get_resolver_token(self.symbol.name):
+                case SymbolResToken() as token:
+                    return cast(Expr, self.resolver.resolve_value(token))
+                case FunctionResToken() as token:
+                    return cast(Expr, self.resolver.resolve_unapplied(token))
+                case _:
+                    return self.symbol
+
+        return IrStrategies(
+            {
+                SymbolStrat.SUBSTITUTE: IrResolveStrategy(substitute),
+                SymbolStrat.SYMBOL: IrResolveStrategy(lambda: self.symbol),
+            },
+            SymbolStrat.SUBSTITUTE,
         )

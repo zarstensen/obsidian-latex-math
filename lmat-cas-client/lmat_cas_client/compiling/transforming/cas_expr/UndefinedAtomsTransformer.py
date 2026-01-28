@@ -12,7 +12,16 @@ from lmat_cas_client.compiling.definition.Resolver import (
     FunctionResToken,
     SymbolResToken,
 )
-from lmat_cas_client.compiling.transforming.Ir import IrStrategies, MultIr
+from lmat_cas_client.compiling.transforming.Ir import (
+    ImplicitStrat,
+    IrResolveStrategy,
+    IrStrategies,
+    MultIr,
+    SymbolIr,
+    SymbolStrat,
+    ir_strat,
+)
+from lmat_cas_client.math_lib.MatrixUtils import is_matrix
 from lmat_cas_client.math_lib.units import UnitUtils
 from sympy import Expr, MatrixBase, Number, Symbol
 from sympy.physics.units import Quantity
@@ -72,8 +81,18 @@ class UndefinedAtomsTransformer(Transformer):
     def __init__(self, definition_resolver: DefinitionResolver):
         self.__definition_store = definition_resolver
 
-    def combine_symbol(self, *symbols: Symbol) -> Symbol:
-        return Symbol("".join(map(str, symbols)))
+    def combine_symbol(self, *symbols: Symbol) -> IrStrategies:
+        symbol = Symbol("".join(map(str, symbols)))
+
+        return IrStrategies(
+            {
+                SymbolStrat.SUBSTITUTE: IrResolveStrategy(
+                    lambda: self.substitute_symbol(symbol)
+                ),
+                SymbolStrat.SYMBOL: IrResolveStrategy(lambda: symbol),
+            },
+            SymbolStrat.SUBSTITUTE,
+        )
 
     def substitute_symbol(self, substitute_symbol: Symbol) -> Symbol | Expr:
         match self.__definition_store.get_resolver_token(substitute_symbol.name):
@@ -102,23 +121,29 @@ class UndefinedAtomsTransformer(Transformer):
 
     def formatted_symbol(
         self, formatter: Token, symbol_contents: str, primes: str | None
-    ) -> Symbol:
+    ) -> IrStrategies:
         formatter_text = str(formatter)
 
         if not symbol_contents.startswith("{") and not symbol_contents.endswith("}"):
             symbol_contents = f"{{{str(symbol_contents)}}}"
 
-        return Symbol(f"{formatter_text}{symbol_contents}{primes or ''}")
+        return self.combine_symbol(
+            Symbol(f"{formatter_text}{symbol_contents}{primes or ''}")
+        )
 
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol | Expr:
+    @ir_strat(unit_symbol_ir=ImplicitStrat.BUBBLE_UP)
+    def unit(self, unit_symbol_ir: IrStrategies) -> Quantity | Symbol | Expr:
+
+        unit_symbol: Symbol = cast(Symbol, unit_symbol_ir[SymbolStrat.SYMBOL])
 
         unit = UnitUtils.str_to_unit(unit_symbol.name)
 
         if unit is not None:
             return unit
         else:
-            return self.substitute_symbol(unit_symbol)
+            return unit_symbol_ir[ImplicitStrat.DEFAULT].resolve()
 
+    @ir_strat(func_head=SymbolStrat.SYMBOL)
     def maybe_function_application(
         self, func_head: Symbol, func_args: List[Expr]
     ) -> Expr | IrStrategies:
@@ -190,12 +215,50 @@ class UndefinedAtomsTransformer(Transformer):
 
         return _wrapper
 
+    # TODO: this should be a different decorator for when primes is a thing? no not taht
     @staticmethod
+    @ir_strat(index_target=ImplicitStrat.BUBBLE_UP)
     def _index_fallback(handler):
         def _wrapper(
-            self: "UndefinedAtomsTransformer", index_str: str, index_target: Expr, *args
+            self: "UndefinedAtomsTransformer",
+            index_str: str,
+            index_target: Expr | IrStrategies,
+            *args,
         ):
-            if hasattr(index_target, "__getitem__"):
+            match index_target:
+                case IrStrategies():
+                    sub_val = cast(Expr, index_target[ImplicitStrat.DEFAULT].resolve())
+
+                    if is_matrix(sub_val):
+                        return handler(self, sub_val, *args)
+                    elif isinstance(sub_val, Symbol):
+                        # should this be allowed if sub_val is just defined to be another symbol?
+                        # no, so check if index_target symbol has a definition before doing this.
+                        # but it should work for assumptions on the other hand...
+                        pass
+                    else:
+                        # ERROR
+                        pass
+                case _:
+                    if is_matrix(index_target):
+                        return handler(self, index_target, *args)
+                    else:
+                        # should symbol be allowed here (it may be possible through some definition + substitution magic.) nvm (a)_x would trigger this case.
+                        # i feel like it should not be allowed? but it SHOULD
+                        # but if this is not allowed, then the second case in IrStrategies is not allowed either then, if sub_val was defined to be another symbol.
+                        # ERROR
+                        pass
+            # these are the possible cases:
+            # Not IrStrategies:
+            # - Not Matrix -> Error cannot index non matrix object
+            # - Matrix -> index into matrix
+            # IrStratigies:
+            # - substituted value not matrix -> return symbol value + index
+            # - substituted value is matrix -> index into substituted value.
+            # that makes sense, now how do we integrate this with the primes parameter?
+            if hasattr(
+                index_target, "__getitem__"
+            ):  # TODO: check explicitly for matrix here, not just getitem.
                 return handler(self, index_target, *args)
             elif isinstance(index_target, Symbol):
                 return self.substitute_symbol(
@@ -208,6 +271,7 @@ class UndefinedAtomsTransformer(Transformer):
 
     @_index_symbol_prime
     @_index_fallback
+    @ir_strat()
     def complement_2d_indexing(
         self, index_target: MatrixBase, indicies: tuple[RangeIndex, RangeIndex]
     ):
@@ -225,6 +289,7 @@ class UndefinedAtomsTransformer(Transformer):
 
     @_index_symbol_prime
     @_index_fallback
+    @ir_strat()
     def standard_2d_indexing(
         self, index_target: MatrixBase, indicies: tuple[RangeIndex, RangeIndex]
     ):
@@ -243,8 +308,12 @@ class UndefinedAtomsTransformer(Transformer):
 
     @_index_symbol_prime
     @_index_fallback
+    @ir_strat()
     def standard_1d_indexing(
-        self, index_target: MatrixBase, index: Optional[RangeIndex | int | Symbol]
+        self,
+        index_target: MatrixBase,
+        index: Optional[RangeIndex | int | Symbol],
+        primes: Optional[str],
     ):
         match index:
             case None:
