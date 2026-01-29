@@ -1,5 +1,5 @@
 import inspect
-from abc import ABC, abstractmethod
+from abc import ABC
 from inspect import BoundArguments, Parameter, Signature
 from typing import (
     Any,
@@ -8,14 +8,11 @@ from typing import (
     Iterable,
     Optional,
     Protocol,
-    Self,
     cast,
-    override,
     runtime_checkable,
 )
 
 from attr import frozen
-from sympy import Expr
 
 
 @frozen

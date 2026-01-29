@@ -7,7 +7,6 @@ from lark.tree import Meta
 from lmat_cas_client.compiling.definition.Resolver import (
     DefinitionResolver,
 )
-from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.compiling.transforming.cas_expr.ConstantsTransformer import (
     ConstantsTransformer,
 )
@@ -21,6 +20,7 @@ from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer i
 from lmat_cas_client.compiling.transforming.ComposeTransformers import (
     compose_transformers,
 )
+from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.math_lib import MatrixUtils
 from sympy import *
@@ -126,17 +126,13 @@ class CasExprTransformer(Transformer):
                 return CasExpr(tuple([(cast(Basic, sympy_expr), meta)]))
 
     def sor_env(self, relations: list[CasExpr | Delim]) -> CasExpr:
-        return CasExpr.from_cas_exprs(
-            [
-                cast(
-                    CasExpr, next(row)
-                )  # the row iterator should only contain 1 element
-                for is_delim, row in itertools.groupby(
-                    relations, lambda t: t == self.Delim.MatDelim
-                )
-                if not is_delim
-            ]
-        )
+        return CasExpr.from_cas_exprs([
+            cast(CasExpr, next(row))  # the row iterator should only contain 1 element
+            for is_delim, row in itertools.groupby(
+                relations, lambda t: t == self.Delim.MatDelim
+            )
+            if not is_delim
+        ])
 
     def sor_and_chain(self, relations: list[CasExpr]) -> CasExpr:
         return CasExpr.from_cas_exprs(relations)

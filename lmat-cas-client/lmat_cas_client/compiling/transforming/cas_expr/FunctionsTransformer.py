@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from enum import Enum
 from typing import Any, Iterator, Optional, cast
 
 import sympy
@@ -9,11 +8,11 @@ from lmat_cas_client.compiling.definition.Resolver import (
     DefinitionResolver,
     FunctionResToken,
 )
-from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
     LhsStrat,
     RhsStrat,
 )
+from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from sympy import *
@@ -396,7 +395,8 @@ class BuiltInFunctionsTransformer(Transformer):
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
         exponents_str = exponent.value
         exponents_str = (
-            exponents_str.replace("{", "")
+            exponents_str
+            .replace("{", "")
             .replace("}", "")
             .replace("\\ast", "H")
             .replace("*", "H")
@@ -590,14 +590,12 @@ class BuiltInFunctionsTransformer(Transformer):
 
         match indicies:
             case RangeIndex() as index:
-                return Matrix(
-                    [
-                        *index_target[: index.beg or 0],  # typing: ignore[misc]
-                        *index_target[
-                            index.end or len(index_target) :  # typing: ignore[misc]
-                        ],
-                    ]
-                )
+                return Matrix([
+                    *index_target[: index.beg or 0],  # type: ignore[misc]
+                    *index_target[
+                        index.end or len(index_target) :  # type: ignore[misc]
+                    ],
+                ])
             case [RangeIndex() as row_index, RangeIndex() as col_index]:
                 if row_index != ALL_INDEX:
                     for _ in range(
@@ -633,7 +631,7 @@ class BuiltInFunctionsTransformer(Transformer):
 
         match indicies:
             case RangeIndex() as index:
-                index_val = index_target[index.beg : index.end]  # typing: ignore[misc]
+                index_val = index_target[index.beg : index.end]  # type: ignore[misc]
 
                 if isinstance(index, SingularIndex):
                     return index_val[0]
@@ -686,7 +684,7 @@ class BuiltInFunctionsTransformer(Transformer):
         # verify result
         match target_variables:
             case int() as target_variable_count:
-                if len(params) != target_variables:
+                if len(params) != target_variable_count:
                     raise RuntimeError(
                         f"Expected {target_variable_count} variables, but only found {len(params)} ({', '.join(map(str, params))})"
                     )

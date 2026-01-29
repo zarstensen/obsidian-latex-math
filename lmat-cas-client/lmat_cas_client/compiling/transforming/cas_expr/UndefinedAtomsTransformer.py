@@ -3,7 +3,7 @@ from ctypes import ArgumentError
 from typing import ClassVar, List, cast, final, override
 
 from attr import frozen
-from lark import Token, Transformer, Tree, Visitor, v_args
+from lark import Token, Transformer, v_args
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     SymbolDefinition,
     SympyDef,
@@ -14,9 +14,9 @@ from lmat_cas_client.compiling.definition.Resolver import (
     SymbolResToken,
 )
 from lmat_cas_client.compiling.transforming.Ir import (
-    ResolveStrategy,
     Ir,
     Resolved,
+    ResolveStrategy,
     SupportsBubbleUp,
     ir_strat,
 )

@@ -1,6 +1,6 @@
 # mypy: disable-error-code="override"
 from itertools import chain
-from typing import Any, Iterable, Optional, override
+from typing import Any, Iterable, override
 
 from lark import Discard, Tree, v_args
 from sympy import Symbol
