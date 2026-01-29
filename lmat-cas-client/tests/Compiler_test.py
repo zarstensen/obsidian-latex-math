@@ -839,17 +839,16 @@ class TestLatexToCasExprCompiler:
         [
             (r"a_{b}'", {}, Symbol("a'_{b}")),
             (r"a_{b}", {}, Symbol("a_{b}")),
-            (r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_0", {}, Matrix([[1, 2]])),
-            (r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{1,1}", {}, 4),
             (
-                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{,1}",
+                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{[0]}",
+                {},
+                1,
+            ),
+            (r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{[1,1]}", {}, 4),
+            (
+                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{[,1]}",
                 {},
                 Matrix([2, 4]),
-            ),
-            (
-                r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9\end{bmatrix}_{..1,1..}",
-                {},
-                Matrix([[2, 3]]),
             ),
             (
                 r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9\end{bmatrix}_{[..1,1..]}",
@@ -863,7 +862,7 @@ class TestLatexToCasExprCompiler:
             ),
             (r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{(1;1)}", {}, Matrix([1])),
             (
-                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{;1}",
+                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{(;1)}",
                 {},
                 Matrix([1, 3]),
             ),

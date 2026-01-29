@@ -16,10 +16,12 @@ from lmat_cas_client.compiling.definition.DefinitionStore import (
 )
 from lmat_cas_client.compiling.definition.DefinitionStoreResolver import AstTransformer
 from lmat_cas_client.compiling.definition.EmptyResolver import EmptyResolver
+from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
+    SymbolIr,
+)
 from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     DepsTransformer,
 )
-from lmat_cas_client.compiling.transforming.Ir import SymbolStrat, try_resolve_ir
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 
 _SET_TERM_TO_ASSUMPTION = {
@@ -67,7 +69,7 @@ class DefinitionsTransformer(Transformer):
     def __init__(
         self,
         expr_transformer: AstTransformer,
-        dependencies_transformer: TransformerRunner[[], set[str]],
+        dependencies_transformer: TransformerRunner[[], set[Symbol]],
     ):
         self._expr_transformer = expr_transformer
         self._dependencies_transformer = dependencies_transformer
@@ -79,12 +81,10 @@ class DefinitionsTransformer(Transformer):
     def symbol_cas_expr_def(
         self, def_ast: Tree, value_ast: Optional[Tree] = None
     ) -> DefinitionStore:
-        def_val: Symbol = cast(
-            Symbol,
-            try_resolve_ir(
-                self._expr_transformer.transform(def_ast, EmptyResolver()),
-                [SymbolStrat.SYMBOL],
-            )[0],
+        def_val: Symbol = (
+            cast(SymbolIr, self._expr_transformer.transform(def_ast, EmptyResolver()))
+            .as_symbol()
+            .value
         )
 
         if value_ast is None:
@@ -104,13 +104,15 @@ class DefinitionsTransformer(Transformer):
         store: DefinitionStore = {}
 
         for symb in symbs:
-            def_val: Symbol = cast(
-                Symbol,
-                try_resolve_ir(
+            def_val: Symbol = (
+                cast(
+                    SymbolIr,
                     self._expr_transformer.transform(symb, EmptyResolver()),
-                    [SymbolStrat.SYMBOL],
-                )[0],
+                )
+                .as_symbol()
+                .value
             )
+
             store[def_val.name] = SymbolDefinition(
                 SympyDef(Symbol(def_val.name, **assum))
             )
@@ -120,12 +122,10 @@ class DefinitionsTransformer(Transformer):
     def function_def(
         self, func_ast: Tree, params: tuple[str], body_ast: Optional[Tree] = None
     ) -> DefinitionStore:
-        func: Symbol = cast(
-            Symbol,
-            try_resolve_ir(
-                self._expr_transformer.transform(func_ast, EmptyResolver()),
-                [SymbolStrat.SYMBOL],
-            )[0],
+        func: Symbol = (
+            cast(SymbolIr, self._expr_transformer.transform(func_ast, EmptyResolver()))
+            .as_symbol()
+            .value
         )
 
         if body_ast is None:
@@ -144,12 +144,10 @@ class DefinitionsTransformer(Transformer):
     def function_assumption_def(
         self, func_ast: Tree, params: tuple[str], assumptions: Mapping[str, bool]
     ) -> DefinitionStore:
-        func: Symbol = cast(
-            Symbol,
-            try_resolve_ir(
-                self._expr_transformer.transform(func_ast, EmptyResolver()),
-                [SymbolStrat.SYMBOL],
-            )[0],
+        func: Symbol = (
+            cast(SymbolIr, self._expr_transformer.transform(func_ast, EmptyResolver()))
+            .as_symbol()
+            .value
         )
 
         return {
@@ -160,13 +158,9 @@ class DefinitionsTransformer(Transformer):
 
     def function_params(self, *params: Tree) -> tuple[str, ...]:
         return tuple(
-            cast(
-                Symbol,
-                try_resolve_ir(
-                    self._expr_transformer.transform(p, EmptyResolver()),
-                    [SymbolStrat.SYMBOL],
-                )[0],
-            ).name
+            cast(SymbolIr, self._expr_transformer.transform(p, EmptyResolver()))
+            .as_symbol()
+            .value.name
             for p in params
         )
 

@@ -1,5 +1,6 @@
+from abc import abstractmethod
 from ctypes import ArgumentError
-from typing import List, Optional, cast, override
+from typing import List, cast, final, override
 
 from attr import frozen
 from lark import Token, Transformer, Tree, Visitor, v_args
@@ -13,17 +14,15 @@ from lmat_cas_client.compiling.definition.Resolver import (
     SymbolResToken,
 )
 from lmat_cas_client.compiling.transforming.Ir import (
-    ImplicitStrat,
-    IrResolveStrategy,
-    IrStrategies,
+    Capability,
+    Ir,
     MultIr,
-    SymbolIr,
-    SymbolStrat,
+    Resolved,
+    SupportsBubbleUp,
     ir_strat,
 )
-from lmat_cas_client.math_lib.MatrixUtils import is_matrix
 from lmat_cas_client.math_lib.units import UnitUtils
-from sympy import Expr, MatrixBase, Number, Symbol
+from sympy import Expr, Number, Symbol
 from sympy.physics.units import Quantity
 
 
@@ -58,18 +57,43 @@ class ImplicitMul:
     rhs: Expr
 
 
+class SymbolStrat(Capability):
+    _resolve_method = "as_symbol"
+
+    @abstractmethod
+    def as_symbol(self) -> Resolved[Symbol]:
+        pass
+
+
+class SubstituteStrat(Capability):
+    _resolve_method = "as_substituted"
+
+    @abstractmethod
+    def as_substituted(self) -> Resolved[Expr]:
+        pass
+
+
+@final
 @frozen
-class RangeIndex:
-    beg: Optional[Expr]
-    end: Optional[Expr]
+class SymbolIr(Ir, SymbolStrat, SubstituteStrat):
+    symbol: Symbol
+    resolver: DefinitionResolver
 
+    _default_strat = SubstituteStrat
 
-class SingularIndex(RangeIndex):
-    def __init__(self, index: Expr):
-        super().__init__(beg=index, end=index + 1)
+    @override
+    def as_symbol(self) -> Resolved[Symbol]:
+        return Resolved(self.symbol)
 
-
-ALL_INDEX = RangeIndex(beg=None, end=None)
+    @override
+    def as_substituted(self) -> Resolved[Expr]:
+        match self.resolver.get_resolver_token(self.symbol.name):
+            case SymbolResToken() as token:
+                return Resolved(cast(Expr, self.resolver.resolve_value(token)))
+            case FunctionResToken() as token:
+                return Resolved(cast(Expr, self.resolver.resolve_unapplied(token)))
+            case _:
+                return cast(Resolved[Expr], self.as_symbol())
 
 
 @v_args(inline=True)
@@ -79,33 +103,17 @@ class UndefinedAtomsTransformer(Transformer):
     """
 
     def __init__(self, definition_resolver: DefinitionResolver):
-        self.__definition_store = definition_resolver
+        self.__resolver = definition_resolver
 
-    def combine_symbol(self, *symbols: Symbol) -> IrStrategies:
+    def combine_symbol(self, *symbols: Symbol) -> SymbolIr:
         symbol = Symbol("".join(map(str, symbols)))
 
-        return IrStrategies(
-            {
-                SymbolStrat.SUBSTITUTE: IrResolveStrategy(
-                    lambda: self.substitute_symbol(symbol)
-                ),
-                SymbolStrat.SYMBOL: IrResolveStrategy(lambda: symbol),
-            },
-            SymbolStrat.SUBSTITUTE,
-        )
+        return SymbolIr(symbol, self.__resolver)
 
-    def substitute_symbol(self, substitute_symbol: Symbol) -> Symbol | Expr:
-        match self.__definition_store.get_resolver_token(substitute_symbol.name):
-            case SymbolResToken() as token:
-                return cast(Expr, self.__definition_store.resolve_value(token))
-            case FunctionResToken() as token:
-                return cast(Expr, self.__definition_store.resolve_unapplied(token))
-            case _:
-                return substitute_symbol
-
+    @ir_strat(symbol=SymbolStrat, index_contents=SymbolStrat)
     def indexed_symbol(
         self, symbol: Symbol, index_contents: Symbol | Number | str, primes: str | None
-    ) -> Symbol:
+    ) -> SymbolIr:
         primes = "" if primes is None else primes
 
         match index_contents:
@@ -117,11 +125,11 @@ class UndefinedAtomsTransformer(Transformer):
         if not index_contents.startswith("{") or not index_contents.endswith("}"):
             index_contents = f"{{{index_contents}}}"
 
-        return Symbol(f"{symbol.name}_{index_contents}{primes}")
+        return self.combine_symbol(Symbol(f"{symbol.name}{primes}_{index_contents}"))
 
     def formatted_symbol(
         self, formatter: Token, symbol_contents: str, primes: str | None
-    ) -> IrStrategies:
+    ) -> SymbolIr:
         formatter_text = str(formatter)
 
         if not symbol_contents.startswith("{") and not symbol_contents.endswith("}"):
@@ -131,27 +139,28 @@ class UndefinedAtomsTransformer(Transformer):
             Symbol(f"{formatter_text}{symbol_contents}{primes or ''}")
         )
 
-    @ir_strat(unit_symbol_ir=ImplicitStrat.BUBBLE_UP)
-    def unit(self, unit_symbol_ir: IrStrategies) -> Quantity | Symbol | Expr:
+    @ir_strat(unit_symbol_ir=SupportsBubbleUp)
+    def unit(self, unit_symbol_ir: Ir) -> Quantity | Symbol | Expr:
 
-        unit_symbol: Symbol = cast(Symbol, unit_symbol_ir[SymbolStrat.SYMBOL])
+        assert isinstance(unit_symbol_ir, SymbolStrat)
+        unit_symbol: Symbol = unit_symbol_ir.as_symbol().value
 
         unit = UnitUtils.str_to_unit(unit_symbol.name)
 
         if unit is not None:
             return unit
         else:
-            return unit_symbol_ir[ImplicitStrat.DEFAULT].resolve()
+            return cast(Expr, unit_symbol_ir.as_default().value)
 
-    @ir_strat(func_head=SymbolStrat.SYMBOL)
+    @ir_strat(func_head=SymbolStrat)
     def maybe_function_application(
         self, func_head: Symbol, func_args: List[Expr]
-    ) -> Expr | IrStrategies:
-        match self.__definition_store.get_resolver_token(func_head.name):
+    ) -> Expr | MultIr:
+        match self.__resolver.get_resolver_token(func_head.name):
             case FunctionResToken() as token:
                 return cast(
                     Expr,
-                    self.__definition_store.resolve_applied(
+                    self.__resolver.resolve_applied(
                         token, map(lambda a: SymbolDefinition(SympyDef(a)), func_args)
                     ),
                 )
@@ -169,174 +178,13 @@ class UndefinedAtomsTransformer(Transformer):
                     )
 
                 return MultIr(
-                    self.substitute_symbol(func_head), func_args[0]
-                ).strategies()
-
-    def index_range(self, begin: Optional[Expr], end: Optional[Expr]):
-        return RangeIndex(begin, end)
-
-    def index_all(self):
-        return ALL_INDEX
-
-    def index_singular(self, index: Expr):
-        return SingularIndex(index)
-
-    def indicies_2d(
-        self,
-        row_index: Optional[RangeIndex] = None,
-        col_index: Optional[RangeIndex] = None,
-    ):
-        return row_index or ALL_INDEX, col_index or ALL_INDEX
-
-    @staticmethod
-    def _index_symbol_prime(handler):
-        def _wrapper(
-            self: "UndefinedAtomsTransformer",
-            index_str: str,
-            index_target: Expr,
-            *args,
-        ):
-            match index_target, args:
-                case Symbol() as symbol, [*new_args, Token() | None as primes] if (
-                    primes is None or primes.type == "PRIMES"
-                ):
-                    return handler(
-                        self,
-                        index_str,
-                        self.substitute_symbol(
-                            Symbol(
-                                f"{symbol.name}{primes.value if primes is not None else ''}"
-                            )
-                        ),
-                        *new_args,
-                    )
-                case _:
-                    return handler(self, index_str, index_target, *args)
-
-        return _wrapper
-
-    # TODO: this should be a different decorator for when primes is a thing? no not taht
-    @staticmethod
-    @ir_strat(index_target=ImplicitStrat.BUBBLE_UP)
-    def _index_fallback(handler):
-        def _wrapper(
-            self: "UndefinedAtomsTransformer",
-            index_str: str,
-            index_target: Expr | IrStrategies,
-            *args,
-        ):
-            match index_target:
-                case IrStrategies():
-                    sub_val = cast(Expr, index_target[ImplicitStrat.DEFAULT].resolve())
-
-                    if is_matrix(sub_val):
-                        return handler(self, sub_val, *args)
-                    elif isinstance(sub_val, Symbol):
-                        # should this be allowed if sub_val is just defined to be another symbol?
-                        # no, so check if index_target symbol has a definition before doing this.
-                        # but it should work for assumptions on the other hand...
-                        pass
-                    else:
-                        # ERROR
-                        pass
-                case _:
-                    if is_matrix(index_target):
-                        return handler(self, index_target, *args)
-                    else:
-                        # should symbol be allowed here (it may be possible through some definition + substitution magic.) nvm (a)_x would trigger this case.
-                        # i feel like it should not be allowed? but it SHOULD
-                        # but if this is not allowed, then the second case in IrStrategies is not allowed either then, if sub_val was defined to be another symbol.
-                        # ERROR
-                        pass
-            # these are the possible cases:
-            # Not IrStrategies:
-            # - Not Matrix -> Error cannot index non matrix object
-            # - Matrix -> index into matrix
-            # IrStratigies:
-            # - substituted value not matrix -> return symbol value + index
-            # - substituted value is matrix -> index into substituted value.
-            # that makes sense, now how do we integrate this with the primes parameter?
-            if hasattr(
-                index_target, "__getitem__"
-            ):  # TODO: check explicitly for matrix here, not just getitem.
-                return handler(self, index_target, *args)
-            elif isinstance(index_target, Symbol):
-                return self.substitute_symbol(
-                    Symbol(f"{index_target.name}_{{{index_str.strip()}}}")
+                    SymbolIr(func_head, self.__resolver).as_substituted().value,
+                    func_args[0],
                 )
-            else:
-                assert False, "AAAAAAAA"
-
-        return _wrapper
-
-    @_index_symbol_prime
-    @_index_fallback
-    @ir_strat()
-    def complement_2d_indexing(
-        self, index_target: MatrixBase, indicies: tuple[RangeIndex, RangeIndex]
-    ):
-        row, col = indicies
-
-        if row != ALL_INDEX:
-            for _ in range((row.end or index_target.shape[0]) - (row.beg or 0)):
-                index_target.row_del(row.beg or 0)
-
-        if col != ALL_INDEX:
-            for _ in range((col.end or index_target.shape[1]) - (col.beg or 0)):
-                index_target.col_del(col.beg or 0)
-
-        return index_target
-
-    @_index_symbol_prime
-    @_index_fallback
-    @ir_strat()
-    def standard_2d_indexing(
-        self, index_target: MatrixBase, indicies: tuple[RangeIndex, RangeIndex]
-    ):
-
-        row, col = indicies
-
-        index_value: MatrixBase = index_target[
-            row.beg : row.end,  # type: ignore[misc]
-            col.beg : col.end,  # type: ignore[misc]
-        ]
-
-        if isinstance(row, SingularIndex) and isinstance(col, SingularIndex):
-            return index_value[0]
-
-        return index_value
-
-    @_index_symbol_prime
-    @_index_fallback
-    @ir_strat()
-    def standard_1d_indexing(
-        self,
-        index_target: MatrixBase,
-        index: Optional[RangeIndex | int | Symbol],
-        primes: Optional[str],
-    ):
-        match index:
-            case None:
-                index = ALL_INDEX
-            case RangeIndex():
-                pass
-            case _:
-                index = SingularIndex(cast(Expr, index))
-
-        index_value: MatrixBase = index_target[index.beg : index.end, :]  # type: ignore[misc]
-
-        if isinstance(index, SingularIndex) and index_target.shape[1] == 1:
-            return index_value[0]
-
-        return index_value
 
 
 class IndexInjector(Visitor):
-    INDEX_RULES = [
-        "standard_2d_indexing",
-        "standard_1d_indexing",
-        "complement_2d_indexing",
-    ]
+    INDEX_RULES = []
 
     def __init__(self, src_text):
         self._src_text = src_text

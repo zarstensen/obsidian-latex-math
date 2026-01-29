@@ -19,7 +19,7 @@ from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer i
 from lmat_cas_client.compiling.transforming.ComposeTransformers import (
     compose_transformers,
 )
-from lmat_cas_client.compiling.transforming.Ir import MultStrat, ir_strat
+from lmat_cas_client.compiling.transforming.Ir import SupportsRhs, ir_strat
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.math_lib import MatrixUtils
 from sympy import *
@@ -237,7 +237,7 @@ class CasExprTransformer(Transformer):
         return result
 
     @v_args(inline=True)
-    @ir_strat(base=MultStrat.RHS)
+    @ir_strat(base=SupportsRhs)
     def exponentiation(self, base: Expr, exponent: Expr) -> Expr:
         # special matrix notation.
         if isinstance(exponent, Symbol) and MatrixUtils.is_matrix(base):

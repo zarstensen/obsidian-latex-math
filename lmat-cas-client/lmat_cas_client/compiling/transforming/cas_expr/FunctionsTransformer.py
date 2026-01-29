@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Iterator, Optional, cast
 
 import sympy
+from attr import frozen
 from lark import Token, Transformer, v_args
 from lmat_cas_client.compiling.definition.Resolver import (
     DefinitionResolver,
@@ -10,13 +11,29 @@ from lmat_cas_client.compiling.definition.Resolver import (
 )
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
     ImplicitMul,
+    SymbolIr,
+    SymbolStrat,
 )
-from lmat_cas_client.compiling.transforming.Ir import MultStrat, ir_strat
+from lmat_cas_client.compiling.transforming.Ir import SupportsLhs, SupportsRhs, ir_strat
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from sympy import *
 from sympy.core.function import UndefinedFunction
 from sympy.tensor.array import derive_by_array
+
+
+@frozen
+class RangeIndex:
+    beg: Optional[Expr]
+    end: Optional[Expr]
+
+
+class SingularIndex(RangeIndex):
+    def __init__(self, index: Expr):
+        super().__init__(beg=index, end=index + 1)
+
+
+ALL_INDEX = RangeIndex(beg=None, end=None)
 
 
 class ImplicitMulStrategy(Enum):
@@ -129,9 +146,9 @@ class BuiltInFunctionsTransformer(Transformer):
     """
 
     def __init__(self, definition_resolver: DefinitionResolver):
-        self.__definition_resolver = definition_resolver
+        self.__resolver = definition_resolver
 
-    @ir_strat(arg=MultStrat.LHS)
+    @ir_strat(arg=SupportsLhs)
     def trig_function(
         self, func_token: Token, exponent: Expr | int | None, arg: Expr
     ) -> Expr:
@@ -154,23 +171,27 @@ class BuiltInFunctionsTransformer(Transformer):
 
         return _try_raise_exponent(trig_func(arg), exponent)
 
+    @ir_strat()
     def frac(self, numerator: Expr, denominator: Expr) -> Expr:
         return numerator * denominator**-1
 
+    @ir_strat()
     def binom(self, n: Expr, k: Expr) -> Expr:
         return binomial(n, k)
 
+    @ir_strat()
     def sqrt(self, degree: Expr | None, arg: Expr) -> Expr:
         if degree is None:
             return sqrt(arg)
         else:
             return root(arg, degree)
 
+    @ir_strat()
     def conjugate(self, arg: Expr) -> Expr:
         return conjugate(arg)
 
     @func_exp(exp_pos=2)
-    @ir_strat(arg=MultStrat.LHS)
+    @ir_strat(arg=SupportsLhs)
     def log_implicit_base(self, func_token: Token, arg: Expr) -> Expr:
         log_type = func_token.type
         base = 10 if log_type == "FUNC_LG" else None
@@ -183,40 +204,42 @@ class BuiltInFunctionsTransformer(Transformer):
         return log_val
 
     @func_exp(exp_pos=3)
-    @ir_strat(arg=MultStrat.LHS)
+    @ir_strat(arg=SupportsLhs)
     def log_explicit_base(self, _func_token: Token, base: Expr, arg: Expr) -> Expr:
         return log(arg, base)
 
-    @ir_strat(arg=MultStrat.LHS)
+    @ir_strat(arg=SupportsLhs)
     def log_explicit_base_exponent_first(
         self, func_token: Token, exponent, base: Expr, arg: Expr
     ) -> Expr:
         return self.log_explicit_base(func_token, base, exponent, arg)
 
     @func_exp()
-    @ir_strat(arg=MultStrat.LHS)
+    @ir_strat(arg=SupportsLhs)
     def exponential(self, arg: Expr) -> Expr:
         return exp(arg)
 
-    @ir_strat(arg=MultStrat.RHS)
+    @ir_strat(arg=SupportsRhs)
     def factorial(self, arg: Expr) -> Expr:
         return factorial(arg)
 
-    @ir_strat(arg=MultStrat.RHS)
+    @ir_strat(arg=SupportsRhs)
     def percent(self, arg: Expr) -> Expr:
         return Mul(arg, 100**-1)
 
-    @ir_strat(arg=MultStrat.RHS)
+    @ir_strat(arg=SupportsRhs)
     def permille(self, arg: Expr) -> Expr:
         return Mul(arg, 1000**-1)
 
+    @ir_strat()
     def upper_gamma(self, s: Expr, x: Expr | int = 0) -> Expr:
         return uppergamma(s, x)
 
+    @ir_strat()
     def lower_gamma(self, s: Expr, x: Expr) -> Expr:
         return lowergamma(s, x)
 
-    @ir_strat(arg=MultStrat.LHS)
+    @ir_strat(arg=SupportsLhs)
     def limit(
         self, symbol: Expr, approach_value: Expr, direction: str | None, arg: Expr
     ) -> Expr:
@@ -225,25 +248,26 @@ class BuiltInFunctionsTransformer(Transformer):
         return limit(arg, symbol, approach_value, direction)
 
     @func_exp()
-    @ir_strat(val=MultStrat.LHS)
+    @ir_strat(val=SupportsLhs)
     def real_part(self, val: Expr) -> Expr:
         return re(val)
 
     @func_exp()
-    @ir_strat(val=MultStrat.LHS)
+    @ir_strat(val=SupportsLhs)
     def imaginary_part(self, val: Expr) -> Expr:
         return im(val)
 
     @func_exp()
-    @ir_strat(val=MultStrat.LHS)
+    @ir_strat(val=SupportsLhs)
     def argument(self, val: Expr) -> Expr:
         return arg(val)
 
     @func_exp()
-    @ir_strat(val=MultStrat.LHS)
+    @ir_strat(val=SupportsLhs)
     def sign(self, val: Expr) -> Expr:
         return sign(val)
 
+    @ir_strat()
     def limit_direction(self, direction_token: Token) -> str:
         return direction_token.value
 
@@ -314,7 +338,7 @@ class BuiltInFunctionsTransformer(Transformer):
             power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
-    @ir_strat(expr=MultStrat.RHS)
+    @ir_strat(expr=SupportsRhs)
     def derivative_prime(self, expr: Expr, primes: Token):
         body, variables = self._expr_as_function(expr, range(0, 2))
 
@@ -408,35 +432,36 @@ class BuiltInFunctionsTransformer(Transformer):
         )
 
     @func_exp()
-    @ir_strat(mat=MultStrat.LHS)
+    @ir_strat(mat=SupportsLhs)
     def determinant(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).det()
 
     @func_exp()
-    @ir_strat(mat=MultStrat.LHS)
+    @ir_strat(mat=SupportsLhs)
     def trace(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).trace()
 
     @func_exp()
-    @ir_strat(mat=MultStrat.LHS)
+    @ir_strat(mat=SupportsLhs)
     def adjugate(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).adjugate()
 
     @func_exp()
-    @ir_strat(mat=MultStrat.LHS)
+    @ir_strat(mat=SupportsLhs)
     def rref(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).rref()[0]
 
     @func_exp()
-    @ir_strat(vector=MultStrat.LHS)
+    @ir_strat(vector=SupportsLhs)
     def unitvec(self, vector: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(vector).normalized()
 
-    @ir_strat(mat=MultStrat.RHS)
+    @ir_strat(mat=SupportsRhs)
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
         exponents_str = exponent.value
         exponents_str = (
-            exponents_str.replace("{", "")
+            exponents_str
+            .replace("{", "")
             .replace("}", "")
             .replace("\\ast", "H")
             .replace("*", "H")
@@ -458,7 +483,7 @@ class BuiltInFunctionsTransformer(Transformer):
     # Linear Alg Specific Implementations
 
     @func_exp()
-    @ir_strat(expr=MultStrat.LHS)
+    @ir_strat(expr=SupportsLhs)
     def gradient(self, expr: Expr, eval_point: None | list[Expr]) -> MatrixBase:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -471,7 +496,7 @@ class BuiltInFunctionsTransformer(Transformer):
             return res
 
     @func_exp()
-    @ir_strat(expr=MultStrat.LHS)
+    @ir_strat(expr=SupportsLhs)
     def hessian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -484,7 +509,7 @@ class BuiltInFunctionsTransformer(Transformer):
             return res
 
     @func_exp()
-    @ir_strat(expr=MultStrat.LHS)
+    @ir_strat(expr=SupportsLhs)
     def jacobian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -509,7 +534,7 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             return jacobian
 
-    @ir_strat(expr=MultStrat.LHS)
+    @ir_strat(expr=SupportsLhs)
     def taylor(
         self,
         degree: Expr,
@@ -588,6 +613,117 @@ class BuiltInFunctionsTransformer(Transformer):
     def modulo(self, a: Expr, b: Expr) -> Expr:
         return Mod(a, b)
 
+    # Indexing
+
+    @ir_strat()
+    def index_range(self, begin: Optional[Expr], end: Optional[Expr]):
+        return RangeIndex(begin, end)
+
+    @ir_strat()
+    def index_all(self):
+        return ALL_INDEX
+
+    @ir_strat()
+    def index_singular(self, index: Expr):
+        return SingularIndex(index)
+
+    @ir_strat()
+    def indicies_2d(
+        self,
+        row_index: Optional[RangeIndex] = None,
+        col_index: Optional[RangeIndex] = None,
+    ):
+        return row_index or ALL_INDEX, col_index or ALL_INDEX
+
+    @ir_strat()
+    def indicies_1d(self, index: RangeIndex):
+        return index
+
+    @ir_strat()
+    def complement_indexing(
+        self,
+        index_target: MatrixBase,
+        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
+    ):
+        if not MatrixUtils.is_matrix(index_target):
+            index_target = Matrix(index_target)
+
+        match indicies:
+            case RangeIndex() as index:
+                return Matrix([
+                    *index_target[: index.beg or 0],
+                    *index_target[index.end or len(index_target) :],
+                ])
+            case [RangeIndex() as row_index, RangeIndex() as col_index]:
+                if row_index != ALL_INDEX:
+                    for _ in range(
+                        (row_index.end or index_target.shape[0]) - (row_index.beg or 0)
+                    ):
+                        index_target.row_del(row_index.beg or 0)
+
+                if col_index != ALL_INDEX:
+                    for _ in range(
+                        (col_index.end or index_target.shape[1]) - (col_index.beg or 0)
+                    ):
+                        index_target.col_del(col_index.beg or 0)
+
+                return index_target
+
+    @ir_strat()
+    def standard_indexing(
+        self,
+        index_target: MatrixBase,
+        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
+    ):
+
+        if not MatrixUtils.is_matrix(index_target):
+            index_target = Matrix(index_target)
+
+        match indicies:
+            case RangeIndex() as index:
+                index_val = index_target[index.beg : index.end]
+
+                if isinstance(index, SingularIndex):
+                    return index_val[0]
+                else:
+                    return index_val
+            case [RangeIndex() as row_index, RangeIndex() as col_index]:
+                index_val = index_target[
+                    row_index.beg : row_index.end,  # type: ignore[misc]
+                    col_index.beg : col_index.end,  # type: ignore[misc]
+                ]
+
+                if isinstance(row_index, SingularIndex) and isinstance(
+                    col_index, SingularIndex
+                ):
+                    return index_val[0]
+                else:
+                    return index_val
+            case _:
+                assert False, "Invalid indicies passed to standard index handler"
+
+    @ir_strat(symbol=SymbolStrat)
+    def complement_indexing_prime(
+        self,
+        symbol: Symbol,
+        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
+        primes: Optional[str],
+    ):
+        return self.complement_indexing(
+            SymbolIr(Symbol(f"{symbol.name}{primes or ''}"), self.__resolver), indicies
+        )
+
+    @ir_strat(symbol=SymbolStrat)
+    def standard_indexing_prime(
+        self,
+        symbol: Symbol,
+        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
+        primes: Optional[str],
+    ):
+        return self.standard_indexing(
+            SymbolIr(Symbol(f"{symbol.name}{primes or ''}"), self.__resolver), indicies
+        )
+
     # Helper Methods
 
     # from the given expression, return a function body expression, and a tuple of variables the function body expects.
@@ -602,10 +738,10 @@ class BuiltInFunctionsTransformer(Transformer):
         body = None
 
         if isinstance(expr, UndefinedFunction):
-            match self.__definition_resolver.get_resolver_token(expr.name):
+            match self.__resolver.get_resolver_token(expr.name):
                 case FunctionResToken() as token:
-                    body = self.__definition_resolver.resolve_body(token)
-                    params = self.__definition_resolver.resolve_params(token)
+                    body = self.__resolver.resolve_body(token)
+                    params = self.__resolver.resolve_params(token)
 
         if params is None or body is None:
             params = symbols_variable_order(cast(set[Symbol], expr.free_symbols))
