@@ -1,6 +1,6 @@
 # mypy: disable-error-code="override"
 from itertools import chain
-from typing import Any, Iterable, override
+from typing import Any, Iterable, Optional, override
 
 from lark import Discard, Tree, v_args
 from sympy import Symbol
@@ -63,7 +63,7 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
         self, func_name: Symbol, func_args: Iterable[Symbol]
     ) -> set[Symbol]:
         # include both the function itself, and all arguments to the function as dependencies.
-        # e.g. f(x, 1, y) should produce { 'f', 'x', 'y' }
+        # e.g. f(x, 1, y) should produce { f, x, y }
 
         return set([func_name, *func_args])
 

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from ctypes import ArgumentError
-from typing import List, cast, final, override
+from typing import ClassVar, List, cast, final, override
 
 from attr import frozen
 from lark import Token, Transformer, Tree, Visitor, v_args
@@ -14,9 +14,8 @@ from lmat_cas_client.compiling.definition.Resolver import (
     SymbolResToken,
 )
 from lmat_cas_client.compiling.transforming.Ir import (
-    Capability,
+    ResolveStrategy,
     Ir,
-    MultIr,
     Resolved,
     SupportsBubbleUp,
     ir_strat,
@@ -26,8 +25,102 @@ from sympy import Expr, Number, Symbol
 from sympy.physics.units import Quantity
 
 
+class SymbolStrat(ResolveStrategy):
+    """
+    Ir object can be resolved as a sympy Symbol.
+    """
+
+    _resolve_method = "as_symbol"
+
+    @abstractmethod
+    def as_symbol(self) -> Resolved[Symbol]:
+        pass
+
+
+class SubstituteStrat(ResolveStrategy):
+    """
+    Ir object can have a defined value,
+    which it can be substituted with.j
+    """
+
+    _resolve_method = "as_substituted"
+
+    @abstractmethod
+    def as_substituted(self) -> Resolved[Expr]:
+        pass
+
+
+@final
 @frozen
-class ImplicitMul:
+class SymbolIr(Ir, SymbolStrat, SubstituteStrat):
+    """
+    Intermediate representation of a symbol in the AST.
+
+    Args:
+        SymbolStrat: resolves the original Symbol object.
+        SubstituteStrat (_type_): resolves the symbol's defined value from a DefinitionResolver.
+        if not present, returns the original Symbol object.
+    """
+
+    symbol: Symbol
+    resolver: DefinitionResolver
+
+    _default_strat = SubstituteStrat
+
+    @override
+    def as_symbol(self) -> Resolved[Symbol]:
+        return Resolved(self.symbol)
+
+    @override
+    def as_substituted(self) -> Resolved[Expr]:
+        match self.resolver.get_resolver_token(self.symbol.name):
+            case SymbolResToken() as token:
+                return Resolved(cast(Expr, self.resolver.resolve_value(token)))
+            case FunctionResToken() as token:
+                return Resolved(cast(Expr, self.resolver.resolve_unapplied(token)))
+            case _:
+                return cast(Resolved[Expr], self.as_symbol())
+
+
+class LhsStrat(ResolveStrategy):
+    """
+    Ir object has a left hand expression, which this resolves to.
+    """
+
+    _resolve_method: ClassVar[str] = "as_lhs"  # noqa: F821
+
+    @abstractmethod
+    def as_lhs(self) -> Resolved[Expr]:
+        pass
+
+
+class RhsStrat(ResolveStrategy):
+    """
+    Ir object has a right hand expression, which this resolves to.
+    """
+
+    _resolve_method: ClassVar[str] = "as_rhs"
+
+    @abstractmethod
+    def as_rhs(self) -> Resolved[Expr]:
+        pass
+
+
+class MultStrat(ResolveStrategy):
+    """
+    Ir object can be resolved to all of it's factors
+    multiplied together
+    """
+
+    _resolve_method: ClassVar[str] = "as_mult"
+
+    @abstractmethod
+    def as_mult(self) -> Resolved[Expr]:
+        pass
+
+
+@frozen
+class MultIr(Ir, LhsStrat, RhsStrat, MultStrat):
     """
     This is needed for when a maybe_function_application rule does *not* apply the function,
     then the expression should be interpreted as an implicit multiplication between the
@@ -56,44 +149,19 @@ class ImplicitMul:
     lhs: Expr
     rhs: Expr
 
-
-class SymbolStrat(Capability):
-    _resolve_method = "as_symbol"
-
-    @abstractmethod
-    def as_symbol(self) -> Resolved[Symbol]:
-        pass
-
-
-class SubstituteStrat(Capability):
-    _resolve_method = "as_substituted"
-
-    @abstractmethod
-    def as_substituted(self) -> Resolved[Expr]:
-        pass
-
-
-@final
-@frozen
-class SymbolIr(Ir, SymbolStrat, SubstituteStrat):
-    symbol: Symbol
-    resolver: DefinitionResolver
-
-    _default_strat = SubstituteStrat
+    _default_strat = MultStrat
 
     @override
-    def as_symbol(self) -> Resolved[Symbol]:
-        return Resolved(self.symbol)
+    def as_lhs(self):
+        return Resolved(self.lhs, lambda r: MultIr(r, self.rhs))
 
     @override
-    def as_substituted(self) -> Resolved[Expr]:
-        match self.resolver.get_resolver_token(self.symbol.name):
-            case SymbolResToken() as token:
-                return Resolved(cast(Expr, self.resolver.resolve_value(token)))
-            case FunctionResToken() as token:
-                return Resolved(cast(Expr, self.resolver.resolve_unapplied(token)))
-            case _:
-                return cast(Resolved[Expr], self.as_symbol())
+    def as_rhs(self):
+        return Resolved(self.rhs, lambda r: MultIr(self.lhs, r))
+
+    @override
+    def as_mult(self):
+        return Resolved(self.lhs * self.rhs)
 
 
 @v_args(inline=True)
@@ -106,9 +174,7 @@ class UndefinedAtomsTransformer(Transformer):
         self.__resolver = definition_resolver
 
     def combine_symbol(self, *symbols: Symbol) -> SymbolIr:
-        symbol = Symbol("".join(map(str, symbols)))
-
-        return SymbolIr(symbol, self.__resolver)
+        return SymbolIr(Symbol("".join(map(str, symbols))), self.__resolver)
 
     @ir_strat(symbol=SymbolStrat, index_contents=SymbolStrat)
     def indexed_symbol(
@@ -181,26 +247,3 @@ class UndefinedAtomsTransformer(Transformer):
                     SymbolIr(func_head, self.__resolver).as_substituted().value,
                     func_args[0],
                 )
-
-
-class IndexInjector(Visitor):
-    INDEX_RULES = []
-
-    def __init__(self, src_text):
-        self._src_text = src_text
-
-    @override
-    def __default__(self, node: Tree):
-        if node.data not in self.INDEX_RULES:
-            return node
-
-        match node.children:
-            case [_, index_node, *_] if isinstance(index_node, Tree):
-                index_meta = index_node.meta
-            case _:
-                assert False, "rule is not a valid index rule"
-
-        node.children.insert(
-            0, self._src_text[index_meta.start_pos : index_meta.end_pos]
-        )
-        return node

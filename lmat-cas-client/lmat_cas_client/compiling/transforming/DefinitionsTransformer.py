@@ -69,7 +69,7 @@ class DefinitionsTransformer(Transformer):
     def __init__(
         self,
         expr_transformer: AstTransformer,
-        dependencies_transformer: TransformerRunner[[], set[Symbol]],
+        dependencies_transformer: DepsTransformer,
     ):
         self._expr_transformer = expr_transformer
         self._dependencies_transformer = dependencies_transformer

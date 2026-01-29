@@ -9,6 +9,7 @@ from typing import (
     Optional,
     Protocol,
     Self,
+    cast,
     override,
     runtime_checkable,
 )
@@ -19,51 +20,89 @@ from sympy import Expr
 
 @frozen
 class Resolved[T]:
+    """
+    Represents a value resolved from an Ir object,
+    using a ResolveStrategy.
+    """
+
     value: T
+    """
+    Resolved value
+    """
     post_resolve: Optional[Callable[[Any], Any]] = None
+    """
+    Optional post resolve handler, which
+    should be called when done working with the resolved value.
+    """
 
 
 @runtime_checkable
-class Capability(Protocol):
+class ResolveStrategy(Protocol):
+    """
+    Base class for all Ir resolving strategies.
+    An Ir object implements many of these strategies
+    """
+
     _resolve_method: ClassVar[str]
 
 
-class ImplicitCapability(Capability):
+class ImplicitResolveStrat(ResolveStrategy):
+    """
+    Base class for all ResolveStrategy classes,
+    which are guaranteed to be implemented by all Ir objects.
+    """
+
     pass
 
 
-class SupportsDefault(ImplicitCapability):
+class SupportsDefault(ImplicitResolveStrat):
+    """
+    Resolve value from Ir using some default ResolveStrategy,
+    specified by supplying a type to the _default_strat static field.
+    """
+
     _resolve_method: ClassVar[str] = "as_default"
-    _default_strat: ClassVar[type[Capability]]
+    _default_strat: ClassVar[type[ResolveStrategy]]
 
     def as_default(self) -> Resolved[Any]:
         return getattr(self, self._default_strat._resolve_method)()
 
 
-class SupportsBubbleUp(ImplicitCapability):
+class SupportsBubbleUp(ImplicitResolveStrat):
+    """
+    Resolving a value using this strat simply returns the original Ir.
+    """
+
     _resolve_method: ClassVar[str] = "as_bubble_up"
 
-    def as_bubble_up(self) -> Resolved[Self]:
-        return Resolved(self)
+    def as_bubble_up(self) -> Resolved["Ir"]:
+        return Resolved(cast("Ir", self))
 
 
 class Ir(ABC, SupportsDefault, SupportsBubbleUp):
+    """
+    Base class for an Intermediate representation inside a Lark AST.
+    Each implementing class specifies how a concrete value can be resolved,
+    by implementing various ResolveStrategy classes.
+    """
+
     def resolve(
-        self, capabilities: Iterable[type[Capability]]
+        self, strategies: Iterable[type[ResolveStrategy]]
     ) -> Optional[Resolved[Any]]:
-        for capability in capabilities:
+        """
+        Attempt to resolve a value from the given list of strategies.
+        uses the first strategy which the current Ir implements.
+        """
+        for capability in strategies:
             if isinstance(self, capability):
                 return getattr(self, capability._resolve_method)()
 
         return None
 
 
-# need a decorator, which takes positional arguments (by name?) an applies some strategy / multiple strategies prioritized in some order, maybe a default strategy,
-# and also aplies the post_handler to the result of the strategy
-# default resolve strat has to be implicit, then we now we can handle all IrStrategies.
 def ir_strat(
-    default_resolve_strat: type[ImplicitCapability] = SupportsDefault,
-    **resolve_strats: type[Capability] | Iterable[type[Capability]],
+    default_resolve_strat: type[ImplicitResolveStrat] = SupportsDefault,
+    **resolve_strats: type[ResolveStrategy] | Iterable[type[ResolveStrategy]],
 ):
     """
     Decorator for handling automatic resolution of IrStrategies objects passed to decorated function.
@@ -83,14 +122,14 @@ def ir_strat(
 
     # make sure all elements are iterables,
     # this makes some logic later down the line easier to handle.
-    resolve_strats_norm: dict[str, Iterable[type[Capability]]] = {
+    resolve_strats_norm: dict[str, Iterable[type[ResolveStrategy]]] = {
         p: [s] if isinstance(s, type) else s for p, s in resolve_strats.items()
     }
 
     # attempt to resolve a value from the given argument, and a series of strategies to use.
     # this also returns the optional post resolver of the used IrResolverStrategy, as the second return value.
     # if arg_val is not IrStrategies, it just returns the original argument, and None
-    def _try_resolve_ir_arg(arg_val: Any, strategies: Iterable[type[Capability]]):
+    def _try_resolve_ir_arg(arg_val: Any, strategies: Iterable[type[ResolveStrategy]]):
         match arg_val:
             case Ir():
                 strat = arg_val.resolve((*strategies, default_resolve_strat))
@@ -173,132 +212,3 @@ def ir_strat(
         return _wrapper
 
     return _decorator
-
-
-# IMPLS move down
-class SupportsLhs(Capability):
-    _resolve_method: ClassVar[str] = "as_lhs"
-
-    @abstractmethod
-    def as_lhs(self) -> Resolved[Expr]:
-        pass
-
-
-class SupportsRhs(Capability):
-    _resolve_method: ClassVar[str] = "as_rhs"
-
-    @abstractmethod
-    def as_rhs(self) -> Resolved[Expr]:
-        pass
-
-
-class SupportsMult(Capability):
-    _resolve_method: ClassVar[str] = "as_mult"
-
-    @abstractmethod
-    def as_mult(self) -> Resolved[Expr]:
-        pass
-
-
-@frozen
-class MultIr(Ir, SupportsLhs, SupportsRhs, SupportsMult):
-    lhs: Expr
-    rhs: Expr
-
-    _default_strat = SupportsMult
-
-    @override
-    def as_lhs(self):
-        return Resolved(self.lhs, lambda r: MultIr(r, self.rhs))
-
-    @override
-    def as_rhs(self):
-        return Resolved(self.rhs, lambda r: MultIr(self.lhs, r))
-
-    @override
-    def as_mult(self):
-        return Resolved(self.lhs * self.rhs)
-
-
-# TODO: this should maybe be moved to where the other mul is
-# class MultStrat(ResolveStrategyKind):
-#     LHS = auto()
-#     RHS = auto()
-#     MULT = auto()
-
-
-# @frozen
-# class MultIr(Ir):
-#     lhs: Expr
-#     rhs: Expr
-
-#     @override
-#     def strategies(self) -> IrStrategies:
-#         return IrStrategies(
-#             {
-#                 MultStrat.LHS: IrResolveStrategy(
-#                     lambda: self.lhs, lambda r: MultIr(r, self.rhs).strategies()
-#                 ),
-#                 MultStrat.RHS: IrResolveStrategy(
-#                     lambda: self.rhs,
-#                     lambda r: MultIr(self.lhs, r).strategies(),
-#                 ),
-#                 MultStrat.MULT: IrResolveStrategy(
-#                     lambda: self.lhs * self.rhs
-#                 ),  # this should maybe be value?
-#             },
-#             MultStrat.MULT,
-#         )
-
-
-# # TODO: SYMBOL is probably going to be moved out of this one, as it
-# # is also needed for the diff stuff
-# class IndexStrat(ResolveStrategyKind):
-#     INDEX_VALUE = auto()
-#     SYMBOL = auto()
-
-
-# @frozen
-# class IndexIr(Ir):
-#     # TODO: implement this one
-#     pass
-
-#     @override
-#     def strategies(self):
-#         return IrStrategies(
-#             {
-#                 IndexStrat.SYMBOL: IrResolveStrategy(lambda: None),
-#                 IndexStrat.SYMBOL: IrResolveStrategy(lambda: None),
-#             },
-#             IndexStrat.INDEX_VALUE,
-#         )
-
-
-# class SymbolStrat(ResolveStrategyKind):
-#     SUBSTITUTE = auto()
-#     SYMBOL = auto()
-
-
-# @frozen
-# class SymbolIr(Ir):
-#     resolver: DefinitionResolver
-#     symbol: Symbol
-
-#     @override
-#     def strategies(self):
-#         def substitute():
-#             match self.resolver.get_resolver_token(self.symbol.name):
-#                 case SymbolResToken() as token:
-#                     return cast(Expr, self.resolver.resolve_value(token))
-#                 case FunctionResToken() as token:
-#                     return cast(Expr, self.resolver.resolve_unapplied(token))
-#                 case _:
-#                     return self.symbol
-
-#         return IrStrategies(
-#             {
-#                 SymbolStrat.SUBSTITUTE: IrResolveStrategy(substitute),
-#                 SymbolStrat.SYMBOL: IrResolveStrategy(lambda: self.symbol),
-#             },
-#             SymbolStrat.SUBSTITUTE,
-#         )

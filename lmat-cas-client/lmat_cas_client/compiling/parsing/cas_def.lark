@@ -77,7 +77,6 @@ function_assumption_def: symbol function_params _FUN_ASSUME_OP assumption_set
 
 function_params: _L_PAREN symbol (_COMMA symbol)* _R_PAREN
 
-// new rule which wraps _cas_expr__symbol in _cas_expr__expression somehow? has to be possible.
 ?symbol: _cas_expr__symbol
 
 assumption_set: COMPLEX

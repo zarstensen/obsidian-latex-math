@@ -75,6 +75,10 @@ _non_indexed_symbol: single_letter_symbol | multi_letter_symbol | formatted_symb
 
 indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | BRACE_SURROUNDED_TEXT) [PRIMES]
 
+// General rule matching all symbol rules.
+// all of these rules return an SymbolIr, which
+// can be used to get the original symbol value,
+// or its defined value (if present)
 _symbol: _non_indexed_symbol | indexed_symbol
 
 // this rule optionally tries to create a unit, instead of a symbol, if bunits are used.
@@ -86,7 +90,6 @@ unit: _L_BRACE _symbol _R_BRACE
 // groups any value which evaluates to a number.
 _number: _numeric_number | _digit
 // groups any value which evaluates to a number, and can be passed as an argument, without surrounding it with braces.
-// it may be a bit counter intuitive, but here pi (and other constants) are essentially seen as a "digit".
 _digit: _numeric_digit | _constant
 
 _constant: CONST_INFINITY
@@ -102,7 +105,6 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 // multiplication between 'f' and the singular argument in its parameter list.
 // If there is more than one argument in its parameter list, a syntax error should be
 // raised
-// have this be maybe_function_application + complement indexing?
 maybe_function_application: _symbol (_L_PAREN list_of_expressions _R_PAREN | _L_BRACE _L_PAREN list_of_expressions _R_PAREN _R_BRACE)
 
 
@@ -309,30 +311,32 @@ det_matrix: CMD_BEGIN_VMATRIX matrix_body CMD_END_VMATRIX _MATRIX_ENV_END
 
 // ======== Matrix Indexing ========
 
-// ?indexable_expr: matrix_type | maybe_function_application | non_indexed_symbol
 
+// rules for matching individual indexes in index lists.
+
+// match a range / slice index, e.g. 3..5 -> take elements from idx 3 to 5
 index_range: [ expression ] (_CMD_DOTS|_COLON) [ expression ]
-index_all: "*"
+// match a catch all range / slice
+index_all: MUL | _STAR | _CMD_CDOT
+// match a index which only indexes a single element in some dimension
 index_singular: expression
 
 ?index: index_range | index_all | index_singular
 
+// match a standard indicies list [ index , index ]
 standard_indicies: _L_BRACKET [index] _COMMA [index] _R_BRACKET -> indicies_2d
     | _L_BRACKET index _R_BRACKET -> indicies_1d
+// match a complement indicies list ( index ; index )
 complement_indicies: _L_PAREN [index] _SEMICOLON [index] _R_PAREN -> indicies_2d
     | _L_PAREN index _R_PAREN -> indicies_1d
 
 _index_template{target, indicies}: target _UNDERSCORE _L_BRACE indicies _R_BRACE
 
 complement_indexing: _index_template{factor_func_arg, complement_indicies}
-    | _index_template{_symbol, complement_indicies} [ PRIMES ] -> complement_indexing_prime
 standard_indexing: _index_template{factor_func_arg, standard_indicies}
-    | _index_template{_symbol, standard_indicies} [ PRIMES ] -> standard_indexing_prime
 
 ?indexing: complement_indexing | standard_indexing
 
-// TODO: add indexed symbol back, with lower priority than the above rules, so we can still use indexed symbols other places.
-// the maybe function application still need to take this one though, as it is just implicit multiplication, if the symbol is substituted + indexed into.
 // ======== Matrices functions ========
 
 _matrix_functions: determinant | trace | adjugate | rref | unitvec | gradient | hessian | jacobian | taylor
@@ -419,7 +423,7 @@ _R_FORMAT: "\\right"
 // basic binary operators
 ADD: "+"
 SUB: "-"
-MUL: "*"
+MUL: "*" | "\\ast"
 DIV: "/" | "\\over"
 
 // basic common operators
@@ -619,6 +623,7 @@ _SEMICOLON: ";"
 _UNDERSCORE: "_"
 _PERCENT: "\\%"
 _PERMILLE: "\\textperthousand"
+_STAR: "\\star"
 
 // relational symbols
 EQUAL: "="

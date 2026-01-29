@@ -31,8 +31,6 @@ class AstNamespacesRemover(Visitor):
 
         for child in node.children:
             match child:
-                case Tree():
-                    new_children.append(child)
                 case Token():
                     new_children.append(
                         child.update(self._rem_regex.sub(r"\1\2", child.type))

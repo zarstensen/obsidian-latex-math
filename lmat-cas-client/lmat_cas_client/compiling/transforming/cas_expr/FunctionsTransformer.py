@@ -9,12 +9,11 @@ from lmat_cas_client.compiling.definition.Resolver import (
     DefinitionResolver,
     FunctionResToken,
 )
+from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
-    ImplicitMul,
-    SymbolIr,
-    SymbolStrat,
+    LhsStrat,
+    RhsStrat,
 )
-from lmat_cas_client.compiling.transforming.Ir import SupportsLhs, SupportsRhs, ir_strat
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from sympy import *
@@ -24,91 +23,28 @@ from sympy.tensor.array import derive_by_array
 
 @frozen
 class RangeIndex:
+    """
+    Represents a index slice.
+    can be used as [ self.beg : self.end ]
+    """
+
     beg: Optional[Expr]
     end: Optional[Expr]
 
 
 class SingularIndex(RangeIndex):
+    """
+    Represents the equivalent of a index with no slicing.
+    """
+
     def __init__(self, index: Expr):
         super().__init__(beg=index, end=index + 1)
 
 
 ALL_INDEX = RangeIndex(beg=None, end=None)
-
-
-class ImplicitMulStrategy(Enum):
-    """
-    What strategy to use when an ImplicitMul class is recieved.
-    """
-
-    LHS = 0
-    r"""
-    Indicates the current rule handler should perform work
-    on the left hand side (lhs) of the implicit multiplication,
-    e.g. sin should use this, as the sin in \sin f(x) should be applied to
-    f and not (x)
-    """
-    RHS = 1
-    """
-    Like LHS, but indicate that the right hand side shoul be used
-    instead (rhs). e.g. f(x)! should use this, as ! should be applied
-    to (x) and not f.
-    """
-    MULT = 2
-    """
-    Indicate that the current rule handler should apply the implicit multiplication,
-    and then work with the result.
-    """
-
-
-def implicit_mul_strategy(strategy: ImplicitMulStrategy):
-    """
-    Use this decorator for any rule handlers which may receive ImplicitMul structs.
-    Depending on the chosen strategy, the relevant parts of ImplicitMul is automatically
-    passed to the rule handler, and an appropiate ImplicitMul object is constructed and
-    returned from the rule handlers result.
-    Note that at most 1 arg can be an ImplicitMul if the LHS or RHS strategy is picked.
-    """
-
-    def _decorator(handler):
-        def _wrapped(*args: Any):
-            new_args = []
-            had_failed_apply = False
-
-            # search for an ImplicitMul in args, if found
-            # substitute in lhs, rhs or implicit mul of both, depending on
-            # chosen strategy.
-            for arg in args:
-                match arg:
-                    case ImplicitMul(lhs, rhs):
-                        assert (
-                            not had_failed_apply or strategy == ImplicitMulStrategy.MULT
-                        )
-                        match strategy:
-                            case ImplicitMulStrategy.LHS:
-                                new_args.append(lhs)
-                            case ImplicitMulStrategy.RHS:
-                                new_args.append(rhs)
-                            case ImplicitMulStrategy.MULT:
-                                new_args.append(lhs * rhs)
-                        had_failed_apply = True
-                    case arg:
-                        new_args.append(arg)
-
-            # return result wrapped in an ImplicitMul for further bubbling up.
-            if had_failed_apply and strategy != ImplicitMulStrategy.MULT:
-                match strategy:
-                    case ImplicitMulStrategy.LHS:
-                        return ImplicitMul(handler(*new_args), rhs)
-                    case ImplicitMulStrategy.RHS:
-                        return ImplicitMul(lhs, handler(*new_args))
-            else:
-                # except if we aplied the ImplicitMul
-                return handler(*new_args)
-
-        return _wrapped
-
-    return _decorator
+"""
+Constant representing an index slice including all elements from the original list
+"""
 
 
 def _try_raise_exponent(arg: Expr, exponent: Expr | int | None):
@@ -148,7 +84,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def __init__(self, definition_resolver: DefinitionResolver):
         self.__resolver = definition_resolver
 
-    @ir_strat(arg=SupportsLhs)
+    @ir_strat(arg=LhsStrat)
     def trig_function(
         self, func_token: Token, exponent: Expr | int | None, arg: Expr
     ) -> Expr:
@@ -191,7 +127,7 @@ class BuiltInFunctionsTransformer(Transformer):
         return conjugate(arg)
 
     @func_exp(exp_pos=2)
-    @ir_strat(arg=SupportsLhs)
+    @ir_strat(arg=LhsStrat)
     def log_implicit_base(self, func_token: Token, arg: Expr) -> Expr:
         log_type = func_token.type
         base = 10 if log_type == "FUNC_LG" else None
@@ -204,30 +140,30 @@ class BuiltInFunctionsTransformer(Transformer):
         return log_val
 
     @func_exp(exp_pos=3)
-    @ir_strat(arg=SupportsLhs)
+    @ir_strat(arg=LhsStrat)
     def log_explicit_base(self, _func_token: Token, base: Expr, arg: Expr) -> Expr:
         return log(arg, base)
 
-    @ir_strat(arg=SupportsLhs)
+    @ir_strat(arg=LhsStrat)
     def log_explicit_base_exponent_first(
         self, func_token: Token, exponent, base: Expr, arg: Expr
     ) -> Expr:
         return self.log_explicit_base(func_token, base, exponent, arg)
 
     @func_exp()
-    @ir_strat(arg=SupportsLhs)
+    @ir_strat(arg=LhsStrat)
     def exponential(self, arg: Expr) -> Expr:
         return exp(arg)
 
-    @ir_strat(arg=SupportsRhs)
+    @ir_strat(arg=RhsStrat)
     def factorial(self, arg: Expr) -> Expr:
         return factorial(arg)
 
-    @ir_strat(arg=SupportsRhs)
+    @ir_strat(arg=RhsStrat)
     def percent(self, arg: Expr) -> Expr:
         return Mul(arg, 100**-1)
 
-    @ir_strat(arg=SupportsRhs)
+    @ir_strat(arg=RhsStrat)
     def permille(self, arg: Expr) -> Expr:
         return Mul(arg, 1000**-1)
 
@@ -239,7 +175,7 @@ class BuiltInFunctionsTransformer(Transformer):
     def lower_gamma(self, s: Expr, x: Expr) -> Expr:
         return lowergamma(s, x)
 
-    @ir_strat(arg=SupportsLhs)
+    @ir_strat(arg=LhsStrat)
     def limit(
         self, symbol: Expr, approach_value: Expr, direction: str | None, arg: Expr
     ) -> Expr:
@@ -248,22 +184,22 @@ class BuiltInFunctionsTransformer(Transformer):
         return limit(arg, symbol, approach_value, direction)
 
     @func_exp()
-    @ir_strat(val=SupportsLhs)
+    @ir_strat(val=LhsStrat)
     def real_part(self, val: Expr) -> Expr:
         return re(val)
 
     @func_exp()
-    @ir_strat(val=SupportsLhs)
+    @ir_strat(val=LhsStrat)
     def imaginary_part(self, val: Expr) -> Expr:
         return im(val)
 
     @func_exp()
-    @ir_strat(val=SupportsLhs)
+    @ir_strat(val=LhsStrat)
     def argument(self, val: Expr) -> Expr:
         return arg(val)
 
     @func_exp()
-    @ir_strat(val=SupportsLhs)
+    @ir_strat(val=LhsStrat)
     def sign(self, val: Expr) -> Expr:
         return sign(val)
 
@@ -338,7 +274,7 @@ class BuiltInFunctionsTransformer(Transformer):
             power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
-    @ir_strat(expr=SupportsRhs)
+    @ir_strat(expr=RhsStrat)
     def derivative_prime(self, expr: Expr, primes: Token):
         body, variables = self._expr_as_function(expr, range(0, 2))
 
@@ -432,36 +368,35 @@ class BuiltInFunctionsTransformer(Transformer):
         )
 
     @func_exp()
-    @ir_strat(mat=SupportsLhs)
+    @ir_strat(mat=LhsStrat)
     def determinant(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).det()
 
     @func_exp()
-    @ir_strat(mat=SupportsLhs)
+    @ir_strat(mat=LhsStrat)
     def trace(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).trace()
 
     @func_exp()
-    @ir_strat(mat=SupportsLhs)
+    @ir_strat(mat=LhsStrat)
     def adjugate(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).adjugate()
 
     @func_exp()
-    @ir_strat(mat=SupportsLhs)
+    @ir_strat(mat=LhsStrat)
     def rref(self, mat: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(mat).rref()[0]
 
     @func_exp()
-    @ir_strat(vector=SupportsLhs)
+    @ir_strat(vector=LhsStrat)
     def unitvec(self, vector: Expr) -> Expr:
         return MatrixUtils.ensure_matrix(vector).normalized()
 
-    @ir_strat(mat=SupportsRhs)
+    @ir_strat(mat=RhsStrat)
     def exp_transpose(self, mat: Expr, exponent: Token) -> Expr:
         exponents_str = exponent.value
         exponents_str = (
-            exponents_str
-            .replace("{", "")
+            exponents_str.replace("{", "")
             .replace("}", "")
             .replace("\\ast", "H")
             .replace("*", "H")
@@ -483,7 +418,7 @@ class BuiltInFunctionsTransformer(Transformer):
     # Linear Alg Specific Implementations
 
     @func_exp()
-    @ir_strat(expr=SupportsLhs)
+    @ir_strat(expr=LhsStrat)
     def gradient(self, expr: Expr, eval_point: None | list[Expr]) -> MatrixBase:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -496,7 +431,7 @@ class BuiltInFunctionsTransformer(Transformer):
             return res
 
     @func_exp()
-    @ir_strat(expr=SupportsLhs)
+    @ir_strat(expr=LhsStrat)
     def hessian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -509,7 +444,7 @@ class BuiltInFunctionsTransformer(Transformer):
             return res
 
     @func_exp()
-    @ir_strat(expr=SupportsLhs)
+    @ir_strat(expr=LhsStrat)
     def jacobian(self, expr: Expr, eval_point: None | list[Expr]) -> Expr:
         body, variables = self._expr_as_function(
             expr, len(eval_point) if eval_point is not None else None
@@ -534,7 +469,7 @@ class BuiltInFunctionsTransformer(Transformer):
         else:
             return jacobian
 
-    @ir_strat(expr=SupportsLhs)
+    @ir_strat(expr=LhsStrat)
     def taylor(
         self,
         degree: Expr,
@@ -645,15 +580,24 @@ class BuiltInFunctionsTransformer(Transformer):
         index_target: MatrixBase,
         indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
     ):
+        """
+        like standard_indexing, but instead of keeping
+        elements in the passed RangeIndex objects,
+        this rule removes them, and returns the resulting matrix.
+        """
         if not MatrixUtils.is_matrix(index_target):
             index_target = Matrix(index_target)
 
         match indicies:
             case RangeIndex() as index:
-                return Matrix([
-                    *index_target[: index.beg or 0],
-                    *index_target[index.end or len(index_target) :],
-                ])
+                return Matrix(
+                    [
+                        *index_target[: index.beg or 0],  # typing: ignore[misc]
+                        *index_target[
+                            index.end or len(index_target) :  # typing: ignore[misc]
+                        ],
+                    ]
+                )
             case [RangeIndex() as row_index, RangeIndex() as col_index]:
                 if row_index != ALL_INDEX:
                     for _ in range(
@@ -675,13 +619,21 @@ class BuiltInFunctionsTransformer(Transformer):
         index_target: MatrixBase,
         indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
     ):
+        """
+        Indexes a matrix target using the passed indicies objects.
+
+        if a pair of indicies is passed,
+        it is indexed as a 2d matrix.
+
+        if only 1 index is passed, the target is flattened and indexed as such.
+        """
 
         if not MatrixUtils.is_matrix(index_target):
             index_target = Matrix(index_target)
 
         match indicies:
             case RangeIndex() as index:
-                index_val = index_target[index.beg : index.end]
+                index_val = index_target[index.beg : index.end]  # typing: ignore[misc]
 
                 if isinstance(index, SingularIndex):
                     return index_val[0]
@@ -701,28 +653,6 @@ class BuiltInFunctionsTransformer(Transformer):
                     return index_val
             case _:
                 assert False, "Invalid indicies passed to standard index handler"
-
-    @ir_strat(symbol=SymbolStrat)
-    def complement_indexing_prime(
-        self,
-        symbol: Symbol,
-        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
-        primes: Optional[str],
-    ):
-        return self.complement_indexing(
-            SymbolIr(Symbol(f"{symbol.name}{primes or ''}"), self.__resolver), indicies
-        )
-
-    @ir_strat(symbol=SymbolStrat)
-    def standard_indexing_prime(
-        self,
-        symbol: Symbol,
-        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
-        primes: Optional[str],
-    ):
-        return self.standard_indexing(
-            SymbolIr(Symbol(f"{symbol.name}{primes or ''}"), self.__resolver), indicies
-        )
 
     # Helper Methods
 

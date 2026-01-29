@@ -7,9 +7,6 @@ from lmat_cas_client.compiling.parsing.CasExprParser import (
     latex_comment_remover,
 )
 from lmat_cas_client.compiling.parsing.Parser import Parser, lark_parser_defaults
-from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
-    IndexInjector,
-)
 from lmat_cas_client.compiling.transforming.ComposeTransformers import (
     AstNamespacesRemover,
 )
@@ -26,8 +23,8 @@ cas_expr_def_parser = Parser(
         **lark_parser_defaults,
     ),
     pre_processor=latex_comment_remover,
-    post_processor=lambda s, t: IndexInjector(s).visit(
-        AstNamespacesRemover("cas_expr").visit(t)
+    post_processor=lambda _, t: AstNamespacesRemover("cas_expr").visit(
+        t
     ),  # remove the cas_expr namespace from the ast,
     # so the ast's present in the Definition's do not contain a cas_expr__ prefix.
 )

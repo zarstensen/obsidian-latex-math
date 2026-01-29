@@ -9,9 +9,6 @@ from regex import Regex
 from sympy import *
 
 from lmat_cas_client.compiling.parsing.Parser import Parser, lark_parser_defaults
-from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
-    IndexInjector,
-)
 
 
 # Represents a scope to be handled by the ScopePostLexer.
@@ -338,7 +335,6 @@ cas_expr_parser = Parser(
         **lark_parser_defaults,
     ),
     pre_processor=latex_comment_remover,
-    post_processor=lambda s, t: IndexInjector(s).visit(t),
 )
 
 """
