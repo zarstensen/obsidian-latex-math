@@ -7,7 +7,9 @@ from sympy.logic.boolalg import BooleanFalse, BooleanTrue
 from sympy.physics.units import Quantity
 from sympy.printing.latex import LatexPrinter
 
-from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
+from lmat_cas_client.compiling.transforming.LatexMatrix import (
+    ImmutableLatexMatrix,
+)
 
 
 # this is a bit scuffed, but since the Quantity class, and not the printer class, implements a _latex method,
@@ -36,7 +38,7 @@ class LmatLatexPrinter(LatexPrinter):
         # remove all \text latex, we do not want this.
         return regex.sub(r"\\text\{(.*?)\}", r"\1", super().doprint(expr))
 
-    def _print_LatexMatrix(self, expr: LatexMatrix):
+    def _print_LatexMatrix(self, expr: ImmutableLatexMatrix):
         contents = []
 
         for row_index in range(expr.rows):

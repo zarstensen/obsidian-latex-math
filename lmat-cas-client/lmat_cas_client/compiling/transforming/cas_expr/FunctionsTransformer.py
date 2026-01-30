@@ -2,7 +2,6 @@ from collections.abc import Iterable
 from typing import Any, Iterator, Optional, cast
 
 import sympy
-from attr import frozen
 from lark import Token, Transformer, v_args
 from lmat_cas_client.compiling.definition.Resolver import (
     DefinitionResolver,
@@ -18,32 +17,6 @@ from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from sympy import *
 from sympy.core.function import UndefinedFunction
 from sympy.tensor.array import derive_by_array
-
-
-@frozen
-class RangeIndex:
-    """
-    Represents a index slice.
-    can be used as [ self.beg : self.end ]
-    """
-
-    beg: Optional[Expr]
-    end: Optional[Expr]
-
-
-class SingularIndex(RangeIndex):
-    """
-    Represents the equivalent of a index with no slicing.
-    """
-
-    def __init__(self, index: Expr):
-        super().__init__(beg=index, end=index + 1)
-
-
-ALL_INDEX = RangeIndex(beg=None, end=None)
-"""
-Constant representing an index slice including all elements from the original list
-"""
 
 
 def _try_raise_exponent(arg: Expr, exponent: Expr | int | None):
@@ -552,33 +525,35 @@ class BuiltInFunctionsTransformer(Transformer):
 
     @ir_strat()
     def index_range(self, begin: Optional[Expr], end: Optional[Expr]):
-        return RangeIndex(begin, end)
+        return slice(begin, end)
 
     @ir_strat()
-    def index_all(self):
-        return ALL_INDEX
+    def index_all(self, _token: Optional[Token] = None):
+        return slice(None)
 
     @ir_strat()
     def index_singular(self, index: Expr):
-        return SingularIndex(index)
+        return index
 
     @ir_strat()
     def indicies_2d(
         self,
-        row_index: Optional[RangeIndex] = None,
-        col_index: Optional[RangeIndex] = None,
+        row_index: Optional[Expr | slice] = None,
+        col_index: Optional[Expr | slice] = None,
     ):
-        return row_index or ALL_INDEX, col_index or ALL_INDEX
+        return row_index if row_index is not None else slice(None), (
+            col_index if col_index is not None else slice(None)
+        )
 
     @ir_strat()
-    def indicies_1d(self, index: RangeIndex):
+    def indicies_1d(self, index: Expr | slice):
         return index
 
     @ir_strat()
     def complement_indexing(
         self,
         index_target: MatrixBase,
-        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
+        indicies: tuple[Expr | slice, Expr | slice] | Expr | slice,
     ):
         """
         like standard_indexing, but instead of keeping
@@ -589,33 +564,45 @@ class BuiltInFunctionsTransformer(Transformer):
             index_target = Matrix(index_target)
 
         match indicies:
-            case RangeIndex() as index:
-                return Matrix([
-                    *index_target[: index.beg or 0],  # type: ignore[misc]
-                    *index_target[
-                        index.end or len(index_target) :  # type: ignore[misc]
-                    ],
-                ])
-            case [RangeIndex() as row_index, RangeIndex() as col_index]:
-                if row_index != ALL_INDEX:
-                    for _ in range(
-                        (row_index.end or index_target.shape[0]) - (row_index.beg or 0)
-                    ):
-                        index_target.row_del(row_index.beg or 0)
+            case [row_index, col_index]:
+                if not isinstance(row_index, slice):
+                    row_index = slice(row_index, row_index + 1)
 
-                if col_index != ALL_INDEX:
+                if not isinstance(col_index, slice):
+                    col_index = slice(col_index, col_index + 1)
+
+                if row_index != slice(None):
                     for _ in range(
-                        (col_index.end or index_target.shape[1]) - (col_index.beg or 0)
+                        (row_index.stop or index_target.shape[0])
+                        - (row_index.start or 0)
                     ):
-                        index_target.col_del(col_index.beg or 0)
+                        index_target.row_del(row_index.start or 0)
+
+                if col_index != slice(None):
+                    for _ in range(
+                        (col_index.stop or index_target.shape[1])
+                        - (col_index.start or 0)
+                    ):
+                        index_target.col_del(col_index.start or 0)
 
                 return index_target
+            case index:
+                assert not isinstance(index, tuple)
+                if not isinstance(index, slice):
+                    index = slice(index, index + 1)
+
+                return Matrix([
+                    *index_target[: index.start or 0],  # type: ignore[misc]
+                    *index_target[
+                        index.stop or len(index_target) :  # type: ignore[misc]
+                    ],
+                ])
 
     @ir_strat()
     def standard_indexing(
         self,
         index_target: MatrixBase,
-        indicies: tuple[RangeIndex, RangeIndex] | RangeIndex,
+        indicies: tuple[Expr | slice, Expr | slice] | Expr | slice,
     ):
         """
         Indexes a matrix target using the passed indicies objects.
@@ -628,29 +615,17 @@ class BuiltInFunctionsTransformer(Transformer):
 
         if not MatrixUtils.is_matrix(index_target):
             index_target = Matrix(index_target)
+        # index_target = Matrix(index_target)
 
         match indicies:
-            case RangeIndex() as index:
-                index_val = index_target[index.beg : index.end]  # type: ignore[misc]
-
-                if isinstance(index, SingularIndex):
-                    return index_val[0]
-                else:
-                    return index_val
-            case [RangeIndex() as row_index, RangeIndex() as col_index]:
-                index_val = index_target[
-                    row_index.beg : row_index.end,  # type: ignore[misc]
-                    col_index.beg : col_index.end,  # type: ignore[misc]
+            case [row_index, col_index]:
+                return index_target[
+                    row_index,  # type: ignore[misc]
+                    col_index,  # type: ignore[misc]
                 ]
 
-                if isinstance(row_index, SingularIndex) and isinstance(
-                    col_index, SingularIndex
-                ):
-                    return index_val[0]
-                else:
-                    return index_val
-            case _:
-                assert False, "Invalid indicies passed to standard index handler"
+            case index:
+                return index_target[index]  # type: ignore[misc]
 
     # Helper Methods
 

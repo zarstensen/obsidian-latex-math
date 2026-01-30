@@ -871,14 +871,30 @@ class TestLatexToCasExprCompiler:
                 {},
                 Matrix([[1, 3]]),
             ),
+            (
+                r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9\end{bmatrix}_{[1,\ast]}",
+                {},
+                Matrix([[4, 5, 6]]),
+            ),
+            (
+                r"""\sum_{x=0}^4 \sum_{y=0}^4\begin{bmatrix}
+  6  & 7  & 8  & 9  & 10 \\
+  12 & 14 & 16 & 18 & 20 \\
+  18 & 21 & 24 & 27 & 30 \\
+  24 & 28 & 32 & 36 & 40 \\
+  30 & 35 & 40 & 45 & 50
+\end{bmatrix}_{[y, x]}""",
+                {},
+                600,
+            ),
         ],
     )
     def test_indexing(
         self, latex_str: str, lmat_env: LmatEnvironment, expected_expr: Expr
     ):
-        assert simplify(self._parse_single_expr(latex_str, lmat_env)) == simplify(
-            expected_expr
-        )
+        assert simplify(
+            self._parse_single_expr(latex_str, lmat_env)
+        ).doit() == simplify(expected_expr)
 
 
 class TestLatexToLogicCompiler:

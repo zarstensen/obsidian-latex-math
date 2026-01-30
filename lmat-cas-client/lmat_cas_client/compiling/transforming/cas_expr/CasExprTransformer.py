@@ -28,7 +28,7 @@ from sympy import Basic, Expr
 from sympy.core.numbers import Float, Integer
 from sympy.logic.boolalg import *
 
-from ..LatexMatrix import LatexMatrix
+from ..LatexMatrix import LatexMatrix, MutableLatexMatrix
 
 
 class CasExpr(NamedTuple):
@@ -261,7 +261,7 @@ class CasExprTransformer(Transformer):
 
     @v_args(inline=True)
     def matrix(self, matrix_begin_cmd, matrix_body, matrix_end_cmd) -> LatexMatrix:
-        return LatexMatrix(
+        return MutableLatexMatrix(
             matrix_body, env_begin=str(matrix_begin_cmd), env_end=str(matrix_end_cmd)
         )
 
@@ -269,7 +269,7 @@ class CasExprTransformer(Transformer):
     def array_matrix(
         self, matrix_begin_cmd, array_options, matrix_body, matrix_end_cmd
     ) -> LatexMatrix:
-        return LatexMatrix(
+        return MutableLatexMatrix(
             matrix_body,
             env_begin=f"{matrix_begin_cmd}{array_options}",
             env_end=str(matrix_end_cmd),

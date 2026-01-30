@@ -1,5 +1,7 @@
 import sympy.physics.units as u
-from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
+from lmat_cas_client.compiling.transforming.LatexMatrix import (
+    MutableLatexMatrix,
+)
 from lmat_cas_client.LmatLatexPrinter import LmatLatexPrinter
 from sympy import *
 
@@ -41,7 +43,7 @@ class TestLmatPrinter:
         self._assert_str_equal(r"\frac{a + b^{2}}{27 - b}", latex_str)
 
     def test_latex_matrix(self):
-        latex_matrix = LatexMatrix(
+        latex_matrix = MutableLatexMatrix(
             [[1, 2], [3, 4]], env_begin=r"\begin{matrix}", env_end=r"\end{matrix}"
         )
         latex_str = self.printer.doprint(latex_matrix)
