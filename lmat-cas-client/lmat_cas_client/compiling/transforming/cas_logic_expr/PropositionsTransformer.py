@@ -10,6 +10,7 @@ from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
 from lmat_cas_client.compiling.transforming.ComposeTransformers import (
     compose_transformers,
 )
+from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from sympy import *
 from sympy.logic.boolalg import *
@@ -32,12 +33,15 @@ class CasLogicTransformer(Transformer):
     def cas_logic_expression(self, meta: Meta, *props: Basic) -> CasExpr:
         return CasExpr(tuple([(prop, meta) for prop in props]))
 
+    @ir_strat()
     def prop_iff(self, *args: tuple[Expr]) -> Basic:
         return Equivalent(*args)
 
+    @ir_strat()
     def prop_negated_iff(self, *args: tuple[Expr]) -> BooleanFunction:
         return Not(Equivalent(*args))
 
+    @ir_strat()
     def prop_implies(self, *args: Expr | Token) -> Expr:
         reversed_args = list(reversed(args))
 
@@ -66,24 +70,31 @@ class CasLogicTransformer(Transformer):
 
         return cast(Expr, reversed_args[0])
 
+    @ir_strat()
     def prop_or(self, *args: Boolean) -> BooleanFunction:
         return Or(*args)
 
+    @ir_strat()
     def prop_nand(self, *args: Boolean) -> BooleanFunction:
         return Nand(*args)
 
+    @ir_strat()
     def prop_and(self, *args: Boolean) -> BooleanFunction:
         return And(*args)
 
+    @ir_strat()
     def prop_nor(self, *args: Boolean) -> BooleanFunction:
         return Nor(*args)
 
+    @ir_strat()
     def prop_xor(self, *args: Boolean) -> BooleanFunction:
         return Xor(*args)
 
+    @ir_strat()
     def prop_xnor(self, *args: Boolean) -> BooleanFunction:
         return Xnor(*args)
 
+    @ir_strat()
     def prop_not(self, arg: Boolean) -> BooleanFunction:
         return Not(arg)
 

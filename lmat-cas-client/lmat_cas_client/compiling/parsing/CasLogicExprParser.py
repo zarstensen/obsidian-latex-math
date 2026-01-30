@@ -18,7 +18,7 @@ cas_logic_expr_parser = Parser(
         **lark_parser_defaults,
     ),
     pre_processor=latex_comment_remover,
-    post_processor=AstNamespacesRemover("cas_expr").visit,
+    post_processor=lambda _, t: AstNamespacesRemover("cas_expr").visit(t),
 )
 
 """

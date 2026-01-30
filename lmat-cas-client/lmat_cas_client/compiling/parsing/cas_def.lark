@@ -1,7 +1,7 @@
 %import .cas_expr._IGNORE -> _CAS_EXPR__IGNORE
 %import .cas_expr (_L_FORMAT, _R_FORMAT, _WS, ADD, SUB, LT, LTE, GT, GTE, _L_BRACE, _R_BRACE, _L_PAREN, _R_PAREN, _CMD_OVERLINE, _UNDERSCORE, _COMMA, _PROP_OP_AND)
 // should these be aliased? it does not really make a difference, but i guess it makes sense to do it?
-%import .cas_expr.substitute_symbol -> cas_expr__substitute_symbol
+%import .cas_expr._symbol -> _cas_expr__symbol
 %import .cas_expr.undefined_function -> cas_expr__undefined_function
 %import .cas_expr.relation
 %import .cas_logic_expr.cas_logic_expression
@@ -77,7 +77,7 @@ function_assumption_def: symbol function_params _FUN_ASSUME_OP assumption_set
 
 function_params: _L_PAREN symbol (_COMMA symbol)* _R_PAREN
 
-?symbol: cas_expr__combine_symbol
+?symbol: _cas_expr__symbol
 
 assumption_set: COMPLEX
     | ALGEBRAIC

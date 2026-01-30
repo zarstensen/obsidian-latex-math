@@ -29,11 +29,11 @@ class Parser:
         lark_parser: Lark,
         *,
         pre_processor: Optional[Callable[[str], str]] = None,
-        post_processor: Optional[Callable[[Tree], Tree]] = None,
+        post_processor: Optional[Callable[[str, Tree], Tree]] = None,
     ):
 
         self._pre_processor = pre_processor or (lambda s: s)
-        self._post_processor = post_processor or (lambda t: t)
+        self._post_processor = post_processor or (lambda _ps, t: t)
         self._lark_parser = lark_parser
 
     @property
@@ -61,7 +61,7 @@ class Parser:
         except UnexpectedInput as e:
             raise self._prettify_unexpected_input(e, pre_processed_text) from e
 
-        return self._post_processor(ast_result)
+        return self._post_processor(pre_processed_text, ast_result)
 
     _PARSE_ERR_PRETTY_STR_SPAN = 30
     # Maximum number of expected tokens to show to the user.

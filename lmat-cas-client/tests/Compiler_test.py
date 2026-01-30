@@ -134,7 +134,7 @@ class TestLatexToCasExprCompiler:
         # indexed_symbols
         x1, x2 = symbols("x_{1} x_{2}")
 
-        assert self._parse_single_expr(r"x_{1} x_{2}") == x1 * x2
+        assert self._parse_single_expr(r"x_1 x_{2}") == x1 * x2
 
         # functions
         assert self._parse_single_expr(r"b \sin(a)") == sin(a) * b
@@ -833,6 +833,68 @@ class TestLatexToCasExprCompiler:
     )
     def test_mod_chaining(self, latex: str, expected_expr: Expr):
         self._assert_compiles_to(latex, expected_expr)
+
+    @pytest.mark.parametrize(
+        "latex_str,lmat_env,expected_expr",
+        [
+            (r"a_{b}'", {}, Symbol("a'_{b}")),
+            (r"a_{b}", {}, Symbol("a_{b}")),
+            (
+                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{[0]}",
+                {},
+                1,
+            ),
+            (r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{[1,1]}", {}, 4),
+            (
+                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{[,1]}",
+                {},
+                Matrix([2, 4]),
+            ),
+            (
+                r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9\end{bmatrix}_{[..1,1..]}",
+                {},
+                Matrix([[2, 3]]),
+            ),
+            (
+                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{(0;)}",
+                {},
+                Matrix([[3, 4]]),
+            ),
+            (r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{(1;1)}", {}, Matrix([1])),
+            (
+                r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}_{(;1)}",
+                {},
+                Matrix([1, 3]),
+            ),
+            (
+                r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9\end{bmatrix}_{(1..;1)}",
+                {},
+                Matrix([[1, 3]]),
+            ),
+            (
+                r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9\end{bmatrix}_{[1,\ast]}",
+                {},
+                Matrix([[4, 5, 6]]),
+            ),
+            (
+                r"""\sum_{x=0}^4 \sum_{y=0}^4\begin{bmatrix}
+  6  & 7  & 8  & 9  & 10 \\
+  12 & 14 & 16 & 18 & 20 \\
+  18 & 21 & 24 & 27 & 30 \\
+  24 & 28 & 32 & 36 & 40 \\
+  30 & 35 & 40 & 45 & 50
+\end{bmatrix}_{[y, x]}""",
+                {},
+                600,
+            ),
+        ],
+    )
+    def test_indexing(
+        self, latex_str: str, lmat_env: LmatEnvironment, expected_expr: Expr
+    ):
+        assert simplify(
+            self._parse_single_expr(latex_str, lmat_env)
+        ).doit() == simplify(expected_expr)
 
 
 class TestLatexToLogicCompiler:

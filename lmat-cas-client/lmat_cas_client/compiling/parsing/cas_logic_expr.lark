@@ -1,4 +1,4 @@
-%import .cas_expr.substitute_symbol -> cas_expr__substitute_symbol
+%import .cas_expr._symbol -> _cas_expr__symbol
 %import .cas_expr (_CMD_BAR, _CMD_OVERLINE, _L_PAREN, _R_PAREN, _L_BRACKET, _R_BRACKET, _L_BRACE, _R_BRACE)
 
 
@@ -44,7 +44,7 @@ prop_xnor: prop_xnor_arg (_XNOR prop_xnor_arg)+
 ?prop_xnor_arg: prop_not_arg | prop_not
 
 prop_not: _NOT prop_not_arg
-?prop_not_arg: _delimited_proposition | cas_expr__substitute_symbol | _prop_bool_value
+?prop_not_arg: _delimited_proposition | _cas_expr__symbol | _prop_bool_value
 
 _prop_bool_value: CMD_TAUTOLOGY | CMD_FALSUM
 // ======== propositional logic ========

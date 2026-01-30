@@ -1,6 +1,6 @@
 import itertools
 from enum import Enum
-from typing import Iterable, Iterator, NamedTuple, cast
+from typing import Iterable, Iterator, NamedTuple, cast, override
 
 from lark import Token, Transformer, v_args
 from lark.tree import Meta
@@ -12,15 +12,15 @@ from lmat_cas_client.compiling.transforming.cas_expr.ConstantsTransformer import
 )
 from lmat_cas_client.compiling.transforming.cas_expr.FunctionsTransformer import (
     BuiltInFunctionsTransformer,
-    ImplicitMulStrategy,
-    implicit_mul_strategy,
 )
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
+    RhsStrat,
     UndefinedAtomsTransformer,
 )
 from lmat_cas_client.compiling.transforming.ComposeTransformers import (
     compose_transformers,
 )
+from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 from lmat_cas_client.math_lib import MatrixUtils
 from sympy import *
@@ -28,7 +28,7 @@ from sympy import Basic, Expr
 from sympy.core.numbers import Float, Integer
 from sympy.logic.boolalg import *
 
-from ..LatexMatrix import LatexMatrix
+from ..LatexMatrix import LatexMatrix, MutableLatexMatrix
 
 
 class CasExpr(NamedTuple):
@@ -50,6 +50,7 @@ class CasExpr(NamedTuple):
         return CasExpr(tuple(expressions))
 
     # retreive number of expressions in the system
+    @override
     def __len__(self):
         return len(self.expressions)
 
@@ -227,7 +228,7 @@ class CasExprTransformer(Transformer):
         return result
 
     @v_args(inline=True)
-    @implicit_mul_strategy(ImplicitMulStrategy.MULT)
+    @ir_strat()
     def implicit_multiplication(self, *factors: Expr) -> Expr:
         result = factors[0]
 
@@ -237,7 +238,7 @@ class CasExprTransformer(Transformer):
         return result
 
     @v_args(inline=True)
-    @implicit_mul_strategy(ImplicitMulStrategy.RHS)
+    @ir_strat(base=RhsStrat)
     def exponentiation(self, base: Expr, exponent: Expr) -> Expr:
         # special matrix notation.
         if isinstance(exponent, Symbol) and MatrixUtils.is_matrix(base):
@@ -260,7 +261,7 @@ class CasExprTransformer(Transformer):
 
     @v_args(inline=True)
     def matrix(self, matrix_begin_cmd, matrix_body, matrix_end_cmd) -> LatexMatrix:
-        return LatexMatrix(
+        return MutableLatexMatrix(
             matrix_body, env_begin=str(matrix_begin_cmd), env_end=str(matrix_end_cmd)
         )
 
@@ -268,7 +269,7 @@ class CasExprTransformer(Transformer):
     def array_matrix(
         self, matrix_begin_cmd, array_options, matrix_body, matrix_end_cmd
     ) -> LatexMatrix:
-        return LatexMatrix(
+        return MutableLatexMatrix(
             matrix_body,
             env_begin=f"{matrix_begin_cmd}{array_options}",
             env_end=str(matrix_end_cmd),
