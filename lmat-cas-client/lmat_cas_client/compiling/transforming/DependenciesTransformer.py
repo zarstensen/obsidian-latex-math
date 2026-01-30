@@ -68,8 +68,26 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
         return set([func_name, *func_args])
 
     @v_args(inline=False)
-    def list_of_expressions(self, tokens: Iterable[set[Symbol]]) -> set[Symbol]:
-        return set(chain.from_iterable(tokens))
+    def list_of_expressions(
+        self, expr_deps: Iterable[Symbol | set[Symbol]]
+    ) -> set[Symbol]:
+        # convert single symbols into an iterable so chain.from_iterable can work with them.
+        # this happens when a symbol rule is the last rule in one of the expressions.
+        return set(
+            filter(
+                lambda s: isinstance(s, Symbol),
+                chain.from_iterable(
+                    (
+                        (
+                            expr_symbols
+                            if isinstance(expr_symbols, Iterable)
+                            else [expr_symbols]
+                        )
+                        for expr_symbols in expr_deps
+                    )
+                ),
+            )
+        )
 
 
 type DepsTransformer = TransformerRunner[[], set[str]]

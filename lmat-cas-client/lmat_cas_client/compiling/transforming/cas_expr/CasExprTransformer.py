@@ -114,6 +114,7 @@ class CasExprTransformer(Transformer):
         return Integer(int(binary_number_str, 2))
 
     @v_args(meta=True, inline=True)
+    @ir_strat()
     def cas_expression(
         self, meta: Meta, cas_expr: CasExpr | list[CasExpr] | Basic
     ) -> CasExpr:
@@ -137,8 +138,9 @@ class CasExprTransformer(Transformer):
     def sor_and_chain(self, relations: list[CasExpr]) -> CasExpr:
         return CasExpr.from_cas_exprs(relations)
 
-    @v_args(meta=True)
-    def relation(self, meta: Meta, tokens: list[Expr | Token]) -> CasExpr:
+    @v_args(meta=True, inline=True)
+    @ir_strat()
+    def relation(self, meta: Meta, *tokens: Expr | Token) -> CasExpr:
         if len(tokens) == 1:
             return CasExpr(tuple([(cast(Expr, tokens[0]), meta)]))
         # construct a list of relations which later will be used to construct
@@ -167,16 +169,18 @@ class CasExprTransformer(Transformer):
 
         return CasExpr(tuple((relation, meta) for relation in relations))
 
-    def expression(self, tokens: list[Expr | Token]) -> Expr:
+    @v_args(inline=True)
+    @ir_strat()
+    def expression(self, *tokens: Expr | Token) -> Expr:
         # construct a sum between the given sympy expressions,
         # with the sign that separates them in the tokens list.
 
-        signs = [self.SIGN_DICT[t.type] for t in tokens if isinstance(t, Token)]
+        signs = [self._SIGN_DICT[t.type] for t in tokens if isinstance(t, Token)]
         values = list(filter(lambda t: not isinstance(t, Token), tokens))
 
         # if no first sign was specified, it is implicitly '+'.
         if len(signs) < len(values):
-            signs.insert(0, self.SIGN_DICT["ADD"])
+            signs.insert(0, self._SIGN_DICT["ADD"])
 
         if len(signs) != len(values):
             raise RuntimeError(
@@ -194,7 +198,9 @@ class CasExprTransformer(Transformer):
 
         return result
 
-    def term(self, tokens: list[Expr | Token]) -> Expr:
+    @v_args(inline=True)
+    @ir_strat()
+    def term(self, *tokens: Expr | Token) -> Expr:
         # multiply / divide a series of factor together.
         # tokens is a list of sympy expressions, representing factors,
         # separated by a multiplication / division token.
@@ -210,7 +216,7 @@ class CasExprTransformer(Transformer):
             sign: Integer = S.One
 
             if isinstance(tokens[i], Token):
-                sign = self.SIGN_DICT[cast(Token, tokens[i]).type]
+                sign = self._SIGN_DICT[cast(Token, tokens[i]).type]
                 i += 1
 
             factor: Expr = cast(Expr, tokens[i])
@@ -250,6 +256,7 @@ class CasExprTransformer(Transformer):
         return pow(base, exponent)
 
     @v_args(inline=True)
+    @ir_strat()
     def matrix_body(self, *body: Expr | Token) -> list[list[Expr]]:
         return [
             list(cast(Iterator[Expr], row))
@@ -260,12 +267,14 @@ class CasExprTransformer(Transformer):
         ]
 
     @v_args(inline=True)
+    @ir_strat()
     def matrix(self, matrix_begin_cmd, matrix_body, matrix_end_cmd) -> LatexMatrix:
         return MutableLatexMatrix(
             matrix_body, env_begin=str(matrix_begin_cmd), env_end=str(matrix_end_cmd)
         )
 
     @v_args(inline=True)
+    @ir_strat()
     def array_matrix(
         self, matrix_begin_cmd, array_options, matrix_body, matrix_end_cmd
     ) -> LatexMatrix:
@@ -282,7 +291,12 @@ class CasExprTransformer(Transformer):
     def matrix_like_delim(self, _: Iterator[Token]):
         return self.Delim.MatDelim
 
-    SIGN_DICT = {"ADD": S.One, "SUB": S.NegativeOne}
+    @v_args(inline=True)
+    @ir_strat()
+    def list_of_expressions(self, *exprs: Expr) -> Iterable[Expr]:
+        return exprs
+
+    _SIGN_DICT = {"ADD": S.One, "SUB": S.NegativeOne}
 
     def _create_relation(self, left: Expr, right: Expr, relation_type: str) -> Rel:
         with evaluate(False):
@@ -303,11 +317,6 @@ class CasExprTransformer(Transformer):
                     raise RuntimeError(
                         f"Unknown relation type '{relation_type}' between {left} and {right}"
                     )
-
-    def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
-        return list(
-            filter(lambda x: not isinstance(x, Token) or x.type != "COMMA", tokens)
-        )
 
 
 def cas_expr_transformer(resolver: DefinitionResolver):

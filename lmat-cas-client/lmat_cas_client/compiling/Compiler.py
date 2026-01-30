@@ -152,6 +152,7 @@ class LatexToCasExprCompiler(CasExprCompiler):
         """
         ast = cas_expr_parser.parse(latex_str)
 
+        print(ast.pretty(), flush=True)
         dependencies = dependencies_transformer_runner.transform(ast)
 
         assert_acyclic_dependencies(def_store, dependencies)
