@@ -1,6 +1,6 @@
 import os
 import re as regex
-from typing import Callable, Iterator, cast
+from typing import Callable, Iterator, cast, override
 
 from lark import Lark, Token
 from lark.lark import PostLex
@@ -59,6 +59,7 @@ class MultiArgScope(LexerScope):
         super().__init__(*args, **kwargs)
         self.arg_count = arg_count
 
+    @override
     def token_handler(
         self, token_stream: Iterator[Token], scope_start_token: Token | None
     ) -> Iterator[Token]:
@@ -81,6 +82,7 @@ class MultiArgScope(LexerScope):
 
 
 class MatrixScope(LexerScope):
+    @override
     def token_handler(
         self, token_stream: Iterator[Token], scope_start_token: Token | None
     ) -> Iterator[Token]:
@@ -100,6 +102,7 @@ class MatrixScope(LexerScope):
 
 
 class PartialDiffScope(LexerScope):
+    @override
     def token_handler(self, token_stream, _scope_start_token):
         for token in super().token_handler(token_stream, _scope_start_token):
             yield token
@@ -205,6 +208,7 @@ class CasExprPostLexer(PostLex):
             ),
         ]
 
+    @override
     def process(self, stream: Iterator[Token]) -> Iterator[Token]:
 
         non_namespace_tokens = set()

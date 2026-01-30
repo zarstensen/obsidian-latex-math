@@ -70,6 +70,7 @@ class TruthTableResultMarkdown(TruthTableResult):
 
 # implementation for LATEX_ARRAY
 class TruthTableResultLatex(TruthTableResult):
+    @override
     def getResponsePayload(self) -> tuple[str, dict]:
         table_rows = []
 

@@ -1,5 +1,6 @@
+from abc import abstractmethod
 from ctypes import ArgumentError
-from typing import List, cast
+from typing import ClassVar, List, cast, final, override
 
 from attr import frozen
 from lark import Token, Transformer, v_args
@@ -12,13 +13,114 @@ from lmat_cas_client.compiling.definition.Resolver import (
     FunctionResToken,
     SymbolResToken,
 )
+from lmat_cas_client.compiling.transforming.Ir import (
+    Ir,
+    Resolved,
+    ResolveStrategy,
+    SupportsBubbleUp,
+    ir_strat,
+)
 from lmat_cas_client.math_lib.units import UnitUtils
 from sympy import Expr, Number, Symbol
 from sympy.physics.units import Quantity
 
 
+class SymbolStrat(ResolveStrategy):
+    """
+    Ir object can be resolved as a sympy Symbol.
+    """
+
+    _resolve_method = "as_symbol"
+
+    @abstractmethod
+    def as_symbol(self) -> Resolved[Symbol]:
+        pass
+
+
+class SubstituteStrat(ResolveStrategy):
+    """
+    Ir object can have a defined value,
+    which it can be substituted with.j
+    """
+
+    _resolve_method = "as_substituted"
+
+    @abstractmethod
+    def as_substituted(self) -> Resolved[Expr]:
+        pass
+
+
+@final
 @frozen
-class ImplicitMul:
+class SymbolIr(Ir, SymbolStrat, SubstituteStrat):
+    """
+    Intermediate representation of a symbol in the AST.
+
+    Args:
+        SymbolStrat: resolves the original Symbol object.
+        SubstituteStrat (_type_): resolves the symbol's defined value from a DefinitionResolver.
+        if not present, returns the original Symbol object.
+    """
+
+    symbol: Symbol
+    resolver: DefinitionResolver
+
+    _default_strat = SubstituteStrat
+
+    @override
+    def as_symbol(self) -> Resolved[Symbol]:
+        return Resolved(self.symbol)
+
+    @override
+    def as_substituted(self) -> Resolved[Expr]:
+        match self.resolver.get_resolver_token(self.symbol.name):
+            case SymbolResToken() as token:
+                return Resolved(cast(Expr, self.resolver.resolve_value(token)))
+            case FunctionResToken() as token:
+                return Resolved(cast(Expr, self.resolver.resolve_unapplied(token)))
+            case _:
+                return cast(Resolved[Expr], self.as_symbol())
+
+
+class LhsStrat(ResolveStrategy):
+    """
+    Ir object has a left hand expression, which this resolves to.
+    """
+
+    _resolve_method: ClassVar[str] = "as_lhs"  # noqa: F821
+
+    @abstractmethod
+    def as_lhs(self) -> Resolved[Expr]:
+        pass
+
+
+class RhsStrat(ResolveStrategy):
+    """
+    Ir object has a right hand expression, which this resolves to.
+    """
+
+    _resolve_method: ClassVar[str] = "as_rhs"
+
+    @abstractmethod
+    def as_rhs(self) -> Resolved[Expr]:
+        pass
+
+
+class MultStrat(ResolveStrategy):
+    """
+    Ir object can be resolved to all of it's factors
+    multiplied together
+    """
+
+    _resolve_method: ClassVar[str] = "as_mult"
+
+    @abstractmethod
+    def as_mult(self) -> Resolved[Expr]:
+        pass
+
+
+@frozen
+class MultIr(Ir, LhsStrat, RhsStrat, MultStrat):
     """
     This is needed for when a maybe_function_application rule does *not* apply the function,
     then the expression should be interpreted as an implicit multiplication between the
@@ -47,6 +149,20 @@ class ImplicitMul:
     lhs: Expr
     rhs: Expr
 
+    _default_strat = MultStrat
+
+    @override
+    def as_lhs(self):
+        return Resolved(self.lhs, lambda r: MultIr(r, self.rhs))
+
+    @override
+    def as_rhs(self):
+        return Resolved(self.rhs, lambda r: MultIr(self.lhs, r))
+
+    @override
+    def as_mult(self):
+        return Resolved(self.lhs * self.rhs)
+
 
 @v_args(inline=True)
 class UndefinedAtomsTransformer(Transformer):
@@ -55,23 +171,15 @@ class UndefinedAtomsTransformer(Transformer):
     """
 
     def __init__(self, definition_resolver: DefinitionResolver):
-        self.__definition_store = definition_resolver
+        self.__resolver = definition_resolver
 
-    def combine_symbol(self, *symbols: Symbol) -> Symbol:
-        return Symbol("".join(map(str, symbols)))
+    def combine_symbol(self, *symbols: Symbol) -> SymbolIr:
+        return SymbolIr(Symbol("".join(map(str, symbols))), self.__resolver)
 
-    def substitute_symbol(self, substitute_symbol: Symbol) -> Symbol | Expr:
-        match self.__definition_store.get_resolver_token(substitute_symbol.name):
-            case SymbolResToken() as token:
-                return cast(Expr, self.__definition_store.resolve_value(token))
-            case FunctionResToken() as token:
-                return cast(Expr, self.__definition_store.resolve_unapplied(token))
-            case _:
-                return substitute_symbol
-
+    @ir_strat(symbol=SymbolStrat, index_contents=SymbolStrat)
     def indexed_symbol(
         self, symbol: Symbol, index_contents: Symbol | Number | str, primes: str | None
-    ) -> Symbol:
+    ) -> SymbolIr:
         primes = "" if primes is None else primes
 
         match index_contents:
@@ -83,36 +191,42 @@ class UndefinedAtomsTransformer(Transformer):
         if not index_contents.startswith("{") or not index_contents.endswith("}"):
             index_contents = f"{{{index_contents}}}"
 
-        return Symbol(f"{symbol.name}_{index_contents}{primes}")
+        return self.combine_symbol(Symbol(f"{symbol.name}{primes}_{index_contents}"))
 
     def formatted_symbol(
         self, formatter: Token, symbol_contents: str, primes: str | None
-    ) -> Symbol:
+    ) -> SymbolIr:
         formatter_text = str(formatter)
-        primes = "" if primes is None else primes
 
         if not symbol_contents.startswith("{") and not symbol_contents.endswith("}"):
             symbol_contents = f"{{{str(symbol_contents)}}}"
 
-        return Symbol(f"{formatter_text}{symbol_contents}{primes}")
+        return self.combine_symbol(
+            Symbol(f"{formatter_text}{symbol_contents}{primes or ''}")
+        )
 
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol | Expr:
+    @ir_strat(unit_symbol_ir=SupportsBubbleUp)
+    def unit(self, unit_symbol_ir: Ir) -> Quantity | Symbol | Expr:
+
+        assert isinstance(unit_symbol_ir, SymbolStrat)
+        unit_symbol: Symbol = unit_symbol_ir.as_symbol().value
 
         unit = UnitUtils.str_to_unit(unit_symbol.name)
 
         if unit is not None:
             return unit
         else:
-            return self.substitute_symbol(unit_symbol)
+            return cast(Expr, unit_symbol_ir.as_default().value)
 
+    @ir_strat(func_head=SymbolStrat)
     def maybe_function_application(
         self, func_head: Symbol, func_args: List[Expr]
-    ) -> Expr | ImplicitMul:
-        match self.__definition_store.get_resolver_token(func_head.name):
+    ) -> Expr | MultIr:
+        match self.__resolver.get_resolver_token(func_head.name):
             case FunctionResToken() as token:
                 return cast(
                     Expr,
-                    self.__definition_store.resolve_applied(
+                    self.__resolver.resolve_applied(
                         token, map(lambda a: SymbolDefinition(SympyDef(a)), func_args)
                     ),
                 )
@@ -129,4 +243,7 @@ class UndefinedAtomsTransformer(Transformer):
                         f"\n${func_head}(x, y, ...) \\mapsto \\mathbb{{C}}$"
                     )
 
-                return ImplicitMul(self.substitute_symbol(func_head), func_args[0])
+                return MultIr(
+                    SymbolIr(func_head, self.__resolver).as_substituted().value,
+                    func_args[0],
+                )

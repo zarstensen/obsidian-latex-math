@@ -1,6 +1,7 @@
 # This file contains all sorts of additional math related functions not implemented by sympy.
 
 from itertools import combinations
+from typing import override
 
 from sympy import *
 from sympy.core.numbers import int_valued
@@ -111,6 +112,7 @@ def taylor(
 # Therefore this is more akin to a universal quantification combined with an iff in the symbolic case.
 class SymbolicIff(Function):
     @classmethod
+    @override
     def eval(cls, *args: Expr) -> Basic:
         try:
             args_bool = (as_Boolean(arg) for arg in args)

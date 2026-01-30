@@ -26,6 +26,7 @@ extend-safe-fixes = ["W291"]
 
 check_untyped_defs = true
 cache_fine_grained = true
+enable_error_code = ["explicit-override", "override"]
 
 [[tool.mypy.overrides]]
 module = "sympy.*"

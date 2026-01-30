@@ -1,13 +1,15 @@
 import re as regex
 from functools import reduce
-from typing import cast
+from typing import cast, override
 
 from sympy import *
 from sympy.logic.boolalg import BooleanFalse, BooleanTrue
 from sympy.physics.units import Quantity
 from sympy.printing.latex import LatexPrinter
 
-from lmat_cas_client.compiling.transforming.LatexMatrix import LatexMatrix
+from lmat_cas_client.compiling.transforming.LatexMatrix import (
+    ImmutableLatexMatrix,
+)
 
 
 # this is a bit scuffed, but since the Quantity class, and not the printer class, implements a _latex method,
@@ -31,11 +33,12 @@ class LmatLatexPrinter(LatexPrinter):
             settings["mul_symbol"] = r" \, "
         super().__init__(settings)
 
+    @override
     def doprint(self, expr):
         # remove all \text latex, we do not want this.
         return regex.sub(r"\\text\{(.*?)\}", r"\1", super().doprint(expr))
 
-    def _print_LatexMatrix(self, expr: LatexMatrix):
+    def _print_LatexMatrix(self, expr: ImmutableLatexMatrix):
         contents = []
 
         for row_index in range(expr.rows):
@@ -46,12 +49,15 @@ class LmatLatexPrinter(LatexPrinter):
 
         return f"{expr.env_begin}{r' \\ '.join(contents)}{expr.env_end}"
 
+    @override
     def _print_BooleanTrue(self, _: bool | BooleanTrue | BooleanFalse):
         return r"\mathrm{T}"
 
+    @override
     def _print_BooleanFalse(self, _: bool | BooleanTrue | BooleanFalse):
         return r"\mathrm{F}"
 
+    @override
     def _print_Mul(self, expr: Expr):
         # try to split any fraction up into at most 3 distinct fractions.
         # one for all constant values, one for all symbols, and finally one for all units.

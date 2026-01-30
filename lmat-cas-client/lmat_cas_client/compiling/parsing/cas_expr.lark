@@ -39,10 +39,10 @@ implicit_multiplication: _align* factor (_align* factor)* _align*
     | basefactor_arg
 
 // matches all base factors in an exponentiation, which may be passed to a mathematical function as an argument.
-?basefactor_arg: substitute_symbol
+?basefactor_arg: _symbol
     | function_as_arg
     | _number
-    | _matrix_notation
+    | matrix_notation
 
 // various rules for grouping expressions surrounded by delimiters.
 _delimitedfactor: parenthesees_expression | brackets_expression | braces_expression
@@ -64,32 +64,32 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
 
 // ======== Symbols ========
 
-substitute_symbol: combine_symbol
-combine_symbol: indexed_symbol | _non_indexed_symbol
-
 single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
 // this could for example be \mathit
 formatted_symbol: _cmd_format (BRACE_SURROUNDED_TEXT | SINGLE_LETTER_SYMBOL) [PRIMES]
+
 _non_indexed_symbol: single_letter_symbol | multi_letter_symbol | formatted_symbol
 
 indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | BRACE_SURROUNDED_TEXT) [PRIMES]
 
-// all the rules here should return the NAME (as in a str) of the symbol to be created
-// the symbol rule is responsible for eactually creating the symbol and optionally substituting its value.
+// General rule matching all symbol rules.
+// all of these rules return an SymbolIr, which
+// can be used to get the original symbol value,
+// or its defined value (if present)
+_symbol: _non_indexed_symbol | indexed_symbol
 
 // this rule optionally tries to create a unit, instead of a symbol, if bunits are used.
 // otherwise this is the same as the symbol rule.
-unit: _L_BRACE combine_symbol _R_BRACE
+unit: _L_BRACE _symbol _R_BRACE
 
 // ======== Numbers ========
 
 // groups any value which evaluates to a number.
 _number: _numeric_number | _digit
 // groups any value which evaluates to a number, and can be passed as an argument, without surrounding it with braces.
-// it may be a bit counter intuitive, but here pi (and other constants) are essentially seen as a "_digit".
 _digit: _numeric_digit | _constant
 
 _constant: CONST_INFINITY
@@ -105,7 +105,7 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 // multiplication between 'f' and the singular argument in its parameter list.
 // If there is more than one argument in its parameter list, a syntax error should be
 // raised
-maybe_function_application: combine_symbol (_L_PAREN list_of_expressions _R_PAREN | _L_BRACE _L_PAREN list_of_expressions _R_PAREN _R_BRACE)
+maybe_function_application: _symbol (_L_PAREN list_of_expressions _R_PAREN | _L_BRACE _L_PAREN list_of_expressions _R_PAREN _R_BRACE)
 
 
 // groups all functions which cannot be used as an argument to other functions.
@@ -137,8 +137,7 @@ maybe_function_application: combine_symbol (_L_PAREN list_of_expressions _R_PARE
     | _divisibility_functions
 
 // matches a special kind of argument, defined by the fact that fractions and binomials can be passed without surrounding them with braces.
-substitute_single_letter_symbol.1: single_letter_symbol -> substitute_symbol
-?function_special_arg: braces_expression | frac | binom | substitute_single_letter_symbol | _digit
+?function_special_arg: braces_expression | frac | binom | single_letter_symbol | _digit
 
 
 // named functions
@@ -198,14 +197,14 @@ limit_direction: _L_BRACE (ADD|SUB) _R_BRACE
     | ADD
     | SUB
 
-limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _RIGHT_ARROW basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
+limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE _symbol _RIGHT_ARROW basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
 // prioritize delimited expressions over terms, such that e.g. \sum_{j = 0}^5 (j) j is parsed as Sum(j, (j, 0, 5)) * j and not Sum(j ** 2, (j, 0, 5)).
 _delimited_arg.1: _delimitedfactor
 _delimited_arg_or_term: _delimited_arg | term
 
-_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg _delimited_arg_or_term
-_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _delimited_arg_or_term
+_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE _symbol EQUAL expression _R_BRACE _CARET function_special_arg _delimited_arg_or_term
+_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE _symbol EQUAL expression _R_BRACE _delimited_arg_or_term
 
 _series_function: sum | product
 
@@ -234,11 +233,11 @@ abs: _L_BAR expression _R_BAR
 norm: _L_DOUBLE_BAR expression _R_DOUBLE_BAR
 floor: _L_FLOOR expression _R_FLOOR
 ceil: _L_CEIL expression _R_CEIL
-sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|substitute_single_letter_symbol|_digit)
-conjugate: _FUNC_CONJUGATE (braces_expression|substitute_single_letter_symbol|_digit)
+sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|single_letter_symbol|_digit)
+conjugate: _FUNC_CONJUGATE (braces_expression|single_letter_symbol|_digit)
 
 // match a single argument in a list of latex style arguments (that is \command{arg1}{arg2}...{argN})
-_multiarg_func_arg: (braces_expression|substitute_single_letter_symbol|_digit)
+_multiarg_func_arg: (braces_expression|single_letter_symbol|_digit)
 // terminals signifying the delimiters and end of multiple arguments in a latex style argument list.
 // due to lalr's limited lookahead, a custom post lexer needs to insert this token when parsing.
 %declare _MULTIARG_DELIMITER
@@ -260,7 +259,7 @@ _postfix_function: factorial | percent | permille | derivative_prime | modulo
 // which matches all cases of the postfix function such that it can be passed as an argument to another function.
 //
 // all of these rules are grouped together in _postfix_function_arg
-_postfix_function_arg: factorial_func_arg | percent_func_arg | permille_func_arg | derivative_prime_func_arg
+_postfix_function_arg: factorial_func_arg | percent_func_arg | permille_func_arg | derivative_prime_func_arg | indexing
 
 factorial: _delimitedfactor _BANG
 factorial_func_arg: factor_func_postfix_arg _BANG -> factorial
@@ -280,7 +279,7 @@ modulo: (factor_func_arg | modulo) _FUNC_MOD factor_func_arg
 frac: _FUNC_FRAC _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 binom: _FUNC_BINOM _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 
-diff_symbol_exponent: combine_symbol [_CARET function_special_arg]
+diff_symbol_exponent: _symbol [_CARET function_special_arg]
 diff_symbol_arg_list: ((_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) diff_symbol_exponent)+
 
 // _L_BRACE_R_BRACE_PAIR.1: _R_BRACE _WS? _L_BRACE
@@ -289,25 +288,54 @@ _derivative: derivative_func_first | derivative_symbols_first | derivative_phys_
 
 derivative_func_first: (_FUNC_DERIVATIVE [_L_BRACKET expression _R_BRACKET]|_FUNC_PARTIAL_DERIVATIVE [_CARET function_special_arg]) expression _R_BRACE _L_BRACE diff_symbol_arg_list _R_BRACE
 derivative_symbols_first: (_FUNC_DERIVATIVE [_L_BRACKET expression _R_BRACKET]|_FUNC_PARTIAL_DERIVATIVE [_CARET function_special_arg]) _R_BRACE _L_BRACE diff_symbol_arg_list _R_BRACE _delimited_arg_or_term
-derivative_phys_func_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE expression _R_BRACE _L_BRACE combine_symbol _R_BRACE
-derivative_phys_symbols_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE combine_symbol _R_BRACE _delimited_arg_or_term
+derivative_phys_func_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE expression _R_BRACE _L_BRACE _symbol _R_BRACE
+derivative_phys_symbols_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE _symbol _R_BRACE _delimited_arg_or_term
 
-integral: _FUNC_INTEGRAL [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) combine_symbol -> integral_no_bounds
-    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) combine_symbol -> integral_lower_bound_first
-    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) combine_symbol -> integral_upper_bound_first
+integral: _FUNC_INTEGRAL [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) _symbol -> integral_no_bounds
+    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) _symbol -> integral_lower_bound_first
+    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) _symbol -> integral_upper_bound_first
 
 // ======== Matrices ========
 
 // det_matrix is differentiated from the other matrices, as this one evaluates to the determinant value, which is a scalar and not a matrix.
 // TODO: different name for these?
-_matrix_notation: _matrix_type | det_matrix
-_matrix_type: matrix | array_matrix
+?matrix_notation: matrix_type | det_matrix
+?matrix_type: matrix | array_matrix
 
 matrix_row_delim: MATRIX_ROW_DELIM -> matrix_like_delim
 matrix_body: matrix_row_delim? expression ((_MATRIX_COL_DELIM|matrix_row_delim) expression)* matrix_row_delim?
 matrix: CMD_BEGIN_MATRIX matrix_body CMD_END_MATRIX _MATRIX_ENV_END
 array_matrix: CMD_BEGIN_ARRAY ARRAY_ENV_OPTIONS matrix_body CMD_END_ARRAY _MATRIX_ENV_END
 det_matrix: CMD_BEGIN_VMATRIX matrix_body CMD_END_VMATRIX _MATRIX_ENV_END
+
+
+// ======== Matrix Indexing ========
+
+
+// rules for matching individual indexes in index lists.
+
+// match a range / slice index, e.g. 3..5 -> take elements from idx 3 to 5
+index_range: [ expression ] (_CMD_DOTS|_COLON) [ expression ]
+// match a catch all range / slice
+index_all: MUL | _STAR | _CMD_CDOT
+// match a index which only indexes a single element in some dimension
+index_singular: expression
+
+?index: index_range | index_all | index_singular
+
+// match a standard indicies list [ index , index ]
+standard_indicies: _L_BRACKET [index] _COMMA [index] _R_BRACKET -> indicies_2d
+    | _L_BRACKET index _R_BRACKET -> indicies_1d
+// match a complement indicies list ( index ; index )
+complement_indicies: _L_PAREN [index] _SEMICOLON [index] _R_PAREN -> indicies_2d
+    | _L_PAREN index _R_PAREN -> indicies_1d
+
+_index_template{target, indicies}: target _UNDERSCORE _L_BRACE indicies _R_BRACE
+
+complement_indexing: _index_template{factor_func_arg, complement_indicies}
+standard_indexing: _index_template{factor_func_arg, standard_indicies}
+
+?indexing: complement_indexing | standard_indexing
 
 // ======== Matrices functions ========
 
@@ -395,7 +423,7 @@ _R_FORMAT: "\\right"
 // basic binary operators
 ADD: "+"
 SUB: "-"
-MUL: "*"
+MUL: "*" | "\\ast"
 DIV: "/" | "\\over"
 
 // basic common operators
@@ -403,6 +431,8 @@ _CMD_TIMES: "\\times"
 _CMD_XPROD: /\\cross(product)?/ | "\\cp"
 _CMD_CDOT:  "\\cdot"
 _CMD_VDOT: "\\dotproduct" | "\\vdot"
+// Terminal matching a bunch of repeadet horizontal dots, these may be split up into multiple terminals in the future, if needed
+_CMD_DOTS: /\\dots[cbmio]?/ | /\\[lc]?dots/ | (_CMD_CDOT|".") ~ 2..3
 _CMD_DIV:   "\\div"
 _CMD_BAR: "\\bar"
 _CMD_OVERLINE: "\\overline"
@@ -588,9 +618,12 @@ _DOUBLE_BAR: "||" | /\\mid\s*\\mid/ | /\\[lr]?Vert/
 _DOT: "."
 _CARET: "^"
 _COMMA: ","
+_COLON: ":"
+_SEMICOLON: ";"
 _UNDERSCORE: "_"
 _PERCENT: "\\%"
 _PERMILLE: "\\textperthousand"
+_STAR: "\\star"
 
 // relational symbols
 EQUAL: "="
