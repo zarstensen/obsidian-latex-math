@@ -8,8 +8,10 @@ from lmat_cas_client.compiling.definition.Resolver import (
     FunctionResToken,
 )
 from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
+    BodyStrat,
     LhsStrat,
     RhsStrat,
+    SymbolStrat,
 )
 from lmat_cas_client.compiling.transforming.Ir import ir_strat
 from lmat_cas_client.math_lib import Functions, MatrixUtils
@@ -203,15 +205,15 @@ class BuiltInFunctionsTransformer(Transformer):
     def min(self, args: Iterator[Expr]):
         return Min(*args)
 
-    @ir_strat()
-    def diff_symbol_exponent(self, symbol, exponent: Expr | None):
+    @ir_strat(symbol=SymbolStrat)
+    def diff_symbol_exponent(self, symbol: Symbol, exponent: Expr | None):
         return (symbol, 1 if exponent is None else exponent)
 
     @ir_strat()
     def diff_symbol_arg_list(self, *arg_list: tuple[Expr, Expr]):
         return [*arg_list]
 
-    @ir_strat()
+    @ir_strat(expr=BodyStrat)
     def derivative_symbols_first(
         self, power: Optional[Expr], symbols: Iterable[tuple[Symbol, int]], expr: Expr
     ):
@@ -224,13 +226,13 @@ class BuiltInFunctionsTransformer(Transformer):
 
         return diff(expr, *symbols)
 
-    @ir_strat()
+    @ir_strat(expr=BodyStrat)
     def derivative_func_first(
         self, power: Optional[Expr], expr: Expr, symbols: Iterable[tuple[Symbol, int]]
     ):
         return self.derivative_symbols_first(power, symbols, expr)
 
-    @ir_strat()
+    @ir_strat(expr=BodyStrat, symbol=SymbolStrat)
     def derivative_phys_symbols_first(
         self, power: Optional[Expr], symbol: Symbol, expr: Expr
     ):
@@ -238,7 +240,7 @@ class BuiltInFunctionsTransformer(Transformer):
             power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
-    @ir_strat()
+    @ir_strat(expr=BodyStrat, symbol=SymbolStrat)
     def derivative_phys_func_first(
         self, power: Optional[Expr], expr: Expr, symbol: Symbol
     ):
@@ -246,7 +248,7 @@ class BuiltInFunctionsTransformer(Transformer):
             power, [(symbol, int(power) if power is not None else 1)], expr
         )
 
-    @ir_strat(expr=RhsStrat)
+    @ir_strat(expr=(RhsStrat, BodyStrat))
     def derivative_prime(self, expr: Expr, primes: Token):
         body, variables = self._expr_as_function(expr, range(0, 2))
 
@@ -615,7 +617,6 @@ class BuiltInFunctionsTransformer(Transformer):
 
         if not MatrixUtils.is_matrix(index_target):
             index_target = Matrix(index_target)
-        # index_target = Matrix(index_target)
 
         match indicies:
             case [row_index, col_index]:

@@ -721,8 +721,7 @@ def test_applied_function_expressions():
     expected_failures = {
         3,
         4,
-    }  # 0 is ambiguous, and the others require not-yet-added features
-    # not sure why 1, and 2 are failing
+    }
     for i, (latex_str, sympy_expr, lmat_env) in enumerate(
         APPLIED_FUNCTION_EXPRESSION_PAIRS
     ):

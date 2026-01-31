@@ -3,7 +3,11 @@ from collections.abc import Iterable
 from typing import Optional
 
 from attr import frozen
-from lmat_cas_client.compiling.definition.DefinitionStore import Definition
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    Definition,
+    FunctionDefinition,
+    SymbolDefinition,
+)
 from sympy import Basic
 
 
@@ -43,14 +47,25 @@ class DefinitionResolver(ABC):
         pass
 
     @abstractmethod
-    def resolve_value(self, token: SymbolResToken) -> Basic:
+    def get_definition(self, def_id: str) -> Optional[Definition]:
+        """
+        Retrieve the definition object associated with the given definition
+        id.
+        This can be supplied to all methods which a ResolverToken can be passed to,
+        do note that this means the resolver is then no longer aware of what id the Definition
+        is tied to, so any optional caching will not occur.
+        """
+        pass
+
+    @abstractmethod
+    def resolve_value(self, target: SymbolResToken | SymbolDefinition) -> Basic:
         """
         Resolve the value of a symbol definition.
         """
         pass
 
     @abstractmethod
-    def resolve_body(self, token: FunctionResToken) -> Basic:
+    def resolve_body(self, target: FunctionResToken | FunctionDefinition) -> Basic:
         """
         Resolve the body of a function definition.
         Parameters are simply seen as symbols when resolving the body value.
@@ -58,7 +73,9 @@ class DefinitionResolver(ABC):
         pass
 
     @abstractmethod
-    def resolve_params(self, token: FunctionResToken) -> tuple[Basic]:
+    def resolve_params(
+        self, target: FunctionResToken | FunctionDefinition
+    ) -> tuple[Basic]:
         """
         Resolve the parameters to a function definition.
         The parameters are returned as Sympy objects (most likely Symbol)
@@ -66,7 +83,7 @@ class DefinitionResolver(ABC):
         pass
 
     @abstractmethod
-    def resolve_unapplied(self, token: FunctionResToken) -> Basic:
+    def resolve_unapplied(self, target: FunctionResToken | FunctionDefinition) -> Basic:
         """
         Resolve the unapplied version of a function definition.
         i.e. the f in f(x) := ...
@@ -75,7 +92,9 @@ class DefinitionResolver(ABC):
 
     @abstractmethod
     def resolve_applied(
-        self, token: FunctionResToken, params: Iterable[Definition]
+        self,
+        target: FunctionResToken | FunctionDefinition,
+        params: Iterable[Definition],
     ) -> Basic:
         """
         Resolve the applied value of a function definition.
