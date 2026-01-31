@@ -196,7 +196,7 @@ class MultStrat(ResolveStrategy):
 
 @frozen
 class MultIr(Ir, LhsStrat, RhsStrat, MultStrat):
-    """
+    r"""
     This is needed for when a maybe_function_application rule does *not* apply the function,
     then the expression should be interpreted as an implicit multiplication between the
     function head and body.
