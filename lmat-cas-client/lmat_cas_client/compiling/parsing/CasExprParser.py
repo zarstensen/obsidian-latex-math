@@ -234,36 +234,6 @@ class CasExprPostLexer(PostLex):
                 item = item.update(f"{self._grammar_namespace}{item.type}")
 
             yield item
-        # buffer = []
-
-        # def filtered_iterator() -> Iterator[Token]:
-        #     for item in stream:
-        #         if (
-        #             self._namespace_regex is not None
-        #             and not self._namespace_regex.match(item.type)
-        #         ):
-        #             # instead of this, change the type here and then remove it later? probably?
-        #             # idk if this will work anyways, what is the strat even if it does not work?
-        #             # lets not think about that and just DO IT! >:(
-        #             buffer.append(item)
-        #         else:
-        #             if self._namespace_regex is not None:
-        #                 yield item.update(self._namespace_regex.sub(r"\1\2", item.type))
-        #             else:
-        #                 yield item
-
-        # processed = self._process_scope(filtered_iterator(), LexerScope(), None, None)
-
-        # for item in processed:
-        #     while len(buffer) > 0:
-        #         yield buffer.pop()
-
-        #     if item.type.startswith("_"):
-        #         item = item.update(f"_{self._grammar_namespace}{item.type[1:]}")
-        #     else:
-        #         item = item.update(f"{self._grammar_namespace}{item.type}")
-
-        #     yield item
 
     def _process_scope(
         self,

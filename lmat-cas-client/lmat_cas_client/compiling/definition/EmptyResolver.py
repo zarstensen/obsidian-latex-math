@@ -1,6 +1,10 @@
 from collections.abc import Iterable
 from typing import override
 
+from lmat_cas_client.compiling.definition.DefinitionStore import (
+    FunctionDefinition,
+    SymbolDefinition,
+)
 from lmat_cas_client.compiling.definition.Resolver import (
     Definition,
     DefinitionResolver,
@@ -16,27 +20,37 @@ class EmptyResolver(DefinitionResolver):
     """
 
     @override
-    def get_resolver_token(self, _name: str):
+    def get_resolver_token(self, _def_id: str):
         return None
 
     @override
-    def resolve_value(self, _token: SymbolResToken) -> Basic:
+    def get_definition(self, _def_id: str):
+        return None
+
+    @override
+    def resolve_value(self, _target: SymbolResToken | SymbolDefinition) -> Basic:
         raise NotImplementedError()
 
     @override
-    def resolve_body(self, _token: FunctionResToken) -> Basic:
+    def resolve_body(self, _target: FunctionResToken | FunctionDefinition) -> Basic:
         raise NotImplementedError()
 
     @override
-    def resolve_params(self, _token: FunctionResToken) -> tuple[Basic]:
+    def resolve_params(
+        self, _target: FunctionResToken | FunctionDefinition
+    ) -> tuple[Basic]:
         raise NotImplementedError()
 
     @override
-    def resolve_unapplied(self, _token: FunctionResToken) -> Basic:
+    def resolve_unapplied(
+        self, _target: FunctionResToken | FunctionDefinition
+    ) -> Basic:
         raise NotImplementedError()
 
     @override
     def resolve_applied(
-        self, _token: FunctionResToken, _params: Iterable[Definition]
+        self,
+        _target: FunctionResToken | FunctionDefinition,
+        _params: Iterable[Definition],
     ) -> Basic:
         raise NotImplementedError()

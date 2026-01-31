@@ -393,8 +393,13 @@ class TestEvaluate:
     def test_partial_derivative(self):
         handler = EvalHandler(self.expr_compiler, self.store_compiler)
         result = handler.handle({"expression": "\n\\dv{x} x\n", "environment": {}})
-
         assert result.sympy_expr == 1
+
+        result = handler.handle({
+            "expression": r"g(10)",
+            "environment": {"definitionsv2": [r"f(x) := x^2", r"g(x) := \dv{f(x)}{x}"]},
+        })
+        assert result.sympy_expr == 20
 
     def test_function(self):
         handler = EvalHandler(self.expr_compiler, self.store_compiler)

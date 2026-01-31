@@ -5,7 +5,7 @@ from typing import MutableMapping
 
 from attr import field, frozen
 from lark import Tree
-from sympy import Basic
+from sympy import Basic, Expr
 from sympy.core.function import UndefinedFunction
 
 
@@ -21,14 +21,17 @@ class AstDef:
 
 @frozen
 class SympyDef:
-    """Definition entry for values defined as singular sympy expressions."""
+    """
+    Definition entry for values defined as singular sympy expressions.
+    """
 
     expr: Basic
 
 
 @frozen
 class AstFunDef:
-    """Like AstDef but for an applyable function with a body and an uneavluated value.
+    """
+    Like AstDef but for an appliable function with a body and an uneavluated value.
     e.g. f(x) = x^2
           ^      ^
         unappl.  |
@@ -37,6 +40,15 @@ class AstFunDef:
 
     body: Tree
     unapplied: Basic
+
+
+@frozen
+class SympyFunDef:
+    """
+    Like AstFunDef but for sympy Expr objects, instead of Lark trees.
+    """
+
+    body: Expr
 
 
 @frozen
@@ -49,7 +61,7 @@ type SymDefVal = AstDef | SympyDef
 UnionType representing all symbol-like definitions definable in a DefinitionStore
 """
 
-type FunDefVal = AstFunDef | SympyUndefFunDef
+type FunDefVal = AstFunDef | SympyFunDef | SympyUndefFunDef
 """
 UnionType representing all function-like definitions definable in a DefinitionStore
 """
@@ -61,7 +73,7 @@ class Definition(ABC):
     Base "class" for all types storable in a DefinitionStore.
     All definitions must hold a set of dependencies they must need to be resolved,
     before their own value can be safely resolved.
-    Note that extending this class, also requires implementing / extending and already existing Resolver,
+    Note that extending this class, also requires implementing / extending an already existing Resolver,
     for the definition to be resolvable.
     """
 
