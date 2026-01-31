@@ -4,7 +4,7 @@ from typing import Any, MutableMapping, Optional, cast, override
 
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import CasExpr
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
-from sympy import Basic, Symbol
+from sympy import Basic, Expr, Symbol
 
 from .DefinitionStore import (
     AstDef,
@@ -15,6 +15,7 @@ from .DefinitionStore import (
     FunctionDefinition,
     SymbolDefinition,
     SympyDef,
+    SympyFunDef,
     SympyUndefFunDef,
 )
 from .Resolver import (
@@ -58,7 +59,7 @@ class DefinitionStoreResolver(DefinitionResolver):
             return None
 
         # split SymbolDefinition and FunctionDefinition into 2 distinct ResolverToken's
-        match self._combined_store[def_id]:
+        match self.get_definition(def_id):
             case SymbolDefinition():
                 return SymbolResToken(def_id)
             case FunctionDefinition():
@@ -69,24 +70,33 @@ class DefinitionStoreResolver(DefinitionResolver):
                 assert False
 
     @override
-    def resolve_value(self, token: SymbolResToken):
+    def get_definition(self, def_id: str):
+        if def_id not in self._combined_store:
+            return None
+
+        return self._combined_store[def_id]
+
+    @override
+    def resolve_value(self, target: SymbolResToken | SymbolDefinition):
         # verify token is correct
-        match token:
+        cache_key = None
+        match target:
             case SymbolResToken(def_id):
+                # check cache
+                cache_key = def_id
+
+                if self._is_cached(cache_key, id=def_id):
+                    return self._cache[cache_key]
+
+                symbol_definition: SymbolDefinition = cast(
+                    SymbolDefinition, self._combined_store[def_id]
+                )
+            case SymbolDefinition() as symbol_definition:
                 pass
             case _:
                 assert False, "Token is not of the correct type"
 
-        # check cache
-        cache_key = def_id
-
-        if self._is_cached(cache_key, id=def_id):
-            return self._cache[cache_key]
-
         # resolve value
-        symbol_definition: SymbolDefinition = cast(
-            SymbolDefinition, self._combined_store[def_id]
-        )
 
         match symbol_definition.value:
             case SympyDef(expr):
@@ -98,21 +108,22 @@ class DefinitionStoreResolver(DefinitionResolver):
                 assert False, "Failed to resolve value"
 
     @override
-    def resolve_body(self, token: FunctionResToken):
-        match token:
+    def resolve_body(self, target: FunctionResToken | FunctionDefinition):
+        cache_key = None
+        match target:
             case FunctionResToken(def_id):
+                cache_key = def_id
+
+                if self._is_cached(cache_key, id=def_id):
+                    return self._cache[cache_key]
+
+                function_definition: FunctionDefinition = cast(
+                    FunctionDefinition, self._combined_store[def_id]
+                )
+            case FunctionDefinition() as function_definition:
                 pass
             case _:
                 assert False, "Token is not of the correct type"
-
-        cache_key = def_id
-
-        if self._is_cached(cache_key, id=def_id):
-            return self._cache[cache_key]
-
-        function_definition: FunctionDefinition = cast(
-            FunctionDefinition, self._combined_store[def_id]
-        )
 
         match function_definition.value:
             case AstFunDef(body_ast, _):
@@ -120,67 +131,76 @@ class DefinitionStoreResolver(DefinitionResolver):
                     body_ast, self._override_args({})
                 )
                 return self._cached(cas_expr.get_expr(-1), key=cache_key, id=def_id)
+            case SympyFunDef(body):
+                return body
             case SympyUndefFunDef(fun):
                 # Undefined function's body is exactly the same as its applied value,
                 # except its arguments are just its parameters.
-                return fun(*self.resolve_params(token))
+                return fun(*self.resolve_params(target))
             case _:
                 assert False, "Failed to resolve body"
 
     @override
-    def resolve_params(self, token: FunctionResToken):
-        match token:
+    def resolve_params(self, target: FunctionResToken | FunctionDefinition):
+        match target:
             case FunctionResToken(def_id):
+                function_definition: FunctionDefinition = cast(
+                    FunctionDefinition, self._combined_store[def_id]
+                )
+            case FunctionDefinition() as function_definition:
                 pass
             case _:
                 assert False, "Token is not of the correct type"
 
-        function_definition: FunctionDefinition = cast(
-            FunctionDefinition, self._combined_store[def_id]
-        )
         return tuple(map(lambda s: Symbol(s), function_definition.params))
 
     @override
-    def resolve_unapplied(self, token: FunctionResToken):
-        match token:
+    def resolve_unapplied(self, target: FunctionResToken | FunctionDefinition):
+        match target:
             case FunctionResToken(def_id):
+                # resolve_unapplied is uncached for now.
+                # not realy a reason to cache currently.
+
+                function_definition: FunctionDefinition = cast(
+                    FunctionDefinition, self._combined_store[def_id]
+                )
+            case FunctionDefinition() as function_definition:
                 pass
             case _:
                 assert False, "Token is not of the correct type"
-
-        # resolve_unapplied is uncached for now.
-        # not realy a reason to cache currently.
-
-        function_definition: FunctionDefinition = cast(
-            FunctionDefinition, self._combined_store[def_id]
-        )
 
         match function_definition.value:
             case AstFunDef(_, unapplied):
                 return unapplied
+            # TODO: what should SympyFunDef be here?
             case SympyUndefFunDef(fun):
                 return fun
             case _:
                 assert False, "Failed to resolve body"
 
     @override
-    def resolve_applied(self, token: FunctionResToken, arguments: Iterable[Definition]):
-        match token:
+    def resolve_applied(
+        self,
+        target: FunctionResToken | FunctionDefinition,
+        arguments: Iterable[Definition],
+    ):
+        arguments = tuple(arguments)
+        cache_key = None
+
+        match target:
             case FunctionResToken(def_id):
+                cache_key = (def_id, arguments)
+
+                if self._is_cached(cache_key, id=def_id):
+                    return self._cache[cache_key]
+
+                function_definition: FunctionDefinition = cast(
+                    FunctionDefinition, self._combined_store[def_id]
+                )
+            case FunctionDefinition() as function_definition:
                 pass
             case _:
                 assert False, "Token is not of the correct type"
-
-        arguments = tuple(arguments)
-
-        cache_key = (def_id, arguments)
-
-        if self._is_cached(cache_key, id=def_id):
-            return self._cache[cache_key]
-
-        function_definition: FunctionDefinition = cast(
-            FunctionDefinition, self._combined_store[def_id]
-        )
 
         if len(function_definition.params) != len(arguments):
             raise ValueError(
@@ -194,6 +214,23 @@ class DefinitionStoreResolver(DefinitionResolver):
             case AstFunDef(body_ast, _):
                 cas_expr = self._transformer.transform(body_ast, arg_resolver)
                 return self._cached(cas_expr.get_expr(-1), key=cache_key, id=def_id)
+            case SympyFunDef(body):
+                # subs the resolved parameters into the body Expr.
+                params = self.resolve_params(target)
+
+                subs_dict: dict[Basic | complex, Expr] = dict()
+
+                for param in params:
+                    param_token = arg_resolver.get_resolver_token(param.name)
+                    match param_token:
+                        case SymbolResToken():
+                            subs_dict[param] = arg_resolver.resolve_value(param_token)
+                        case FunctionResToken():
+                            subs_dict[param] = arg_resolver.resolve_unapplied(
+                                param_token
+                            )
+
+                return body.subs(subs_dict)
             case SympyUndefFunDef(fun):
                 # Create new resolver with arguments set to definition, then ask for the value
 
@@ -223,7 +260,7 @@ class DefinitionStoreResolver(DefinitionResolver):
             this is relevant for when to *not* cache the value.
         """
         try:
-            if id not in self._args_store:
+            if id not in self._args_store and key is not None:
                 self._cache[key] = value
         except TypeError:
             pass  # if key is unhashable, simply dont cache.

@@ -5,8 +5,11 @@ from typing import ClassVar, List, cast, final, override
 from attr import frozen
 from lark import Token, Transformer, v_args
 from lmat_cas_client.compiling.definition.DefinitionStore import (
+    Definition,
+    FunctionDefinition,
     SymbolDefinition,
     SympyDef,
+    SympyFunDef,
 )
 from lmat_cas_client.compiling.definition.Resolver import (
     DefinitionResolver,
@@ -21,7 +24,7 @@ from lmat_cas_client.compiling.transforming.Ir import (
     ir_strat,
 )
 from lmat_cas_client.math_lib.units import UnitUtils
-from sympy import Expr, Number, Symbol
+from sympy import Basic, Expr, Number, Symbol
 from sympy.physics.units import Quantity
 
 
@@ -80,6 +83,78 @@ class SymbolIr(Ir, SymbolStrat, SubstituteStrat):
                 return Resolved(cast(Expr, self.resolver.resolve_unapplied(token)))
             case _:
                 return cast(Resolved[Expr], self.as_symbol())
+
+
+class AppliedStrat(ResolveStrategy):
+    """
+    Ir object has an applied value, which this resolves.
+    """
+
+    _resolve_method = "as_applied"
+
+    @abstractmethod
+    def as_applied(self) -> Resolved[Basic]:
+        pass
+
+
+class BodyStrat(ResolveStrategy):
+    """
+    Ir object has a function body, which this resolves
+    """
+
+    _resolve_method = "as_body"
+
+    @abstractmethod
+    def as_body(self) -> Resolved[Basic]:
+        pass
+
+
+@final
+@frozen
+class FuncIr(Ir, AppliedStrat, BodyStrat):
+    """
+    Ir of a function application.
+    Stores the arguments passed to the function,
+    as well as the function definition itself.
+
+    Args:
+        AppliedStrat: Resolve the function value when applied with the given arguments.
+        BodyStrat: Resolve the body of the function.
+    """
+
+    args: tuple[Definition, ...]
+    func_target: FunctionResToken | FunctionDefinition
+    resolver: DefinitionResolver
+
+    _default_strat = AppliedStrat
+
+    @override
+    def as_applied(self) -> Resolved[Basic]:
+        return Resolved(self.resolver.resolve_applied(self.func_target, self.args))
+
+    @override
+    def as_body(self) -> Resolved[Basic]:
+
+        match self.func_target:
+            case FunctionResToken(id):
+                definition = cast(FunctionDefinition, self.resolver.get_definition(id))
+            case FunctionDefinition() as definition:
+                pass
+            case _:
+                assert False
+
+        return Resolved(
+            self.resolver.resolve_body(self.func_target),
+            post_resolve=lambda r: FuncIr(
+                self.args,
+                FunctionDefinition(
+                    SympyFunDef(r),
+                    definition.params,
+                    deps=definition.deps,  # type: ignore[arg-type]
+                ),
+                self.resolver,
+            ),
+        )
 
 
 class LhsStrat(ResolveStrategy):
@@ -221,14 +296,18 @@ class UndefinedAtomsTransformer(Transformer):
     @ir_strat(func_head=SymbolStrat)
     def maybe_function_application(
         self, func_head: Symbol, func_args: List[Expr]
-    ) -> Expr | MultIr:
+    ) -> FuncIr | MultIr:
         match self.__resolver.get_resolver_token(func_head.name):
             case FunctionResToken() as token:
-                return cast(
-                    Expr,
-                    self.__resolver.resolve_applied(
-                        token, map(lambda a: SymbolDefinition(SympyDef(a)), func_args)
-                    ),
+                # if it is a defined function,
+                # we need to wrap it in an intermediate reprensentation object,
+                # in the case this is the child of a partial derivative (or similar) rule,
+                # which needs to *first* differentiate the body and *then* apply the arguments to the
+                # new body.
+                return FuncIr(
+                    tuple(map(lambda a: SymbolDefinition(SympyDef(a)), func_args)),
+                    token,
+                    self.__resolver,
                 )
             case _:
                 # if it is not a defined function,

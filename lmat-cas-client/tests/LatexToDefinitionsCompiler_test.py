@@ -179,9 +179,7 @@ class TestLatexToDefinitionCompiler:
         assert result["z"].value.expr == Symbol("z", prime=True)
 
     def test_function_def(self):
-        # TODO: remove space from f (
-        #                          ^ here
-        result = self.compiler.compile(r"f (x) := x^3")
+        result = self.compiler.compile(r"f(x) := x^3")
 
         assert len(result) == 1
         assert isinstance(result["f"], FunctionDefinition)
