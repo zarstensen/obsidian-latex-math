@@ -388,6 +388,7 @@ sor_env_delim: _SOR_EXPR_DELIM -> matrix_like_delim
 _sor_env_body: sor_env_delim?  relation (sor_env_delim relation)* sor_env_delim?
 sor_env: _CMD_BEGIN_ALIGN _sor_env_body _CMD_END_ALIGN
     | _CMD_BEGIN_CASES _sor_env_body _CMD_END_CASES
+    | _CMD_BEGIN_GATHER _sor_env_body _CMD_END_GATHER
 
 // land SOR rules
 
@@ -700,8 +701,10 @@ _LATEX_NEWLINE: "\\\\"
 // system of relations
 _CMD_BEGIN_ALIGN: CMD_BEGIN _WS? "align" _WS? _R_BRACE
 _CMD_BEGIN_CASES: CMD_BEGIN _WS? "cases" _WS? _R_BRACE
+_CMD_BEGIN_GATHER: CMD_BEGIN _WS? "gather" _WS? _R_BRACE
 _CMD_END_ALIGN: CMD_END _WS? "align" _WS? _R_BRACE
 _CMD_END_CASES: CMD_END _WS? "cases" _WS? _R_BRACE
+_CMD_END_GATHER: CMD_END _WS? "gather" _WS? _R_BRACE
 
 _PROP_OP_AND: /\\(big)?wedge/
     | "\\land"
