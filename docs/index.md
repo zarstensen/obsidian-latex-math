@@ -10,9 +10,12 @@ Math expressions are parsed and evaluated directly inside LaTeX math blocks, pro
 [^learning-curve]: This of course assumes you are already somewhat familiar with LaTeX. But even if you aren't, LaTeX is *the* standard for notating digital math, so there is no loss in [learning it](https://www.reed.edu/academic_support/pdfs/qskills/latexcheatsheet.pdf)!
 
 <!-- **LaTeX Math** is a math CAS plugin for [Obsidian](https://obsidian.md/). plugin which adds mathematical evaluation of LaTeX math blocks to your notes, using [Sympy](https://www.sympy.org). -->
+<p align="center">
+<a href="https://obsidian.md/plugins?id=latex-math"><img src="https://img.shields.io/badge/Install%20Plugin%20↧-7e1dfb?style=flat-square&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math" alt="Install Plugin" width="200"></a>
+</p>
 
 
-## Quick Usage
+## Quick Start
 
 Start out by placing your cursor inside any math block. Then execute the `Evaluate LaTeX expression` command (or any other command from the [command list](#command-list)). **LaTeX Math** will now parse and evaluate the contents of the math block, and insert the result directly in your note. It really is as simple as that!
 
@@ -24,22 +27,10 @@ Start out by placing your cursor inside any math block. Then execute the `Evalua
 
 **LaTeX Math** has many more features to offer, so go take a look at the brief [feature showcase](reference/features.md) before heading over to the [tutorial](tutorial/1-intro.md) to get you started properly using this plugin.
 
-WIP FROM HERE
-Take a look at the [command list](#command-list) for a brief overview of what this plugin can do, or see the [feature showcase](features.md) for a more in-depth walkthrough of the plugin's core features.
-
-<!-- something something, latex math can do just more, something something see quick + detailed reference and extensive feature overview -->
-
-Also see the [documentation](https://github.com/zarstensen/obsidian-latex-math/tree/main/docs), which goes more in depth about the features than this README.
-OK NO LONGER WIP
 ## Installation
 
-[**Click here**](https://obsidian.md/plugins?id=latex-math) to automatically open and install the latest version of this plugin in Obsidian.
+[![Install Button](https://img.shields.io/badge/CLICK%20HERE%20↧-7e1dfb?style=for-the-badge&logo=obsidian&logoSize=white&link=https%3A%2F%2Fobsidian.md%2Fplugins%3Fid%3Dlatex-math)](https://obsidian.md/plugins?id=latex-math) to automatically open and install the latest version of this plugin in Obsidian.
+
+
 
 Alternatively, press `Browse` in Obsidian's `Options (⚙️)> Community plugins` menu and search for `LaTeX Math`.
-
-- What is latex math + what does latex math aim to solve? (aim to solve, maybe in explanation)
-  - CAS client + sympy + latex oriented workflow (why? maybe in explenation section)
-- How to install, details can be found in the installation section? (link to installation, maybe inline it here?)
-- Usage (what is the most basic thing you can do? link to tutorial afterwards)
-- Feature Overview, probably not in the reference? or maybe it should? or maybe it is a tutorial.
-- Quick reference? (link again probably, this should definetly be in the reference)

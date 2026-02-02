@@ -1,0 +1,2 @@
+- Deep dive into all evaluate commands
+- 

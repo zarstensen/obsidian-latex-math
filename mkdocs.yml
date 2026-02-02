@@ -14,6 +14,7 @@ theme:
   features:
     - navigation.instant
     - navigation.instant.prefetch
+    - navigation.indexes
     - navigation.tracking
     - navigation.tabs
 markdown_extensions:
@@ -23,6 +24,9 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.details
   - pymdownx.keys
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
   - admonition
 plugins:
   - search
