@@ -626,7 +626,14 @@ class BuiltInFunctionsTransformer(Transformer):
                 ]
 
             case index:
-                return index_target[index]  # type: ignore[misc]
+                match index_target.shape:
+                    # special cases for vectors, so they still work when 1d index is symbolic.
+                    case (1, _):
+                        return index_target[0, index]
+                    case (_, 1):
+                        return index_target[index, 0]
+                    case _:
+                        return index_target[index]  # type: ignore[misc]
 
     # Helper Methods
 

@@ -72,11 +72,11 @@ multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
 // this could for example be \mathit
-formatted_symbol: _cmd_format (BRACE_SURROUNDED_TEXT | SINGLE_LETTER_SYMBOL) [PRIMES]
+formatted_symbol: _cmd_format (_L_BRACE BRACE_SURROUNDED_TEXT _R_BRACE | SINGLE_LETTER_SYMBOL) [PRIMES]
 
 _non_indexed_symbol: single_letter_symbol | multi_letter_symbol | formatted_symbol
 
-indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | BRACE_SURROUNDED_TEXT) [PRIMES]
+indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | _L_BRACE BRACE_SURROUNDED_TEXT _R_BRACE) [PRIMES]
 
 // General rule matching all symbol rules.
 // all of these rules return an SymbolIr, which
@@ -335,8 +335,10 @@ complement_indicies: _L_PAREN [index] _SEMICOLON [index] _R_PAREN -> indicies_2d
 
 _index_template{target, indicies}: target _UNDERSCORE _L_BRACE indicies _R_BRACE
 
-complement_indexing: _index_template{factor_func_arg, complement_indicies}
-standard_indexing: _index_template{factor_func_arg, standard_indicies}
+complement_indexing: _index_template{_non_indexed_symbol, complement_indicies} 
+    | _index_template{factor_func_arg, complement_indicies}
+standard_indexing: _index_template{_non_indexed_symbol, standard_indicies} 
+    | _index_template{factor_func_arg, standard_indicies}
 
 ?indexing: complement_indexing | standard_indexing
 
@@ -401,7 +403,7 @@ _system_of_relations: sor_env | sor_and_chain
 
 _WS: /[\s\t\n\r]+/
 
-_TEXT: CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
+_TEXT: CMD_TEXT _WS? _L_BRACE BRACE_SURROUNDED_TEXT _R_BRACE
 // any tokens appearing in ANY terminals which are not ignored, should all be individually ignored and NOT be part of this,
 // as it will otherwise be prioritized incorrectly.
 _IGNORE.-1: /(?<!\\)\\ /
@@ -480,7 +482,8 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 //  )                   :
 //
 // NOTE: this does not currently support escaped braces, it just treats them as they were unescaped.
-BRACE_SURROUNDED_TEXT: /({(?:[^{}]+|(?-1))*})/ 
+// TODO: update this documentation, this is currently a bit of copilot magic regex...
+BRACE_SURROUNDED_TEXT.-1: /(?<={)((?:[^{}]+|{(?:[^{}]+|(?-1))*})*)(?=})/ 
 
 
 // limit, integral, sum, and product symbols
