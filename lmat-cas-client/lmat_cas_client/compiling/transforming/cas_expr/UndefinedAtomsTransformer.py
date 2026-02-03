@@ -263,8 +263,7 @@ class UndefinedAtomsTransformer(Transformer):
             case Number():
                 index_contents = str(index_contents)
 
-        if not index_contents.startswith("{") or not index_contents.endswith("}"):
-            index_contents = f"{{{index_contents}}}"
+        index_contents = f"{{{index_contents}}}"
 
         return self.combine_symbol(Symbol(f"{symbol.name}{primes}_{index_contents}"))
 

@@ -887,6 +887,24 @@ class TestLatexToCasExprCompiler:
                 {},
                 600,
             ),
+            (
+                r"xf_{[0]}",
+                {
+                    "definitionsv2": [
+                        r"xf := \begin{bmatrix} 2474 & 2574 & 2830 & 3219 & 3429 & 3448 & 3677 & 3872 & 4001 & 4116 \end{bmatrix}"
+                    ]
+                },
+                2474,
+            ),
+            (
+                r"\frac{1}{10} \sum_{j=0}^9 xf_{[j]}",
+                {
+                    "definitionsv2": [
+                        r"xf := \begin{bmatrix} 2474 & 2574 & 2830 & 3219 & 3429 & 3448 & 3677 & 3872 & 4001 & 4116 \end{bmatrix}"
+                    ]
+                },
+                3364,
+            ),
         ],
     )
     def test_indexing(
