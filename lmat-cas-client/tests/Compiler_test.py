@@ -377,6 +377,8 @@ class TestLatexToCasExprCompiler:
 
         x, a, b = symbols("x a b")
 
+        assert self._parse_single_expr(r"x {atm}") == x * u.atm
+
         assert (
             self._parse_single_expr(r"{a + b}^2 + {s}^2") == u.second**2 + (a + b) ** 2
         )

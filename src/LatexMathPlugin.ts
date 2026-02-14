@@ -16,7 +16,7 @@ import { ConfirmModal } from '/views/modals/ConfirmModal';
 import { SuccessResponseVerifier } from './services/ResponseVerifier';
 import { EvaluateMode } from '/models/cas/messages/EvaluateMessage';
 import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
-import { mathjaxLoadLatexPackages } from './utils/MathJaxPackageLoader';
+import { mathjaxLoadLatexPackages, mathjaxLoadLatexPreamble } from './utils/MathJaxPackageLoader';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -66,6 +66,13 @@ export default class LatexMathPlugin extends Plugin {
 
         // import latex packages
         await mathjaxLoadLatexPackages(["physics"]);
+        // fix some alignment issues with \left and \right
+        await mathjaxLoadLatexPreamble(`
+\\let\\originalleft\\left
+\\let\\originalright\\right
+\\renewcommand{\\left}{\\mathopen{}\\originalleft}
+\\renewcommand{\\right}[1]{\\originalright#1\\mathclose{}}
+`);
     }
 
     // sets up the given map of commands as obsidian commands.
