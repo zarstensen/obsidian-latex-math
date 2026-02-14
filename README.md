@@ -60,7 +60,7 @@ Below is a table of all the commands this plugin provides, along with a brief de
 | Evalf LaTeX expression                      |     `Alt + F`      | Evaluate expression and output decimal numbers instead of fractions in the result.                                                                |
 | Expand LaTeX expression                     |     `Alt + E`      | Evaluate expression and expand the result as much as possible.                                                                                    |
 | Factor LaTeX expression                     |                    | Evaluate expression and factorize the result as much as possible.                                                                                 |
-| Partial fraction decompose LaTeX expression |                    | Evaluate expression and perform partial fraction decomposition on the result.                                                                     |
+| Apart LaTeX expression |                    | Evaluate expression and perform partial fraction decomposition on the result.                                                                     |
 | Solve LaTeX expression                      |     `Alt + L`      | Solve a single equation or a system of equations. Output the result in a new math block below the current one.                                    |
 | Convert units in LaTeX expression           |     `Alt + U`      | Try to convert the units in the right most expression to the user supplied one.                                                                   |
 | Create truth table from LaTeX expression    |                    | If selected expression is a proposition, inserts a truth table generated from the proposition. Table can be inserted as either latex or markdown. |
@@ -72,7 +72,7 @@ Below is a table of all the commands this plugin provides, along with a brief de
 
 Evaluate equations in various ways using the evaluate command suite. The computed output varies, depending on the chosen command.
 
-The entire evaluate suite consists of the following commands: `Evaluate LaTeX expression`, `Evalf LaTeX expression`, `Expand LaTeX expression`, `Factor LaTeX expression` and `Partial fraction decompose LaTeX expression`.
+The entire evaluate suite consists of the following commands: `Evaluate LaTeX expression`, `Evalf LaTeX expression`, `Expand LaTeX expression`, `Factor LaTeX expression` and `Apart LaTeX expression`.
 
 <!-- TODO: update this one so it uses the newest version -->
 ![demo](readme-assets/evaluate-demo.gif)

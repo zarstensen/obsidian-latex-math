@@ -2,6 +2,7 @@
 site_name: LaTeX Math for Obsidian
 site_url: https://github.com/zarstensen/obsidian-latex-math
 repo_url: https://github.com/zarstensen/obsidian-latex-math
+use_directory_urls: false
 theme:
   name: material
   font:
@@ -28,6 +29,7 @@ markdown_extensions:
       alternate_style: true
       combine_header_slug: true
   - admonition
+  - tables
 plugins:
   - search
   - callouts

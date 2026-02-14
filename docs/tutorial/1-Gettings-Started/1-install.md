@@ -9,7 +9,7 @@ Just press `Browse` in Obsidian's `Options (⚙️)> Community plugins` menu and
 
 <a href="https://obsidian.md/plugins?id=latex-math" target="_blank"> Alternatively click this text to automatically open the plugin page in your Obsidian app. </a>
 
-If you have not yet enabled community plugins, make sure to do this, as you will otherwise not be allowed to install the plugin.
+If you have not yet **enabled community plugins**, make sure to do this, as you will otherwise not be allowed to install the plugin.
 
 Once you have located the **LaTeX Math** plugin, select it and press the highlighted `install` button.
 

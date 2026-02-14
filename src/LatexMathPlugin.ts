@@ -56,7 +56,7 @@ export default class LatexMathPlugin extends Plugin {
             [new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf LaTeX expression'],
             [new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand LaTeX expression'],
             [new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Partial fraction decompose LaTeX expression'],
+            [new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Apart LaTeX expression'],
             [new SolveCommand(response_verifier), 'Solve LaTeX expression'],
             [new ConvertSympyCommand(response_verifier), 'Convert LaTeX expression to Sympy'],
             [new UnitConvertCommand(response_verifier), 'Convert units in LaTeX expression'],

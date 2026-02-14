@@ -8,7 +8,7 @@ This page provides a brief overview of **LaTeX Math**'s main features, along wit
 Use the **evaluate** command suite to evaluate the content of a math block in various ways.
 The output *format* depends on the chosen command, you will in most cases use `Evaluate LaTeX expression`, which simplifies the result as much as possible, before inserting it.
 
-The entire evaluate suite consists of the following commands: `Evaluate LaTeX expression`, `Evalf LaTeX expression`, `Expand LaTeX expression`, `Factor LaTeX expression` and `Partial fraction decompose LaTeX expression`.
+The entire evaluate suite consists of the following commands: `Evaluate LaTeX expression`, `Evalf LaTeX expression`, `Expand LaTeX expression`, `Factor LaTeX expression` and `Apart LaTeX expression`.
 
 <!-- TODO: update this one so it uses the newest version -->
 ![demo](assets/evaluate-demo.gif)
