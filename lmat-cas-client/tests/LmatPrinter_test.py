@@ -49,5 +49,11 @@ class TestLmatPrinter:
         latex_str = self.printer.doprint(latex_matrix)
         self._assert_str_equal(latex_str, r"\begin{matrix}1&2\\3&4\end{matrix}")
 
+    def test_functions(self):
+        x = symbols("x")
+        func_application = sin(x)
+        latex_str = self.printer.doprint(func_application)
+        self._assert_str_equal(latex_str, r"\sin\left(x\right)")
+
     def _assert_str_equal(self, expected, actual):
         assert "".join(expected.split()) == "".join(actual.split())

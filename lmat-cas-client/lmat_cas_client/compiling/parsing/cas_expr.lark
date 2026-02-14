@@ -108,7 +108,7 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 // multiplication between 'f' and the singular argument in its parameter list.
 // If there is more than one argument in its parameter list, a syntax error should be
 // raised
-maybe_function_application: _symbol (_L_PAREN list_of_expressions _R_PAREN | _L_BRACE _L_PAREN list_of_expressions _R_PAREN _R_BRACE)
+maybe_function_application: _symbol _L_PAREN list_of_expressions _R_PAREN
 
 
 // groups all functions which cannot be used as an argument to other functions.

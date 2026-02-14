@@ -1,11 +1,12 @@
 import re as regex
 from functools import reduce
-from typing import cast, override
+from typing import Any, cast, override
 
 from sympy import *
+from sympy.core.function import AppliedUndef
 from sympy.logic.boolalg import BooleanFalse, BooleanTrue
 from sympy.physics.units import Quantity
-from sympy.printing.latex import LatexPrinter
+from sympy.printing.latex import LatexPrinter, accepted_latex_functions
 
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
     ImmutableLatexMatrix,
@@ -93,6 +94,85 @@ class LmatLatexPrinter(LatexPrinter):
         ])
 
         return result
+
+    @override
+    def _print_Function(self, expr: Function, exp: Any = None) -> str:
+        r"""
+        copied directly from LatexPrinter, because some string literals need to be changed,
+        and they were not configurable.
+        """
+        func = expr.func.__name__
+        if hasattr(self, "_print_" + func) and not isinstance(expr, AppliedUndef):
+            return getattr(self, "_print_" + func)(expr, exp)
+        else:
+            args = [str(self._print(arg)) for arg in expr.args]
+            # How inverse trig functions should be displayed, formats are:
+            # abbreviated: asin, full: arcsin, power: sin^-1
+            inv_trig_style = self._settings["inv_trig_style"]
+            # If we are dealing with a power-style inverse trig function
+            inv_trig_power_case = False
+            # If it is applicable to fold the argument brackets
+            can_fold_brackets = (
+                self._settings["fold_func_brackets"]
+                and len(args) == 1
+                and not self._needs_function_brackets(expr.args[0])
+            )
+
+            inv_trig_table = [
+                "asin",
+                "acos",
+                "atan",
+                "acsc",
+                "asec",
+                "acot",
+                "asinh",
+                "acosh",
+                "atanh",
+                "acsch",
+                "asech",
+                "acoth",
+            ]
+
+            # If the function is an inverse trig function, handle the style
+            if func in inv_trig_table:
+                if inv_trig_style == "abbreviated":
+                    pass
+                elif inv_trig_style == "full":
+                    func = ("ar" if func[-1] == "h" else "arc") + func[1:]
+                elif inv_trig_style == "power":
+                    func = func[1:]
+                    inv_trig_power_case = True
+
+                    # Can never fold brackets if we're raised to a power
+                    if exp is not None:
+                        can_fold_brackets = False
+
+            if inv_trig_power_case:
+                if func in accepted_latex_functions:
+                    name = r"\%s^{-1}" % func
+                else:
+                    name = r"\operatorname{%s}^{-1}" % func
+            elif exp is not None:
+                func_tex = self._hprint_Function(func)
+                func_tex = self.parenthesize_super(func_tex)
+                name = r"%s^{%s}" % (func_tex, exp)
+            else:
+                name = self._hprint_Function(func)
+
+            if can_fold_brackets:
+                if func in accepted_latex_functions:
+                    # Wrap argument safely to avoid parse-time conflicts
+                    # with the function name itself
+                    name += r" {%s}"
+                else:
+                    name += r"%s"
+            else:
+                name += r"\left(%s \right)"  # this is the modified line
+
+            if inv_trig_power_case and exp is not None:
+                name += r"^{%s}" % exp
+
+            return name % ",".join(args)
 
     # split expr into 3 expr.
     # the first contains all constants in the passed expression,
