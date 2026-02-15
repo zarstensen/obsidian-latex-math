@@ -65,8 +65,53 @@ Some basic functions include `\sqrt ..` ([square root](https://en.wikipedia.org/
 In addition to these, all the [trigonometric functions](https://en.wikipedia.org/wiki/Trigonometric_functions) are also supported (e.x. `\sin`, `\cos`, `\arccot`).
 These functions expect their input to be in [radians](https://en.wikipedia.org/wiki/Radian).
 
-Functions from other areas of mathematics like combinatorics (e.x. `\binom`), complex numbers (e.x. `\Re`, `\Im`, `\arg`) and linear algebra (e.x. `\mathbf{H}_{..}` for the [hessian matrix](https://en.wikipedia.org/wiki/Hessian_matrix)) can also be used.
+Functions from other areas of mathematics like combinatorics (e.x. `\binom`), complex numbers (e.x. `\Re`, `\Im`, `\arg`) and linear algebra (e.x. `\mathbf{H}_{..}` for the [hessian matrix](https://en.wikipedia.org/wiki/Hessian_matrix)) are also integrated into the plugin.
 
+<!-- instead of the below, have a showcase now, so do like a mini exercise with the user and show how it can be solved
+we could definetly do like a minimum finding thingy, so we find the extrema of some 2d function or smnthng -->
+x^{2} + y^{2} + 100 \, \tanh^{2}\left(x - 10 \right) - 100
+
+Check if above has a global minimum at (0, 0)
+<!-- TODO: this should be in the referenced or the how to section? -->
 ## Derivatives and Integrals
 
-TODO: write this...
+### Lagrange Notation
+
+NOT CORRECT, just ordered by x, y, z, then u, v s and t or smnthng and then alphabetically.
+To differentiate expressions with strictly 1 unknown variables, prepend them with primes (`'`).
+Note that only this limited subset of the [Lagrange notation](https://en.wikipedia.org/wiki/Notation_for_differentiation) is supported.
+> [!example]
+> Below expression correctly computes the derivative of `x^2`
+> 
+> ```latex
+> $$
+> (x^2)' = 2x
+> $$
+> ```
+> 
+> But this expression fails, because there are 2 unknowns (`x` and `y`), so **LaTeX Math** does not know which one to pick.
+> 
+> ```latex
+> $$
+> (x + y)'
+> $$
+> ```
+
+### Leibniz Notation
+
+Leibniz notation should be used in place of [Lagrange notation](#lagrange-notation) when the expression contains multiple unknown variables, and thus requires computing a [partial derivative](https://en.wikipedia.org/wiki/Notation_for_differentiation#Partial_derivatives).
+This notation can be written using a standard `\frac` command, and the special `\dd` differential operator command, or using the `\dv` command from the [physics package](https://mirrors.dotsrc.org/ctan/macros/latex/contrib/physics/physics.pdf#subsection.2.5).
+
+[!example]
+
+```latex
+$$
+\frac{\dd \sin x \cdot \sin y}{\dd x \dd y} = \cos x \cos y
+$$
+```
+
+```latex
+$$
+\dv{\dd \sin x \cdot \sin y}{\dd x \dd y} = \cos x \cos y
+$$
+```
