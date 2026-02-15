@@ -128,7 +128,10 @@ class DefinitionStoreResolver(DefinitionResolver):
         match function_definition.value:
             case AstFunDef(body_ast, _):
                 cas_expr = self._transformer.transform(
-                    body_ast, self._override_args({})
+                    body_ast,
+                    self._override_args({
+                        p.name: EmptyDefinition() for p in self.resolve_params(target)
+                    }),
                 )
                 return self._cached(cas_expr.get_expr(-1), key=cache_key, id=def_id)
             case SympyFunDef(body):

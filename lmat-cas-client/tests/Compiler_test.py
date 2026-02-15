@@ -595,7 +595,12 @@ class TestLatexToCasExprCompiler:
             # Three-variable function
             (
                 r"\grad(f)",
-                {"definitionsv2": [r"f(x, y, z) := x^2 + y^2 + z^2"]},
+                {
+                    "definitionsv2": [
+                        r"f(x, y, z) := x^2 + y^2 + z^2",
+                        r"x := 25 \quad y \in \mathbb{R}",
+                    ]
+                },
                 Matrix([2 * Symbol("x"), 2 * Symbol("y"), 2 * Symbol("z")]),
             ),
             # Complex expression
