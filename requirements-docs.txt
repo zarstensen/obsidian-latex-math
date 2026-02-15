@@ -1,0 +1,2 @@
+mkdocs-material~=9.7
+mkdocs-callouts~=1.16

@@ -5,6 +5,11 @@ on:
     branches:
       - "*"
 
+permissions:
+  contents: write
+
 jobs:
   run-tests:
     uses: ./.github/workflows/test.yml
+  tmp-docs:
+    uses: ./.github/workflows/docs.yml
