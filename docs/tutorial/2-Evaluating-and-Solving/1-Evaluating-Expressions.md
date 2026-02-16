@@ -19,7 +19,7 @@ So, to start off, all [arithmetic operators](https://en.wikipedia.org/wiki/Arith
 Other aliases for these operators, like `\dfrac{..}{..}` instead of `\frac{..}{..}` can also be used, these are detailed for each operator in the [reference](MISSING-LINK).
 
 > [!important] Exercise
-> Translate the following natural language expressions into \(\LaTeX\) and evaluate them with **LaTeX Math**.
+> Translate the following natural language expressions into \( \LaTeX \) and evaluate them with **LaTeX Math**.
 >
 > a) one plus one.
 >
@@ -39,21 +39,12 @@ Other aliases for these operators, like `\dfrac{..}{..}` instead of `\frac{..}{.
 
 ## Values and Symbols
 
-**LaTeX Math** supports both working with concrete numerical values or abstract undefined symbols.
+**LaTeX Math** supports both working with concrete numerical values and abstract undefined symbols.
 
 **Numerical values** are denoted by just writing any integer or decimal number. Please note that **LaTeX Math** uses `.` as the [decimal separator](https://en.wikipedia.org/wiki/Decimal_separator), and there is currently no support for a thousands separator.
-So $\frac{1}{2}$ is the same as `0.5` and `10,000` is not *currently* a valid numeric number.
+So $\frac{1}{2}$ is the same as `0.5` and `10,000` is *not currently* a valid number.
 
 Additionally, numbers can be written as binary, hex or octal numbers by prefixing them with `0b`, `0x` and `0o`.
-
-> [!example]
-> The below expression consists of a sum between a fraction, a decimal value, and a binary value.
->
-> ```latex
-> $$
-> \frac{3}{5} + 0.4 - 0b1001 = -8.0
-> $$
-> ```
 
 **Symbols** are denoted by writing a series of characters from the English alphabet.
 Symbols may additionally be *indexed* with `_` (e.x. `x_{i}`) or *formatted* with commands like `\mathrm`[^format] (e.x. `\mathrm{v}`).
@@ -68,7 +59,12 @@ The symbols `e`, `i` and `\pi` are predefined to be equal to [eulers number](htt
 As an example, the following matrix $\begin{bmatrix} 1 & 2 \\ a & bc \end{bmatrix}$ can be written as `$\begin{bmatrix} 1 & 2 \\ a & bc \end{bmatrix}$`.
 
 Matrix types can be indexed by prepending them with an *index* operator, of the form `_{[r, c]}` or `_{[i]}`, where `r` and `c` is the <u>r</u>ow and <u>c</u>olumn to index, and `i` is the <u>i</u>ndex in a vector.
-Note that matrices are **0 indexed**, meaning a value of 0 must be supplied, in order to index the first row / column of a matrix.
+Matrices are **0 indexed**, meaning a value of 0 must be supplied, in order to index the first row / column of a matrix.
+
+> [!note] Indexed Symbol v.s. Index Operator
+> Note that this type of index is an *operator*, in contrast to the previously mentioned symbolic index which may be a part of a *symbol*.
+>
+> i.e. `x_{i}` is a concrete symbol in and of itself, whilst `x_{[i]}` means take the symbol `x`, and attempt to perform an index operation on it.
 
 > [!important] Exercise
 > Translate the following natural language expressions into \(\LaTeX\) and evaluate them with **LaTeX Math**.
