@@ -18,12 +18,24 @@ So, to start off, all [arithmetic operators](https://en.wikipedia.org/wiki/Arith
 
 Other aliases for these operators, like `\dfrac{..}{..}` instead of `\frac{..}{..}` can also be used, these are detailed for each operator in the [reference](MISSING-LINK).
 
-> [!example] Example Expression Using All Arithmetic Operators
-> The below expressions showcases all the above operators in a singular expression.
-> 
-> ```latex
-> (4^{\frac{1}{2}} + \log_{10} 100) \cdot (-2) = -8
-> ```
+> [!important] Exercise
+> Translate the following natural language expressions into \(\LaTeX\) and evaluate them with **LaTeX Math**.
+>
+> a) one plus one.
+>
+> b) three over four.
+>
+> c) three over four, raised to the power of one plus one
+>
+> > [!success]- answers
+> >
+> > a) `1 + 1 = 2`
+> >
+> > b) `\frac{3}{4}`
+> >
+> > c) `\left( \frac{3}{4} \right)^{(1 + 1)} = \frac{9}{16}`
+> >
+> > Notice that most purely visual commands like `\left`, `\right`, `\quad`, .. are allowed and will simply be ignored by the parser.
 
 ## Values and Symbols
 
@@ -55,6 +67,28 @@ The symbols `e`, `i` and `\pi` are predefined to be equal to [eulers number](htt
 **Matrices** are specified by placing values in any [matrix](https://www.overleaf.com/learn/latex/Matrices) or array environment.
 As an example, the following matrix $\begin{bmatrix} 1 & 2 \\ a & bc \end{bmatrix}$ can be written as `$\begin{bmatrix} 1 & 2 \\ a & bc \end{bmatrix}$`.
 
+Matrix types can be indexed by prepending them with an *index* operator, of the form `_{[r, c]}` or `_{[i]}`, where `r` and `c` is the <u>r</u>ow and <u>c</u>olumn to index, and `i` is the <u>i</u>ndex in a vector.
+Note that matrices are **0 indexed**, meaning a value of 0 must be supplied, in order to index the first row / column of a matrix.
+
+> [!important] Exercise
+> Translate the following natural language expressions into \(\LaTeX\) and evaluate them with **LaTeX Math**.
+>
+> a) the matrix symbol \(M\) indexed at \(x, y\). (remember matrix symbols are commonly bold)
+>
+> b) The binary number `0011` multiplied with the octal number 16
+>
+> c) A [rotation matrix](https://en.wikipedia.org/wiki/Rotation_matrix) with \(\theta = \frac{\pi}{2}\)
+>
+> > [!success]- answers
+> >
+> > a) `\mathbf{M}_{[x, y]}`
+> >
+> > b) `0b0011 \cdot 0o16 = 42`
+> >
+> > c) `\begin{bmatrix} \cos \frac{\pi}{2} & - \sin \frac{\pi}{2} \\ \sin \frac{\pi}{2} & \cos \frac{\pi}{2} \end{bmatrix} = \begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix}`
+> >
+> > Take note of how much we repeated ourselves in the solution to c)! This will be addressed in [AAA](MISSING-LINK).
+
 ## Built-in Functions
 
 In addition to the arithmetic operators, various mathematical functions are also supported.
@@ -65,18 +99,39 @@ Some basic functions include `\sqrt ..` ([square root](https://en.wikipedia.org/
 In addition to these, all the [trigonometric functions](https://en.wikipedia.org/wiki/Trigonometric_functions) are also supported (e.x. `\sin`, `\cos`, `\arccot`).
 These functions expect their input to be in [radians](https://en.wikipedia.org/wiki/Radian).
 
-Functions from other areas of mathematics like combinatorics (e.x. `\binom`), complex numbers (e.x. `\Re`, `\Im`, `\arg`) and linear algebra (e.x. `\mathbf{H}_{..}` for the [hessian matrix](https://en.wikipedia.org/wiki/Hessian_matrix)) are also integrated into the plugin.
+Functions from other areas of mathematics like combinatorics (e.x. `\binom`), complex numbers (e.x. `\Re`, `\Im`, `\arg`) and calculus (e.x. `\grad(..)` for the [gradient](https://en.wikipedia.org/wiki/Gradient) of an expression) are also integrated into the plugin.
 
-<!-- instead of the below, have a showcase now, so do like a mini exercise with the user and show how it can be solved
-we could definetly do like a minimum finding thingy, so we find the extrema of some 2d function or smnthng -->
-x^{2} + y^{2} + 100 \, \tanh^{2}\left(x - 10 \right) - 100
+> [!important] Exercise
+> Translate the following natural language expressions into \(\LaTeX\) and evaluate them with **LaTeX Math**.
+>
+> a) The sum of sine of \(x\) squared and cosine of \(x\) squared.
+>
+> b) \(e\) raised to the power of the product between the imaginary constant and pi.
+>
+> c) A north-east pointing \(2\)d unit vector, scaled by one fourth. 
+>
+> > [!success]- answers
+> >
+> > a) `\sin^2 x + \cos^2 x = 1`
+> >
+> > b) `e^{i \cdot \pi} = -1` or `\exp(i \cdot \pi)`
+> >
+> > c) `\begin{bmatrix} \frac{1}{\sqrt 2} \\ \frac{1}{\sqrt 2} \end{bmatrix}`
 
-Check if above has a global minimum at (0, 0)
-<!-- TODO: this should be in the referenced or the how to section? -->
+<!-- ## Putting It To Use
+
+In this section, we will use our new tools to solve a problem, which is done trivially using **LaTeX Math**.
+
+So let's get started.
+
+Consider the following expression.
+$$
+x^2 + y^3 - 5 y
+$$
+
+At which $(x, y)$ pairs does this expression have [stationary points](https://en.wikipedia.org/wiki/Stationary_point)?
+
 ## Derivatives and Integrals
-
-### Lagrange Notation
-
 NOT CORRECT, just ordered by x, y, z, then u, v s and t or smnthng and then alphabetically.
 To differentiate expressions with strictly 1 unknown variables, prepend them with primes (`'`).
 Note that only this limited subset of the [Lagrange notation](https://en.wikipedia.org/wiki/Notation_for_differentiation) is supported.
@@ -114,4 +169,4 @@ $$
 $$
 \dv{\dd \sin x \cdot \sin y}{\dd x \dd y} = \cos x \cos y
 $$
-```
+``` -->
