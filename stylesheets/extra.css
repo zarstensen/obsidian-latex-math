@@ -1,0 +1,21 @@
+.latex-toggle-wrapper {
+    position: relative;
+    margin: 1em 0;
+}
+
+.latex-toggle-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.25em 0.5em;
+    font-size: 0.75em;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.latex-source {
+    background: var(--md-code-bg-color);
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+}
