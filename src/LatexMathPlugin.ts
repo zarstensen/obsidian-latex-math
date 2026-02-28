@@ -51,17 +51,17 @@ export default class LatexMathPlugin extends Plugin {
 
         // add commands
         this.addCommands(new Map([
-            [new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.EVAL_LOGIC, response_verifier), 'Evaluate LaTeX logic expression'],
-            [new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Partial fraction decompose LaTeX expression'],
-            [new SolveCommand(response_verifier), 'Solve LaTeX expression'],
-            [new ConvertSympyCommand(response_verifier), 'Convert LaTeX expression to Sympy'],
-            [new UnitConvertCommand(response_verifier), 'Convert units in LaTeX expression'],
-            [new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)'],
-            [new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)'],
+            [new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate expression'],
+            [new EvaluateCommand(EvaluateMode.EVAL_LOGIC, response_verifier), 'Evaluate logic expression'],
+            [new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf expression'],
+            [new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand expression'],
+            [new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor expression'],
+            [new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Apart expression'],
+            [new SolveCommand(response_verifier), 'Solve equation'],
+            [new ConvertSympyCommand(response_verifier), 'Convert expression to Sympy'],
+            [new UnitConvertCommand(response_verifier), 'Convert units'],
+            [new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table (Markdown)'],
+            [new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table (LaTeX)'],
         ]));
 
         // import latex packages
