@@ -1,7 +1,8 @@
-from typing import Any, cast, override
+from typing import Any, Generator, Iterable, cast, override
 
 from pydantic import BaseModel
 from sympy import *
+from sympy.core.relational import Relational
 from sympy.solvers.solveset import NonlinearError
 
 from lmat_cas_client.Client import HandlerError
@@ -14,6 +15,39 @@ from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
 from lmat_cas_client.math_lib.units import UnitUtils
 
 from .CommandHandler import *
+
+
+def _split_matrix_eqs(equations: Iterable[Basic]) -> Generator[Basic]:
+    """
+    Split every matrix equation (matrix on lhs and rhs) into a series of equations,
+    for each element in the matrices.
+
+    Args:
+        equations (list[Basic])
+
+    Raises:
+        HandlerError
+
+    Yields:
+        Basic: new equations generated from equations arg.
+    """
+    for eq in equations:
+        match eq:
+            case Relational():
+                match cast(Any, eq.lhs), cast(Any, eq.rhs):
+                    case MatrixBase() as lhs_mat, MatrixBase() as rhs_mat:
+                        if lhs_mat.shape != rhs_mat.shape:
+                            raise HandlerError(
+                                f"Cannot solve equations with different matrix shapes!\nlhs was {lhs_mat.shape} rhs was {rhs_mat.shape}"
+                            )
+
+                        for row in range(lhs_mat.rows):
+                            for col in range(rhs_mat.cols):
+                                yield type(eq)(lhs_mat[row, col], rhs_mat[row, col])
+                    case _:
+                        yield eq
+            case _:
+                yield eq
 
 
 class SolveMessage(BaseModel):
@@ -70,9 +104,11 @@ class SolveHandler(CompilingCommandHandler):
         )
 
         equations = list(
-            self._cas_expr_compiler.compile(
-                message.expression, definition_store
-            ).get_all_expr()
+            _split_matrix_eqs(
+                self._cas_expr_compiler.compile(
+                    message.expression, definition_store
+                ).get_all_expr()
+            )
         )
 
         # get a list of free symbols, by combining all the equations individual free symbols.
@@ -93,9 +129,6 @@ class SolveHandler(CompilingCommandHandler):
 
         symbols: list[Symbol | None] = [None] * len(message.symbols)
 
-        if len(message.symbols) != len(equations):
-            raise HandlerError("Incorrect number of symbols provided.")
-
         for free_symbol in free_symbols:
             if str(free_symbol) in message.symbols:
                 symbol_index = message.symbols.index(str(free_symbol))
@@ -106,7 +139,7 @@ class SolveHandler(CompilingCommandHandler):
 
         if (
             len(equations) == 1 and len(symbols) == 1
-        ):  # these two should always have equal lenth.
+        ):  # these two should always have equal length.
             solution_set = solveset(equations[0], symbols[0], domain=solve_domain)
         else:
             try:
@@ -170,9 +203,11 @@ class SolveInfoHandler(CompilingCommandHandler):
             message.environment, self._def_store_compiler
         )
         equations = list(
-            self._cas_expr_compiler.compile(
-                message.expression, definition_store
-            ).get_all_expr()
+            _split_matrix_eqs(
+                self._cas_expr_compiler.compile(
+                    message.expression, definition_store
+                ).get_all_expr()
+            )
         )
 
         # time for a full symbols list, and a default symbols list maybe?

@@ -58,6 +58,33 @@ class TestSolve:
         assert result.solution == FiniteSet((0, 0), (1, Rational(3, 2)))
         assert result.symbols == [x, y]
 
+        result = handler.handle({
+            "expression": r"""
+                \begin{bmatrix}
+                3 & 2 & -1 \\
+                2 & -2 & 4 \\
+                2 & -1 & 2
+                \end{bmatrix}
+                \begin{bmatrix}
+                x \\
+                y \\
+                z
+                \end{bmatrix}
+                =
+                \begin{bmatrix}
+                1 \\
+                -2 \\
+                0
+                \end{bmatrix}
+
+                """,
+            "environment": {},
+            "symbols": ["x", "y", "z"],
+        })
+
+        assert result.solution == FiniteSet((1, -2, -2))
+        assert result.symbols == [x, y, z]
+
     def test_solve_multivariate(self):
         x, y, z = symbols("x y z")
 
