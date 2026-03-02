@@ -6,59 +6,6 @@
 %import .cas_expr.relation
 %import .cas_logic_expr.cas_logic_expression
 
-// what is the left hand side?
-// - symbol
-// - symbol + function arg list
-// i think that is it?
-
-// what is the right hand side?
-// - relation
-// - set? (for assumptions)
-
-// what is the separator
-// - := (definition)
-// - \stackrel{def}{=}
-// - \stackrel{\mathrm{def}}{=}
-// - \vcentcoloneq(q?)
-// - =: (for flipping stuff?)
-// - \in (assumptions)
-// - \mapsto (undefined function assumptions)
-
-// what is a definition expression?
-// let def_expr represent a singular definition rule, then multiple def_expr are added via. the following methods.
-//
-// whitespace command: <--- And all of this stuff last [ ]
-// def_expr \quad def_expr (x := 5 \quad y := 10)
-//
-// chained with logical and
-// def_expr \land def_expr (x := 5 \land y := 10)
-//
-// system of expressions environments:
-// \begin{cases}
-// x &:= 5 \\
-// y &:= 10 \\
-// \end{cases}
-
-
-// some definitions examples:
-// == DEFINING A VARIABLE ==  <--- Start Here [ ]
-// x := 5
-// f (x, y) := x^2
-// ^ ^
-// | |
-// Symbol
-//   |
-//   Function Arguments
-// 
-// == DEFINING ASSUMPTIONS ON A SYMBOL == <--- Then Here [ ]
-//
-// x \in R (assume x to be Real)
-// x, y, z \in \mathbbm{Z} (assume x, y and z to be integers).
-//
-// == DEFINE SYMBOL TO BE AN UNDEFINED FUNCTION == <--- And Finally Here [ ]
-// f (x, y, z) \mapsto \mathbbm{R} (the symbol 'f', should be interpreted as a function taking 3 arguments, x, y and z, and its output always being a part of the real numbers set)
-//
-
 cas_logic_expr_def: symbol_cas_logic_expr_def (_DEF_SPACE symbol_cas_logic_expr_def)* -> cas_expr_def
 
 cas_expr_def: _definition ((_PROP_OP_AND|_DEF_SPACE) _definition)*

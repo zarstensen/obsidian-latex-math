@@ -18,8 +18,7 @@ export class LmatEnvironment {
         return new LmatEnvironment(
             parsed_lmat_block.symbols,
             definitions,
-            parsed_lmat_block.units?.system,
-            parsed_lmat_block.solve?.domain
+            parsed_lmat_block.units?.system
         );
     }
 
@@ -98,10 +97,6 @@ export class LmatEnvironment {
          * if left undefined, SI is used as the default system.
          */
         public unit_system: string | undefined = undefined,
-        /**
-         * the domain is a sympy expression, evaluating to the default solution domain of any equation solutions.
-         */
-        public solve_domain: string | undefined = undefined
     ) { }
 
     // regex for extracting the contents of an lmat code block.
