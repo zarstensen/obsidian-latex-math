@@ -11,13 +11,16 @@ from lmat_cas_client.compiling.Compiler import (
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
-from lmat_cas_client.math_lib.SymbolUtils import symbols_variable_order
+from lmat_cas_client.math_lib.SymbolUtils import (
+    symbol_assumptions_set,
+    symbols_variable_order,
+)
 from lmat_cas_client.math_lib.units import UnitUtils
 
 from .CommandHandler import *
 
 
-def _split_matrix_eqs(equations: Iterable[Basic]) -> Generator[Basic]:
+def _split_matrix_eqs(equations: Iterable[Basic]) -> Generator[Basic, None, None]:
     """
     Split every matrix equation (matrix on lhs and rhs) into a series of equations,
     for each element in the matrices.
@@ -79,9 +82,12 @@ class SolveResult(CommandResult):
             isinstance(solutions_set, FiniteSet)
             and len(solutions_set) <= SolveResult.MAX_RELATIONAL_FINITE_SOLUTIONS
         ):
-            return CommandResult.result(
-                dict(solution_set=lmat_latex(solutions_set.as_relational(symbols)))
-            )
+            rel_sol_set = solutions_set.as_relational(symbols)
+
+            if rel_sol_set == false:
+                rel_sol_set = EmptySet
+
+            return CommandResult.result(dict(solution_set=lmat_latex(rel_sol_set)))
         else:
             return CommandResult.result(
                 dict(
@@ -119,14 +125,6 @@ class SolveHandler(CompilingCommandHandler):
         if len(free_symbols) == 0:
             raise HandlerError("Cannot solve equation if no free symbols are present.")
 
-        solve_domain = S.Complexes
-
-        if (
-            message.environment.solve_domain is not None
-            and message.environment.solve_domain.strip() != ""
-        ):
-            solve_domain = sympify(message.environment.solve_domain)
-
         symbols: list[Symbol | None] = [None] * len(message.symbols)
 
         for free_symbol in free_symbols:
@@ -137,15 +135,14 @@ class SolveHandler(CompilingCommandHandler):
         if None in symbols:
             raise HandlerError(f"No such symbols: {message.symbols}")
 
-        if (
-            len(equations) == 1 and len(symbols) == 1
-        ):  # these two should always have equal length.
-            solution_set = solveset(equations[0], symbols[0], domain=solve_domain)
-        else:
-            try:
-                solution_set = linsolve(equations, symbols)
-            except NonlinearError:
-                solution_set = nonlinsolve(equations, symbols)
+        match equations, symbols:
+            case [eq], [Symbol() as symb]:
+                solution_set = solveset(eq, symb, domain=symbol_assumptions_set(symb))
+            case _:
+                try:
+                    solution_set = linsolve(equations, symbols)
+                except NonlinearError:
+                    solution_set = nonlinsolve(equations, symbols)
 
         unit_system = message.environment.unit_system
 
@@ -165,6 +162,9 @@ class SolveHandler(CompilingCommandHandler):
                         for sol in solution_set.args
                     )
                 )
+
+        if solution_set == false:
+            solution_set = EmptySet
 
         return SolveResult(solution_set, symbols)
 

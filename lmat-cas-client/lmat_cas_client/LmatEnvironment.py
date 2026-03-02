@@ -17,5 +17,3 @@ class LmatEnvironment(BaseModel):
     definitions: list[EnvDefinition] = Field(default_factory=list)
 
     unit_system: Optional[str] = None
-
-    solve_domain: Optional[str] = None

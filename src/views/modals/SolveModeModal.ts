@@ -2,14 +2,13 @@ import { App, finishRenderMath, Notice, renderMath, Setting } from "obsidian";
 import { LatexMathSymbol } from "/models/cas/messages/SolveMessage";
 import { BaseModal } from "./BaseModal";
 
-type SolveConfig = { domain: string, symbols: LatexMathSymbol[] };
+type SolveConfig = { symbols: LatexMathSymbol[] };
 
 // The SymbolSelectorModal provides a modal dialog to select a single symbol from a list of symbols.
 // Once opened, the getSelectedSymbolAsync method can be awaited to get the selected symbol.
 export class SolveModeModal extends BaseModal {
     constructor(symbols: LatexMathSymbol[],
         protected equation_count: number,
-        protected domain: string,
         app: App) {
         super(app);
 
@@ -29,15 +28,6 @@ export class SolveModeModal extends BaseModal {
         // setup view
 
         this.setTitle("Solve equations");
-
-        new Setting(this.contentEl)
-            .setName("Solution domain")
-            .addText(text => {
-                text.setValue(this.domain);
-                text.onChange((value) => {
-                    this.domain = value;
-                });
-            });
 
         // create list of selectable symbols.
         const symbols_div = this.contentEl.createDiv("prompt-results");
@@ -86,11 +76,11 @@ export class SolveModeModal extends BaseModal {
         }
 
         this.close();
-        this.solve_config_resolve({ domain: this.domain, symbols: selected_symbols });
+        this.solve_config_resolve({ symbols: selected_symbols });
     }
 
     private symbol_selection: Map<LatexMathSymbol, boolean> = new Map();
 
     private solve_config_promise: Promise<SolveConfig>;
-    private solve_config_resolve: (value: SolveConfig | PromiseLike<SolveConfig>) => void;
+    private solve_config_resolve: (value: SolveConfig | PromiseLike<SolveConfig>) => void = (_) => { };
 }
