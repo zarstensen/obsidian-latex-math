@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import ChainMap, Mapping, Optional, cast
 
-from lark import Token, Transformer, Tree, v_args
+from lark import Transformer, Tree, v_args
 from sympy import Function, Symbol
 
 from lmat_cas_client.compiling.definition.DefinitionStore import (
@@ -23,35 +23,6 @@ from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     DepsTransformer,
 )
 from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
-
-_SET_TERM_TO_ASSUMPTION = {
-    "COMPLEX": "complex",
-    "ALGEBRAIC": "algebraic",
-    "TRANSCENDENTAL": "transcendental",
-    "EXT_REAL": "extended_real",
-    "REAL": "real",
-    "IMAGINARY": "imaginary",
-    "RATIONAL": "rational",
-    "IRRATIONAL": "irrational",
-    "INTEGER": "integer",
-    "NONINTEGER": "noninteger",
-    "EVEN": "even",
-    "ODD": "odd",
-    "PRIME": "prime",
-    "NONZERO": "nonzero",
-    "EXT_NONZERO": "extended_nonzero",
-    "POSITIVE": "positive",
-    "NONNEGATIVE": "nonnegative",
-    "NEGATIVE": "negative",
-    "NONPOSITIVE": "nonpositive",
-    "EXT_POSITIVE": "extended_positive",
-    "EXT_NONNEGATIVE": "extended_nonnegative",
-    "EXT_NEGATIVE": "extended_negative",
-    "EXT_NONPOSITIVE": "extended_nonpositive",
-}
-"""
-Map of assumption set terminals, to their corresponding sympy assumption
-"""
 
 
 @v_args(inline=True)
@@ -164,8 +135,54 @@ class DefinitionsTransformer(Transformer):
             for p in params
         )
 
-    def assumption_set(self, assum_set_term: Token):
-        return {_SET_TERM_TO_ASSUMPTION[assum_set_term.type]: True}
+    # ==== assumption sets ====
+    def SET_COMPLEX(self, _):
+        return {"complex": True}
+
+    def SET_REAL(self, _):
+        return {"real": True}
+
+    def SET_IMAGINARY(self, _):
+        return {"imaginary": True}
+
+    def SET_RATIONAL(self, _):
+        return {"rational": True}
+
+    def SET_INTEGER(self, _):
+        return {"integer": True}
+
+    def SET_NATURAL(self, _):
+        return {"integer": True, "positive": True, "nonzero": True}
+
+    def SET_EVEN(self, _):
+        return {"even": True}
+
+    def SET_ODD(self, _):
+        return {"odd": True}
+
+    def SET_PRIME(self, _):
+        return {"prime": True}
+
+    def ext_real_set(self, *_):
+        return {"extended_real": True}
+
+    def algebraic_set(self, *_):
+        return {"algebraic": True}
+
+    def positive_set(self, assum: Mapping[str, bool], *_):
+        return {**assum, "positive": True}
+
+    def nonnegative_set(self, assum: Mapping[str, bool], *_):
+        return {**assum, "nonnegative": True}
+
+    def negative_set(self, assum: Mapping[str, bool], *_):
+        return {**assum, "negative": True}
+
+    def nonpositive_set(self, assum: Mapping[str, bool], *_):
+        return {**assum, "nonpositive": True}
+
+    def natural0_set(self, assum: Mapping[str, bool], *_):
+        return {**assum, "nonzero": False}
 
 
 definitions_transformer_runner = TransformerRunner[
