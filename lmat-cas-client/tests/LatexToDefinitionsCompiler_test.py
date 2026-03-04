@@ -46,19 +46,6 @@ class TestLatexToDefinitionCompiler:
         assert isinstance(result["x"], SymbolDefinition)
         assert result["x"].value.expr == Symbol("x", algebraic=True)
 
-        # Transcendental number (two notations)
-        result = self.compiler.compile(r"x \in \mathbb{C} - \overline{\mathbb{Q}}")
-        assert len(result) == 1
-        assert isinstance(result["x"], SymbolDefinition)
-        assert result["x"].value.expr == Symbol("x", transcendental=True)
-
-        result = self.compiler.compile(
-            r"x \in \mathbb{C} \setminus \overline{\mathbb{Q}}"
-        )
-        assert len(result) == 1
-        assert isinstance(result["x"], SymbolDefinition)
-        assert result["x"].value.expr == Symbol("x", transcendental=True)
-
         # Extended real
         result = self.compiler.compile(r"x \in \overline{\mathbb{R}}")
         assert len(result) == 1
@@ -71,13 +58,8 @@ class TestLatexToDefinitionCompiler:
         assert isinstance(result["x"], SymbolDefinition)
         assert result["x"].value.expr == Symbol("x", real=True)
 
-        # Imaginary (two notations)
+        # Imaginary
         result = self.compiler.compile(r"x \in \mathbb{I}")
-        assert len(result) == 1
-        assert isinstance(result["x"], SymbolDefinition)
-        assert result["x"].value.expr == Symbol("x", imaginary=True)
-
-        result = self.compiler.compile(r"x \in \mathbb{I} - \set{0}")
         assert len(result) == 1
         assert isinstance(result["x"], SymbolDefinition)
         assert result["x"].value.expr == Symbol("x", imaginary=True)
@@ -87,24 +69,11 @@ class TestLatexToDefinitionCompiler:
         assert len(result) == 1
         assert isinstance(result["x"], SymbolDefinition)
         assert result["x"].value.expr == Symbol("x", rational=True)
-
-        # Irrational
-        result = self.compiler.compile(r"x \in \mathbb{R} - \mathbb{Q}")
-        assert len(result) == 1
-        assert isinstance(result["x"], SymbolDefinition)
-        assert result["x"].value.expr == Symbol("x", irrational=True)
-
         # Integer
         result = self.compiler.compile(r"x \in \mathbb{Z}")
         assert len(result) == 1
         assert isinstance(result["x"], SymbolDefinition)
         assert result["x"].value.expr == Symbol("x", integer=True)
-
-        # Noninteger
-        result = self.compiler.compile(r"x \in \overline{\mathbb{R}} - \mathbb{Z}")
-        assert len(result) == 1
-        assert isinstance(result["x"], SymbolDefinition)
-        assert result["x"].value.expr == Symbol("x", noninteger=True)
 
         # Even
         result = self.compiler.compile(r"x \in \mathbb{E}")
@@ -123,18 +92,6 @@ class TestLatexToDefinitionCompiler:
         assert len(result) == 1
         assert isinstance(result["x"], SymbolDefinition)
         assert result["x"].value.expr == Symbol("x", prime=True)
-
-        # Nonzero
-        result = self.compiler.compile(r"x \in \mathbb{R} - \set{0}")
-        assert len(result) == 1
-        assert isinstance(result["x"], SymbolDefinition)
-        assert result["x"].value.expr == Symbol("x", nonzero=True)
-
-        # Extended nonzero
-        result = self.compiler.compile(r"x \in \overline{\mathbb{R}} - \set{0}")
-        assert len(result) == 1
-        assert isinstance(result["x"], SymbolDefinition)
-        assert result["x"].value.expr == Symbol("x", extended_nonzero=True)
 
         # Positive (two notations)
         result = self.compiler.compile(r"x \in \mathbb{R}_{+}")

@@ -1,5 +1,5 @@
 %import .cas_expr._IGNORE -> _CAS_EXPR__IGNORE
-%import .cas_expr (_L_FORMAT, _R_FORMAT, _WS, ADD, SUB, LT, LTE, GT, GTE, _L_BRACE, _R_BRACE, _L_PAREN, _R_PAREN, _CMD_OVERLINE, _UNDERSCORE, _COMMA, _PROP_OP_AND)
+%import .cas_expr (_L_FORMAT, _R_FORMAT, _WS, ADD, SUB, LT, LTE, GT, GTE, _L_BRACE, _R_BRACE, _L_PAREN, _R_PAREN, _CMD_OVERLINE, _CMD_BAR, _UNDERSCORE, _COMMA, _PROP_OP_AND)
 // should these be aliased? it does not really make a difference, but i guess it makes sense to do it?
 %import .cas_expr._symbol -> _cas_expr__symbol
 %import .cas_expr.undefined_function -> cas_expr__undefined_function
@@ -71,37 +71,32 @@ symbol_cas_expr_def: symbol _DEF_OP [relation]
 
 function_def: symbol function_params _DEF_OP [relation]
 
-assumption_def: symbol (_COMMA symbol)* _VAR_ASSUME_OP assumption_set
+assumption_def: symbol (_COMMA symbol)* _VAR_ASSUME_OP _assumption_set
 
-function_assumption_def: symbol function_params _FUN_ASSUME_OP assumption_set
+function_assumption_def: symbol function_params _FUN_ASSUME_OP _assumption_set
 
 function_params: _L_PAREN symbol (_COMMA symbol)* _R_PAREN
 
 ?symbol: _cas_expr__symbol
 
-assumption_set: COMPLEX
-    | ALGEBRAIC
-    | TRANSCENDENTAL
-    | EXT_REAL
-    | REAL
-    | IMAGINARY
-    | RATIONAL
-    | IRRATIONAL
-    | INTEGER
-    | NONINTEGER
-    | EVEN
-    | ODD
-    | PRIME
-    | NONZERO
-    | EXT_NONZERO
-    | POSITIVE
-    | NONNEGATIVE
-    | NEGATIVE
-    | NONPOSITIVE
-    | EXT_POSITIVE
-    | EXT_NONNEGATIVE
-    | EXT_NEGATIVE
-    | EXT_NONPOSITIVE
+_assumption_set: _signed_set
+    | SET_COMPLEX
+    | SET_IMAGINARY
+    | algebraic_set
+    | positive_set
+    | nonnegative_set
+    | negative_set
+    | nonpositive_set
+    | natural0_set
+
+_signed_set: SET_REAL|ext_real_set|SET_RATIONAL|SET_INTEGER|SET_EVEN|SET_ODD|SET_PRIME 
+ext_real_set: (_CMD_OVERLINE|_CMD_BAR) _L_BRACE? SET_REAL _R_BRACE?
+algebraic_set: (_CMD_OVERLINE|_CMD_BAR) _L_BRACE? SET_RATIONAL _R_BRACE?
+positive_set: _signed_set _UNDERSCORE (_L_BRACE? ADD _R_BRACE?| _L_BRACE GT "0" _R_BRACE)
+nonnegative_set: _signed_set _UNDERSCORE _L_BRACE GTE "0" _R_BRACE
+negative_set: _signed_set _UNDERSCORE (_L_BRACE? SUB _R_BRACE?| _L_BRACE LT "0" _R_BRACE)
+nonpositive_set: _signed_set _UNDERSCORE _L_BRACE LTE "0" _R_BRACE
+natural0_set: SET_NATURAL _UNDERSCORE _L_BRACE? "0" _R_BRACE?
 
 // ======== TERMINALS ========
 
@@ -122,28 +117,13 @@ _FUN_ASSUME_OP: /\\(long)?mapsto/
 _SET_FORMATTER: /\\(pmb|boldsymbol|mathbf|mathbbm?|mathcal|mathscr)/
 _CMD_SET_MINUS: "\\setminus" | "\\backslash" | "-"
 _CMD_SET: "\\set"
-COMPLEX: _SET_FORMATTER _L_BRACE "C" _R_BRACE | "C"
-ALGEBRAIC: _CMD_OVERLINE _L_BRACE RATIONAL _R_BRACE
-TRANSCENDENTAL: COMPLEX _WS? _CMD_SET_MINUS _WS? ALGEBRAIC
-EXT_REAL: _CMD_OVERLINE _L_BRACE REAL _R_BRACE
-REAL: _SET_FORMATTER _L_BRACE "R" _R_BRACE | "R"
-IMAGINARY: (_SET_FORMATTER _L_BRACE "I" _R_BRACE | "I") (_WS? _CMD_SET_MINUS _WS? _CMD_SET _L_BRACE "0" _R_BRACE)?
-RATIONAL: _SET_FORMATTER _L_BRACE "Q" _R_BRACE | "Q"
-IRRATIONAL: REAL _WS? _CMD_SET_MINUS _WS? RATIONAL
-INTEGER: _SET_FORMATTER _L_BRACE "Z" _R_BRACE | "Z"
-NONINTEGER: EXT_REAL _WS? _CMD_SET_MINUS _WS? INTEGER
-EVEN: _SET_FORMATTER _L_BRACE "E" _R_BRACE | "E"
-ODD: _SET_FORMATTER _L_BRACE "O" _R_BRACE | "O"
-PRIME: _SET_FORMATTER _L_BRACE "P" _R_BRACE | "P"
-NONZERO: REAL _WS? _CMD_SET_MINUS _WS? _CMD_SET _L_BRACE "0" _R_BRACE
-EXT_NONZERO: EXT_REAL _WS? _CMD_SET_MINUS _WS? _CMD_SET _L_BRACE "0" _R_BRACE
-POSITIVE: REAL _UNDERSCORE _L_BRACE (_WS? ADD _WS? | _WS? GT _WS? "0" _WS?) _R_BRACE
-NONNEGATIVE: REAL _UNDERSCORE _L_BRACE _WS? GTE _WS? "0" _WS? _R_BRACE
-NEGATIVE: REAL _UNDERSCORE _L_BRACE (SUB | LT "0") _R_BRACE
-NONPOSITIVE: REAL _UNDERSCORE _L_BRACE _WS? LTE _WS? "0" _WS? _R_BRACE
-EXT_POSITIVE: EXT_REAL _UNDERSCORE _L_BRACE (_WS? ADD _WS? | _WS? GT _WS? "0" _WS?) _R_BRACE
-EXT_NONNEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE _WS? GTE _WS? "0" _WS? _R_BRACE
-EXT_NEGATIVE: EXT_REAL _UNDERSCORE _L_BRACE (_WS? SUB _WS? | _WS? LT _WS? "0" _WS?) _R_BRACE
-EXT_NONPOSITIVE: EXT_REAL _UNDERSCORE _L_BRACE _WS? LTE _WS? "0" _WS? _R_BRACE
 
-
+SET_COMPLEX: _SET_FORMATTER _WS? _L_BRACE _WS? "C" _WS? _R_BRACE | "C"
+SET_REAL: _SET_FORMATTER _WS? _L_BRACE _WS? "R" _WS? _R_BRACE | "R"
+SET_IMAGINARY: _SET_FORMATTER _WS? _L_BRACE _WS? "I" _WS? _R_BRACE | "I"
+SET_RATIONAL: _SET_FORMATTER _WS? _L_BRACE _WS? "Q" _WS? _R_BRACE | "Q"
+SET_INTEGER: _SET_FORMATTER _WS? _L_BRACE _WS? "Z" _WS? _R_BRACE | "Z"
+SET_NATURAL: _SET_FORMATTER _WS? _L_BRACE _WS? "N" _WS? _R_BRACE | "N"
+SET_EVEN: _SET_FORMATTER _WS? _L_BRACE _WS? "E" _WS? _R_BRACE | "E"
+SET_ODD: _SET_FORMATTER _WS? _L_BRACE _WS? "O" _WS? _R_BRACE | "O"
+SET_PRIME: _SET_FORMATTER _WS? _L_BRACE _WS? "P" _WS? _R_BRACE | "P"
