@@ -4,18 +4,21 @@
 // ======== Core structure ========
 
 
-
-latex_math_string: relation | system_of_relations | proposition_chain
+// a cas expression, is a system of Basic sympy objects + some additional parsing metadata
+cas_expression: _system_of_relations
 
 _rel_op: EQUAL | NOT_EQUAL | LT | LTE | GT | GTE
 _align: _ALIGN | _LATEX_NEWLINE
 relation: (_align* _rel_op)? expression (_rel_op expression)* (_rel_op _align*)?
 
+// the below 3 rules (expression, term and implicit_multiplication) are conditionally inlined,
+// as they all should do nothing to their child, if only 1 is present.
+
 // an expression is a sum of terms
-expression: (_align* (ADD|SUB))? term ((ADD|SUB) term)*
+?expression: (_align* (ADD|SUB))? term ((ADD|SUB) term)*
 
 // a term is a series of products of factors separated by product operators.
-term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_CROSS|OPERATOR_DIV) (_align* (ADD|SUB))? implicit_multiplication)*
+?term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_CROSS|OPERATOR_DIV) (_align* (ADD|SUB))? implicit_multiplication)*
 
 // factors with no operator between them are implicitly multiplied together.
 ?implicit_multiplication: _align* factor (_align* factor)* _align*
@@ -39,10 +42,10 @@ term: implicit_multiplication ((OPERATOR_MUL|OPERATOR_CROSS|OPERATOR_DIV) (_alig
     | basefactor_arg
 
 // matches all base factors in an exponentiation, which may be passed to a mathematical function as an argument.
-?basefactor_arg: substitute_symbol
+?basefactor_arg: _symbol
     | function_as_arg
     | _number
-    | _matrix_notation
+    | matrix_notation
 
 // various rules for grouping expressions surrounded by delimiters.
 _delimitedfactor: parenthesees_expression | brackets_expression | braces_expression
@@ -64,32 +67,32 @@ exponentiation_arg: basefactor_arg _CARET function_special_arg -> exponentiation
 
 // ======== Symbols ========
 
-substitute_symbol: combine_symbol
-combine_symbol: indexed_symbol | _non_indexed_symbol
-
-!single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
+single_letter_symbol: SINGLE_LETTER_SYMBOL -> combine_symbol
 multi_letter_symbol: MULTI_LETTER_SYMBOL -> combine_symbol
 
 // a formatted symbol is any symbol surrounded with a latex command which changes it visually.
 // this could for example be \mathit
-formatted_symbol: _cmd_format (BRACE_SURROUNDED_TEXT | single_letter_symbol) [PRIMES]
+formatted_symbol: _cmd_format (_L_BRACE BRACE_SURROUNDED_TEXT _R_BRACE | SINGLE_LETTER_SYMBOL) [PRIMES]
+
 _non_indexed_symbol: single_letter_symbol | multi_letter_symbol | formatted_symbol
 
-indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | BRACE_SURROUNDED_TEXT) [PRIMES]
+indexed_symbol: _non_indexed_symbol _UNDERSCORE (single_letter_symbol | _digit | _L_BRACE BRACE_SURROUNDED_TEXT _R_BRACE) [PRIMES]
 
-// all the rules here should return the NAME (as in a str) of the symbol to be created
-// the symbol rule is responsible for eactually creating the symbol and optionally substituting its value.
+// General rule matching all symbol rules.
+// all of these rules return an SymbolIr, which
+// can be used to get the original symbol value,
+// or its defined value (if present)
+_symbol: _non_indexed_symbol | indexed_symbol
 
 // this rule optionally tries to create a unit, instead of a symbol, if bunits are used.
 // otherwise this is the same as the symbol rule.
-unit: _L_BRACE combine_symbol _R_BRACE
+unit: _L_BRACE _symbol _R_BRACE
 
 // ======== Numbers ========
 
 // groups any value which evaluates to a number.
 _number: _numeric_number | _digit
 // groups any value which evaluates to a number, and can be passed as an argument, without surrounding it with braces.
-// it may be a bit counter intuitive, but here pi (and other constants) are essentially seen as a "_digit".
 _digit: _numeric_digit | _constant
 
 _constant: CONST_INFINITY
@@ -99,10 +102,16 @@ _numeric_number: HEXADECIMAL_NUMBER | BASE_10_NUMBER | OCTAL_NUMBER | BINARY_NUM
 
 // ======== Functions ========
 
-undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PAREN
+// matches a potential function application, anything of the form,
+// f (x, y, ....)      where 'f' is some symbol.
+// if 'f' turns out to *not* be a symbol, this should just be interpreted as an implicit
+// multiplication between 'f' and the singular argument in its parameter list.
+// If there is more than one argument in its parameter list, a syntax error should be
+// raised
+maybe_function_application: _symbol _L_PAREN list_of_expressions _R_PAREN
 
 
-// groups all functions whic cannot be used as an argument to other functions.
+// groups all functions which cannot be used as an argument to other functions.
 // to pass this type of function, delimit them so they are matched by the _delimited_factor rule.
 ?function_noarg: _postfix_function
 
@@ -118,7 +127,7 @@ undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PARE
     | _derivative
     | _postfix_function_arg
 
-?named_function: undefined_function
+?named_function: maybe_function_application
     | trig_function
     | _log
     | exponential
@@ -131,8 +140,7 @@ undefined_function: combine_symbol _UNDEF_FUNC_START list_of_expressions _R_PARE
     | _divisibility_functions
 
 // matches a special kind of argument, defined by the fact that fractions and binomials can be passed without surrounding them with braces.
-substitute_single_letter_symbol.1: single_letter_symbol -> substitute_symbol
-?function_special_arg: braces_expression | parenthesees_expression | named_function | _delimited_function | frac | binom | substitute_single_letter_symbol | _digit
+?function_special_arg: braces_expression | frac | binom | single_letter_symbol | _digit
 
 
 // named functions
@@ -192,15 +200,14 @@ limit_direction: _L_BRACE (ADD|SUB) _R_BRACE
     | ADD
     | SUB
 
-_lim_approach_symbol: _PROP_OP_LR_IMPLICATION
-limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE substitute_symbol _lim_approach_symbol basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
+limit: _FUNC_LIMIT _UNDERSCORE _L_BRACE _symbol _RIGHT_ARROW basefactor_arg [_CARET limit_direction] _R_BRACE factor_func_arg
 
 // prioritize delimited expressions over terms, such that e.g. \sum_{j = 0}^5 (j) j is parsed as Sum(j, (j, 0, 5)) * j and not Sum(j ** 2, (j, 0, 5)).
 _delimited_arg.1: _delimitedfactor
 _delimited_arg_or_term: _delimited_arg | term
 
-_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _CARET function_special_arg _delimited_arg_or_term
-_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE substitute_symbol EQUAL expression _R_BRACE _delimited_arg_or_term
+_series_template_start_iter_first{series_name}: series_name _UNDERSCORE _L_BRACE _symbol EQUAL expression _R_BRACE _CARET function_special_arg _delimited_arg_or_term
+_series_template_end_iter_first{series_name}: series_name _CARET function_special_arg _UNDERSCORE _L_BRACE _symbol EQUAL expression _R_BRACE _delimited_arg_or_term
 
 _series_function: sum | product
 
@@ -229,11 +236,11 @@ abs: _L_BAR expression _R_BAR
 norm: _L_DOUBLE_BAR expression _R_DOUBLE_BAR
 floor: _L_FLOOR expression _R_FLOOR
 ceil: _L_CEIL expression _R_CEIL
-sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|substitute_single_letter_symbol|_digit)
-conjugate: _FUNC_CONJUGATE (braces_expression|substitute_single_letter_symbol|_digit)
+sqrt: _FUNC_SQRT [brackets_expression] (braces_expression|single_letter_symbol|_digit)
+conjugate: _FUNC_CONJUGATE (braces_expression|single_letter_symbol|_digit)
 
 // match a single argument in a list of latex style arguments (that is \command{arg1}{arg2}...{argN})
-_multiarg_func_arg: (braces_expression|substitute_single_letter_symbol|_digit)
+_multiarg_func_arg: (braces_expression|single_letter_symbol|_digit)
 // terminals signifying the delimiters and end of multiple arguments in a latex style argument list.
 // due to lalr's limited lookahead, a custom post lexer needs to insert this token when parsing.
 %declare _MULTIARG_DELIMITER
@@ -255,7 +262,7 @@ _postfix_function: factorial | percent | permille | derivative_prime | modulo
 // which matches all cases of the postfix function such that it can be passed as an argument to another function.
 //
 // all of these rules are grouped together in _postfix_function_arg
-_postfix_function_arg: factorial_func_arg | percent_func_arg | permille_func_arg | derivative_prime_func_arg
+_postfix_function_arg: factorial_func_arg | percent_func_arg | permille_func_arg | derivative_prime_func_arg | indexing
 
 factorial: _delimitedfactor _BANG
 factorial_func_arg: factor_func_postfix_arg _BANG -> factorial
@@ -267,14 +274,15 @@ permille_func_arg: factor_func_postfix_arg _PERMILLE -> permille
 derivative_prime: factor_func_arg PRIMES
 derivative_prime_func_arg: factor_func_postfix_arg PRIMES -> derivative_prime
 
-modulo: factor_func_arg _FUNC_MOD factor_func_arg
+modulo: (factor_func_arg | modulo) _FUNC_MOD factor_func_arg
 
 // core functions
-// why is _MULTIARG_DELIMITER a thing?
+// TODO: just add 2 more terminals, which match cases where arguments are not delimited,
+// there are a limited number of cases where this is allowed, so it should be doable?
 frac: _FUNC_FRAC _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 binom: _FUNC_BINOM _multiarg_func_arg _MULTIARG_DELIMITER _multiarg_func_arg _MULTIARG_EOS
 
-diff_symbol_exponent: substitute_symbol [_CARET function_special_arg]
+diff_symbol_exponent: _symbol [_CARET function_special_arg]
 diff_symbol_arg_list: ((_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) diff_symbol_exponent)+
 
 // _L_BRACE_R_BRACE_PAIR.1: _R_BRACE _WS? _L_BRACE
@@ -283,25 +291,56 @@ _derivative: derivative_func_first | derivative_symbols_first | derivative_phys_
 
 derivative_func_first: (_FUNC_DERIVATIVE [_L_BRACKET expression _R_BRACKET]|_FUNC_PARTIAL_DERIVATIVE [_CARET function_special_arg]) expression _R_BRACE _L_BRACE diff_symbol_arg_list _R_BRACE
 derivative_symbols_first: (_FUNC_DERIVATIVE [_L_BRACKET expression _R_BRACKET]|_FUNC_PARTIAL_DERIVATIVE [_CARET function_special_arg]) _R_BRACE _L_BRACE diff_symbol_arg_list _R_BRACE _delimited_arg_or_term
-derivative_phys_func_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE expression _R_BRACE _L_BRACE substitute_symbol _R_BRACE
-derivative_phys_symbols_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE substitute_symbol _R_BRACE _delimited_arg_or_term
+derivative_phys_func_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE expression _R_BRACE _L_BRACE _symbol _R_BRACE
+derivative_phys_symbols_first: _FUNC_PHYS_DERIVATIVE [ _L_BRACKET expression _R_BRACKET ] _L_BRACE _symbol _R_BRACE _delimited_arg_or_term
 
-integral: _FUNC_INTEGRAL [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) substitute_symbol -> integral_no_bounds
-    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) substitute_symbol -> integral_lower_bound_first
-    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) substitute_symbol -> integral_upper_bound_first
+integral: _FUNC_INTEGRAL [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) _symbol -> integral_no_bounds
+    | _FUNC_INTEGRAL _UNDERSCORE function_special_arg _CARET function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) _symbol -> integral_lower_bound_first
+    | _FUNC_INTEGRAL _CARET function_special_arg _UNDERSCORE function_special_arg [expression] (_DIFFERENTIAL_SYMBOL|_PARTIAL_SYMBOL) _symbol -> integral_upper_bound_first
 
 // ======== Matrices ========
 
 // det_matrix is differentiated from the other matrices, as this one evaluates to the determinant value, which is a scalar and not a matrix.
 // TODO: different name for these?
-_matrix_notation: _matrix_type | det_matrix
-_matrix_type: matrix | array_matrix
+?matrix_notation: matrix_type | det_matrix
+?matrix_type: matrix | array_matrix
 
 matrix_row_delim: MATRIX_ROW_DELIM -> matrix_like_delim
 matrix_body: matrix_row_delim? expression ((_MATRIX_COL_DELIM|matrix_row_delim) expression)* matrix_row_delim?
 matrix: CMD_BEGIN_MATRIX matrix_body CMD_END_MATRIX _MATRIX_ENV_END
 array_matrix: CMD_BEGIN_ARRAY ARRAY_ENV_OPTIONS matrix_body CMD_END_ARRAY _MATRIX_ENV_END
 det_matrix: CMD_BEGIN_VMATRIX matrix_body CMD_END_VMATRIX _MATRIX_ENV_END
+
+
+// ======== Matrix Indexing ========
+
+
+// rules for matching individual indexes in index lists.
+
+// match a range / slice index, e.g. 3..5 -> take elements from idx 3 to 5
+index_range: [ expression ] (_CMD_DOTS|_COLON) [ expression ]
+// match a catch all range / slice
+index_all: MUL | _STAR | _CMD_CDOT
+// match a index which only indexes a single element in some dimension
+index_singular: expression
+
+?index: index_range | index_all | index_singular
+
+// match a standard indicies list [ index , index ]
+standard_indicies: _L_BRACKET [index] _COMMA [index] _R_BRACKET -> indicies_2d
+    | _L_BRACKET index _R_BRACKET -> indicies_1d
+// match a complement indicies list ( index ; index )
+complement_indicies: _L_PAREN [index] _SEMICOLON [index] _R_PAREN -> indicies_2d
+    | _L_PAREN index _R_PAREN -> indicies_1d
+
+_index_template{target, indicies}: target _UNDERSCORE _L_BRACE indicies _R_BRACE
+
+complement_indexing: _index_template{_non_indexed_symbol, complement_indicies} 
+    | _index_template{factor_func_arg, complement_indicies}
+standard_indexing: _index_template{_non_indexed_symbol, standard_indicies} 
+    | _index_template{factor_func_arg, standard_indicies}
+
+?indexing: complement_indexing | standard_indexing
 
 // ======== Matrices functions ========
 
@@ -313,11 +352,13 @@ adjugate: _func_template{_FUNC_MATRIX_ADJUGATE}
 rref: _func_template{_FUNC_MATRIX_RREF}
 unitvec: _func_template{_FUNC_VEC_UNIT}
 
-gradient: _func_template{_FUNC_GRADIENT}
-hessian: _func_template{_FUNC_HESSIAN}
-jacobian: _func_template{_FUNC_JACOBIAN}
+_lin_alg_func_template{func_name}.1: func_name [_CARET function_special_arg](_UNDERSCORE _L_BRACE expression _R_BRACE | _UNDERSCORE function_special_arg | _L_PAREN expression _R_PAREN) [_L_PAREN list_of_expressions _R_PAREN]
 
-taylor: _FUNC_TAYLOR _UNDERSCORE _L_BRACE expression _COMMA expression [_COMMA expression] _R_BRACE _L_PAREN expression (_COMMA expression)* _R_PAREN
+gradient.1: _lin_alg_func_template{_FUNC_GRADIENT}
+hessian.1: _lin_alg_func_template{_FUNC_HESSIAN}
+jacobian.1: _lin_alg_func_template{_FUNC_JACOBIAN}
+
+taylor: _FUNC_TAYLOR _UNDERSCORE _L_BRACE expression _COMMA expression [_COMMA expression] _R_BRACE [_L_PAREN list_of_expressions _R_PAREN]
 
 // ======== Combinatorial functions ========
 
@@ -337,80 +378,57 @@ lcm: _FUNC_LCM _L_PAREN expression _COMMA expression _R_PAREN
 
 // ======== System of relations ========
 
-%declare _EXPR_DELIM
-system_of_relations_expr: relation
-system_of_relations_delim: _EXPR_DELIM -> matrix_like_delim
-_system_of_relations_body: system_of_relations_delim? system_of_relations_expr (system_of_relations_delim system_of_relations_expr)* system_of_relations_delim?
-system_of_relations: _CMD_BEGIN_ALIGN _system_of_relations_body _CMD_END_ALIGN
-    | _CMD_BEGIN_CASES _system_of_relations_body _CMD_END_CASES
+// there are two ways to denote a system of relations.
+// 1) in some latex environment (align or cases currently)
+// 2) separating the relations with a logical and operator
 
-// ======== Propositional Logic Structure
+%declare _SOR_EXPR_DELIM
 
-// represents a chain of propositions, separated by equivalence symbols
-proposition_chain: _proposition | (_proposition|relation) (_PROP_OP_EQUIV (_proposition|relation))+
+// environment SOR (system of relatiosn) rules
 
-// represents a single proposition in a series of chained propositions
-_proposition: _prop_bool_value | _delimited_proposition | prop_not | prop_xnor | prop_xor | prop_nor | prop_and | prop_nand | prop_or | prop_implies | prop_iff
-// represents a single proposition surrounded by parenthesess, brackets or braces.
-_delimited_proposition: _L_PAREN _proposition _R_PAREN | _L_BRACKET _proposition _R_BRACKET | _L_BRACE _proposition _R_BRACE
+sor_env_delim: _SOR_EXPR_DELIM -> matrix_like_delim
+_sor_env_body: sor_env_delim?  relation (sor_env_delim relation)* sor_env_delim?
+sor_env: _CMD_BEGIN_ALIGN _sor_env_body _CMD_END_ALIGN
+    | _CMD_BEGIN_CASES _sor_env_body _CMD_END_CASES
 
-// propositional operator presedence is based on wolfram alpha: https://www.wolframalpha.com/input?i=not+A+xor+B+nor++C+and+D+nand+E+or+F+implies+G+%3C%3D%3E+H
+// land SOR rules
 
-prop_iff: prop_iff_arg (_PROP_OP_BIIMPLICATION prop_iff_arg)+
-?prop_iff_arg: prop_implies_arg | prop_implies
+sor_and_chain: relation (_PROP_OP_AND relation)*
 
-!prop_implies: prop_implies_arg ((_PROP_OP_LR_IMPLICATION|_PROP_OP_NEG_LR_IMPLICATION|_PROP_OP_RL_IMPLICATION|_PROP_OP_NEG_RL_IMPLICATION) prop_implies_arg)+
-?prop_implies_arg: prop_or_arg | prop_or
-
-prop_or: prop_or_arg (_PROP_OP_OR prop_or_arg)+
-?prop_or_arg: prop_nand_arg | prop_nand
-
-prop_nand: prop_nand_arg (_PROP_OP_NAND prop_nand_arg)+
-?prop_nand_arg: prop_and_arg | prop_and
-
-prop_and: prop_and_arg (_PROP_OP_AND prop_and_arg)+
-?prop_and_arg: prop_nor_arg | prop_nor
-
-prop_nor: prop_nor_arg (_PROP_OP_NOR prop_nor_arg)+
-?prop_nor_arg: prop_xor_arg | prop_xor
-
-prop_xor: prop_xor_arg (_PROP_OP_XOR prop_xor_arg)+
-?prop_xor_arg: prop_xnor_arg | prop_xnor
-
-prop_xnor: prop_xnor_arg (_PROP_OP_XNOR prop_xnor_arg)+
-?prop_xnor_arg: prop_not_arg | prop_not
-
-prop_not: _PROP_OP_NOT prop_not_arg
-?prop_not_arg: _delimited_proposition | relation | _prop_bool_value
-
-_prop_bool_value: CMD_TAUTOLOGY | CMD_CONTRADICTION
+_system_of_relations: sor_env | sor_and_chain
 
 // ================ Terminals ================
 
 // ignore escaped whitespace in latex code
-%ignore /(?<!\\)\\ /
 
 _WS: /[\s\t\n\r]+/
+
+_TEXT: CMD_TEXT _WS? _L_BRACE BRACE_SURROUNDED_TEXT _R_BRACE
+// any tokens appearing in ANY terminals which are not ignored, should all be individually ignored and NOT be part of this,
+// as it will otherwise be prioritized incorrectly.
+_IGNORE.-1: /(?<!\\)\\ /
+    | "\\," | "\\thinspace" | "\\:" | "\\medspace" | "\\;" | "\\thickspace"
+    | "\\quad" | "\\qquad"
+    | "\\!" | "\\negthinspace" | "\\negmedspace" | "\\negthickspace"   
+    | "\\vrule" | "\\vcenter" | "\\vbox" | "\\vskip" | "\\vspace" | "\\hfill"
+    | "\\*" | "\\-" | "\\." | "\\/" | "\\(" | "\\=" | "\\middle"
+    | "\\limits" | "\\nolimits"
+    | "~"
+    | "\\displaystyle"
+    | _TEXT
+
+_L_FORMAT: "\\left"
+_R_FORMAT: "\\right"
+
 %ignore _WS
-
-%ignore "\\," | "\\thinspace" | "\\:" | "\\medspace" | "\\;" | "\\thickspace"
-%ignore "\\quad" | "\\qquad"
-%ignore "\\!" | "\\negthinspace" | "\\negmedspace" | "\\negthickspace"
-%ignore "\\vrule" | "\\vcenter" | "\\vbox" | "\\vskip" | "\\vspace" | "\\hfill"
-%ignore "\\*" | "\\-" | "\\." | "\\/" | "\\(" | "\\=" | "\\middle"
-%ignore "~"
-
-_LR_FORMAT: "\\left" | "\\right"
-%ignore _LR_FORMAT
-%ignore "\\limits" | "\\nolimits"
-%ignore "\\displaystyle"
-
-%ignore _TEXT
+%ignore _R_FORMAT
+%ignore _L_FORMAT
+%ignore _IGNORE
 
 // basic binary operators
 ADD: "+"
 SUB: "-"
-MUL: "*"
+MUL: "*" | "\\ast"
 DIV: "/" | "\\over"
 
 // basic common operators
@@ -418,6 +436,8 @@ _CMD_TIMES: "\\times"
 _CMD_XPROD: /\\cross(product)?/ | "\\cp"
 _CMD_CDOT:  "\\cdot"
 _CMD_VDOT: "\\dotproduct" | "\\vdot"
+// Terminal matching a bunch of repeadet horizontal dots, these may be split up into multiple terminals in the future, if needed
+_CMD_DOTS: /\\dots[cbmio]?/ | /\\[lc]?dots/ | (_CMD_CDOT|".") ~ 2..3
 _CMD_DIV:   "\\div"
 _CMD_BAR: "\\bar"
 _CMD_OVERLINE: "\\overline"
@@ -443,8 +463,6 @@ _L_BAR: _BAR
 _L_DOUBLE_BAR: _DOUBLE_BAR
 %declare _R_DOUBLE_BAR
 
-_UNDEF_FUNC_START.1: /(?<! )(?<! \\left)\(/
-
 _L_DELIMITER: _DOT | _L_ANGLE | L_BRACE_LITERAL | _L_BRACKET | _L_CEIL | _L_FLOOR | _L_PAREN
 _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOOR | _R_PAREN
 
@@ -453,28 +471,28 @@ _R_DELIMITER: _DOT | _R_ANGLE | R_BRACE_LITERAL | _R_BRACKET | _R_CEIL | _R_FLOO
 // Due to lalr's limited 1 lookahead, this needs to be a single terminal with a rather conveluted regex,
 // Below is a breakdown of it:
 //
-//  (?<brace_text>      :
+//  (                   :
 //    {                 : Initial left brace
 //    (?:               : 
 //      [^{}]+          : Match any text up till '{' or '}'
 //      |               : OR
-//      (?&brace_text)  : recursively match the entire regex
+//      (?-1)           : recursively match the entire regex
 //    )*                : Do this as much as needed 
 //    }                 : Final right brace
 //  )                   :
 //
-// it is important that the brace_text group is named, so we can reference it later for the recursive match.
-// this recursive match does not work with (?0), as lark places this regex in a larger regex,
-// so the (?0) would refer to an incorrect capturing group, leading to unexpected matches.
 // NOTE: this does not currently support escaped braces, it just treats them as they were unescaped.
-BRACE_SURROUNDED_TEXT: /({(?:[^{}]+|(?-1))*})/ 
+// TODO: update this documentation, this is currently a bit of copilot magic regex...
+BRACE_SURROUNDED_TEXT.-1: /(?<={)((?:[^{}]+|{(?:[^{}]+|(?-1))*})*)(?=})/ 
 
 
 // limit, integral, sum, and product symbols
-_FUNC_LIMIT:  "\\lim"
+_FUNC_LIMIT:  /\\lim(?!its)/
 _FUNC_INTEGRAL:  "\\int" | "\\intop"
 _FUNC_SUM:  "\\sum"
 _FUNC_PRODUCT: "\\prod"
+_RIGHT_ARROW: /\\(?:to|(?:long)?rightarrow)/
+
 
 // common functions
 _FUNC_EXP:  "\\exp"
@@ -532,8 +550,8 @@ FUNC_ASECH: CMD_OPERATOR _WS? _L_BRACE _WS? "arsech" _WS? _R_BRACE
 FUNC_ACOTH: CMD_OPERATOR _WS? _L_BRACE _WS? "arcoth" _WS? _R_BRACE
 
 _FUNC_SQRT: "\\sqrt"
-_FUNC_UPPER_GAMMA.1: "\\Gamma" _LR_FORMAT? _L_PAREN
-_FUNC_LOWER_GAMMA.1: "\\gamma" _LR_FORMAT? _L_PAREN
+_FUNC_UPPER_GAMMA.1: "\\Gamma" _L_FORMAT? _L_PAREN
+_FUNC_LOWER_GAMMA.1: "\\gamma" _L_FORMAT? _L_PAREN
 
 // matrix functions
 
@@ -555,9 +573,9 @@ _FUNC_JACOBIAN.1: CMD_MATRIX_FORMAT _WS? _L_BRACE _WS? "J" _WS? _R_BRACE
 // as the transformer needs these as individual tokens.
 //
 // Technically this means some indexed "T" symbols may rarely be incorrectly matched to this terminal,
-// e.g. "T_{x_{1,1}}(y)" would be matched by this, but these scenarios are very obscure anyways, so it should not be an issue.
+// e.g. "T_{x_{1,1}}" would be matched by this, but these scenarios are very obscure anyways, so it should not be an issue.
 //
-_FUNC_TAYLOR.1: /T(?=\s*_\s*{([^,]+?,)+.+?}(\\left)?\(.+?\))/s // (\\right)? check is not needed as .+ accounts for this
+_FUNC_TAYLOR.1: /T(?=\s*_\s*{([^,]+?,)+.+?})/s // (\\right)? check is not needed as .+ accounts for this
 
 // combinatorial functions.
 
@@ -568,18 +586,15 @@ _CMD_PERMUTATIONS: "P"
 _CMD_COMBINATIONS: "C"
 _CMD_DERANGEMENTS: "D"
 
-_FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _LR_FORMAT? _L_PAREN
-_FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _LR_FORMAT? _L_PAREN
-_FUNC_DERANGEMENTS.1: _CMD_DERANGEMENTS _LR_FORMAT? _L_PAREN
+_FUNC_PERMUTATIONS.1: _CMD_PERMUTATIONS _L_FORMAT? _L_PAREN
+_FUNC_COMBINATIONS.1: _CMD_COMBINATIONS _L_FORMAT? _L_PAREN
+_FUNC_DERANGEMENTS.1: _CMD_DERANGEMENTS _L_FORMAT? _L_PAREN
 
 // divisibility functions.
 
 _FUNC_GCD: "\\gcd"
 _FUNC_LCM: CMD_OPERATOR _WS? _L_BRACE _WS? "lcm" _WS? _R_BRACE
-_FUNC_MOD: "\\mod"
-
-// TODO: use a bit more elaborate regex here, so more complex strings are allowed in the index.
-// UNDEFINED_FUNC_START: (SINGLE_LETTER_SYMBOL|MULTI_LETTER_SYMBOL) (_WS? _UNDERSCORE _WS? _L_BRACE /\s*[^{}]+\s*/ _R_BRACE)? _LR_FORMAT? _L_PAREN
+_FUNC_MOD: /\\b?mod/
 
 // un-redefinable mathematical constants
 CONST_INFINITY: "\\infty"
@@ -597,7 +612,6 @@ CMD_BOLD_FORMAT: "\\pmb"
 _cmd_format: CMD_MATH | CMD_VEC | CMD_VECBOLD | CMD_HAT | CMD_BOLD_FORMAT | DELTA_UPPER
 CMD_TEXT: /\\text(bf|it|sf|tt|sc|normal|up)?/ | /\\textcolor\s*{\s*\w+\s*}/
 
-_TEXT: CMD_TEXT _WS? BRACE_SURROUNDED_TEXT
 
 
 // mathrm is also included here so operatorname does not have to be used everywhere.
@@ -610,9 +624,12 @@ _DOUBLE_BAR: "||" | /\\mid\s*\\mid/ | /\\[lr]?Vert/
 _DOT: "."
 _CARET: "^"
 _COMMA: ","
+_COLON: ":"
+_SEMICOLON: ";"
 _UNDERSCORE: "_"
 _PERCENT: "\\%"
 _PERMILLE: "\\textperthousand"
+_STAR: "\\star"
 
 // relational symbols
 EQUAL: "="
@@ -673,9 +690,9 @@ CMD_END_MATRIX: CMD_END _WS? MATRIX_ENV _WS? _R_BRACE
 CMD_BEGIN_VMATRIX: CMD_BEGIN _WS? VMATRIX_ENV _WS? _R_BRACE
 CMD_END_VMATRIX: CMD_END _WS? VMATRIX_ENV _WS? _R_BRACE
 
-CMD_BEGIN_ARRAY: ("\\left" _WS? _L_DELIMITER)? _WS? CMD_BEGIN _WS? ARRAY_ENV _WS? _R_BRACE
+CMD_BEGIN_ARRAY: (_L_FORMAT _WS? _L_DELIMITER)? _WS? CMD_BEGIN _WS? ARRAY_ENV _WS? _R_BRACE
 ARRAY_ENV_OPTIONS: _L_BRACE (/[clr|:\s]+/)? _R_BRACE
-CMD_END_ARRAY: CMD_END _WS? ARRAY_ENV _WS? _R_BRACE _WS? ("\\right" _WS? _R_DELIMITER)?
+CMD_END_ARRAY: CMD_END _WS? ARRAY_ENV _WS? _R_BRACE _WS? (_R_FORMAT _WS? _R_DELIMITER)?
 
 %declare _MATRIX_COL_DELIM
 %declare MATRIX_ROW_DELIM
@@ -689,36 +706,5 @@ _CMD_BEGIN_CASES: CMD_BEGIN _WS? "cases" _WS? _R_BRACE
 _CMD_END_ALIGN: CMD_END _WS? "align" _WS? _R_BRACE
 _CMD_END_CASES: CMD_END _WS? "cases" _WS? _R_BRACE
 
-// ======== propositional logic ========
-
-CMD_TAUTOLOGY.1: /\\(?:mathrm|operatorname)\s*{\s*(?:T|True|TRUE)\s*}/ | "\\top"
-CMD_CONTRADICTION.1: /\\(?:mathrm|operatorname)\s*{\s*(?:F|False|FALSE)\s*}/ | "\\bot"
-
-_CMD_DOT: "\\dot"
-
-_PROP_OP_BIIMPLICATION: "\\iff"
-    | /\\(?:[Ll]ongl|[Ll])eftrightarrow/
-    | /\\(?:leftright|rightleft)harpoons/
-// have to increase priority due to _LIM_APPROACH_SYMBOL
-_PROP_OP_LR_IMPLICATION.1: "\\implies"
-    | "\\to"
-    | /\\(?:[Ll]ongr|[Rr])ightarrow/
-_PROP_OP_NEG_LR_IMPLICATION: /\\n[Rr]ightarrow/
-_PROP_OP_RL_IMPLICATION: /\\(?:[Ll]ongl|[Ll])eftarrow/
-_PROP_OP_NEG_RL_IMPLICATION: /\\n[Ll]eftarrow/
-_PROP_OP_OR: /\\(big)?vee/
-    | "\\lor"
-_PROP_OP_NAND: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_AND | _L_BRACE _WS? _PROP_OP_AND _WS? _R_BRACE)
 _PROP_OP_AND: /\\(big)?wedge/
     | "\\land"
-_PROP_OP_NOR: (_CMD_BAR|_CMD_OVERLINE) _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
-_PROP_OP_XOR: /\\(big)?oplus/
-    | "\\veebar"
-    | _CMD_DOT _WS? (_PROP_OP_OR | _L_BRACE _WS? _PROP_OP_OR _WS? _R_BRACE)
-_PROP_OP_XNOR: "\\odot"
-    | (_CMD_BAR|_CMD_OVERLINE) _WS? ( _PROP_OP_XOR | _L_BRACE _WS? (_PROP_OP_XOR) _WS? _R_BRACE)
-_PROP_OP_NOT: "\\neg"
-    | "\\sim"
-_PROP_OP_PREFIX_NOT: "\\not"
-
-_PROP_OP_EQUIV: "\\equiv"

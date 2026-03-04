@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import override
+from typing import Iterable, override
 
 from pydantic import BaseModel
 from sympy import *
@@ -7,10 +7,8 @@ from sympy.logic.boolalg import Boolean, as_Boolean, truth_table
 from tabulate import tabulate
 
 from lmat_cas_client.Client import HandlerError
-from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
-    PropositionExpr,
+from lmat_cas_client.compiling.Compiler import (
+    lmat_env_to_definition_store,
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
@@ -36,19 +34,20 @@ class TruthTableMessage(BaseModel):
 class TruthTableResult(CommandResult):
     def __init__(
         self,
-        columns: tuple[Expr],
+        columns: Iterable[Basic],
         serialized_proposition: str,
-        truth_table: tuple[tuple[Boolean]],
+        truth_table: Iterable[Iterable[Boolean]],
     ):
         super().__init__()
-        self.columns = columns
+        self.columns = tuple(columns)
         self.serialized_proposition = serialized_proposition
-        self.truth_table = truth_table
+        self.truth_table = tuple(tuple(row) for row in truth_table)
 
 
 # implementation for MARKDOWN
 class TruthTableResultMarkdown(TruthTableResult):
-    def getResponsePayload(self) -> dict:
+    @override
+    def getResponsePayload(self) -> tuple[str, dict]:
         markdown_table_contents = []
 
         # create true false strings, last column are bold to make it visually distinguishable.
@@ -71,43 +70,36 @@ class TruthTableResultMarkdown(TruthTableResult):
 
 # implementation for LATEX_ARRAY
 class TruthTableResultLatex(TruthTableResult):
-    def getResponsePayload(self) -> dict:
-        array_contents = []
+    @override
+    def getResponsePayload(self) -> tuple[str, dict]:
+        table_rows = []
 
         for row in self.truth_table:
-            array_contents.append("&".join(map(lmat_latex, row)))
+            table_rows.append("&".join(map(lmat_latex, row)))  # type: ignore[arg-type]
 
-        array_contents = r"\\ \hline ".join(array_contents)
+        table_contents = r"\\ \hline ".join(table_rows)
 
         array_options = rf"{{{':'.join(('c' for _ in self.columns))}|c}}"
 
         headers = rf"{'&'.join(map(lmat_latex, self.columns))} & {self.serialized_proposition}"
 
         return CommandResult.result({
-            "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{array_contents}\end{{array}}"
+            "truth_table": rf"\begin{{array}}{array_options}{headers}\\ \hline{table_contents}\end{{array}}"
         })
 
 
 # TruthTableHandler attempts to generate a truth table from the given expression.
-# Expects a PropositionExpr so will fail if it is not.
-class TruthTableHandler(CommandHandler):
-    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
-        super().__init__()
-        self._compiler = compiler
-
+class TruthTableHandler(CompilingCommandHandler):
     @override
-    def handle(self, message: TruthTableMessage) -> TruthTableResult:
+    def handle(self, message: TruthTableMessage | MessageLike) -> TruthTableResult:
         message = TruthTableMessage.model_validate(message)
 
-        definitions_store = LmatEnvironment.create_definition_store(message.environment)
-        sympy_expr = self._compiler.compile(message.expression, definitions_store)
-
-        if not isinstance(sympy_expr, PropositionExpr):
-            raise HandlerError(
-                f"Expression must be a proposition, was {type(sympy_expr)}"
-            )
-
-        sympy_expr = sympify(sympy_expr)
+        definitions_store = lmat_env_to_definition_store(
+            message.environment, self._def_store_compiler
+        )
+        sympy_expr = self._cas_expr_compiler.compile(
+            message.expression, definitions_store
+        ).get_expr(-1)
 
         columns = sorted(sympy_expr.free_symbols, key=str)
 
@@ -118,7 +110,7 @@ class TruthTableHandler(CommandHandler):
         for row in reversed(tuple(truth_table(sympy_expr, columns))):
             truth_table_data.append([*map(as_Boolean, row[0]), row[1]])
 
-        result_cls = None
+        result_cls: type[TruthTableResult] | None = None
 
         # Select result class dependant on requested table format
         match message.truth_table_format:

@@ -46,5 +46,5 @@ export class UnitConvertModeModal extends BaseModal {
     private target_units: string[] = [];
 
     private target_units_promise: Promise<string[]>;
-    private target_units_resolve: (value: string[] | PromiseLike<string[]>) => void;
+    private target_units_resolve: (value: string[] | PromiseLike<string[]>) => void = (_) => { };
 }

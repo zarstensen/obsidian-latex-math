@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import override
+from typing import Iterable, cast, override
 
 from pydantic import BaseModel
 from sympy import *
@@ -7,16 +7,13 @@ from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
-from lmat_cas_client.compiling.Compiler import Compiler
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.PropositionsTransformer import (
-    PropositionExpr,
+from lmat_cas_client.compiling.Compiler import (
+    lmat_env_to_definition_store,
 )
-from lmat_cas_client.compiling.transforming.SystemOfExpr import SystemOfExpr
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
 
-from .CommandHandler import CommandHandler, CommandResult
+from .CommandHandler import CommandResult, CompilingCommandHandler, MessageLike
 
 
 class EvaluateMessage(BaseModel):
@@ -26,16 +23,16 @@ class EvaluateMessage(BaseModel):
 
 class EvaluateResult(CommandResult, ABC):
     def __init__(
-        self, sympy_expr: Expr, expr_separator: str, expr_lines: list[int] | None
+        self, sympy_expr: Expr, expr_separator: str, expr_lines: Iterable[int] | None
     ):
         super().__init__()
         self.sympy_expr = sympy_expr
         self.expr_separator = expr_separator
-        self.expr_lines = expr_lines
+        self.expr_lines = None if expr_lines is None else tuple(expr_lines)
 
     @override
     def getResponsePayload(self):
-        metadata = dict(separator=self.expr_separator)
+        metadata: dict[str, str | int] = dict(separator=self.expr_separator)
 
         if self.expr_lines is not None and self.expr_lines[0] != self.expr_lines[1]:
             metadata = dict(
@@ -47,47 +44,46 @@ class EvaluateResult(CommandResult, ABC):
         )
 
 
-class EvalHandlerBase(CommandHandler, ABC):
-    def __init__(self, compiler: Compiler[[DefinitionStore], Expr]):
-        super().__init__()
-        self._compiler = compiler
+class EvalHandlerBase(CompilingCommandHandler, ABC):
+    """
+    Base class command handler for all the evaluate suite command handlers.
+    All implementing classes need to implement an evaluate method,
+    this base class takes rest of all of the remaining logic.
+    """
 
     @abstractmethod
     def evaluate(self, sympy_expr: Expr, message: EvaluateMessage) -> Expr:
         pass
 
     @override
-    def handle(self, message: EvaluateMessage) -> EvaluateResult:
+    def handle(self, message: EvaluateMessage | MessageLike) -> EvaluateResult:
         message = EvaluateMessage.model_validate(message)
 
-        definitions_store = LmatEnvironment.create_definition_store(message.environment)
-        sympy_expr = self._compiler.compile(message.expression, definitions_store)
-        expr_lines = None
+        definitions_store = lmat_env_to_definition_store(
+            message.environment, self._def_store_compiler
+        )
 
-        # choose bottom / right most evaluatable expression.
-        while isinstance(sympy_expr, SystemOfExpr) or isinstance(
-            sympy_expr, Relational
-        ):
-            # for system of expressions, take the last one
-            if isinstance(sympy_expr, SystemOfExpr):
-                expr_lines = (
-                    sympy_expr.get_location(-1).line,
-                    sympy_expr.get_location(-1).end_line,
-                )
+        [*_, (sympy_expr, expr_meta)] = self._cas_expr_compiler.compile(
+            message.expression, definitions_store
+        ).expressions
 
-                if expr_lines[1] is None:
-                    expr_lines = (expr_lines[0], len(message.expression.splitlines()))
+        expr_lines = (
+            expr_meta.line,
+            expr_meta.end_line,
+        )
 
-                sympy_expr = sympy_expr.get_expr(-1)
+        if expr_lines[1] is None:
+            expr_lines = (expr_lines[0], len(message.expression.splitlines()))
 
-            # for equalities, take the right hand side.
-            if isinstance(sympy_expr, Relational):
-                sympy_expr = sympy_expr.rhs
+        # choose  right most evaluatable expression.
+        while isinstance(sympy_expr, Relational):
+            sympy_expr = sympy_expr.rhs
 
-        if isinstance(sympy_expr, PropositionExpr):
-            separator = r"\equiv"
-        else:
-            separator = "="
+        # We must end up with an expr type after this loop.
+        sympy_expr = cast(Expr, sympy_expr)
+
+        # TODO: the separator stuff should no longer be a thing?
+        separator = "="
 
         sympy_expr = self.evaluate(sympify(sympy_expr), message)
 

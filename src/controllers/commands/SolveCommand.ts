@@ -39,13 +39,11 @@ export class SolveCommand extends LatexMathCommand {
             const symbol_selector = new SolveModeModal(
                 solve_info_result.available_symbols,
                 solve_info_result.required_symbols,
-                lmat_env.solve_domain ?? "",
                 app);
 
             symbol_selector.open();
 
             const config = await symbol_selector.getSolveConfig();
-            lmat_env.solve_domain = config.domain;
 
             symbols = config.symbols;
         } else {

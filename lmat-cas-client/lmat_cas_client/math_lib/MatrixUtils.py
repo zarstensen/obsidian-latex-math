@@ -1,8 +1,10 @@
+from typing import cast
+
 from sympy import *
 
 
 # Check if the given sympy object can be treated as a matrix.
-def is_matrix(obj: Basic) -> bool:
+def is_matrix[T](obj: T) -> bool:
     return hasattr(obj, "is_Matrix") and obj.is_Matrix
 
 
@@ -11,4 +13,4 @@ def is_matrix(obj: Basic) -> bool:
 def ensure_matrix(obj: Basic) -> MatrixBase:
     if not is_matrix(obj):
         return Matrix([obj])
-    return obj
+    return cast(MatrixBase, obj)

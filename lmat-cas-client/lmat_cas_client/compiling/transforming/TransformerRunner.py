@@ -3,13 +3,13 @@ from typing import Callable
 from lark import Transformer, Tree
 
 
-class TransformerRunner[**PTransform, TRes: Transformer]:
+class TransformerRunner[**PTransform, TRes]:
     """
     Wrapper class for a lark Transformer factory taking PTransform arguments and returning TRes as a transform result.
     Constructs a new Transformer instance from the given Transformer factory, and transforms a given tree with the newly constructed instance.
     """
 
-    def __init__(self, transformer_factory: Callable[PTransform, TRes]):
+    def __init__(self, transformer_factory: Callable[PTransform, Transformer]):
         self._transformer_factory = transformer_factory
 
     def transform(

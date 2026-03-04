@@ -14,7 +14,7 @@ test('Test Solve Message', async () => {
 
 test('Test Solve Message With Assumptions', async () => {
     const response = response_verifier.verifyResponse<SolveResponse>(await server.send(
-        new SolveMessage(new SolveArgsPayload("x^2 = 4", new LmatEnvironment(undefined, undefined, undefined, "Naturals"), ["x"]))
+        new SolveMessage(new SolveArgsPayload("x^2 = 4", new LmatEnvironment(undefined, ["x \\in \\mathbb{R}_{+}"], undefined), ["x"]))
     ).response);
 
     expect(normLatexStr(response.solution_set)).toMatch(/x\s*=\s*2/g);

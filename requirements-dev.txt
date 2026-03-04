@@ -3,4 +3,5 @@ pytest-cov~=6.2
 pytest-xdist~=3.8
 pandas~=2.2
 tabulate~=0.9
-ruff~=0.12
+ruff~=0.14.0 # TODO: upgrade to newer version
+mypy~=1.19

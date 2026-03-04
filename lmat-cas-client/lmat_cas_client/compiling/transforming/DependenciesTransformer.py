@@ -1,15 +1,19 @@
+# mypy: disable-error-code="override"
 from itertools import chain
-from typing import Iterator, override
+from typing import Any, Iterable, override
 
-from lark import Discard, Token, v_args
-from sympy import Expr, Function, Symbol
+from lark import Discard, Tree, v_args
+from sympy import Symbol
 from sympy.physics.units import Quantity
 
-from lmat_cas_client.compiling.DefinitionStore import DefinitionStore
-from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
-from lmat_cas_client.compiling.transforming.UndefinedAtomsTransformer import (
+from lmat_cas_client.compiling.definition.EmptyResolver import EmptyResolver
+from lmat_cas_client.compiling.transforming.cas_expr.UndefinedAtomsTransformer import (
+    SymbolIr,
+    SymbolStrat,
     UndefinedAtomsTransformer,
 )
+from lmat_cas_client.compiling.transforming.Ir import ir_strat
+from lmat_cas_client.compiling.transforming.TransformerRunner import TransformerRunner
 
 
 @v_args(inline=True)
@@ -20,48 +24,73 @@ class DependenciesTransformer(UndefinedAtomsTransformer):
     """
 
     def __init__(self):
-        UndefinedAtomsTransformer.__init__(self, DefinitionStore())
+        UndefinedAtomsTransformer.__init__(self, EmptyResolver())
 
-    def latex_math_string(self, dependencies: list[Symbol | Function] = []) -> set[str]:
-        return set(dependency.name for dependency in dependencies)
+    @override
+    def transform(self, tree: Tree) -> set[str]:
+        res: set[Symbol] = super().transform(tree)
+        return set(symbol.name for symbol in res)
 
-    def __default__(self, _data, children, _meta):
-        symbols = []
+    @override
+    def __default__(self, _data, children, _meta) -> set[Symbol]:
+        symbols = set()
 
         for child in children:
-            if child is None or isinstance(child, Token):
-                continue
-            elif isinstance(child, list) or isinstance(child, tuple):
-                symbols.extend(child)
-            else:
-                symbols.append(child)
-
-        if len(symbols) == 0:
-            return Discard
+            match child:
+                case Symbol():
+                    symbols.add(child)
+                case set() if all(isinstance(e, Symbol) for e in child):
+                    symbols.update(child)
 
         return symbols
 
-    def unit(self, unit_symbol: Symbol) -> Quantity | Symbol:
-        symbol_or_unit = super().unit(unit_symbol)
-
-        if isinstance(symbol_or_unit, Quantity):
-            return Discard
-
-        return symbol_or_unit
+    @override
+    def combine_symbol(self, *symbols: Symbol) -> Symbol:
+        return super().combine_symbol(*symbols).as_symbol().value
 
     @override
-    def undefined_function(
-        self, func_name: str, func_args: Iterator[Expr]
-    ) -> Function | Expr:
-        # include both the function itself, and all arguments to the function as dependencies.
-        # e.g. f(x, 1, y) should produce [ 'f', 'x', 'y' ]
+    def unit(self, unit_symbol: Symbol) -> Symbol:
+        unit: Any | Quantity = super().unit(SymbolIr(unit_symbol, EmptyResolver()))
 
-        return [Function(func_name), *func_args]
+        if isinstance(unit, Quantity):
+            return Discard  # type: ignore[return-value]
+
+        return unit_symbol
+
+    @override
+    @ir_strat(func_head=SymbolStrat)
+    def maybe_function_application(
+        self, func_name: Symbol, func_args: Iterable[Symbol]
+    ) -> set[Symbol]:
+        # include both the function itself, and all arguments to the function as dependencies.
+        # e.g. f(x, 1, y) should produce { f, x, y }
+
+        return set([func_name, *func_args])
 
     @v_args(inline=False)
-    def list_of_expressions(self, tokens: Iterator[Expr]) -> list[Expr]:
-        return list(chain.from_iterable(tokens))
+    def list_of_expressions(
+        self, expr_deps: Iterable[Symbol | set[Symbol]]
+    ) -> set[Symbol]:
+        # convert single symbols into an iterable so chain.from_iterable can work with them.
+        # this happens when a symbol rule is the last rule in one of the expressions.
+        return set(
+            filter(
+                lambda s: isinstance(s, Symbol),
+                chain.from_iterable(
+                    (
+                        (
+                            expr_symbols
+                            if isinstance(expr_symbols, Iterable)
+                            else [expr_symbols]
+                        )
+                        for expr_symbols in expr_deps
+                    )
+                ),
+            )
+        )
 
+
+type DepsTransformer = TransformerRunner[[], set[str]]
 
 dependencies_transformer_runner = TransformerRunner[[], set[str]](
     DependenciesTransformer

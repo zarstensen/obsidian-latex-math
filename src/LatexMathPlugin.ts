@@ -10,16 +10,13 @@ import { HandlerInterrupter } from '/services/HandlerInterrupter';
 import { CasClientExtractor } from './services/CasClientExtractor';
 import { ExecutableSpawner, SourceCodeSpawner } from './services/CasClientSpawner';
 import { CasServer, ClientResponse, UnixTimestampMillis } from './services/CasServer';
-import { LmatCodeBlockRenderer } from './controllers/LmatCodeBlockRenderer';
 import { LmatSettingsTab } from '/views/LmatSettingsTab';
 import { EvaluateStatusBar } from '/views/LmatStatusBar';
 import { ConfirmModal } from '/views/modals/ConfirmModal';
 import { SuccessResponseVerifier } from './services/ResponseVerifier';
 import { EvaluateMode } from '/models/cas/messages/EvaluateMessage';
 import { TruthTableFormat } from '/models/cas/messages/TruthTableMessage';
-import { CasCommandRequester } from './services/CasCommandRequester';
-import { SymbolSetMessage } from './models/cas/messages/SymbolSetsMessage';
-import { mathjaxLoadLatexPackages } from './utils/MathJaxPackageLoader';
+import { mathjaxLoadLatexPackages, mathjaxLoadLatexPreamble } from './utils/MathJaxPackageLoader';
 
 interface LatexMathPluginSettings {
     dev_mode: boolean;
@@ -52,29 +49,30 @@ export default class LatexMathPlugin extends Plugin {
         await this.setupStatusBar(new HandlerInterrupter(this.cas_server, response_verifier));
 
 
-        // add code block renderer
-        const lmat_code_block_renderer = new LmatCodeBlockRenderer(
-            new CasCommandRequester(this.cas_server, this.spawn_cas_client_promise, response_verifier, SymbolSetMessage)
-        );
-
-        this.registerMarkdownCodeBlockProcessor("lmat", lmat_code_block_renderer.getHandler());
-
         // add commands
         this.addCommands(new Map([
-            [new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor LaTeX expression'],
-            [new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Partial fraction decompose LaTeX expression'],
-            [new SolveCommand(response_verifier), 'Solve LaTeX expression'],
-            [new ConvertSympyCommand(response_verifier), 'Convert LaTeX expression to Sympy'],
-            [new UnitConvertCommand(response_verifier), 'Convert units in LaTeX expression'],
-            [new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table from LaTeX expression (Markdown)'],
-            [new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table from LaTeX expression (LaTeX)'],
+            [new EvaluateCommand(EvaluateMode.EVAL, response_verifier), 'Evaluate expression'],
+            [new EvaluateCommand(EvaluateMode.EVAL_LOGIC, response_verifier), 'Evaluate logic expression'],
+            [new EvaluateCommand(EvaluateMode.EVALF, response_verifier), 'Evalf expression'],
+            [new EvaluateCommand(EvaluateMode.EXPAND, response_verifier), 'Expand expression'],
+            [new EvaluateCommand(EvaluateMode.FACTOR, response_verifier), 'Factor expression'],
+            [new EvaluateCommand(EvaluateMode.APART, response_verifier), 'Apart expression'],
+            [new SolveCommand(response_verifier), 'Solve equation'],
+            [new ConvertSympyCommand(response_verifier), 'Convert expression to Sympy'],
+            [new UnitConvertCommand(response_verifier), 'Convert units'],
+            [new TruthTableCommand(TruthTableFormat.MARKDOWN, response_verifier), 'Create truth table (Markdown)'],
+            [new TruthTableCommand(TruthTableFormat.LATEX_ARRAY, response_verifier), 'Create truth table (LaTeX)'],
         ]));
 
         // import latex packages
         await mathjaxLoadLatexPackages(["physics"]);
+        // fix some alignment issues with \left and \right
+        await mathjaxLoadLatexPreamble(`
+\\let\\originalleft\\left
+\\let\\originalright\\right
+\\renewcommand{\\left}{\\mathopen{}\\originalleft}
+\\renewcommand{\\right}[1]{\\originalright#1\\mathclose{}}
+`);
     }
 
     // sets up the given map of commands as obsidian commands.
@@ -130,7 +128,7 @@ export default class LatexMathPlugin extends Plugin {
 
 
     private async setupStatusBar(handler_interrupter: HandlerInterrupter): Promise<EvaluateStatusBar> {
-        const status_bar = new EvaluateStatusBar(await this.addStatusBarItem());
+        const status_bar = new EvaluateStatusBar(this.addStatusBarItem());
 
         status_bar.show(false);
 

@@ -11,12 +11,16 @@ from lmat_cas_client.command_handlers.EvalHandler import EvalHandler
 from lmat_cas_client.command_handlers.ExpandHandler import ExpandHandler
 from lmat_cas_client.command_handlers.FactorHandler import FactorHandler
 from lmat_cas_client.command_handlers.SolveHandler import SolveHandler, SolveInfoHandler
-from lmat_cas_client.command_handlers.SymbolSetHandler import SymbolSetHandler
 from lmat_cas_client.command_handlers.test_handlers.TestHangHandler import (
     TestHangHandler,
 )
 from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import (
+    LatexToCasExprCompiler,
+    LatexToDefStoreCompiler,
+    LatexToLogicCasExprCompiler,
+    LatexToLogicDefStoreCompiler,
+)
 from lmat_cas_client.math_lib.setup import setup_mathlib
 
 if len(sys.argv) != 2:
@@ -33,17 +37,44 @@ setup_mathlib()
 
 client = LmatCasClient()
 
-client.register_handler("eval", EvalHandler(LatexToSympyCompiler()))
-client.register_handler("evalf", EvalfHandler(LatexToSympyCompiler()))
-client.register_handler("expand", ExpandHandler(LatexToSympyCompiler()))
-client.register_handler("factor", FactorHandler(LatexToSympyCompiler()))
-client.register_handler("apart", ApartHandler(LatexToSympyCompiler()))
-client.register_handler("solve", SolveHandler(LatexToSympyCompiler()))
-client.register_handler("solve-info", SolveInfoHandler(LatexToSympyCompiler()))
-client.register_handler("symbolsets", SymbolSetHandler(LatexToSympyCompiler()))
-client.register_handler("convert-sympy", ConvertSympyHandler(LatexToSympyCompiler()))
-client.register_handler("convert-units", ConvertUnitsHandler(LatexToSympyCompiler()))
-client.register_handler("truth-table", TruthTableHandler(LatexToSympyCompiler()))
+client.register_handler(
+    "eval",
+    EvalHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler()),
+)
+client.register_handler(
+    "eval-logic",
+    EvalHandler(LatexToLogicCasExprCompiler(), LatexToLogicDefStoreCompiler()),
+)
+client.register_handler(
+    "evalf", EvalfHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler())
+)
+client.register_handler(
+    "expand", ExpandHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler())
+)
+client.register_handler(
+    "factor", FactorHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler())
+)
+client.register_handler(
+    "apart", ApartHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler())
+)
+client.register_handler(
+    "solve", SolveHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler())
+)
+client.register_handler(
+    "solve-info", SolveInfoHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler())
+)
+client.register_handler(
+    "convert-sympy",
+    ConvertSympyHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler()),
+)
+client.register_handler(
+    "convert-units",
+    ConvertUnitsHandler(LatexToCasExprCompiler(), LatexToDefStoreCompiler()),
+)
+client.register_handler(
+    "truth-table",
+    TruthTableHandler(LatexToLogicCasExprCompiler(), LatexToLogicDefStoreCompiler()),
+)
 
 # test specific handlers
 

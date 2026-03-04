@@ -1,7 +1,15 @@
-from typing import Callable, Optional
+from typing import Callable, Iterable, Optional
 
 import regex
-from lark import Lark, LarkError, ParseTree, UnexpectedInput, UnexpectedToken
+from lark import (
+    Lark,
+    LarkError,
+    ParseTree,
+    Token,
+    Tree,
+    UnexpectedInput,
+    UnexpectedToken,
+)
 
 
 class PrettyParserError(LarkError):
@@ -17,14 +25,15 @@ class Parser:
     """
 
     def __init__(
-        self, lark_parser: Lark, pre_processor: Optional[Callable[[str], str]]
+        self,
+        lark_parser: Lark,
+        *,
+        pre_processor: Optional[Callable[[str], str]] = None,
+        post_processor: Optional[Callable[[str, Tree], Tree]] = None,
     ):
-        if pre_processor is None:
 
-            def pre_processor(t):
-                return t  # default pre processor simply does nothign to the input.
-
-        self._pre_processor = pre_processor
+        self._pre_processor = pre_processor or (lambda s: s)
+        self._post_processor = post_processor or (lambda _ps, t: t)
         self._lark_parser = lark_parser
 
     @property
@@ -48,9 +57,11 @@ class Parser:
         pre_processed_text = self._pre_processor(text)
 
         try:
-            return self._lark_parser.parse(pre_processed_text, *args, **kwargs)
+            ast_result = self._lark_parser.parse(pre_processed_text, *args, **kwargs)
         except UnexpectedInput as e:
             raise self._prettify_unexpected_input(e, pre_processed_text) from e
+
+        return self._post_processor(pre_processed_text, ast_result)
 
     _PARSE_ERR_PRETTY_STR_SPAN = 30
     # Maximum number of expected tokens to show to the user.
@@ -80,7 +91,7 @@ class Parser:
         if lark_error.pos_in_stream is None:
             lark_error.pos_in_stream = len(parse_text) - 1
 
-        pretty_err = f"{lark_error.get_context(parse_text, Parser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
+        pretty_err = f"\n{lark_error.get_context(parse_text, Parser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
 
         if (
             isinstance(lark_error, UnexpectedToken)
@@ -90,10 +101,23 @@ class Parser:
             pretty_err += (
                 f"\nExpected one of the following:\n{'\n'.join(pretty_terminals)}"
             )
+        error = PrettyParserError(pretty_err)
 
-        return PrettyParserError(pretty_err)
+        pretty_terminals = []
 
-    def _prettify_terminals(self, terminal_names: list[str]) -> list[str]:
+        for t in lark_error.state.value_stack:
+            match t:
+                case Token():
+                    pretty_terminals.append(repr(t))
+                case Tree():
+                    pretty_terminals.append(t.pretty())
+
+        error.add_note(
+            f"\nParser Input:\n\n{parse_text}\n\nPrevious Terminals:\n{'\n'.join(pretty_terminals)}"
+        )
+        return error
+
+    def _prettify_terminals(self, terminal_names: Iterable[str]) -> list[str]:
         """
         Returns a list of user readable (pretty) strings derived from the given list of terminals.
         If the terminal pattern is simply a string equality check, this string is returned,
@@ -124,3 +148,16 @@ class Parser:
             pretty_terminals.append(term_name.replace("_", " ").capitalize().strip())
 
         return pretty_terminals
+
+
+lark_parser_defaults = {
+    "parser": "lalr",
+    "lexer": "contextual",
+    "debug": False,
+    "cache": True,
+    "propagate_positions": True,
+    "maybe_placeholders": True,
+    "regex": True,
+}
+
+__all__ = ["lark_parser_defaults"]

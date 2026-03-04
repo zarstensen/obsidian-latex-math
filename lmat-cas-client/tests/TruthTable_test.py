@@ -1,10 +1,15 @@
 from lmat_cas_client.command_handlers.TruthTableHandler import TruthTableHandler
-from lmat_cas_client.compiling.Compiler import LatexToSympyCompiler
+from lmat_cas_client.compiling.Compiler import (
+    LatexToLogicCasExprCompiler,
+    LatexToLogicDefStoreCompiler,
+)
 from sympy import *
 
 
 class TestTruthTable:
-    handler = TruthTableHandler(LatexToSympyCompiler())
+    handler = TruthTableHandler(
+        LatexToLogicCasExprCompiler(), LatexToLogicDefStoreCompiler()
+    )
 
     def test_truth_table(self):
         p, q, r = symbols("P Q R")
@@ -15,10 +20,10 @@ class TestTruthTable:
             "truth_table_format": "md",
         })
 
-        assert result.columns == [p, q]
-        assert result.truth_table == [
-            [True, True, True],
-            [True, False, False],
-            [False, True, False],
-            [False, False, False],
-        ]
+        assert result.columns == (p, q)
+        assert result.truth_table == (
+            (True, True, True),
+            (True, False, False),
+            (False, True, False),
+            (False, False, False),
+        )

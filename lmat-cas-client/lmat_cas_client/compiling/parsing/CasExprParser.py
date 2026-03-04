@@ -1,6 +1,6 @@
 import os
 import re as regex
-from typing import Callable, Iterator
+from typing import Callable, Iterator, cast, override
 
 from lark import Lark, Token
 from lark.lark import PostLex
@@ -8,7 +8,7 @@ from lark.lexer import TerminalDef
 from regex import Regex
 from sympy import *
 
-from lmat_cas_client.compiling.parsing.Parser import Parser
+from lmat_cas_client.compiling.parsing.Parser import Parser, lark_parser_defaults
 
 
 # Represents a scope to be handled by the ScopePostLexer.
@@ -22,8 +22,8 @@ class LexerScope:
         self,
         scope_pairs: list[
             tuple[
-                regex.Pattern,
-                regex.Pattern | Callable[[regex.Match[str]], regex.Pattern],
+                str | regex.Pattern,
+                str | regex.Pattern | Callable[[regex.Match[str]], str | regex.Pattern],
             ]
         ] = [],
         replace_tokens: dict[str, str | list[TerminalDef]] = {},
@@ -32,18 +32,20 @@ class LexerScope:
         self.replace_tokens = replace_tokens
 
     def token_handler(
-        self, token_stream: Iterator[Token], _scope_start_token: Token
+        self, token_stream: Iterator[Token], _scope_start_token: Token | None
     ) -> Iterator[Token]:
         for t in token_stream:
             # try to replace the token
             if t.type in self.replace_tokens:
                 if isinstance(self.replace_tokens[t.type], str):
-                    yield Token(self.replace_tokens[t.type], t.value)
+                    yield Token(cast(str, self.replace_tokens[t.type]), t.value)
                     continue
 
                 for replace_token in self.replace_tokens[t.type]:
-                    if regex.fullmatch(replace_token.pattern.to_regexp(), t.value):
-                        yield Token(replace_token.name, t.value)
+                    if regex.fullmatch(
+                        cast(TerminalDef, replace_token).pattern.to_regexp(), t.value
+                    ):
+                        yield Token(cast(TerminalDef, replace_token).name, t.value)
                         break
                 else:
                     # no tokens could replace it anyways, so just return the original one.
@@ -57,8 +59,9 @@ class MultiArgScope(LexerScope):
         super().__init__(*args, **kwargs)
         self.arg_count = arg_count
 
+    @override
     def token_handler(
-        self, token_stream: Iterator[Token], scope_start_token: Token
+        self, token_stream: Iterator[Token], scope_start_token: Token | None
     ) -> Iterator[Token]:
         for _ in range(1, self.arg_count):
             token = next(super().token_handler(token_stream, scope_start_token), None)
@@ -79,9 +82,11 @@ class MultiArgScope(LexerScope):
 
 
 class MatrixScope(LexerScope):
+    @override
     def token_handler(
-        self, token_stream: Iterator[Token], scope_start_token: Token
+        self, token_stream: Iterator[Token], scope_start_token: Token | None
     ) -> Iterator[Token]:
+        assert scope_start_token is not None
         ignore_regex = r"(\\left\s*(\\)?.|\\right\s*(\\)?.|\s)"
         expected_end_token_type = scope_start_token.type.replace("BEGIN", "END")
         expected_end_token_value = regex.sub(
@@ -97,6 +102,7 @@ class MatrixScope(LexerScope):
 
 
 class PartialDiffScope(LexerScope):
+    @override
     def token_handler(self, token_stream, _scope_start_token):
         for token in super().token_handler(token_stream, _scope_start_token):
             yield token
@@ -114,21 +120,32 @@ class PartialDiffScope(LexerScope):
             yield next_token
 
 
-class ScopePostLexer(PostLex):
+class CasExprPostLexer(PostLex):
     """
-    The ScopePostLexer aims to provide scope based context to the lalr parser during tokenization.
+    The CasExprPostLexer aims to provide scope based context to the lalr parser during tokenization.
     It does this by recognizing pairs of terminals, which define a scope.
     Inside this scope, terminals can be specified which should be replaced by other terminals,
     or optionally a custom token handler can be given, for more complex operations.
     """
 
-    def initialize_scopes(self, parser: Lark):
+    def __init__(self, grammar_namespace: str = ""):
+        super().__init__()
+
+        self._namespace_regex = None
+        self._grammar_namespace = grammar_namespace
+
+        if grammar_namespace != "":
+            self._namespace_regex = Regex(f"(_)?{grammar_namespace}(.*)")
+
+        self.initialize_scopes()
+
+    def initialize_scopes(self):
         """
         setup scopes using the terminals defined in the given parser.
         Args:
             parser (Lark): lark parser to retreive terminals from.
         """
-        self.scopes = [
+        self.scopes: list[LexerScope] = [
             # Scope for inner products,
             # is here so we dont go into the abs scope below.
             LexerScope(
@@ -181,7 +198,7 @@ class ScopePostLexer(PostLex):
                     ("_CMD_BEGIN_ALIGN", "_CMD_END_ALIGN"),
                     ("_CMD_BEGIN_CASES", "_CMD_END_CASES"),
                 ],
-                replace_tokens={"_LATEX_NEWLINE": "_EXPR_DELIM"},
+                replace_tokens={"_LATEX_NEWLINE": "_SOR_EXPR_DELIM"},
             ),
             LexerScope(scope_pairs=[("_UNDEF_FUNC_START", "_R_PAREN")]),
             # General scope for L R token pairs.
@@ -191,8 +208,32 @@ class ScopePostLexer(PostLex):
             ),
         ]
 
+    @override
     def process(self, stream: Iterator[Token]) -> Iterator[Token]:
-        yield from self._process_scope(stream, LexerScope(), None, None)
+
+        non_namespace_tokens = set()
+
+        def filtered_iterator() -> Iterator[Token]:
+            for item in stream:
+                if self._namespace_regex is not None and self._namespace_regex.match(
+                    item.type
+                ):
+                    yield item.update(self._namespace_regex.sub(r"\1\2", item.type))
+                else:
+                    non_namespace_tokens.add(item)
+                    yield item
+
+        processed = self._process_scope(filtered_iterator(), LexerScope(), None, None)
+
+        for item in processed:
+            if item in non_namespace_tokens:
+                pass
+            elif item.type.startswith("_"):
+                item = item.update(f"_{self._grammar_namespace}{item.type[1:]}")
+            else:
+                item = item.update(f"{self._grammar_namespace}{item.type}")
+
+            yield item
 
     def _process_scope(
         self,
@@ -200,7 +241,7 @@ class ScopePostLexer(PostLex):
         scope: LexerScope,
         scope_begin_token: Token | None,
         scope_end_terminal: str | None,
-    ) -> Token:
+    ) -> Iterator[Token]:
         """
         process scopes recursively, applying the scope specific replace_tokens to the input stream tokens.
         Args:
@@ -230,7 +271,9 @@ class ScopePostLexer(PostLex):
                         end_terminal = (
                             scope_pair[1]
                             if isinstance(scope_pair[1], str)
-                            else scope_pair[1](match)
+                            else cast(Callable[[regex.Match], str], scope_pair[1])(
+                                match
+                            )
                         )
                         yield from self._process_scope(
                             stream, new_scope, token, end_terminal
@@ -251,30 +294,20 @@ def latex_comment_remover(latex: str) -> str:
     )
 
 
-GRAMMAR_FILE = "latex_math_grammar.lark"
+GRAMMAR_FILE = "cas_expr.lark"
 
-__latex_parser_post_lexer = ScopePostLexer()
-
-latex_parser = Parser(
+cas_expr_parser = Parser(
     Lark.open(
         os.path.join(os.path.dirname(__file__), GRAMMAR_FILE),
         rel_to=os.path.dirname(__file__),
-        parser="lalr",
-        start="latex_math_string",
-        lexer="contextual",
-        debug=False,
-        cache=True,
-        propagate_positions=True,
-        maybe_placeholders=True,
-        regex=True,
-        postlex=__latex_parser_post_lexer,
+        start="cas_expression",
+        postlex=CasExprPostLexer(),
+        **lark_parser_defaults,
     ),
     pre_processor=latex_comment_remover,
 )
-"""
-PrettyParser instance capable of parsing a latex math string.
-"""
 
-__latex_parser_post_lexer.initialize_scopes(latex_parser.parser)
-
-__all__ = ["latex_parser"]
+"""
+PrettyParser instance capable of parsing a latex cas expr string.
+"""
+__all__ = ["cas_expr_parser", "latex_comment_remover", "CasExprPostLexer"]
