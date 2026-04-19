@@ -5,3 +5,4 @@ pandas~=2.2
 tabulate~=0.9
 ruff~=0.14.0 # TODO: upgrade to newer version
 mypy~=1.19
+antlr4-tools~=0.2
