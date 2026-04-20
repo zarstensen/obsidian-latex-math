@@ -12,12 +12,17 @@ expr:
 	| expr POW expr
 	| expr (MUL | DIV |) expr
 	| expr (PLUS | MINUS) expr
-	| FRAC (LBRACE expr RBRACE | atom) (
-		LBRACE expr RBRACE
-		| atom
-	)
+	| function
 	| COMM
 	| NUMBER
-	| WORD;
+	| WORD
+	| DX
+	;
+
+function:
+	FRAC (LBRACE expr RBRACE | atom) (LBRACE expr RBRACE | atom)
+	| INT expr
+	;
+
 
 atom: NUMBER | WORD | COMM;

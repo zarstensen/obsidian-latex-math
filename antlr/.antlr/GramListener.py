@@ -26,15 +26,6 @@ class GramListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by Gram#function.
-    def enterFunction(self, ctx:Gram.FunctionContext):
-        pass
-
-    # Exit a parse tree produced by Gram#function.
-    def exitFunction(self, ctx:Gram.FunctionContext):
-        pass
-
-
     # Enter a parse tree produced by Gram#atom.
     def enterAtom(self, ctx:Gram.AtomContext):
         pass

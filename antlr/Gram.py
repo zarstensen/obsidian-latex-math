@@ -1,4 +1,4 @@
-# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/antlr/Gram.g4 by ANTLR 4.13.1
+# Generated from c:/Users/sblso/Downloads/school/.obsidian/plugins/obsidian-latex-math/antlr/Gram.g4 by ANTLR 4.13.1
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -10,26 +10,29 @@ else:
 
 def serializedATN():
     return [
-        4,1,14,59,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,
-        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,25,8,1,1,1,1,1,1,1,
-        1,1,1,1,3,1,32,8,1,1,1,1,1,1,1,3,1,37,8,1,1,1,1,1,1,1,1,1,1,1,1,
-        1,1,1,3,1,46,8,1,1,1,1,1,1,1,1,1,5,1,52,8,1,10,1,12,1,55,9,1,1,2,
-        1,2,1,2,0,1,2,3,0,2,4,0,2,1,0,8,9,1,0,11,13,67,0,6,1,0,0,0,2,36,
-        1,0,0,0,4,56,1,0,0,0,6,7,3,2,1,0,7,8,5,0,0,1,8,1,1,0,0,0,9,10,6,
-        1,-1,0,10,11,5,1,0,0,11,12,3,2,1,0,12,13,5,2,0,0,13,37,1,0,0,0,14,
-        15,5,3,0,0,15,16,3,2,1,0,16,17,5,4,0,0,17,37,1,0,0,0,18,24,5,10,
-        0,0,19,20,5,3,0,0,20,21,3,2,1,0,21,22,5,4,0,0,22,25,1,0,0,0,23,25,
-        3,4,2,0,24,19,1,0,0,0,24,23,1,0,0,0,25,31,1,0,0,0,26,27,5,3,0,0,
-        27,28,3,2,1,0,28,29,5,4,0,0,29,32,1,0,0,0,30,32,3,4,2,0,31,26,1,
-        0,0,0,31,30,1,0,0,0,32,37,1,0,0,0,33,37,5,13,0,0,34,37,5,11,0,0,
-        35,37,5,12,0,0,36,9,1,0,0,0,36,14,1,0,0,0,36,18,1,0,0,0,36,33,1,
-        0,0,0,36,34,1,0,0,0,36,35,1,0,0,0,37,53,1,0,0,0,38,39,10,7,0,0,39,
-        40,5,5,0,0,40,52,3,2,1,8,41,45,10,6,0,0,42,46,5,6,0,0,43,46,5,7,
-        0,0,44,46,1,0,0,0,45,42,1,0,0,0,45,43,1,0,0,0,45,44,1,0,0,0,46,47,
-        1,0,0,0,47,52,3,2,1,7,48,49,10,5,0,0,49,50,7,0,0,0,50,52,3,2,1,6,
-        51,38,1,0,0,0,51,41,1,0,0,0,51,48,1,0,0,0,52,55,1,0,0,0,53,51,1,
-        0,0,0,53,54,1,0,0,0,54,3,1,0,0,0,55,53,1,0,0,0,56,57,7,1,0,0,57,
-        5,1,0,0,0,6,24,31,36,45,51,53
+        4,1,17,67,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,1,0,1,0,1,0,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,26,8,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,3,1,35,8,1,1,1,1,1,1,1,1,1,5,1,41,8,1,10,1,12,
+        1,44,9,1,1,2,1,2,1,2,1,2,1,2,1,2,3,2,52,8,2,1,2,1,2,1,2,1,2,1,2,
+        3,2,59,8,2,1,2,1,2,3,2,63,8,2,1,3,1,3,1,3,0,1,2,4,0,2,4,6,0,2,1,
+        0,8,9,1,0,13,15,76,0,8,1,0,0,0,2,25,1,0,0,0,4,62,1,0,0,0,6,64,1,
+        0,0,0,8,9,3,2,1,0,9,10,5,0,0,1,10,1,1,0,0,0,11,12,6,1,-1,0,12,13,
+        5,1,0,0,13,14,3,2,1,0,14,15,5,2,0,0,15,26,1,0,0,0,16,17,5,3,0,0,
+        17,18,3,2,1,0,18,19,5,4,0,0,19,26,1,0,0,0,20,26,3,4,2,0,21,26,5,
+        15,0,0,22,26,5,13,0,0,23,26,5,14,0,0,24,26,5,12,0,0,25,11,1,0,0,
+        0,25,16,1,0,0,0,25,20,1,0,0,0,25,21,1,0,0,0,25,22,1,0,0,0,25,23,
+        1,0,0,0,25,24,1,0,0,0,26,42,1,0,0,0,27,28,10,8,0,0,28,29,5,5,0,0,
+        29,41,3,2,1,9,30,34,10,7,0,0,31,35,5,6,0,0,32,35,5,7,0,0,33,35,1,
+        0,0,0,34,31,1,0,0,0,34,32,1,0,0,0,34,33,1,0,0,0,35,36,1,0,0,0,36,
+        41,3,2,1,8,37,38,10,6,0,0,38,39,7,0,0,0,39,41,3,2,1,7,40,27,1,0,
+        0,0,40,30,1,0,0,0,40,37,1,0,0,0,41,44,1,0,0,0,42,40,1,0,0,0,42,43,
+        1,0,0,0,43,3,1,0,0,0,44,42,1,0,0,0,45,51,5,10,0,0,46,47,5,3,0,0,
+        47,48,3,2,1,0,48,49,5,4,0,0,49,52,1,0,0,0,50,52,3,6,3,0,51,46,1,
+        0,0,0,51,50,1,0,0,0,52,58,1,0,0,0,53,54,5,3,0,0,54,55,3,2,1,0,55,
+        56,5,4,0,0,56,59,1,0,0,0,57,59,3,6,3,0,58,53,1,0,0,0,58,57,1,0,0,
+        0,59,63,1,0,0,0,60,61,5,11,0,0,61,63,3,2,1,0,62,45,1,0,0,0,62,60,
+        1,0,0,0,63,5,1,0,0,0,64,65,7,1,0,0,65,7,1,0,0,0,7,25,34,40,42,51,
+        58,62
     ]
 
 class Gram ( Parser ):
@@ -43,17 +46,18 @@ class Gram ( Parser ):
     sharedContextCache = PredictionContextCache()
 
     literalNames = [ "<INVALID>", "'('", "')'", "<INVALID>", "'}'", "'^'", 
-                     "'*'", "'/'", "'+'", "'-'" ]
+                     "'*'", "'/'", "'+'", "'-'", "<INVALID>", "'int'" ]
 
     symbolicNames = [ "<INVALID>", "LPAREN", "RPAREN", "LBRACE", "RBRACE", 
-                      "POW", "MUL", "DIV", "PLUS", "MINUS", "FRAC", "NUMBER", 
-                      "WORD", "COMM", "WS" ]
+                      "POW", "MUL", "DIV", "PLUS", "MINUS", "FRAC", "INT", 
+                      "DX", "NUMBER", "WORD", "COMM", "WS", "ARG_WS" ]
 
     RULE_debug = 0
     RULE_expr = 1
-    RULE_atom = 2
+    RULE_function = 2
+    RULE_atom = 3
 
-    ruleNames =  [ "debug", "expr", "atom" ]
+    ruleNames =  [ "debug", "expr", "function", "atom" ]
 
     EOF = Token.EOF
     LPAREN=1
@@ -66,10 +70,13 @@ class Gram ( Parser ):
     PLUS=8
     MINUS=9
     FRAC=10
-    NUMBER=11
-    WORD=12
-    COMM=13
-    WS=14
+    INT=11
+    DX=12
+    NUMBER=13
+    WORD=14
+    COMM=15
+    WS=16
+    ARG_WS=17
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -105,12 +112,6 @@ class Gram ( Parser ):
             if hasattr( listener, "exitDebug" ):
                 listener.exitDebug(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitDebug" ):
-                return visitor.visitDebug(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
 
@@ -120,9 +121,9 @@ class Gram ( Parser ):
         self.enterRule(localctx, 0, self.RULE_debug)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 6
+            self.state = 8
             self.expr(0)
-            self.state = 7
+            self.state = 9
             self.match(Gram.EOF)
         except RecognitionException as re:
             localctx.exception = re
@@ -153,26 +154,14 @@ class Gram ( Parser ):
         def RPAREN(self):
             return self.getToken(Gram.RPAREN, 0)
 
-        def LBRACE(self, i:int=None):
-            if i is None:
-                return self.getTokens(Gram.LBRACE)
-            else:
-                return self.getToken(Gram.LBRACE, i)
+        def LBRACE(self):
+            return self.getToken(Gram.LBRACE, 0)
 
-        def RBRACE(self, i:int=None):
-            if i is None:
-                return self.getTokens(Gram.RBRACE)
-            else:
-                return self.getToken(Gram.RBRACE, i)
+        def RBRACE(self):
+            return self.getToken(Gram.RBRACE, 0)
 
-        def FRAC(self):
-            return self.getToken(Gram.FRAC, 0)
-
-        def atom(self, i:int=None):
-            if i is None:
-                return self.getTypedRuleContexts(Gram.AtomContext)
-            else:
-                return self.getTypedRuleContext(Gram.AtomContext,i)
+        def function(self):
+            return self.getTypedRuleContext(Gram.FunctionContext,0)
 
 
         def COMM(self):
@@ -183,6 +172,9 @@ class Gram ( Parser ):
 
         def WORD(self):
             return self.getToken(Gram.WORD, 0)
+
+        def DX(self):
+            return self.getToken(Gram.DX, 0)
 
         def POW(self):
             return self.getToken(Gram.POW, 0)
@@ -210,12 +202,6 @@ class Gram ( Parser ):
             if hasattr( listener, "exitExpr" ):
                 listener.exitExpr(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitExpr" ):
-                return visitor.visitExpr(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
     def expr(self, _p:int=0):
@@ -228,154 +214,122 @@ class Gram ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 36
+            self.state = 25
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [1]:
-                self.state = 10
-                self.match(Gram.LPAREN)
-                self.state = 11
-                self.expr(0)
                 self.state = 12
+                self.match(Gram.LPAREN)
+                self.state = 13
+                self.expr(0)
+                self.state = 14
                 self.match(Gram.RPAREN)
                 pass
             elif token in [3]:
-                self.state = 14
-                self.match(Gram.LBRACE)
-                self.state = 15
-                self.expr(0)
                 self.state = 16
+                self.match(Gram.LBRACE)
+                self.state = 17
+                self.expr(0)
+                self.state = 18
                 self.match(Gram.RBRACE)
                 pass
-            elif token in [10]:
-                self.state = 18
-                self.match(Gram.FRAC)
-                self.state = 24
-                self._errHandler.sync(self)
-                token = self._input.LA(1)
-                if token in [3]:
-                    self.state = 19
-                    self.match(Gram.LBRACE)
-                    self.state = 20
-                    self.expr(0)
-                    self.state = 21
-                    self.match(Gram.RBRACE)
-                    pass
-                elif token in [11, 12, 13]:
-                    self.state = 23
-                    self.atom()
-                    pass
-                else:
-                    raise NoViableAltException(self)
-
-                self.state = 31
-                self._errHandler.sync(self)
-                token = self._input.LA(1)
-                if token in [3]:
-                    self.state = 26
-                    self.match(Gram.LBRACE)
-                    self.state = 27
-                    self.expr(0)
-                    self.state = 28
-                    self.match(Gram.RBRACE)
-                    pass
-                elif token in [11, 12, 13]:
-                    self.state = 30
-                    self.atom()
-                    pass
-                else:
-                    raise NoViableAltException(self)
-
+            elif token in [10, 11]:
+                self.state = 20
+                self.function()
                 pass
-            elif token in [13]:
-                self.state = 33
+            elif token in [15]:
+                self.state = 21
                 self.match(Gram.COMM)
                 pass
-            elif token in [11]:
-                self.state = 34
+            elif token in [13]:
+                self.state = 22
                 self.match(Gram.NUMBER)
                 pass
-            elif token in [12]:
-                self.state = 35
+            elif token in [14]:
+                self.state = 23
                 self.match(Gram.WORD)
+                pass
+            elif token in [12]:
+                self.state = 24
+                self.match(Gram.DX)
                 pass
             else:
                 raise NoViableAltException(self)
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 53
+            self.state = 42
             self._errHandler.sync(self)
-            _alt = self._interp.adaptivePredict(self._input,5,self._ctx)
+            _alt = self._interp.adaptivePredict(self._input,3,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
                     if self._parseListeners is not None:
                         self.triggerExitRuleEvent()
                     _prevctx = localctx
-                    self.state = 51
+                    self.state = 40
                     self._errHandler.sync(self)
-                    la_ = self._interp.adaptivePredict(self._input,4,self._ctx)
+                    la_ = self._interp.adaptivePredict(self._input,2,self._ctx)
                     if la_ == 1:
                         localctx = Gram.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 38
-                        if not self.precpred(self._ctx, 7):
+                        self.state = 27
+                        if not self.precpred(self._ctx, 8):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
-                        self.state = 39
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
+                        self.state = 28
                         self.match(Gram.POW)
-                        self.state = 40
-                        self.expr(8)
+                        self.state = 29
+                        self.expr(9)
                         pass
 
                     elif la_ == 2:
                         localctx = Gram.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 41
-                        if not self.precpred(self._ctx, 6):
+                        self.state = 30
+                        if not self.precpred(self._ctx, 7):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
-                        self.state = 45
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
+                        self.state = 34
                         self._errHandler.sync(self)
                         token = self._input.LA(1)
                         if token in [6]:
-                            self.state = 42
+                            self.state = 31
                             self.match(Gram.MUL)
                             pass
                         elif token in [7]:
-                            self.state = 43
+                            self.state = 32
                             self.match(Gram.DIV)
                             pass
-                        elif token in [1, 3, 10, 11, 12, 13]:
+                        elif token in [1, 3, 10, 11, 12, 13, 14, 15]:
                             pass
                         else:
                             raise NoViableAltException(self)
 
-                        self.state = 47
-                        self.expr(7)
+                        self.state = 36
+                        self.expr(8)
                         pass
 
                     elif la_ == 3:
                         localctx = Gram.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 48
-                        if not self.precpred(self._ctx, 5):
+                        self.state = 37
+                        if not self.precpred(self._ctx, 6):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
-                        self.state = 49
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
+                        self.state = 38
                         _la = self._input.LA(1)
                         if not(_la==8 or _la==9):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 50
-                        self.expr(6)
+                        self.state = 39
+                        self.expr(7)
                         pass
 
              
-                self.state = 55
+                self.state = 44
                 self._errHandler.sync(self)
-                _alt = self._interp.adaptivePredict(self._input,5,self._ctx)
+                _alt = self._interp.adaptivePredict(self._input,3,self._ctx)
 
         except RecognitionException as re:
             localctx.exception = re
@@ -383,6 +337,127 @@ class Gram ( Parser ):
             self._errHandler.recover(self, re)
         finally:
             self.unrollRecursionContexts(_parentctx)
+        return localctx
+
+
+    class FunctionContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def FRAC(self):
+            return self.getToken(Gram.FRAC, 0)
+
+        def LBRACE(self, i:int=None):
+            if i is None:
+                return self.getTokens(Gram.LBRACE)
+            else:
+                return self.getToken(Gram.LBRACE, i)
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(Gram.ExprContext)
+            else:
+                return self.getTypedRuleContext(Gram.ExprContext,i)
+
+
+        def RBRACE(self, i:int=None):
+            if i is None:
+                return self.getTokens(Gram.RBRACE)
+            else:
+                return self.getToken(Gram.RBRACE, i)
+
+        def atom(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(Gram.AtomContext)
+            else:
+                return self.getTypedRuleContext(Gram.AtomContext,i)
+
+
+        def INT(self):
+            return self.getToken(Gram.INT, 0)
+
+        def getRuleIndex(self):
+            return Gram.RULE_function
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterFunction" ):
+                listener.enterFunction(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitFunction" ):
+                listener.exitFunction(self)
+
+
+
+
+    def function(self):
+
+        localctx = Gram.FunctionContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 4, self.RULE_function)
+        try:
+            self.state = 62
+            self._errHandler.sync(self)
+            token = self._input.LA(1)
+            if token in [10]:
+                self.enterOuterAlt(localctx, 1)
+                self.state = 45
+                self.match(Gram.FRAC)
+                self.state = 51
+                self._errHandler.sync(self)
+                token = self._input.LA(1)
+                if token in [3]:
+                    self.state = 46
+                    self.match(Gram.LBRACE)
+                    self.state = 47
+                    self.expr(0)
+                    self.state = 48
+                    self.match(Gram.RBRACE)
+                    pass
+                elif token in [13, 14, 15]:
+                    self.state = 50
+                    self.atom()
+                    pass
+                else:
+                    raise NoViableAltException(self)
+
+                self.state = 58
+                self._errHandler.sync(self)
+                token = self._input.LA(1)
+                if token in [3]:
+                    self.state = 53
+                    self.match(Gram.LBRACE)
+                    self.state = 54
+                    self.expr(0)
+                    self.state = 55
+                    self.match(Gram.RBRACE)
+                    pass
+                elif token in [13, 14, 15]:
+                    self.state = 57
+                    self.atom()
+                    pass
+                else:
+                    raise NoViableAltException(self)
+
+                pass
+            elif token in [11]:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 60
+                self.match(Gram.INT)
+                self.state = 61
+                self.expr(0)
+                pass
+            else:
+                raise NoViableAltException(self)
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
         return localctx
 
 
@@ -413,25 +488,19 @@ class Gram ( Parser ):
             if hasattr( listener, "exitAtom" ):
                 listener.exitAtom(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitAtom" ):
-                return visitor.visitAtom(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
 
     def atom(self):
 
         localctx = Gram.AtomContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 4, self.RULE_atom)
+        self.enterRule(localctx, 6, self.RULE_atom)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 56
+            self.state = 64
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 14336) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 57344) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -458,15 +527,15 @@ class Gram ( Parser ):
 
     def expr_sempred(self, localctx:ExprContext, predIndex:int):
             if predIndex == 0:
-                return self.precpred(self._ctx, 7)
+                return self.precpred(self._ctx, 8)
          
 
             if predIndex == 1:
-                return self.precpred(self._ctx, 6)
+                return self.precpred(self._ctx, 7)
          
 
             if predIndex == 2:
-                return self.precpred(self._ctx, 5)
+                return self.precpred(self._ctx, 6)
          
 
 
