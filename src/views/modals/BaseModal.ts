@@ -10,5 +10,5 @@ export class BaseModal extends Modal {
             this.default_action();
         });
     }
-    protected default_action: () => void;
+    protected default_action: () => void = () => { };
 }

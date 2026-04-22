@@ -99,7 +99,7 @@ export interface SendResult {
 
 interface MessagePromiseEntry {
     sent_time: UnixTimestampMillis;
-    resolve: (value: ClientResponse | PromiseLike<ClientResponse>) => void;
+    resolve: (value: SuccessResponse | PromiseLike<SuccessResponse>) => void;
     reject: (reason?: unknown) => void;
 }
 
@@ -221,10 +221,10 @@ export class CasServer {
     }
 
 
-    private client_process: ChildProcessWithoutNullStreams;
-    private ws_cas_client: WebSocket;
-    private ws_cas_server: WebSocketServer;
-    private error_callback: (usr_error: string, dev_error: string) => void;
+    private client_process!: ChildProcessWithoutNullStreams;
+    private ws_cas_client!: WebSocket;
+    private ws_cas_server!: WebSocketServer;
+    private error_callback!: (usr_error: string, dev_error: string) => void;
 
     private message_promises: Record<string, MessagePromiseEntry> = {};
 
@@ -270,7 +270,7 @@ export class CasServer {
                 break;
             }
             case MessageStatus.SUCCESS: {
-                message_promise?.resolve(response);
+                message_promise?.resolve(response as SuccessResponse);
                 break;
             }
             default: {
