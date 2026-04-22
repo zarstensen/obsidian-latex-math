@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable, Optional, cast
 
 import regex
 from lark import (
@@ -89,7 +89,7 @@ class Parser:
         # if lark did not figure out where the error occured,
         # we just assume it was at the end of the string.
         if lark_error.pos_in_stream is None:
-            lark_error.pos_in_stream = len(parse_text) - 1
+            lark_error.pos_in_stream = cast(None, len(parse_text) - 1)
 
         pretty_err = f"\n{lark_error.get_context(parse_text, Parser._PARSE_ERR_PRETTY_STR_SPAN)}Expression is invalid from here."
 
