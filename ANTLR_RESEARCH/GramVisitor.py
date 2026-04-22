@@ -1,4 +1,4 @@
-# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/antlr/Gram.g4 by ANTLR 4.13.1
+# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/ANTLR_RESEARCH/Gram.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .Gram import Gram
@@ -16,6 +16,11 @@ class GramVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by Gram#expr.
     def visitExpr(self, ctx:Gram.ExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by Gram#function.
+    def visitFunction(self, ctx:Gram.FunctionContext):
         return self.visitChildren(ctx)
 
 

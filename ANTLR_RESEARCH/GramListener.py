@@ -1,4 +1,4 @@
-# Generated from c:/Users/sblso/Downloads/school/.obsidian/plugins/obsidian-latex-math/antlr/Gram.g4 by ANTLR 4.13.1
+# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/ANTLR_RESEARCH/Gram.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .Gram import Gram

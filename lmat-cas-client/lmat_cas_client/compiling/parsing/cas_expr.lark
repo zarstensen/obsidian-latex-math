@@ -426,16 +426,16 @@ _R_FORMAT: "\\right"
 %ignore _IGNORE
 
 // basic binary operators
-ADD: "+"
-SUB: "-"
-MUL: "*" | "\\ast"
-DIV: "/" | "\\over"
+ADD: "+" //////////////
+SUB: "-" //
+MUL: "*" | "\\ast" //
+DIV: "/" | "\\over" //
 
 // basic common operators
-_CMD_TIMES: "\\times"
-_CMD_XPROD: /\\cross(product)?/ | "\\cp"
-_CMD_CDOT:  "\\cdot"
-_CMD_VDOT: "\\dotproduct" | "\\vdot"
+_CMD_TIMES: "\\times" //
+_CMD_XPROD: /\\cross(product)?/ | "\\cp" //
+_CMD_CDOT:  "\\cdot" //
+_CMD_VDOT: "\\dotproduct" | "\\vdot" //
 // Terminal matching a bunch of repeadet horizontal dots, these may be split up into multiple terminals in the future, if needed
 _CMD_DOTS: /\\dots[cbmio]?/ | /\\[lc]?dots/ | (_CMD_CDOT|".") ~ 2..3
 _CMD_DIV:   "\\div"
@@ -458,6 +458,7 @@ _L_FLOOR: "\\lfloor"
 _R_FLOOR: "\\rfloor"
 _L_PAREN: "("
 _R_PAREN: ")"
+// DEAL WITH DELIMITERS; NEED TO TEST BAR
 _L_BAR: _BAR
 %declare _R_BAR
 _L_DOUBLE_BAR: _DOUBLE_BAR
@@ -509,8 +510,8 @@ _FUNC_SGN.1: CMD_OPERATOR _WS? _L_BRACE _WS? "sgn" _WS? _R_BRACE
 
 // multiarg functions
 
-_FUNC_FRAC: /\\[dtcs]?frac/ | "\\nicefrac"
-_FUNC_BINOM: /\\[dt]?binom/
+_FUNC_FRAC: /\\[dtcs]?frac/ | "\\nicefrac" //
+_FUNC_BINOM: /\\[dt]?binom/ //
 
 _FUNC_DERIVATIVE: _FUNC_FRAC _WS? _L_BRACE _WS? _DIFFERENTIAL_SYMBOL
 _FUNC_PARTIAL_DERIVATIVE: _FUNC_FRAC _WS? _L_BRACE _WS? _PARTIAL_SYMBOL

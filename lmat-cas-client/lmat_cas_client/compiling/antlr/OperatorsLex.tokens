@@ -1,0 +1,10 @@
+PLUS=1
+MINUS=2
+MULT=3
+DIV=4
+TIMES=5
+CROSS_PROD=6
+DOT_PROD=7
+'+'=1
+'-'=2
+'\\times'=5

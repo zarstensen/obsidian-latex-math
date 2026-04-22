@@ -1,4 +1,4 @@
-# Generated from c:/Users/sblso/Downloads/school/.obsidian/plugins/obsidian-latex-math/antlr/Lex.g4 by ANTLR 4.13.1
+# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/ANTLR_RESEARCH/Lex.g4 by ANTLR 4.13.1
 from antlr4 import *
 from io import StringIO
 import sys

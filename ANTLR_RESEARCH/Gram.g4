@@ -16,13 +16,11 @@ expr:
 	| COMM
 	| NUMBER
 	| WORD
-	| DX
-	;
+	| DX;
 
 function:
 	FRAC (LBRACE expr RBRACE | atom) (LBRACE expr RBRACE | atom)
-	| INT expr
-	;
-
+	| INT+ expr DX+
+	| INT+ FRAC LBRACE DX+ RBRACE (LBRACE expr RBRACE | atom) DX+;
 
 atom: NUMBER | WORD | COMM;
