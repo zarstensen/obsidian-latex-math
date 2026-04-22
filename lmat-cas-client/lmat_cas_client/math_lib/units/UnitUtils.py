@@ -128,9 +128,7 @@ def auto_convert(sympy_expr: Expr, unit_system_in: UnitSystem | str = SI) -> Exp
         # Conver to using all base units of system.
         for units in [unit_system._base_units, *unit_system.get_units_non_prefixed()]:
             converted_expr = u.convert_to(expr, units)
-            converted_expr_complexity = (
-                get_unit_complexity(converted_expr) or sys.maxsize
-            )
+            converted_expr_complexity = get_unit_complexity(converted_expr)
 
             if converted_expr_complexity < curr_complexity:
                 curr_complexity = converted_expr_complexity
@@ -154,19 +152,19 @@ def str_to_unit(unit_str: str) -> Quantity | None:
         return unit
 
 
-#
-#
-def get_unit_complexity(expression: Expr) -> int | None:
+def get_unit_complexity(expression: Expr) -> int:
     """
     get the 'complexity' of a unit.
     complexity is defined as the sum of all units raised power absolute value (or 1/power if 0 < power < 1).
-
+    if expression contains a PhysicalConstant or does not have a as_powers_dict attr,
+    sys.maxsize is returned.
+    The reasoning for this, is that one ideally never wants a PhysicalConstant to not be expanded into its actual value.
 
     Returns:
         int: "complexity" of input unit.
     """
     if not hasattr(expression, "as_powers_dict"):
-        return None
+        return sys.maxsize
 
     complexity = 0
 
