@@ -150,19 +150,19 @@ def str_to_unit(unit_str: str) -> Quantity | None:
         return unit
 
 
-#
-#
 def get_unit_complexity(expression: Expr) -> int:
     """
     get the 'complexity' of a unit.
     complexity is defined as the sum of all units raised power absolute value (or 1/power if 0 < power < 1).
-
+    if expression contains a PhysicalConstant or does not have a as_powers_dict attr,
+    sys.maxsize is returned.
+    The reasoning for this, is that one ideally never wants a PhysicalConstant to not be expanded into its actual value.
 
     Returns:
         int: "complexity" of input unit.
     """
     if not hasattr(expression, "as_powers_dict"):
-        return None
+        return sys.maxsize
 
     complexity = 0
 

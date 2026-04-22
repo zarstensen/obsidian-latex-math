@@ -139,3 +139,11 @@ class TestUnitConversion:
             "environment": {},
         })
         assert abs(simplify(result.sympy_expr) - 1 * units.kg) < 1e-13 * units.kg
+
+    def test_cancel_units(self):
+        handler = EvalHandler(self.compiler)
+        result = handler.handle({
+            "expression": r"\frac{{J}{s}^2}{{kg}{m}^2}",
+            "environment": {},
+        })
+        assert abs(simplify(result.sympy_expr) - 1) < 1e-13
