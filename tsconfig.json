@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",
     "paths": {
       "/*": [
-        "./*"
+        "./src/*"
       ]
     },
     "inlineSourceMap": true,
     "inlineSources": true,
-    "module": "ESNext",
+    "module": "esnext",
     "target": "ES2022",
     "allowJs": true,
     "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "resolvePackageJsonExports": false,
+    "skipLibCheck": true,
     "importHelpers": true,
     "isolatedModules": true,
     "strictNullChecks": true,

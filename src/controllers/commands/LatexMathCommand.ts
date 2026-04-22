@@ -7,7 +7,7 @@ import { CasServer } from "/services/CasServer";
 // function callback is called whenever the command has been invoked by the user.
 // use the response_verifire dependency to verify responses sent to the CasServer.
 export abstract class LatexMathCommand {
-    readonly id: string; // TODO: this should not be here, it should be in a separate controller
+    readonly id!: string; // TODO: this should not be here, it should be in a separate controller
     // in general, these command classes should be more split up.
 
     constructor(public response_verifier: SuccessResponseVerifier) { }

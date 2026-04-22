@@ -1,4 +1,4 @@
-import LatexMathPlugin from 'LatexMathPlugin';
+import LatexMathPlugin from '/LatexMathPlugin';
 import { App, PluginSettingTab, Setting} from 'obsidian';
 
 // Settings tab for Latex Math plugin.

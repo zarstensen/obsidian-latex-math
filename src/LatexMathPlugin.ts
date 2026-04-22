@@ -27,7 +27,7 @@ const DEFAULT_SETTINGS: LatexMathPluginSettings = {
 };
 
 export default class LatexMathPlugin extends Plugin {
-    settings: LatexMathPluginSettings;
+    settings!: LatexMathPluginSettings;
 
     async onload() {
         console.log(`Loading LaTeX Math (v${this.manifest.version})`);
@@ -109,12 +109,11 @@ export default class LatexMathPlugin extends Plugin {
     private static readonly STATUS_BAR_UPDATE_FREQ: UnixTimestampMillis = 500;
     private static readonly STATUS_BAR_MESSAGE_HANG_TIME: UnixTimestampMillis = 1000;
 
-    private cas_server: CasServer;
-    private spawn_cas_client_promise: Promise<void>;
+    private cas_server!: CasServer;
+    private spawn_cas_client_promise!: Promise<void>;
     private prev_err_notice: Notice | null = null;
 
     private async setupCasConnection() {
-        this.cas_server = new CasServer();
         this.cas_server.onError(this.handleCasError.bind(this));
 
         this.spawn_cas_client_promise = this.spawnCasClient(this.manifest.dir as string);
@@ -169,7 +168,7 @@ export default class LatexMathPlugin extends Plugin {
         await this.cas_server.initializeAsync(cas_client_spawner);
     }
 
-    private onCommandFailed(failed_command: LatexMathCommand, unexpected_response: ClientResponse, expected_statuses: Set<string>) {
+    private onCommandFailed(failed_command: unknown, unexpected_response: ClientResponse, expected_statuses: Set<string>) {
         console.error("Command Failed!\nCommand:\t\t\t",
             failed_command,
             "\nExpected value types:\t",
