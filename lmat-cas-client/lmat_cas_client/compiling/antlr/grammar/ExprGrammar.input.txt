@@ -1,0 +1,8 @@
+test abc + 25.34 \frac25xuz
+
+a & b
+
+\begin{bmatrix}
+a & {b & c} & d & e \\
+f & g {\\ h}
+\end{bmatrix}

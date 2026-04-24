@@ -4,4 +4,4 @@ options {
 	language = Python3;
 }
 
-debug: IGNORE EOF;
+debug: .*? EOF;

@@ -1,4 +1,4 @@
-# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/lmat-cas-client/lmat_cas_client/compiling/antlr/ExprGrammar.g4 by ANTLR 4.13.1
+# Generated from ExprGrammar.g4 by ANTLR 4.13.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -10,8 +10,10 @@ else:
 
 def serializedATN():
     return [
-        4,1,32,6,2,0,7,0,1,0,1,0,1,0,1,0,0,0,1,0,0,0,4,0,2,1,0,0,0,2,3,5,
-        1,0,0,3,4,5,0,0,1,4,1,1,0,0,0,0
+        4,1,54,11,2,0,7,0,1,0,5,0,4,8,0,10,0,12,0,7,9,0,1,0,1,0,1,0,1,5,
+        0,1,0,0,0,10,0,5,1,0,0,0,2,4,9,0,0,0,3,2,1,0,0,0,4,7,1,0,0,0,5,6,
+        1,0,0,0,5,3,1,0,0,0,6,8,1,0,0,0,7,5,1,0,0,0,8,9,5,0,0,1,9,1,1,0,
+        0,0,1,5
     ]
 
 class ExprGrammar ( Parser ):
@@ -24,62 +26,95 @@ class ExprGrammar ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "<INVALID>", "'+'", "'-'", "<INVALID>", 
-                     "<INVALID>", "'\\times'", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "'}'", "'('", "')'", "'\\{'", "'\\}'", 
-                     "'\\['", "'\\]'", "'\\lceil'", "'\\rceil'", "'\\lfloor'", 
-                     "'\\rfloor'", "<INVALID>", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "<INVALID>", "'int'" ]
+    literalNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "'+'", "'-'", 
+                     "<INVALID>", "<INVALID>", "'\\times'", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "'\\sqrt'", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "'\\lim'", "'\\sum'", "'\\prod'", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "'('", "')'", "'\\{'", "'\\}'", "'\\['", "'\\]'", "'\\lceil'", 
+                     "'\\rceil'", "'\\lfloor'", "'\\rfloor'", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "'&'", "'\\\\'" ]
 
-    symbolicNames = [ "<INVALID>", "IGNORE", "PLUS", "MINUS", "MULT", "DIV", 
-                      "TIMES", "CROSS_PROD", "DOT_PROD", "LBRACE", "RBRACE", 
-                      "LPAREN", "RPAREN", "LBRACE_LITERAL", "RBRACE_LITERAL", 
-                      "LBRACKET", "RBRACKET", "LCEIL", "RCEIL", "LFLOOR", 
-                      "RFLOOR", "LANGLE", "RANGLE", "BAR", "DOUBLE_BAR", 
-                      "FRAC", "INT", "DX", "NUMBER", "WORD", "COMM", "WS", 
-                      "ARG_WS" ]
+    symbolicNames = [ "<INVALID>", "FUNCTION", "IGNORE", "PLUS", "MINUS", 
+                      "MULT", "DIV", "TIMES", "CROSS_PROD", "DOT_PROD", 
+                      "FRAC", "BINOM", "FUNC_SQRT", "CONJUGATE", "MOD", 
+                      "INT", "DIFFERENTIAL", "PHYS_PARTIAL_DERIVATIVE", 
+                      "LIMIT", "SUM", "PRODUCT", "VEC_UNIT", "SYMBOL", "COMMAND", 
+                      "NUMBER", "BIN_NUMBER", "OCT_NUMBER", "HEX_NUMBER", 
+                      "LBRACE", "RBRACE", "LPAREN", "RPAREN", "LBRACE_LITERAL", 
+                      "RBRACE_LITERAL", "LBRACKET", "RBRACKET", "LCEIL", 
+                      "RCEIL", "LFLOOR", "RFLOOR", "LANGLE", "RANGLE", "BAR", 
+                      "DOUBLE_BAR", "BEGIN_MATRIX", "END_MATRIX", "BEGIN_V_MATRIX", 
+                      "END_V_MATRIX", "BEGIN_ARRAY", "END_ARRAY", "BEGIN_ENV", 
+                      "END_ENV", "ENV_EL_SEP", "ENV_ROW_SEP", "ARG_WS" ]
 
     RULE_debug = 0
 
     ruleNames =  [ "debug" ]
 
     EOF = Token.EOF
-    IGNORE=1
-    PLUS=2
-    MINUS=3
-    MULT=4
-    DIV=5
-    TIMES=6
-    CROSS_PROD=7
-    DOT_PROD=8
-    LBRACE=9
-    RBRACE=10
-    LPAREN=11
-    RPAREN=12
-    LBRACE_LITERAL=13
-    RBRACE_LITERAL=14
-    LBRACKET=15
-    RBRACKET=16
-    LCEIL=17
-    RCEIL=18
-    LFLOOR=19
-    RFLOOR=20
-    LANGLE=21
-    RANGLE=22
-    BAR=23
-    DOUBLE_BAR=24
-    FRAC=25
-    INT=26
-    DX=27
-    NUMBER=28
-    WORD=29
-    COMM=30
-    WS=31
-    ARG_WS=32
+    FUNCTION=1
+    IGNORE=2
+    PLUS=3
+    MINUS=4
+    MULT=5
+    DIV=6
+    TIMES=7
+    CROSS_PROD=8
+    DOT_PROD=9
+    FRAC=10
+    BINOM=11
+    FUNC_SQRT=12
+    CONJUGATE=13
+    MOD=14
+    INT=15
+    DIFFERENTIAL=16
+    PHYS_PARTIAL_DERIVATIVE=17
+    LIMIT=18
+    SUM=19
+    PRODUCT=20
+    VEC_UNIT=21
+    SYMBOL=22
+    COMMAND=23
+    NUMBER=24
+    BIN_NUMBER=25
+    OCT_NUMBER=26
+    HEX_NUMBER=27
+    LBRACE=28
+    RBRACE=29
+    LPAREN=30
+    RPAREN=31
+    LBRACE_LITERAL=32
+    RBRACE_LITERAL=33
+    LBRACKET=34
+    RBRACKET=35
+    LCEIL=36
+    RCEIL=37
+    LFLOOR=38
+    RFLOOR=39
+    LANGLE=40
+    RANGLE=41
+    BAR=42
+    DOUBLE_BAR=43
+    BEGIN_MATRIX=44
+    END_MATRIX=45
+    BEGIN_V_MATRIX=46
+    END_V_MATRIX=47
+    BEGIN_ARRAY=48
+    END_ARRAY=49
+    BEGIN_ENV=50
+    END_ENV=51
+    ENV_EL_SEP=52
+    ENV_ROW_SEP=53
+    ARG_WS=54
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
-        self.checkVersion("4.13.1")
+        self.checkVersion("4.13.2")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
@@ -92,9 +127,6 @@ class ExprGrammar ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-
-        def IGNORE(self):
-            return self.getToken(ExprGrammar.IGNORE, 0)
 
         def EOF(self):
             return self.getToken(ExprGrammar.EOF, 0)
@@ -110,12 +142,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitDebug" ):
                 listener.exitDebug(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitDebug" ):
-                return visitor.visitDebug(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
 
@@ -125,9 +151,18 @@ class ExprGrammar ( Parser ):
         self.enterRule(localctx, 0, self.RULE_debug)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 2
-            self.match(ExprGrammar.IGNORE)
-            self.state = 3
+            self.state = 5
+            self._errHandler.sync(self)
+            _alt = self._interp.adaptivePredict(self._input,0,self._ctx)
+            while _alt!=1 and _alt!=ATN.INVALID_ALT_NUMBER:
+                if _alt==1+1:
+                    self.state = 2
+                    self.matchWildcard() 
+                self.state = 7
+                self._errHandler.sync(self)
+                _alt = self._interp.adaptivePredict(self._input,0,self._ctx)
+
+            self.state = 8
             self.match(ExprGrammar.EOF)
         except RecognitionException as re:
             localctx.exception = re

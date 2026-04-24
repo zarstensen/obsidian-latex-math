@@ -11,8 +11,8 @@ from antlr4 import (
     ParseTreeVisitor,
 )
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
-from Gram import Gram
-from Lex import Lex
+from ExprGrammar import ExprGrammar
+from ExprLexer import ExprLexer
 
 IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
@@ -90,7 +90,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         self.next_node_id += 1
 
         self.__rule_subgraph.add_node(
-            pydot.Node(n, label=f"{Gram.ruleNames[node.getRuleIndex()]}")
+            pydot.Node(n, label=f"{ExprGrammar.ruleNames[node.getRuleIndex()]}")
         )
 
         for ids in results:
@@ -107,7 +107,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         self.__term_subgraph.add_node(
             pydot.Node(
                 id,
-                label=f"{Gram.symbolicNames[node.getSymbol().type]}\n{node.getText()}",
+                label=f"{ExprGrammar.symbolicNames[node.getSymbol().type]}\n{node.getText()}",
                 xlabel=f'<<font color="#004D62">* {node.getSymbol().tokenIndex}</font>>',
             )
         )
@@ -123,9 +123,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         symbol = node.getSymbol()
 
         if symbol and symbol.tokenIndex != -1:
-            label = (
-                f"{Gram.symbolicNames[symbol.type]}\n\\<unexpected: {symbol.text}\\>"
-            )
+            label = f"{ExprGrammar.symbolicNames[symbol.type]}\n\\<unexpected: {symbol.text}\\>"
 
         self.__err_subgraph.add_node(pydot.Node(id, label=label))
         return id
@@ -144,9 +142,9 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
 #     print("syntax errors")
 
 input_stream = FileStream(IN_FILE)
-lexer = Lex(input_stream)
+lexer = ExprLexer(input_stream)
 stream = CommonTokenStream(lexer)
-parser = Gram(stream)
+parser = ExprGrammar(stream)
 tree = parser.debug()
 r = ParseTreeDotVisitor().visit(tree)
 
