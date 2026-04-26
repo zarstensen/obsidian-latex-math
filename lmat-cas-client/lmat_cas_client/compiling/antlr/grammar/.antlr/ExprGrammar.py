@@ -8,39 +8,33 @@ if sys.version_info[1] > 5:
 else:
 	from typing.io import TextIO
 
-
-import Ast
-
 def serializedATN():
     return [
-        4,1,59,83,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,1,0,1,0,1,0,1,1,1,1,1,
+        4,1,59,75,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,1,0,1,0,1,0,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-        1,1,1,1,1,1,1,1,1,3,1,35,8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-        1,1,1,1,1,1,1,1,1,1,1,1,3,1,52,8,1,1,1,1,1,5,1,56,8,1,10,1,12,1,
-        59,9,1,1,2,1,2,1,2,1,2,1,2,1,2,3,2,67,8,2,1,3,1,3,1,3,1,3,1,3,5,
-        3,74,8,3,10,3,12,3,77,9,3,3,3,79,8,3,1,3,1,3,1,3,0,1,2,4,0,2,4,6,
-        0,3,1,0,3,4,1,0,5,6,1,0,23,25,94,0,8,1,0,0,0,2,34,1,0,0,0,4,66,1,
-        0,0,0,6,68,1,0,0,0,8,9,3,2,1,0,9,10,5,0,0,1,10,1,1,0,0,0,11,12,6,
-        1,-1,0,12,13,5,27,0,0,13,14,5,35,0,0,14,15,3,2,1,0,15,16,5,36,0,
-        0,16,35,1,0,0,0,17,18,5,27,0,0,18,19,5,33,0,0,19,20,3,2,1,0,20,21,
-        5,34,0,0,21,35,1,0,0,0,22,23,5,27,0,0,23,35,3,2,1,8,24,25,7,0,0,
-        0,25,35,3,2,1,5,26,27,5,35,0,0,27,28,3,2,1,0,28,29,5,36,0,0,29,35,
-        1,0,0,0,30,35,3,6,3,0,31,32,3,4,2,0,32,33,6,1,-1,0,33,35,1,0,0,0,
-        34,11,1,0,0,0,34,17,1,0,0,0,34,22,1,0,0,0,34,24,1,0,0,0,34,26,1,
-        0,0,0,34,30,1,0,0,0,34,31,1,0,0,0,35,57,1,0,0,0,36,37,10,7,0,0,37,
-        38,7,1,0,0,38,56,3,2,1,8,39,40,10,6,0,0,40,41,7,0,0,0,41,56,3,2,
-        1,7,42,43,10,4,0,0,43,56,3,2,1,5,44,45,10,12,0,0,45,51,5,7,0,0,46,
-        52,3,4,2,0,47,48,5,33,0,0,48,49,3,2,1,0,49,50,5,34,0,0,50,52,1,0,
-        0,0,51,46,1,0,0,0,51,47,1,0,0,0,52,56,1,0,0,0,53,54,10,11,0,0,54,
-        56,7,2,0,0,55,36,1,0,0,0,55,39,1,0,0,0,55,42,1,0,0,0,55,44,1,0,0,
-        0,55,53,1,0,0,0,56,59,1,0,0,0,57,55,1,0,0,0,57,58,1,0,0,0,58,3,1,
-        0,0,0,59,57,1,0,0,0,60,61,5,26,0,0,61,67,6,2,-1,0,62,63,5,27,0,0,
-        63,67,6,2,-1,0,64,65,5,28,0,0,65,67,6,2,-1,0,66,60,1,0,0,0,66,62,
-        1,0,0,0,66,64,1,0,0,0,67,5,1,0,0,0,68,69,5,1,0,0,69,78,5,35,0,0,
-        70,75,3,2,1,0,71,72,5,32,0,0,72,74,3,2,1,0,73,71,1,0,0,0,74,77,1,
-        0,0,0,75,73,1,0,0,0,75,76,1,0,0,0,76,79,1,0,0,0,77,75,1,0,0,0,78,
-        70,1,0,0,0,78,79,1,0,0,0,79,80,1,0,0,0,80,81,5,36,0,0,81,7,1,0,0,
-        0,7,34,51,55,57,66,75,78
+        1,1,1,1,1,3,1,33,8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,3,1,50,8,1,1,1,1,1,5,1,54,8,1,10,1,12,1,57,9,1,1,
+        2,1,2,1,3,1,3,1,3,1,3,1,3,5,3,66,8,3,10,3,12,3,69,9,3,3,3,71,8,3,
+        1,3,1,3,1,3,0,1,2,4,0,2,4,6,0,4,1,0,3,4,1,0,5,6,1,0,23,25,1,0,26,
+        28,84,0,8,1,0,0,0,2,32,1,0,0,0,4,58,1,0,0,0,6,60,1,0,0,0,8,9,3,2,
+        1,0,9,10,5,0,0,1,10,1,1,0,0,0,11,12,6,1,-1,0,12,13,5,27,0,0,13,14,
+        5,35,0,0,14,15,3,2,1,0,15,16,5,36,0,0,16,33,1,0,0,0,17,18,5,27,0,
+        0,18,19,5,33,0,0,19,20,3,2,1,0,20,21,5,34,0,0,21,33,1,0,0,0,22,23,
+        5,27,0,0,23,33,3,2,1,8,24,25,7,0,0,0,25,33,3,2,1,5,26,27,5,35,0,
+        0,27,28,3,2,1,0,28,29,5,36,0,0,29,33,1,0,0,0,30,33,3,6,3,0,31,33,
+        3,4,2,0,32,11,1,0,0,0,32,17,1,0,0,0,32,22,1,0,0,0,32,24,1,0,0,0,
+        32,26,1,0,0,0,32,30,1,0,0,0,32,31,1,0,0,0,33,55,1,0,0,0,34,35,10,
+        7,0,0,35,36,7,1,0,0,36,54,3,2,1,8,37,38,10,6,0,0,38,39,7,0,0,0,39,
+        54,3,2,1,7,40,41,10,4,0,0,41,54,3,2,1,5,42,43,10,12,0,0,43,49,5,
+        7,0,0,44,50,3,4,2,0,45,46,5,33,0,0,46,47,3,2,1,0,47,48,5,34,0,0,
+        48,50,1,0,0,0,49,44,1,0,0,0,49,45,1,0,0,0,50,54,1,0,0,0,51,52,10,
+        11,0,0,52,54,7,2,0,0,53,34,1,0,0,0,53,37,1,0,0,0,53,40,1,0,0,0,53,
+        42,1,0,0,0,53,51,1,0,0,0,54,57,1,0,0,0,55,53,1,0,0,0,55,56,1,0,0,
+        0,56,3,1,0,0,0,57,55,1,0,0,0,58,59,7,3,0,0,59,5,1,0,0,0,60,61,5,
+        1,0,0,61,70,5,35,0,0,62,67,3,2,1,0,63,64,5,32,0,0,64,66,3,2,1,0,
+        65,63,1,0,0,0,66,69,1,0,0,0,67,65,1,0,0,0,67,68,1,0,0,0,68,71,1,
+        0,0,0,69,67,1,0,0,0,70,62,1,0,0,0,70,71,1,0,0,0,71,72,1,0,0,0,72,
+        73,5,36,0,0,73,7,1,0,0,0,6,32,49,53,55,67,70
     ]
 
 class ExprGrammar ( Parser ):
@@ -164,14 +158,13 @@ class ExprGrammar ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.omgomgomg = None # ExprContext
-
-        def EOF(self):
-            return self.getToken(ExprGrammar.EOF, 0)
 
         def expr(self):
             return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
 
+
+        def EOF(self):
+            return self.getToken(ExprGrammar.EOF, 0)
 
         def getRuleIndex(self):
             return ExprGrammar.RULE_debug
@@ -184,12 +177,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitDebug" ):
                 listener.exitDebug(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitDebug" ):
-                return visitor.visitDebug(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
 
@@ -200,7 +187,7 @@ class ExprGrammar ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 8
-            localctx.omgomgomg = self.expr(0)
+            self.expr(0)
             self.state = 9
             self.match(ExprGrammar.EOF)
         except RecognitionException as re:
@@ -218,7 +205,6 @@ class ExprGrammar ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.res = None
 
 
         def getRuleIndex(self):
@@ -227,7 +213,6 @@ class ExprGrammar ( Parser ):
      
         def copyFrom(self, ctx:ParserRuleContext):
             super().copyFrom(ctx)
-            self.res = ctx.res
 
 
     class CommandContext(ExprContext):
@@ -258,12 +243,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitCommand" ):
                 listener.exitCommand(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitCommand" ):
-                return visitor.visitCommand(self)
-            else:
-                return visitor.visitChildren(self)
-
 
     class MultiplicativeOpContext(ExprContext):
 
@@ -290,12 +269,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitMultiplicativeOp" ):
                 listener.exitMultiplicativeOp(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitMultiplicativeOp" ):
-                return visitor.visitMultiplicativeOp(self)
-            else:
-                return visitor.visitChildren(self)
-
 
     class UAdditiveOpContext(ExprContext):
 
@@ -319,19 +292,40 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitUAdditiveOp" ):
                 listener.exitUAdditiveOp(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitUAdditiveOp" ):
-                return visitor.visitUAdditiveOp(self)
-            else:
-                return visitor.visitChildren(self)
+
+    class PrimaryContext(ExprContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def LPAREN(self):
+            return self.getToken(ExprGrammar.LPAREN, 0)
+        def expr(self):
+            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+
+        def RPAREN(self):
+            return self.getToken(ExprGrammar.RPAREN, 0)
+        def function(self):
+            return self.getTypedRuleContext(ExprGrammar.FunctionContext,0)
+
+        def atom(self):
+            return self.getTypedRuleContext(ExprGrammar.AtomContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterPrimary" ):
+                listener.enterPrimary(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitPrimary" ):
+                listener.exitPrimary(self)
 
 
     class AdditiveOpContext(ExprContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
             super().__init__(parser)
-            self.lhs = None # ExprContext
-            self.rhs = None # ExprContext
             self.copyFrom(ctx)
 
         def expr(self, i:int=None):
@@ -353,54 +347,11 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitAdditiveOp" ):
                 listener.exitAdditiveOp(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitAdditiveOp" ):
-                return visitor.visitAdditiveOp(self)
-            else:
-                return visitor.visitChildren(self)
-
-
-    class StubContext(ExprContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
-            super().__init__(parser)
-            self._atom = None # AtomContext
-            self.copyFrom(ctx)
-
-        def LPAREN(self):
-            return self.getToken(ExprGrammar.LPAREN, 0)
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
-
-        def RPAREN(self):
-            return self.getToken(ExprGrammar.RPAREN, 0)
-        def function(self):
-            return self.getTypedRuleContext(ExprGrammar.FunctionContext,0)
-
-        def atom(self):
-            return self.getTypedRuleContext(ExprGrammar.AtomContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterStub" ):
-                listener.enterStub(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitStub" ):
-                listener.exitStub(self)
-
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitStub" ):
-                return visitor.visitStub(self)
-            else:
-                return visitor.visitChildren(self)
-
 
     class ExponentialOpContext(ExprContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
             super().__init__(parser)
-            self._atom = None # AtomContext
             self.copyFrom(ctx)
 
         def expr(self, i:int=None):
@@ -427,12 +378,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitExponentialOp" ):
                 listener.exitExponentialOp(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitExponentialOp" ):
-                return visitor.visitExponentialOp(self)
-            else:
-                return visitor.visitChildren(self)
-
 
     class PrefixContext(ExprContext):
 
@@ -458,12 +403,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitPrefix" ):
                 listener.exitPrefix(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitPrefix" ):
-                return visitor.visitPrefix(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
     def expr(self, _p:int=0):
@@ -476,7 +415,7 @@ class ExprGrammar ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 34
+            self.state = 32
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,0,self._ctx)
             if la_ == 1:
@@ -534,7 +473,7 @@ class ExprGrammar ( Parser ):
                 pass
 
             elif la_ == 5:
-                localctx = ExprGrammar.StubContext(self, localctx)
+                localctx = ExprGrammar.PrimaryContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 26
@@ -546,7 +485,7 @@ class ExprGrammar ( Parser ):
                 pass
 
             elif la_ == 6:
-                localctx = ExprGrammar.StubContext(self, localctx)
+                localctx = ExprGrammar.PrimaryContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 30
@@ -554,17 +493,16 @@ class ExprGrammar ( Parser ):
                 pass
 
             elif la_ == 7:
-                localctx = ExprGrammar.StubContext(self, localctx)
+                localctx = ExprGrammar.PrimaryContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 31
-                localctx._atom = self.atom()
-                localctx.res = localctx._atom.res 
+                self.atom()
                 pass
 
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 57
+            self.state = 55
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,3,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -572,79 +510,78 @@ class ExprGrammar ( Parser ):
                     if self._parseListeners is not None:
                         self.triggerExitRuleEvent()
                     _prevctx = localctx
-                    self.state = 55
+                    self.state = 53
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,2,self._ctx)
                     if la_ == 1:
                         localctx = ExprGrammar.MultiplicativeOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 36
+                        self.state = 34
                         if not self.precpred(self._ctx, 7):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
-                        self.state = 37
+                        self.state = 35
                         _la = self._input.LA(1)
                         if not(_la==5 or _la==6):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 38
+                        self.state = 36
                         self.expr(8)
                         pass
 
                     elif la_ == 2:
                         localctx = ExprGrammar.AdditiveOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
-                        localctx.lhs = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 39
+                        self.state = 37
                         if not self.precpred(self._ctx, 6):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
-                        self.state = 40
+                        self.state = 38
                         _la = self._input.LA(1)
                         if not(_la==3 or _la==4):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 41
-                        localctx.rhs = self.expr(7)
+                        self.state = 39
+                        self.expr(7)
                         pass
 
                     elif la_ == 3:
                         localctx = ExprGrammar.MultiplicativeOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 42
+                        self.state = 40
                         if not self.precpred(self._ctx, 4):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
-                        self.state = 43
+                        self.state = 41
                         self.expr(5)
                         pass
 
                     elif la_ == 4:
                         localctx = ExprGrammar.ExponentialOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 44
+                        self.state = 42
                         if not self.precpred(self._ctx, 12):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 12)")
-                        self.state = 45
+                        self.state = 43
                         self.match(ExprGrammar.POW)
-                        self.state = 51
+                        self.state = 49
                         self._errHandler.sync(self)
                         token = self._input.LA(1)
                         if token in [26, 27, 28]:
-                            self.state = 46
-                            localctx._atom = self.atom()
+                            self.state = 44
+                            self.atom()
                             pass
                         elif token in [33]:
-                            self.state = 47
+                            self.state = 45
                             self.match(ExprGrammar.LBRACE)
-                            self.state = 48
+                            self.state = 46
                             self.expr(0)
-                            self.state = 49
+                            self.state = 47
                             self.match(ExprGrammar.RBRACE)
                             pass
                         else:
@@ -655,11 +592,11 @@ class ExprGrammar ( Parser ):
                     elif la_ == 5:
                         localctx = ExprGrammar.PrefixContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 53
+                        self.state = 51
                         if not self.precpred(self._ctx, 11):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 11)")
-                        self.state = 54
+                        self.state = 52
                         _la = self._input.LA(1)
                         if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 58720256) != 0)):
                             self._errHandler.recoverInline(self)
@@ -669,7 +606,7 @@ class ExprGrammar ( Parser ):
                         pass
 
              
-                self.state = 59
+                self.state = 57
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,3,self._ctx)
 
@@ -688,10 +625,6 @@ class ExprGrammar ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.res = None
-            self._SYMBOL = None # Token
-            self._COMMAND = None # Token
-            self._NUMBER = None # Token
 
         def SYMBOL(self):
             return self.getToken(ExprGrammar.SYMBOL, 0)
@@ -713,12 +646,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitAtom" ):
                 listener.exitAtom(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitAtom" ):
-                return visitor.visitAtom(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
 
@@ -726,31 +653,16 @@ class ExprGrammar ( Parser ):
 
         localctx = ExprGrammar.AtomContext(self, self._ctx, self.state)
         self.enterRule(localctx, 4, self.RULE_atom)
+        self._la = 0 # Token type
         try:
-            self.state = 66
-            self._errHandler.sync(self)
-            token = self._input.LA(1)
-            if token in [26]:
-                self.enterOuterAlt(localctx, 1)
-                self.state = 60
-                localctx._SYMBOL = self.match(ExprGrammar.SYMBOL)
-                localctx.res = Ast.Symbol((None if localctx._SYMBOL is None else localctx._SYMBOL.text))
-                pass
-            elif token in [27]:
-                self.enterOuterAlt(localctx, 2)
-                self.state = 62
-                localctx._COMMAND = self.match(ExprGrammar.COMMAND)
-                localctx.res = Ast.Symbol((None if localctx._COMMAND is None else localctx._COMMAND.text))
-                pass
-            elif token in [28]:
-                self.enterOuterAlt(localctx, 3)
-                self.state = 64
-                localctx._NUMBER = self.match(ExprGrammar.NUMBER)
-                localctx.res = Ast.Number((None if localctx._NUMBER is None else localctx._NUMBER.text))
-                pass
+            self.enterOuterAlt(localctx, 1)
+            self.state = 58
+            _la = self._input.LA(1)
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 469762048) != 0)):
+                self._errHandler.recoverInline(self)
             else:
-                raise NoViableAltException(self)
-
+                self._errHandler.reportMatch(self)
+                self.consume()
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -800,12 +712,6 @@ class ExprGrammar ( Parser ):
             if hasattr( listener, "exitFunction" ):
                 listener.exitFunction(self)
 
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitFunction" ):
-                return visitor.visitFunction(self)
-            else:
-                return visitor.visitChildren(self)
-
 
 
 
@@ -816,31 +722,31 @@ class ExprGrammar ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 68
+            self.state = 60
             self.match(ExprGrammar.FUNCTION)
-            self.state = 69
+            self.state = 61
             self.match(ExprGrammar.LPAREN)
-            self.state = 78
+            self.state = 70
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if (((_la) & ~0x3f) == 0 and ((1 << _la) & 34829500442) != 0):
-                self.state = 70
+                self.state = 62
                 self.expr(0)
-                self.state = 75
+                self.state = 67
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while _la==32:
-                    self.state = 71
+                    self.state = 63
                     self.match(ExprGrammar.COMMA)
-                    self.state = 72
+                    self.state = 64
                     self.expr(0)
-                    self.state = 77
+                    self.state = 69
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
 
 
-            self.state = 80
+            self.state = 72
             self.match(ExprGrammar.RPAREN)
         except RecognitionException as re:
             localctx.exception = re

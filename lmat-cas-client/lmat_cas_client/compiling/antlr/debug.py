@@ -89,9 +89,16 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         n = str(self.next_node_id)
         self.next_node_id += 1
 
-        self.__rule_subgraph.add_node(
-            pydot.Node(n, label=f"{ExprGrammar.ruleNames[node.getRuleIndex()]}")
-        )
+        rule_alias = type(node).__name__.removesuffix("Context")
+
+        rule_name = ExprGrammar.ruleNames[node.getRuleIndex()]
+
+        if rule_alias.lower() == rule_name.lower():
+            label = f"{rule_name}"
+        else:
+            label = f'<{rule_alias} <font color="#808080"> ({rule_name}) </font>>'
+
+        self.__rule_subgraph.add_node(pydot.Node(n, label=label))
 
         for ids in results:
             # TODO: add nodes for missing tokens

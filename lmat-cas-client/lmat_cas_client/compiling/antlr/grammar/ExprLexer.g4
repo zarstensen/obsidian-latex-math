@@ -78,6 +78,7 @@ PLUS: '+';
 MINUS: '-';
 MULT: '*' | '\\ast' | CDOT;
 DIV: '/' | '\\over';
+POW: '^' -> pushMode(COMM_ARG);
 
 TIMES: '\\times';
 CROSS_PROD: '\\cross' 'product'? | '\\cp';
@@ -109,6 +110,13 @@ SUM: '\\sum';
 PRODUCT: '\\prod';
 
 VEC_UNIT: ('\\vu' | '\\vectorunit') -> pushMode(COMM_ARG);
+
+// postfix operators
+
+BANG: '!';
+PERCENT: '\\%';
+PERMILLE: '\\textperthousand';
+
 
 // === Literals === TODO: primes? TODO: code action for remapping this to function
 fragment DIGIT: [0-9];
@@ -158,6 +166,8 @@ fragment SYMBOL_FORMAT: (MATH_FORMAT | CMD_FORMAT) (
         // brace surrounded argument case
         | F_WS? BRACE_TEXT
     );
+
+COMMA: ',';
 
 // indexing?
 // rethink a bit maybe, we have a more powerfull lexer + parser,

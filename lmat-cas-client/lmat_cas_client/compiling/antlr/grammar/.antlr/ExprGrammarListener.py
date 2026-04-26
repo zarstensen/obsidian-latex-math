@@ -5,9 +5,6 @@ if "." in __name__:
 else:
     from ExprGrammar import ExprGrammar
 
-import Ast
-
-
 # This class defines a complete listener for a parse tree produced by ExprGrammar.
 class ExprGrammarListener(ParseTreeListener):
 
@@ -47,21 +44,21 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ExprGrammar#Primary.
+    def enterPrimary(self, ctx:ExprGrammar.PrimaryContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#Primary.
+    def exitPrimary(self, ctx:ExprGrammar.PrimaryContext):
+        pass
+
+
     # Enter a parse tree produced by ExprGrammar#AdditiveOp.
     def enterAdditiveOp(self, ctx:ExprGrammar.AdditiveOpContext):
         pass
 
     # Exit a parse tree produced by ExprGrammar#AdditiveOp.
     def exitAdditiveOp(self, ctx:ExprGrammar.AdditiveOpContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#Stub.
-    def enterStub(self, ctx:ExprGrammar.StubContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#Stub.
-    def exitStub(self, ctx:ExprGrammar.StubContext):
         pass
 
 
