@@ -89,9 +89,11 @@ FRAC:
 BINOM:
     '\\' [dt]? 'binom' -> pushMode(COMM_ARG), pushMode(COMM_ARG);
 
-FUNC_SQRT: '\\sqrt' -> pushMode(COMM_ARG);
+SQRT: '\\sqrt' -> pushMode(COMM_ARG);
 
 CONJUGATE: ('\\bar' | '\\overline') -> pushMode(COMM_ARG);
+
+VEC_UNIT: ('\\vu' | '\\vectorunit') -> pushMode(COMM_ARG);
 
 MOD: '\\' 'b'? 'mod';
 
@@ -108,8 +110,6 @@ LIMIT: '\\lim';
 
 SUM: '\\sum';
 PRODUCT: '\\prod';
-
-VEC_UNIT: ('\\vu' | '\\vectorunit') -> pushMode(COMM_ARG);
 
 // postfix operators
 
