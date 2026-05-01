@@ -1,18 +1,17 @@
 # pyright: reportIncompatibleMethodOverride = false, reportAssignmentType = false
-from typing import cast, override
+from typing import override
 
-from antlr4.Parser import DefaultErrorStrategy
 import pydot
 from antlr4 import (
     CommonTokenStream,
-    ErrorNode,
     FileStream,
     ParserRuleContext,
     ParseTreeVisitor,
 )
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
-from ExprGrammar import ExprGrammar
-from ExprLexer import ExprLexer
+
+from .ExprGrammar import ExprGrammar
+from .ExprLexer import ExprLexer
 
 IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
@@ -157,3 +156,5 @@ r = ParseTreeDotVisitor().visit(tree)
 
 with open(OUT_FILE, "w") as f:
     _ = f.write(str(r))
+
+print(f"======== AST ========\n{tree.res}")

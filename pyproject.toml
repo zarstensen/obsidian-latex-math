@@ -36,7 +36,8 @@ follow_untyped_imports = true
 [[tool.mypy.overrides]]
 module = "jsonpickle.*"
 follow_untyped_imports = true
-# [tool.pyright]
-# include = ["lmat-cas-client"]
+
+[tool.pyright]
+include = ["lmat-cas-client"]
 
 # reportAssignmentType = false

@@ -14,3 +14,14 @@ def ensure_matrix(obj: Basic) -> MatrixBase:
     if not is_matrix(obj):
         return Matrix([obj])
     return cast(MatrixBase, obj)
+
+def ensure_scalar(obj: Basic) -> Expr:
+
+	if is_matrix(obj):
+		mat = cast(MatrixBase, cast(object, obj))
+		if mat.shape == (1, 1):
+			return ensure_scalar(cast(Basic, cast(object, mat[0])))
+		else:
+			assert False
+
+	return obj

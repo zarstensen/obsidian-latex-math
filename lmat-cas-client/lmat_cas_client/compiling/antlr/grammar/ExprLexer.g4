@@ -10,6 +10,7 @@ from enum import Enum
 class AddMode(Enum):
     DEFAULT = 0
     ENV = 1
+    LIM = 2
 }
 
 @members {
@@ -22,12 +23,21 @@ def pushAddMode(self, mode: AddMode):
 def popAddMode(self) -> AddMode:
     return self.add_mode_stack.pop()
 
-def getAddMode(self) -> AddMode:
+def remAddMode(self, mode: AddMode):
+    self.add_mode_stack.reverse()
+    self.add_mode_stack.remove(mode)
+    self.add_mode_stack.reverse()
+
+def topAddMode(self) -> AddMode:
     return self.add_mode_stack[-1]
+
+def hasAddMode(self, mode: AddMode) -> AddMode:
+    return mode in self.add_mode_stack
 }
 
 tokens {
-    FUNCTION
+    FUNCTION,
+    CMD_FUNCTION
 }
 
 // === Skip and Ignore tokens ===
@@ -106,7 +116,8 @@ PHYS_PARTIAL_DERIVATIVE: (
         | '\\' 'p'? 'dv' '*'?
     ) -> pushMode(COMM_ARG);
 
-LIMIT: '\\lim';
+LIMIT: '\\lim' {self.pushAddMode(AddMode.LIM)};
+LIMIT_ARROW: {self.hasAddMode(AddMode.LIM)}? ('\\to' | '\\' 'long' 'rightarrow' '\\mapsto' | '\\xrightarrow' BRACE_TEXT) {self.remAddMode(AddMode.LIM)};
 
 SUM: '\\sum';
 PRODUCT: '\\prod';
@@ -168,6 +179,8 @@ fragment SYMBOL_FORMAT: (MATH_FORMAT | CMD_FORMAT) (
     );
 
 COMMA: ',';
+UNDERSCORE: '_';
+EQUAL: '=';
 
 // indexing?
 // rethink a bit maybe, we have a more powerfull lexer + parser,
@@ -233,8 +246,8 @@ END_ARRAY: CMD_END '{' F_WS? ARRAY_ENV F_WS? '}' ( '\\right' (')'|'\\}'|'\\]'|'\
 BEGIN_ENV: CMD_BEGIN BRACE_TEXT {self.pushAddMode(AddMode.ENV)};
 END_ENV: CMD_END BRACE_TEXT {self.popMode()};
 
-ENV_EL_SEP: '&' { self.getAddMode() == AddMode.ENV }?;
-ENV_ROW_SEP: '\\\\' { self.getAddMode() == AddMode.ENV }?;
+ENV_EL_SEP: '&' { self.topAddMode() == AddMode.ENV }?;
+ENV_ROW_SEP: '\\\\' { self.topAddMode() == AddMode.ENV }?;
 
 
 mode COMM_ARG;

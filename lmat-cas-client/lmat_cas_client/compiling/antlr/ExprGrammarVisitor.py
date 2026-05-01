@@ -1,4 +1,4 @@
-# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/lmat-cas-client/lmat_cas_client/compiling/antlr/grammar/ExprGrammar.g4 by ANTLR 4.13.1
+# Generated from ExprGrammar.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .ExprGrammar import ExprGrammar
@@ -17,8 +17,13 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#Command.
-    def visitCommand(self, ctx:ExprGrammar.CommandContext):
+    # Visit a parse tree produced by ExprGrammar#Function.
+    def visitFunction(self, ctx:ExprGrammar.FunctionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#Series.
+    def visitSeries(self, ctx:ExprGrammar.SeriesContext):
         return self.visitChildren(ctx)
 
 
@@ -47,8 +52,18 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ExprGrammar#Limit.
+    def visitLimit(self, ctx:ExprGrammar.LimitContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ExprGrammar#Prefix.
     def visitPrefix(self, ctx:ExprGrammar.PrefixContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#Int.
+    def visitInt(self, ctx:ExprGrammar.IntContext):
         return self.visitChildren(ctx)
 
 
@@ -57,8 +72,23 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#function.
-    def visitFunction(self, ctx:ExprGrammar.FunctionContext):
+    # Visit a parse tree produced by ExprGrammar#latex_cmd_arg.
+    def visitLatex_cmd_arg(self, ctx:ExprGrammar.Latex_cmd_argContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#limit_dir.
+    def visitLimit_dir(self, ctx:ExprGrammar.Limit_dirContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#series_range_args.
+    def visitSeries_range_args(self, ctx:ExprGrammar.Series_range_argsContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#hard_func.
+    def visitHard_func(self, ctx:ExprGrammar.Hard_funcContext):
         return self.visitChildren(ctx)
 
 

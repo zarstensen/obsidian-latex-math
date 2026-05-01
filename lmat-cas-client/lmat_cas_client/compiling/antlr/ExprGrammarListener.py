@@ -1,4 +1,4 @@
-# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/lmat-cas-client/lmat_cas_client/compiling/antlr/grammar/ExprGrammar.g4 by ANTLR 4.13.1
+# Generated from ExprGrammar.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .ExprGrammar import ExprGrammar
@@ -20,12 +20,21 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#Command.
-    def enterCommand(self, ctx:ExprGrammar.CommandContext):
+    # Enter a parse tree produced by ExprGrammar#Function.
+    def enterFunction(self, ctx:ExprGrammar.FunctionContext):
         pass
 
-    # Exit a parse tree produced by ExprGrammar#Command.
-    def exitCommand(self, ctx:ExprGrammar.CommandContext):
+    # Exit a parse tree produced by ExprGrammar#Function.
+    def exitFunction(self, ctx:ExprGrammar.FunctionContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#Series.
+    def enterSeries(self, ctx:ExprGrammar.SeriesContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#Series.
+    def exitSeries(self, ctx:ExprGrammar.SeriesContext):
         pass
 
 
@@ -74,12 +83,30 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ExprGrammar#Limit.
+    def enterLimit(self, ctx:ExprGrammar.LimitContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#Limit.
+    def exitLimit(self, ctx:ExprGrammar.LimitContext):
+        pass
+
+
     # Enter a parse tree produced by ExprGrammar#Prefix.
     def enterPrefix(self, ctx:ExprGrammar.PrefixContext):
         pass
 
     # Exit a parse tree produced by ExprGrammar#Prefix.
     def exitPrefix(self, ctx:ExprGrammar.PrefixContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#Int.
+    def enterInt(self, ctx:ExprGrammar.IntContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#Int.
+    def exitInt(self, ctx:ExprGrammar.IntContext):
         pass
 
 
@@ -92,12 +119,39 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#function.
-    def enterFunction(self, ctx:ExprGrammar.FunctionContext):
+    # Enter a parse tree produced by ExprGrammar#latex_cmd_arg.
+    def enterLatex_cmd_arg(self, ctx:ExprGrammar.Latex_cmd_argContext):
         pass
 
-    # Exit a parse tree produced by ExprGrammar#function.
-    def exitFunction(self, ctx:ExprGrammar.FunctionContext):
+    # Exit a parse tree produced by ExprGrammar#latex_cmd_arg.
+    def exitLatex_cmd_arg(self, ctx:ExprGrammar.Latex_cmd_argContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#limit_dir.
+    def enterLimit_dir(self, ctx:ExprGrammar.Limit_dirContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#limit_dir.
+    def exitLimit_dir(self, ctx:ExprGrammar.Limit_dirContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#series_range_args.
+    def enterSeries_range_args(self, ctx:ExprGrammar.Series_range_argsContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#series_range_args.
+    def exitSeries_range_args(self, ctx:ExprGrammar.Series_range_argsContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#hard_func.
+    def enterHard_func(self, ctx:ExprGrammar.Hard_funcContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#hard_func.
+    def exitHard_func(self, ctx:ExprGrammar.Hard_funcContext):
         pass
 
 
