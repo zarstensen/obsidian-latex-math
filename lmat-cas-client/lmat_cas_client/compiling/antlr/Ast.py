@@ -2,7 +2,6 @@ from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
 
-
 from antlr4 import ParserRuleContext
 
 
@@ -130,5 +129,5 @@ class UnitVec(AstNode):
     op: Expr
 
 
-BuiltinFunc = Factorial | Percent | Permille | Binom | Sqrt | Conjugate | UnitVec | Limit
+BuiltinFunc = Factorial | Percent | Permille | Binom | Sqrt | Conjugate | UnitVec
 

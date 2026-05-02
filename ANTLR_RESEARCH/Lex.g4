@@ -1,7 +1,7 @@
 lexer grammar Lex;
 
 options {
-	language = Python3;
+    language = Python3;
 }
 
 @members {
@@ -20,7 +20,7 @@ PLUS: '+';
 MINUS: '-';
 // TODO: next up int and dx stuff!!!
 FRAC:
-	'frac' -> pushMode(COMM_ARG), pushMode(COMM_ARG); // twice?
+    'frac' -> pushMode(COMM_ARG), pushMode(COMM_ARG); // twice?
 INT: 'int' { self.dx_counter += 1 }; // increment DX counter
 // check if we *can* lex a DX, and then decrement the DX counter
 DX: { self.dx_counter > 0 }? 'd' LETTER+ { self.dx_counter -= 1 };

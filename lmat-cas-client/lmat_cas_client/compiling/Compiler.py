@@ -3,6 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, ChainMap, override
 
+from antlr4 import CommonTokenStream, InputStream
 from lark import LarkError, Tree
 from lark.exceptions import VisitError
 
@@ -36,6 +37,9 @@ from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
+from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
+from lmat_cas_client.compiling.antlr.ExprLexer import ExprLexer
+from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import evalExprToSympy
 
 
 class Compiler[**PTransform, TRes](ABC):
@@ -150,15 +154,17 @@ class LatexToCasExprCompiler(CasExprCompiler):
         Returns:
             Expr: compiled sympy expression.
         """
-        ast = cas_expr_parser.parse(latex_str)
 
-        dependencies = dependencies_transformer_runner.transform(ast)
+        ast = ExprGrammar(CommonTokenStream(ExprLexer(InputStream(latex_str)))).a_expr().res
 
-        assert_acyclic_dependencies(def_store, dependencies)
+        return evalExprToSympy(ast, None)
+        # dependencies = dependencies_transformer_runner.transform(ast)
 
-        return cas_expr_transformer_runner.transform(
-            ast, DefinitionStoreResolver(def_store, cas_expr_transformer_runner)
-        )
+        # assert_acyclic_dependencies(def_store, dependencies)
+
+        # return cas_expr_transformer_runner.transform(
+        #     ast, DefinitionStoreResolver(def_store, cas_expr_transformer_runner)
+        # )
 
 
 class LatexToLogicCasExprCompiler(CasExprCompiler):

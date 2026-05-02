@@ -9,7 +9,7 @@ else:
 	from typing.io import TextIO
 
 
-import Ast
+import lmat_cas_client.compiling.antlr.Ast as Ast
 
 def serializedATN():
     return [
@@ -123,14 +123,14 @@ class ExprGrammar ( Parser ):
                       "ENV_ROW_SEP", "ARG_WS" ]
 
     RULE_debug = 0
-    RULE_expr = 1
+    RULE_a_expr = 1
     RULE_atom = 2
     RULE_latex_cmd_arg = 3
     RULE_limit_dir = 4
     RULE_series_range_args = 5
     RULE_hard_func = 6
 
-    ruleNames =  [ "debug", "expr", "atom", "latex_cmd_arg", "limit_dir", 
+    ruleNames =  [ "debug", "a_expr", "atom", "latex_cmd_arg", "limit_dir", 
                    "series_range_args", "hard_func" ]
 
     EOF = Token.EOF
@@ -217,10 +217,10 @@ class ExprGrammar ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
             self.res = None
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
 
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
 
         def EOF(self):
@@ -253,10 +253,10 @@ class ExprGrammar ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 14
-            localctx._expr = self.expr(0)
+            localctx._a_expr = self.a_expr(0)
             self.state = 15
             self.match(ExprGrammar.EOF)
-            localctx.res = localctx._expr.res
+            localctx.res = localctx._a_expr.res
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -266,7 +266,7 @@ class ExprGrammar ( Parser ):
         return localctx
 
 
-    class ExprContext(ParserRuleContext):
+    class A_exprContext(ParserRuleContext):
         __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -277,7 +277,7 @@ class ExprGrammar ( Parser ):
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_expr
+            return ExprGrammar.RULE_a_expr
 
      
         def copyFrom(self, ctx:ParserRuleContext):
@@ -286,11 +286,11 @@ class ExprGrammar ( Parser ):
             self.node_t = ctx.node_t
 
 
-    class FunctionContext(ExprContext):
+    class FunctionContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
             self.copyFrom(ctx)
 
         def FUNCTION(self):
@@ -299,11 +299,11 @@ class ExprGrammar ( Parser ):
             return self.getToken(ExprGrammar.LPAREN, 0)
         def RPAREN(self):
             return self.getToken(ExprGrammar.RPAREN, 0)
-        def expr(self, i:int=None):
+        def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.ExprContext)
+                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.ExprContext,i)
+                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
 
         def COMMA(self, i:int=None):
             if i is None:
@@ -330,11 +330,11 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class SeriesContext(ExprContext):
+    class SeriesContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
             self.copyFrom(ctx)
 
         def series_range_args(self):
@@ -342,8 +342,8 @@ class ExprGrammar ( Parser ):
 
         def LPAREN(self):
             return self.getToken(ExprGrammar.LPAREN, 0)
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
         def RPAREN(self):
             return self.getToken(ExprGrammar.RPAREN, 0)
@@ -367,20 +367,20 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class MultiplicativeOpContext(ExprContext):
+    class MultiplicativeOpContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self.lhs = None # ExprContext
-            self.rhs = None # ExprContext
-            self._expr = None # ExprContext
+            self.lhs = None # A_exprContext
+            self.rhs = None # A_exprContext
+            self._a_expr = None # A_exprContext
             self.copyFrom(ctx)
 
-        def expr(self, i:int=None):
+        def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.ExprContext)
+                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.ExprContext,i)
+                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
 
         def MULT(self):
             return self.getToken(ExprGrammar.MULT, 0)
@@ -402,15 +402,15 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class UAdditiveOpContext(ExprContext):
+    class UAdditiveOpContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
             self.copyFrom(ctx)
 
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
         def PLUS(self):
             return self.getToken(ExprGrammar.PLUS, 0)
@@ -432,20 +432,20 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class AdditiveOpContext(ExprContext):
+    class AdditiveOpContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self.lhs = None # ExprContext
-            self.rhs = None # ExprContext
-            self._expr = None # ExprContext
+            self.lhs = None # A_exprContext
+            self.rhs = None # A_exprContext
+            self._a_expr = None # A_exprContext
             self.copyFrom(ctx)
 
-        def expr(self, i:int=None):
+        def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.ExprContext)
+                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.ExprContext,i)
+                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
 
         def PLUS(self):
             return self.getToken(ExprGrammar.PLUS, 0)
@@ -467,18 +467,18 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class StubContext(ExprContext):
+    class StubContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
             self._atom = None # AtomContext
             self.copyFrom(ctx)
 
         def LPAREN(self):
             return self.getToken(ExprGrammar.LPAREN, 0)
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
         def RPAREN(self):
             return self.getToken(ExprGrammar.RPAREN, 0)
@@ -501,18 +501,18 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class ExponentialOpContext(ExprContext):
+    class ExponentialOpContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self.base = None # ExprContext
+            self.base = None # A_exprContext
             self.exp = None # Latex_cmd_argContext
             self.copyFrom(ctx)
 
         def POW(self):
             return self.getToken(ExprGrammar.POW, 0)
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
         def latex_cmd_arg(self):
             return self.getTypedRuleContext(ExprGrammar.Latex_cmd_argContext,0)
@@ -533,11 +533,11 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class LimitContext(ExprContext):
+    class LimitContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
             self.copyFrom(ctx)
 
         def LIMIT(self):
@@ -550,11 +550,11 @@ class ExprGrammar ( Parser ):
             return self.getToken(ExprGrammar.SYMBOL, 0)
         def LIMIT_ARROW(self):
             return self.getToken(ExprGrammar.LIMIT_ARROW, 0)
-        def expr(self, i:int=None):
+        def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.ExprContext)
+                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.ExprContext,i)
+                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
 
         def RBRACE(self):
             return self.getToken(ExprGrammar.RBRACE, 0)
@@ -579,15 +579,15 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class PrefixContext(ExprContext):
+    class PrefixContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self.op = None # ExprContext
+            self.op = None # A_exprContext
             self.copyFrom(ctx)
 
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
         def BANG(self):
             return self.getToken(ExprGrammar.BANG, 0)
@@ -611,17 +611,17 @@ class ExprGrammar ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class IntContext(ExprContext):
+    class IntContext(A_exprContext):
 
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.ExprContext
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ExprGrammar.A_exprContext
             super().__init__(parser)
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
             self.copyFrom(ctx)
 
         def INT(self):
             return self.getToken(ExprGrammar.INT, 0)
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
         def DIFFERENTIAL(self):
             return self.getToken(ExprGrammar.DIFFERENTIAL, 0)
@@ -642,13 +642,13 @@ class ExprGrammar ( Parser ):
 
 
 
-    def expr(self, _p:int=0):
+    def a_expr(self, _p:int=0):
         _parentctx = self._ctx
         _parentState = self.state
-        localctx = ExprGrammar.ExprContext(self, self._ctx, _parentState)
+        localctx = ExprGrammar.A_exprContext(self, self._ctx, _parentState)
         _prevctx = localctx
         _startState = 2
-        self.enterRecursionRule(localctx, 2, self.RULE_expr, _p)
+        self.enterRecursionRule(localctx, 2, self.RULE_a_expr, _p)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
@@ -669,7 +669,7 @@ class ExprGrammar ( Parser ):
                 _la = self._input.LA(1)
                 if (((_la) & ~0x3f) == 0 and ((1 << _la) & 551662387250) != 0):
                     self.state = 21
-                    localctx._expr = self.expr(0)
+                    localctx._a_expr = self.a_expr(0)
                     self.state = 26
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
@@ -677,7 +677,7 @@ class ExprGrammar ( Parser ):
                         self.state = 22
                         self.match(ExprGrammar.COMMA)
                         self.state = 23
-                        localctx._expr = self.expr(0)
+                        localctx._a_expr = self.a_expr(0)
                         self.state = 28
                         self._errHandler.sync(self)
                         _la = self._input.LA(1)
@@ -697,7 +697,7 @@ class ExprGrammar ( Parser ):
                 self.state = 33
                 self.match(ExprGrammar.LBRACE)
                 self.state = 34
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 35
                 self.match(ExprGrammar.RBRACE)
                 pass
@@ -709,7 +709,7 @@ class ExprGrammar ( Parser ):
                 self.state = 37
                 self.match(ExprGrammar.FUNCTION)
                 self.state = 38
-                localctx._expr = self.expr(11)
+                localctx._a_expr = self.a_expr(11)
                 pass
 
             elif la_ == 4:
@@ -727,7 +727,7 @@ class ExprGrammar ( Parser ):
                 self.state = 43
                 self.match(ExprGrammar.LIMIT_ARROW)
                 self.state = 44
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 47
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
@@ -741,7 +741,7 @@ class ExprGrammar ( Parser ):
                 self.state = 49
                 self.match(ExprGrammar.RBRACE)
                 self.state = 50
-                localctx._expr = self.expr(10)
+                localctx._a_expr = self.a_expr(10)
                 pass
 
             elif la_ == 5:
@@ -760,7 +760,7 @@ class ExprGrammar ( Parser ):
                 self.state = 54
                 self.match(ExprGrammar.LPAREN)
                 self.state = 55
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 56
                 self.match(ExprGrammar.RPAREN)
                 pass
@@ -779,7 +779,7 @@ class ExprGrammar ( Parser ):
                 self.state = 59
                 self.series_range_args()
                 self.state = 60
-                localctx._expr = self.expr(6)
+                localctx._a_expr = self.a_expr(6)
                 pass
 
             elif la_ == 7:
@@ -803,8 +803,8 @@ class ExprGrammar ( Parser ):
                     raise NoViableAltException(self)
 
                 self.state = 68
-                localctx._expr = self.expr(4)
-                localctx.res = localctx.node_t(localctx, localctx._expr.res)
+                localctx._a_expr = self.a_expr(4)
+                localctx.res = localctx.node_t(localctx, localctx._a_expr.res)
                 pass
 
             elif la_ == 8:
@@ -814,7 +814,7 @@ class ExprGrammar ( Parser ):
                 self.state = 71
                 self.match(ExprGrammar.INT)
                 self.state = 72
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 73
                 self.match(ExprGrammar.DIFFERENTIAL)
                 pass
@@ -826,10 +826,10 @@ class ExprGrammar ( Parser ):
                 self.state = 75
                 self.match(ExprGrammar.LPAREN)
                 self.state = 76
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 77
                 self.match(ExprGrammar.RPAREN)
-                localctx.res = localctx._expr.res
+                localctx.res = localctx._a_expr.res
                 pass
 
             elif la_ == 10:
@@ -855,9 +855,9 @@ class ExprGrammar ( Parser ):
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,8,self._ctx)
                     if la_ == 1:
-                        localctx = ExprGrammar.MultiplicativeOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
+                        localctx = ExprGrammar.MultiplicativeOpContext(self, ExprGrammar.A_exprContext(self, _parentctx, _parentState))
                         localctx.lhs = _prevctx
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 85
                         if not self.precpred(self._ctx, 9):
                             from antlr4.error.Errors import FailedPredicateException
@@ -879,14 +879,14 @@ class ExprGrammar ( Parser ):
                             raise NoViableAltException(self)
 
                         self.state = 92
-                        localctx.rhs = localctx._expr = self.expr(10)
+                        localctx.rhs = localctx._a_expr = self.a_expr(10)
                         localctx.res = localctx.node_t(localctx, localctx.lhs.res, localctx.rhs.res)
                         pass
 
                     elif la_ == 2:
-                        localctx = ExprGrammar.MultiplicativeOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
+                        localctx = ExprGrammar.MultiplicativeOpContext(self, ExprGrammar.A_exprContext(self, _parentctx, _parentState))
                         localctx.lhs = _prevctx
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 95
                         if not self.precpred(self._ctx, 8):
                             from antlr4.error.Errors import FailedPredicateException
@@ -896,14 +896,14 @@ class ExprGrammar ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self._input.LA(1) not in (self.PLUS, self.MINUS, self.NUMBER)")
                         self.state = 97
-                        localctx.rhs = localctx._expr = self.expr(9)
+                        localctx.rhs = localctx._a_expr = self.a_expr(9)
                         localctx.res = Ast.MultOp(localctx, localctx.lhs.res, localctx.rhs.res)
                         pass
 
                     elif la_ == 3:
-                        localctx = ExprGrammar.AdditiveOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
+                        localctx = ExprGrammar.AdditiveOpContext(self, ExprGrammar.A_exprContext(self, _parentctx, _parentState))
                         localctx.lhs = _prevctx
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 100
                         if not self.precpred(self._ctx, 5):
                             from antlr4.error.Errors import FailedPredicateException
@@ -925,14 +925,14 @@ class ExprGrammar ( Parser ):
                             raise NoViableAltException(self)
 
                         self.state = 107
-                        localctx.rhs = localctx._expr = self.expr(6)
+                        localctx.rhs = localctx._a_expr = self.a_expr(6)
                         localctx.res = localctx.node_t(localctx, localctx.lhs.res, localctx.rhs.res)
                         pass
 
                     elif la_ == 4:
-                        localctx = ExprGrammar.ExponentialOpContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
+                        localctx = ExprGrammar.ExponentialOpContext(self, ExprGrammar.A_exprContext(self, _parentctx, _parentState))
                         localctx.base = _prevctx
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 110
                         if not self.precpred(self._ctx, 15):
                             from antlr4.error.Errors import FailedPredicateException
@@ -945,9 +945,9 @@ class ExprGrammar ( Parser ):
                         pass
 
                     elif la_ == 5:
-                        localctx = ExprGrammar.PrefixContext(self, ExprGrammar.ExprContext(self, _parentctx, _parentState))
+                        localctx = ExprGrammar.PrefixContext(self, ExprGrammar.A_exprContext(self, _parentctx, _parentState))
                         localctx.op = _prevctx
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 115
                         if not self.precpred(self._ctx, 14):
                             from antlr4.error.Errors import FailedPredicateException
@@ -1076,7 +1076,7 @@ class ExprGrammar ( Parser ):
             self.parser = parser
             self.res = None
             self._atom = None # AtomContext
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
 
         def atom(self):
             return self.getTypedRuleContext(ExprGrammar.AtomContext,0)
@@ -1085,8 +1085,8 @@ class ExprGrammar ( Parser ):
         def LBRACE(self):
             return self.getToken(ExprGrammar.LBRACE, 0)
 
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
 
         def RBRACE(self):
@@ -1131,10 +1131,10 @@ class ExprGrammar ( Parser ):
                 self.state = 141
                 self.match(ExprGrammar.LBRACE)
                 self.state = 142
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 143
                 self.match(ExprGrammar.RBRACE)
-                localctx.res = localctx._expr.res
+                localctx.res = localctx._a_expr.res
                 pass
             else:
                 raise NoViableAltException(self)
@@ -1242,7 +1242,7 @@ class ExprGrammar ( Parser ):
             self.start = None
             self.end = None
             self._SYMBOL = None # Token
-            self._expr = None # ExprContext
+            self._a_expr = None # A_exprContext
             self._latex_cmd_arg = None # Latex_cmd_argContext
 
         def UNDERSCORE(self):
@@ -1257,8 +1257,8 @@ class ExprGrammar ( Parser ):
         def EQUAL(self):
             return self.getToken(ExprGrammar.EQUAL, 0)
 
-        def expr(self):
-            return self.getTypedRuleContext(ExprGrammar.ExprContext,0)
+        def a_expr(self):
+            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
 
 
         def RBRACE(self):
@@ -1310,7 +1310,7 @@ class ExprGrammar ( Parser ):
                 self.state = 158
                 self.match(ExprGrammar.EQUAL)
                 self.state = 159
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 160
                 self.match(ExprGrammar.RBRACE)
                 self.state = 161
@@ -1319,7 +1319,7 @@ class ExprGrammar ( Parser ):
                 localctx._latex_cmd_arg = self.latex_cmd_arg()
 
                 localctx.symb = Ast.Symbol(localctx, (None if localctx._SYMBOL is None else localctx._SYMBOL.text))
-                localctx.start = localctx._expr.res
+                localctx.start = localctx._a_expr.res
                 localctx.end = localctx._latex_cmd_arg.res
 
                 pass
@@ -1338,12 +1338,12 @@ class ExprGrammar ( Parser ):
                 self.state = 170
                 self.match(ExprGrammar.EQUAL)
                 self.state = 171
-                localctx._expr = self.expr(0)
+                localctx._a_expr = self.a_expr(0)
                 self.state = 172
                 self.match(ExprGrammar.RBRACE)
 
                 localctx.symb = Ast.Symbol(localctx, (None if localctx._SYMBOL is None else localctx._SYMBOL.text))
-                localctx.start = localctx._expr.res
+                localctx.start = localctx._a_expr.res
                 localctx.end = localctx._latex_cmd_arg.res
 
                 pass
@@ -1472,14 +1472,14 @@ class ExprGrammar ( Parser ):
     def sempred(self, localctx:RuleContext, ruleIndex:int, predIndex:int):
         if self._predicates == None:
             self._predicates = dict()
-        self._predicates[1] = self.expr_sempred
+        self._predicates[1] = self.a_expr_sempred
         pred = self._predicates.get(ruleIndex, None)
         if pred is None:
             raise Exception("No predicate with index:" + str(ruleIndex))
         else:
             return pred(localctx, predIndex)
 
-    def expr_sempred(self, localctx:ExprContext, predIndex:int):
+    def a_expr_sempred(self, localctx:A_exprContext, predIndex:int):
             if predIndex == 0:
                 return self.precpred(self._ctx, 9)
          

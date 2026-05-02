@@ -5,7 +5,7 @@ if "." in __name__:
 else:
     from ExprGrammar import ExprGrammar
 
-import Ast
+import lmat_cas_client.compiling.antlr.Ast as Ast
 
 
 # This class defines a complete listener for a parse tree produced by ExprGrammar.
