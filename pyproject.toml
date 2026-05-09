@@ -30,16 +30,22 @@ cache_fine_grained = true
 enable_error_code = ["explicit-override", "override"]
 
 [[tool.mypy.overrides]]
-module = "sympy.*"
+
+module = ["sympy.*", "jsonpickle.*", "antlr4.*"]
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
-module = "jsonpickle.*"
+
+module = [ "lmat_cas_client.compiling.antlr.ExprGrammar", "lmat_cas_client.compiling.antlr.ExprLexer" ]
+disable_error_code = [
+	"import-untyped",
+	"name-defined",
+	"misc",
+	"has-type",
+	"attr-defined",
+	"assignment",
+	"var-annotated",
+	"arg-type",
+	"index",
+]
 follow_untyped_imports = true
-
-[tool.pyright]
-include = ["lmat-cas-client"]
-typeCheckingMode = "standard"
-reportUnknownMemberType = false
-
-# reportAssignmentType = false

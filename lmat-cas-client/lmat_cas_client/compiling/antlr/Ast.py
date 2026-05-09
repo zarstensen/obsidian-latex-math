@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 
 from antlr4 import ParserRuleContext
@@ -9,11 +11,18 @@ from antlr4 import ParserRuleContext
 class AstNode(ABC):
     ctx: ParserRuleContext = field(repr=False)
 
+    def mut_ctx[T: AstNode](self: T, ctx: ParserRuleContext) -> T:
+        return replace(self, ctx=ctx)
+
 
 @dataclass(frozen=True)
 class Symbol(AstNode):
     symbol: str
 
+@dataclass(frozen=True)
+class SubscriptSymbol(AstNode):
+	symbol: Symbol
+	subscript: list[Expr]
 
 @dataclass(frozen=True)
 class Number(AstNode):
@@ -21,48 +30,66 @@ class Number(AstNode):
 
 
 @dataclass(frozen=True)
+class Matrix(AstNode):
+    elements: list[list[Expr]]
+    beg_cmd: str
+    end_cmd: str
+
+
+@dataclass(frozen=True)
 class ExpOp(AstNode):
-    base: "Expr"
-    exponent: "Expr"
+    base: Expr
+    exponent: Expr
 
 
 @dataclass(frozen=True)
 class MultOp(AstNode):
-    lhs: "Expr"
-    rhs: "Expr"
+    lhs: Expr
+    rhs: Expr
 
 
 @dataclass(frozen=True)
 class DivOp(AstNode):
-    num: "Expr"
-    denom: "Expr"
+    num: Expr
+    denom: Expr
 
 
 @dataclass(frozen=True)
 class AddOp(AstNode):
-    lhs: "Expr"
-    rhs: "Expr"
+    lhs: Expr
+    rhs: Expr
 
 
 @dataclass(frozen=True)
 class SubOp(AstNode):
-    lhs: "Expr"
-    rhs: "Expr"
+    lhs: Expr
+    rhs: Expr
 
 
 @dataclass(frozen=True)
 class UMinusOp(AstNode):
-    op: "Expr"
+    op: Expr
 
 
 @dataclass(frozen=True)
 class UPlusOp(AstNode):
-    op: "Expr"
+    op: Expr
 
+@dataclass(frozen=True)
+class Sum(AstNode):
+	expr: Expr
+	var: Expr
+	range: tuple[Expr, Expr]
+
+@dataclass(frozen=True)
+class Product(AstNode):
+	expr: Expr
+	var: Expr
+	range: tuple[Expr, Expr]
 
 @dataclass(frozen=True)
 class AppliedBuiltinFunc(AstNode):
-    func: "BuiltinFunc"
+    func: BuiltinFunc
 
 
 Expr = (
@@ -75,9 +102,22 @@ Expr = (
     | UPlusOp
     | Symbol
     | Number
+    | Matrix
     | AppliedBuiltinFunc
 )
 
+
+@dataclass(frozen=True)
+class Integral(AstNode):
+    integrand: Expr
+    diff: Expr
+    bounds: tuple[Expr, Expr] | None
+
+
+@dataclass(frozen=True)
+class Differential(AstNode):
+	differentiand: Expr
+	differentials: list[tuple[Expr, Expr | None]]
 
 class LimitDir(Enum):
     POSITIVE = 1
@@ -115,8 +155,9 @@ class Binom(AstNode):
 
 
 @dataclass(frozen=True)
-class Sqrt(AstNode):
+class Root(AstNode):
     op: Expr
+    index: Expr | None
 
 
 @dataclass(frozen=True)
@@ -129,5 +170,4 @@ class UnitVec(AstNode):
     op: Expr
 
 
-BuiltinFunc = Factorial | Percent | Permille | Binom | Sqrt | Conjugate | UnitVec
-
+BuiltinFunc = Factorial | Percent | Permille | Binom | Root | Conjugate | UnitVec

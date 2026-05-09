@@ -9,13 +9,15 @@ vim.schedule(function()
 		cwd = "./lmat-cas-client/lmat_cas_client/compiling/antlr/grammar/",
 		name = "Antlr4 Parser Generate",
 	})
+	parse_gen_task:inc_reference()
 
 	local parse_tree_task = ovs.new_task({
-		cmd = '"../../../../.venv/Scripts/python"',
-		args = { "debug.py" },
-		cwd = "./lmat-cas-client/lmat_cas_client/compiling/antlr/",
+		cmd = '"../.venv/Scripts/python"',
+		args = { "-m", "lmat_cas_client.compiling.antlr.debug" },
+		cwd = "./lmat-cas-client/",
 		name = "Antlr4 Parse Tree Generate",
 	})
+	parse_tree_task:inc_reference()
 
 	parse_gen_task:subscribe("on_complete", function(_, status, _)
 		if status == "SUCCESS" then

@@ -1,4 +1,6 @@
 # pyright: reportIncompatibleMethodOverride = false, reportAssignmentType = false
+import sys
+from time import time
 from typing import override
 
 import pydot
@@ -9,8 +11,10 @@ from antlr4 import (
     ParseTreeVisitor,
 )
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
-from ExprGrammar import ExprGrammar
-from ExprLexer import ExprLexer
+
+from .evaluation.CasExprEvaluator import evalExprToSympy
+from .ExprGrammar import ExprGrammar
+from .ExprLexer import ExprLexer
 
 IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
@@ -112,7 +116,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         self.__term_subgraph.add_node(
             pydot.Node(
                 id,
-                label=f"{ExprGrammar.symbolicNames[node.getSymbol().type]}\n{node.getText()}",
+                label=f'<{ExprGrammar.symbolicNames[node.getSymbol().type]}<br/><font fontname="monospace">{node.getText()}</font>>',
                 xlabel=f'<<font color="#004D62">* {node.getSymbol().tokenIndex}</font>>',
             )
         )
@@ -149,12 +153,31 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
 input_stream = FileStream(IN_FILE)
 lexer = ExprLexer(input_stream)
 stream = CommonTokenStream(lexer)
+
+# Debug: print all tokens lexed from the input stream
+start = time()
+stream.fill()
+tokens = stream.getTokens(0, sys.maxsize)
+end = time()
+print("======== TOKENS ========")
+for t in tokens:
+    try:
+        name = ExprGrammar.symbolicNames[t.type]
+    except Exception:
+        name = str(t.type)
+    print(f"{t.tokenIndex}: {name}\t{repr(t.text)}")
+
+print(f"Lex Time: {end - start} ms")
+start = time()
 parser = ExprGrammar(stream)
 tree = parser.debug()
+end = time()
 r = ParseTreeDotVisitor().visit(tree)
 
 with open(OUT_FILE, "w") as f:
     _ = f.write(str(r))
 
 print(f"======== AST ========\n{tree.res}")
+print(f"Parse Time: {end - start} ms")
+print(f"======== EVAL ========\n{evalExprToSympy(tree.res, None)}")
 
