@@ -88,10 +88,12 @@ IGNORE: F_IGNORE -> skip;
 
 fragment CDOT: '\\cdot';
 
+fragment F_MULT: '*' | '\\ast' | CDOT;
+
 // arithmetic operators
 PLUS: '+';
 MINUS: '-';
-MULT: '*' | '\\ast' | CDOT;
+MULT: F_MULT;
 DIV: '/' | '\\over';
 POW: '^' -> pushMode(COMM_ARG);
 
@@ -152,61 +154,14 @@ BANG: '!';
 PERCENT: '\\%';
 PERMILLE: '\\textperthousand';
 
-// === Literals === TODO: primes? TODO: code action for remapping this to function
-fragment DIGIT: [0-9];
-fragment LETTER: [a-zA-Z];
-
-fragment F_ID: LETTER+ | ID_FORMAT;
-// TODO: ONLY match this one IFFFFF  F_ID is *NOT* a function
-// ooooo thats a good point....
-// fragment F_INDEXED_ID: F_ID {True}? F_WS? '_' F_WS? BRACE_TEXT;
-ID: F_ID;
-
-fragment F_COMMAND: '\\' LETTER+;
-COMMAND: F_COMMAND;
-
-NUMBER: DIGIT+ | DIGIT* '.' DIGIT+;
-
-BIN_NUMBER:
-    '0' ('b' | '\\mathrm{b}') [01]+
-    | '\\mathrm{0b' [01]+ '}';
-
-OCT_NUMBER:
-    '0' ('o' | '\\mathrm{o}') [0-7]+
-    | '\\mathrm{0o' [0-7]+ '}';
-
-HEX_NUMBER:
-    '0' ([xX] | '\\mathrm{' [xX] '}') [0-7]+
-    | '\\mathrm{0' [xX] [0-7]+ '}';
-
-fragment MATH_FORMAT: '\\math' LETTER+;
-fragment CMD_FORMAT:
-    '\\vec'
-    | '\\va' '*'?
-    | '\\vectorarrow'
-    | '\\vb' '*'?
-    | '\\vectorbold'
-    | '\\hat'
-    | '\\tilde';
-
-// TODO: predicate which is just a list of formatters // vec arr as in the arrow above a symbol
-// fragment VEC_ARR_FORMAT: '\\vec' | '\\va' '*'? | '\\vectorarrow'; // vec bold as in non italic
-// and bold, to indicate a vector fragment VEC_BOLD_FORMAT: '\\vectorbold' | '\\vb' '*'?; fragment
-// HAT_FORMAT: '\\hat'?; fragment TILDE_FORMAT: '\\tilde'?;
-
-// TODO: should plain brace text also just be here?
-fragment ID_FORMAT: (MATH_FORMAT | CMD_FORMAT) (
-        // atom cases
-        F_WS DIGIT
-        | F_WS LETTER
-        | F_WS? F_COMMAND
-        // brace surrounded argument case
-        | F_WS? BRACE_TEXT
-    );
 
 COMMA: ',';
 // not exactly COMM_ARG, something different
 UNDERSCORE: '_' -> pushMode(COMM_ARG);
+
+SEMICOLON: ';';
+STAR: '\\star';
+DOTS: '\\dots' [cbmio] | '\\' [lc]? 'dots' | ('\\cdot'|'.') ('\\cdot'|'.') ('\\cdot'|'.')?;
 
 // indexing? rethink a bit maybe, we have a more powerfull lexer + parser, should indexing work
 // differently for symbols v.s. functions? how does one know if a definition is a function vs symbol
@@ -220,8 +175,8 @@ LBRACE:
     '{' {self.pushAddMode(AddMode.DEFAULT) } -> pushMode(DEFAULT_MODE);
 RBRACE: '}' {self.popAddMode() } -> popMode;
 
-LPAREN: '(';
-RPAREN: ')';
+LPAREN: '(' | '\\lparen';
+RPAREN: ')' | '\\rparen';
 
 LBRACE_LITERAL: '\\{';
 RBRACE_LITERAL: '\\}';
@@ -232,6 +187,9 @@ if self.topAddMode() == AddMode.OPT_ARG:
     self.popAddMode()
     self.popMode()
 };
+
+LBRACK_CMD: '\\lbrack';
+RBRACK_CMD: '\\rbrack';
 
 LCEIL: '\\lceil';
 RCEIL: '\\rceil';
@@ -273,21 +231,25 @@ END_V_MATRIX:
 BEGIN_ARRAY: (
         '\\left' F_WS? (
             '('
+			| '\\lparen'
             | '\\{'
             | '['
+            | '\\lbrack'
             | '\\lfloor'
             | '\\langle'
             | '<'
         )
-    )? F_WS? CMD_BEGIN '{' F_WS? ARRAY_ENV F_WS? '}' F_WS? (
+    )? F_WS? CMD_BEGIN F_WS? '{' F_WS? ARRAY_ENV F_WS? '}' F_WS? (
         '{' ([clr|:] | F_WS)+ '}'
     )? {self.pushAddMode(AddMode.MATRIX)};
 END_ARRAY:
-    CMD_END '{' F_WS? ARRAY_ENV F_WS? '}' (
-        '\\right' (
+    CMD_END F_WS? '{' F_WS? ARRAY_ENV F_WS? '}' F_WS? (
+        '\\right' F_WS? (
             ')'
+			| '\\rparen'
             | '\\}'
             | ']'
+            | '\\rbrack'
             | '\\rfloor'
             | '\\rangle'
             | '>'
@@ -300,6 +262,62 @@ END_ENV: CMD_END BRACE_TEXT {self.popAddMode()};
 ENV_EL_SEP: '&' { self.topAddMode() == AddMode.MATRIX }?;
 ENV_ROW_SEP: '\\\\' { self.topAddMode() in (AddMode.MATRIX, AddMode.ENV) }?;
 ENV_SEP_SKIP: ('&' | '\\\\') -> skip;
+
+// === Literals === TODO: primes? TODO: code action for remapping this to function
+
+NUMBER: DIGIT+ | DIGIT* '.' DIGIT+;
+
+BIN_NUMBER:
+    '0' ('b' | '\\mathrm{b}') [01]+
+    | '\\mathrm{0b' [01]+ '}';
+
+OCT_NUMBER:
+    '0' ('o' | '\\mathrm{o}') [0-7]+
+    | '\\mathrm{0o' [0-7]+ '}';
+
+HEX_NUMBER:
+    '0' ([xX] | '\\mathrm{' [xX] '}') [0-7]+
+    | '\\mathrm{0' [xX] [0-7]+ '}';
+
+fragment MATH_FORMAT: '\\math' LETTER+;
+fragment CMD_FORMAT:
+    '\\vec'
+    | '\\va' '*'?
+    | '\\vectorarrow'
+    | '\\vb' '*'?
+    | '\\vectorbold'
+    | '\\hat'
+    | '\\tilde';
+
+// TODO: predicate which is just a list of formatters // vec arr as in the arrow above a symbol
+// fragment VEC_ARR_FORMAT: '\\vec' | '\\va' '*'? | '\\vectorarrow'; // vec bold as in non italic
+// and bold, to indicate a vector fragment VEC_BOLD_FORMAT: '\\vectorbold' | '\\vb' '*'?; fragment
+// HAT_FORMAT: '\\hat'?; fragment TILDE_FORMAT: '\\tilde'?;
+
+// TODO: should plain brace text also just be here?
+fragment ID_FORMAT: (MATH_FORMAT | CMD_FORMAT) (
+        // atom cases
+        F_WS DIGIT
+        | F_WS LETTER
+        | F_WS? F_COMMAND
+        // brace surrounded argument case
+        | F_WS? BRACE_TEXT
+    );
+
+fragment DIGIT: [0-9];
+fragment LETTER: [a-zA-Z];
+
+fragment F_ID: LETTER+ | ID_FORMAT;
+
+DELTA: '\\Delta';
+
+// TODO: ONLY match this one IFFFFF  F_ID is *NOT* a function
+// ooooo thats a good point....
+// fragment F_INDEXED_ID: F_ID {True}? F_WS? '_' F_WS? BRACE_TEXT;
+ID: F_ID | ID_FORMAT;
+
+fragment F_COMMAND: '\\' LETTER+;
+COMMAND: F_COMMAND;
 
 mode COMM_ARG;
 
@@ -314,6 +332,8 @@ self.skip()
 };
 
 // special case needed for limits, where it is valid syntax to have + or - in the superscript.
+// should not really create problems elsewhere, but if it does, this can always be in a second mode specifically
+// for lexing after a POW terminal.
 ARG_PLUS: '+' -> type(PLUS), popMode;
 ARG_MINUS: '-' -> type(MINUS), popMode;
 

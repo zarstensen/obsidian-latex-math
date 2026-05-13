@@ -6,6 +6,7 @@ else:
     from ExprGrammar import ExprGrammar
 
 import lmat_cas_client.compiling.antlr.Ast as Ast
+from typing import cast
 
 
 # This class defines a complete listener for a parse tree produced by ExprGrammar.
@@ -20,15 +21,6 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#rel_op.
-    def enterRel_op(self, ctx:ExprGrammar.Rel_opContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#rel_op.
-    def exitRel_op(self, ctx:ExprGrammar.Rel_opContext):
-        pass
-
-
     # Enter a parse tree produced by ExprGrammar#relation.
     def enterRelation(self, ctx:ExprGrammar.RelationContext):
         pass
@@ -38,39 +30,21 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#deriv_arg.
-    def enterDeriv_arg(self, ctx:ExprGrammar.Deriv_argContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#deriv_arg.
-    def exitDeriv_arg(self, ctx:ExprGrammar.Deriv_argContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#deriv_args.
-    def enterDeriv_args(self, ctx:ExprGrammar.Deriv_argsContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#deriv_args.
-    def exitDeriv_args(self, ctx:ExprGrammar.Deriv_argsContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#int_bounds.
-    def enterInt_bounds(self, ctx:ExprGrammar.Int_boundsContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#int_bounds.
-    def exitInt_bounds(self, ctx:ExprGrammar.Int_boundsContext):
-        pass
-
-
     # Enter a parse tree produced by ExprGrammar#Comb.
     def enterComb(self, ctx:ExprGrammar.CombContext):
         pass
 
     # Exit a parse tree produced by ExprGrammar#Comb.
     def exitComb(self, ctx:ExprGrammar.CombContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#DelimitedExpr.
+    def enterDelimitedExpr(self, ctx:ExprGrammar.DelimitedExprContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#DelimitedExpr.
+    def exitDelimitedExpr(self, ctx:ExprGrammar.DelimitedExprContext):
         pass
 
 
@@ -92,6 +66,15 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ExprGrammar#IndexPow.
+    def enterIndexPow(self, ctx:ExprGrammar.IndexPowContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#IndexPow.
+    def exitIndexPow(self, ctx:ExprGrammar.IndexPowContext):
+        pass
+
+
     # Enter a parse tree produced by ExprGrammar#Stub.
     def enterStub(self, ctx:ExprGrammar.StubContext):
         pass
@@ -101,12 +84,12 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#ExponentialOp.
-    def enterExponentialOp(self, ctx:ExprGrammar.ExponentialOpContext):
+    # Enter a parse tree produced by ExprGrammar#Index.
+    def enterIndex(self, ctx:ExprGrammar.IndexContext):
         pass
 
-    # Exit a parse tree produced by ExprGrammar#ExponentialOp.
-    def exitExponentialOp(self, ctx:ExprGrammar.ExponentialOpContext):
+    # Exit a parse tree produced by ExprGrammar#Index.
+    def exitIndex(self, ctx:ExprGrammar.IndexContext):
         pass
 
 
@@ -155,21 +138,21 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#Abs.
-    def enterAbs(self, ctx:ExprGrammar.AbsContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#Abs.
-    def exitAbs(self, ctx:ExprGrammar.AbsContext):
-        pass
-
-
     # Enter a parse tree produced by ExprGrammar#AdditiveOp.
     def enterAdditiveOp(self, ctx:ExprGrammar.AdditiveOpContext):
         pass
 
     # Exit a parse tree produced by ExprGrammar#AdditiveOp.
     def exitAdditiveOp(self, ctx:ExprGrammar.AdditiveOpContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#Pow.
+    def enterPow(self, ctx:ExprGrammar.PowContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#Pow.
+    def exitPow(self, ctx:ExprGrammar.PowContext):
         pass
 
 
@@ -182,39 +165,21 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ExprGrammar#rel_op.
+    def enterRel_op(self, ctx:ExprGrammar.Rel_opContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#rel_op.
+    def exitRel_op(self, ctx:ExprGrammar.Rel_opContext):
+        pass
+
+
     # Enter a parse tree produced by ExprGrammar#atom.
     def enterAtom(self, ctx:ExprGrammar.AtomContext):
         pass
 
     # Exit a parse tree produced by ExprGrammar#atom.
     def exitAtom(self, ctx:ExprGrammar.AtomContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#symbol.
-    def enterSymbol(self, ctx:ExprGrammar.SymbolContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#symbol.
-    def exitSymbol(self, ctx:ExprGrammar.SymbolContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#subscript_arg.
-    def enterSubscript_arg(self, ctx:ExprGrammar.Subscript_argContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#subscript_arg.
-    def exitSubscript_arg(self, ctx:ExprGrammar.Subscript_argContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#subscript_symbol.
-    def enterSubscript_symbol(self, ctx:ExprGrammar.Subscript_symbolContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#subscript_symbol.
-    def exitSubscript_symbol(self, ctx:ExprGrammar.Subscript_symbolContext):
         pass
 
 
@@ -236,6 +201,33 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ExprGrammar#int_bounds.
+    def enterInt_bounds(self, ctx:ExprGrammar.Int_boundsContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#int_bounds.
+    def exitInt_bounds(self, ctx:ExprGrammar.Int_boundsContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#diff_var.
+    def enterDiff_var(self, ctx:ExprGrammar.Diff_varContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#diff_var.
+    def exitDiff_var(self, ctx:ExprGrammar.Diff_varContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#diff_vars.
+    def enterDiff_vars(self, ctx:ExprGrammar.Diff_varsContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#diff_vars.
+    def exitDiff_vars(self, ctx:ExprGrammar.Diff_varsContext):
+        pass
+
+
     # Enter a parse tree produced by ExprGrammar#limit_dir.
     def enterLimit_dir(self, ctx:ExprGrammar.Limit_dirContext):
         pass
@@ -254,21 +246,102 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ExprGrammar#primary_symbol.
+    def enterPrimary_symbol(self, ctx:ExprGrammar.Primary_symbolContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#primary_symbol.
+    def exitPrimary_symbol(self, ctx:ExprGrammar.Primary_symbolContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#delta_symbol.
+    def enterDelta_symbol(self, ctx:ExprGrammar.Delta_symbolContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#delta_symbol.
+    def exitDelta_symbol(self, ctx:ExprGrammar.Delta_symbolContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#symbol.
+    def enterSymbol(self, ctx:ExprGrammar.SymbolContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#symbol.
+    def exitSymbol(self, ctx:ExprGrammar.SymbolContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#delim_expr.
+    def enterDelim_expr(self, ctx:ExprGrammar.Delim_exprContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#delim_expr.
+    def exitDelim_expr(self, ctx:ExprGrammar.Delim_exprContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#combinatorial.
+    def enterCombinatorial(self, ctx:ExprGrammar.CombinatorialContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#combinatorial.
+    def exitCombinatorial(self, ctx:ExprGrammar.CombinatorialContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#singular_index.
+    def enterSingular_index(self, ctx:ExprGrammar.Singular_indexContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#singular_index.
+    def exitSingular_index(self, ctx:ExprGrammar.Singular_indexContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#range_index.
+    def enterRange_index(self, ctx:ExprGrammar.Range_indexContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#range_index.
+    def exitRange_index(self, ctx:ExprGrammar.Range_indexContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#all_index.
+    def enterAll_index(self, ctx:ExprGrammar.All_indexContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#all_index.
+    def exitAll_index(self, ctx:ExprGrammar.All_indexContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#index_entry.
+    def enterIndex_entry(self, ctx:ExprGrammar.Index_entryContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#index_entry.
+    def exitIndex_entry(self, ctx:ExprGrammar.Index_entryContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#index_arg.
+    def enterIndex_arg(self, ctx:ExprGrammar.Index_argContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#index_arg.
+    def exitIndex_arg(self, ctx:ExprGrammar.Index_argContext):
+        pass
+
+
     # Enter a parse tree produced by ExprGrammar#builtin_func.
     def enterBuiltin_func(self, ctx:ExprGrammar.Builtin_funcContext):
         pass
 
     # Exit a parse tree produced by ExprGrammar#builtin_func.
     def exitBuiltin_func(self, ctx:ExprGrammar.Builtin_funcContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#matrix_el.
-    def enterMatrix_el(self, ctx:ExprGrammar.Matrix_elContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#matrix_el.
-    def exitMatrix_el(self, ctx:ExprGrammar.Matrix_elContext):
         pass
 
 

@@ -7,6 +7,18 @@ from enum import Enum
 from antlr4 import ParserRuleContext
 
 
+class CombOpId(Enum):
+	Permutations = 'P'
+	Combinations = 'C'
+
+def combOpFromId(ctx: ParserRuleContext, n: Expr, kr: Expr, op: CombOpId):
+	match op:
+		case CombOpId.Permutations:
+			return Permutations(ctx, n, kr)
+		case CombOpId.Combinations:
+			return Binom(ctx, n, kr)
+
+
 @dataclass(frozen=True)
 class AstNode(ABC):
     ctx: ParserRuleContext = field(repr=False)
@@ -47,6 +59,11 @@ class MultOp(AstNode):
     lhs: Expr
     rhs: Expr
 
+
+@dataclass(frozen=True)
+class ModOp(AstNode):
+    lhs: Expr
+    rhs: Expr
 
 @dataclass(frozen=True)
 class DivOp(AstNode):
@@ -153,6 +170,14 @@ class Binom(AstNode):
     n: Expr
     k: Expr
 
+@dataclass(frozen=True)
+class Permutations(AstNode):
+	n: Expr
+	r: Expr
+
+@dataclass(frozen=True)
+class Derangements(AstNode):
+	n: Expr
 
 @dataclass(frozen=True)
 class Root(AstNode):

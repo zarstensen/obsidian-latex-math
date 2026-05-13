@@ -1,4 +1,5 @@
-# pyright: reportIncompatibleMethodOverride = false, reportAssignmentType = false
+# type: ignore
+import html
 import sys
 from time import time
 from typing import override
@@ -116,7 +117,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         self.__term_subgraph.add_node(
             pydot.Node(
                 id,
-                label=f'<{ExprGrammar.symbolicNames[node.getSymbol().type]}<br/><font fontname="monospace">{node.getText()}</font>>',
+                label=f'<{ExprGrammar.symbolicNames[node.getSymbol().type]}<br/><font fontname="monospace">{html.escape(node.getText())}</font>>',
                 xlabel=f'<<font color="#004D62">* {node.getSymbol().tokenIndex}</font>>',
             )
         )
