@@ -6,7 +6,10 @@ options {
 
 @header {
 import lmat_cas_client.compiling.antlr.Ast as Ast
-from typing import cast
+from typing import cast, Type
+
+def rule_t[T](t: Type[T], v: T | None = None) -> T:
+	return cast(T, v)
 }
 
 @members {
@@ -21,32 +24,40 @@ func_set: set[str] = set()
 // - [x] how to handle args to derivatives VERY IMPORTANT!!!!!!
 //   SOLUTION: has to be done during evaluation, so the derivatives first go through all their function children and differentiate, and *then* apply their arguments during evaluation,
 //   so nothing parser specific, should be fine
-// - [ ] inner product, floor, ceil, norm
+// - [x] inner product, floor, ceil, norm
 // - [x] modulo
-// - [ ] matrix indexing
-// - [ ] determinant matrix
+// - [x] matrix indexing
+// - [x] determinant matrix
 // - [x] degangements special syntax {! ...}
 // - [x] Delta?
-// - [ ] cross product
+// - [x] Eval At
+// - [x] cross product
 // - [ ] organize
 
-debug
-	returns[res = cast(Ast.Expr, None)]: (expr_system {$res = $expr_system.res} | a_expr {$res = $a_expr.res}) EOF ;
+debug returns[res = rule_t(Ast.AExpr)]:
+	a_lmat_expr {$res = $a_lmat_expr.res};
 
-relation: a_expr rel_op relation
-	| a_expr;
+a_lmat_expr returns[res = cast(Ast.AExpr, None)]: (a_expr {$res = $a_expr.res} | relation | system) EOF;
+
+system_el: a_expr | relation;
+system_body: system_el (ENV_ROW_SEP system_el)* ENV_ROW_SEP*;
+system: BEGIN_ENV system_body END_ENV;
+
+relation: a_expr rel_op relation | a_expr rel_op a_expr;
+
 
 // TODO: should probably begin implementing the visitor / transformer now that way tests can be set
 // up and stuff like that, and also seems to not really have any reamining glaring problems which
 // have not been covered.
 a_expr
-	returns[res = cast(Ast.Expr, None)]
+	returns[res = cast(Ast.AExpr, None)]
 	locals[node_t: type]:
 	base = a_expr POW exp = pow_arg UNDERSCORE index = index_arg
 		{$res=Ast.ExpOp($ctx, $base.res, $exp.res)}                                                                                                              # IndexPow
 	| <assoc = right> base = a_expr POW exp = pow_arg
 		{$res=Ast.ExpOp($ctx, $base.res, $exp.res)}                                                                                                              # Pow
-	| a_expr UNDERSCORE index = index_arg # Index
+	| base = a_expr UNDERSCORE index = index_arg
+		{$res = Ast.IndexOp($ctx, $base.res, $index.res)}# Index
 
 	// \int \frac{\dd ...} {...} case
 	| INT int_bounds FRAC LBRACE DIFFERENTIAL diff=a_expr RBRACE recip_integrand=latex_cmd_arg
@@ -83,6 +94,9 @@ a_expr
 
 	| lhs = a_expr (
 		MULT {$node_t = Ast.MultOp}
+		| TIMES {$node_t = Ast.MultOp}
+		| XPROD {$node_t = Ast.MultOp}
+		| DOT_PROD {$node_t = Ast.MultOp}
 		| DIV {$node_t = Ast.DivOp}
 		| MOD {$node_t = Ast.ModOp}
 	) rhs = a_expr {$res = $node_t($ctx, $lhs.res, $rhs.res)}                                                                                                    # MultiplicativeOp
@@ -103,11 +117,16 @@ a_expr
 		PLUS {$node_t = Ast.UPlusOp}
 		| MINUS {$node_t = Ast.UMinusOp}
 	) a_expr {$res = $node_t($ctx, $a_expr.res)}                                                                                                                 # UAdditiveOp
+	| LPAREN a_expr RPAREN BAR eval_at_arg # EvalAt
+	| LBLANK a_expr BAR eval_at_arg # EvalAt
+	| LBRACKET a_expr RBRACKET eval_at_arg # EvalAt
+	| a_expr BAR eval_at_arg # EvalAt
 
 	| combinatorial {$res = $combinatorial.res}                                                                                                                  # Comb
 	| delim_expr {$res = $delim_expr.res}                                                                                                                        # DelimitedExpr
-	| builtin_func {$res = $builtin_func.res}                                                                                                                    # Stub
+	| cmd_func {$res = $cmd_func.res}                                                                                                                    # Stub
 	| matrix {$res = $matrix.res }                                                                                                                               # Stub
+	| det_matrix # Stub
 	| symbol {$res = $symbol.res}                                                                                                                                # Stub
 	| NUMBER {$res = Ast.Number($ctx, $NUMBER.text) }                                                                                                            # Stub;
 
@@ -137,8 +156,26 @@ latex_cmd_arg
 pow_arg
 	returns[res: Ast.Expr]:
 	atom {$res = $atom.res }
-	| builtin_func {$res = $builtin_func.res}
+	| cmd_func {$res = $cmd_func.res}
 	| LBRACE a_expr RBRACE {$res = $a_expr.res};
+
+range_index returns[res: tuple[Ast.AExpr | None, Ast.AExpr | None]]:
+	beg=a_expr? (COLON|DOTS) end=a_expr? {$res = ($beg.res, $end.res)};
+all_index: MULT | STAR;
+
+index_entry returns[res: Ast.IndexOp.IndexEntry]:
+	a_expr {$res = $a_expr.res}
+	| range_index {$res = $range_index.res}
+	| all_index {$res = None}
+	| {$res = None};
+
+// .. _ [[{..}]]
+//      ^ matches the argument to a subscript
+// must be a comma separated list of index_entry
+index_arg returns[res: tuple[Ast.IndexOp.IndexEntry, ...]]:
+	atom {$res = ($atom.res,)}
+	| cmd_func {$res = ($cmd_func.res,)}
+	| LBRACE (LBRACKET|LPAREN)? index_entry {$res = [$index_entry.res]} ((COMMA | SEMICOLON) index_entry {$res.append($index_entry.res)} )+ (LBRACKET|LPAREN)? RBRACE {$res = tuple($res)};
 
 // \int [[_a^b]] .. \dd ..
 //      ^ int_bounds matches the bounds of a bounded integral
@@ -180,6 +217,14 @@ $start = $s.res
 $end = $e.res
 };
 
+eval_at_sub_vars: a_expr EQ a_expr (COMMA a_expr EQ a_expr)*;
+
+// .. | [[_{x=.., y=..}^{x=..,y=..}]]
+//		^ matches the variables to substitute for an evaluate at expression.
+eval_at_arg:
+	UNDERSCORE LBRACE eval_at_sub_vars RBRACE
+	| UNDERSCORE LBRACE eval_at_sub_vars RBRACE POW LBRACE eval_at_sub_vars RBRACE
+	| POW LBRACE eval_at_sub_vars RBRACE UNDERSCORE LBRACE eval_at_sub_vars RBRACE;
 
 // matches a symbol from a lone ID or COMMAND token
 primary_symbol returns[res: Ast.Expr]:
@@ -200,10 +245,13 @@ symbol returns[res: Ast.Expr]:
 delim_expr returns[res: Ast.Expr]:
 	LPAREN a_expr RPAREN {$res = $a_expr.res.mut_ctx($ctx)}
 	| BAR a_expr BAR //{$res = Ast.Abs($ctx, $a_expr.res)}
+	| DOUBLE_BAR a_expr DOUBLE_BAR //{$res = Ast.Abs($ctx, $a_expr.res)}
 	| LFLOOR a_expr RFLOOR //{$res = Ast.Floor($ctx, $a_expr.res)}
 	| LCEIL a_expr RCEIL //{$res = Ast.Ceil($ctx, $a_expr.res)}
 	| LANGLE a_expr (BAR|COMMA) a_expr RANGLE;
 
+// matches special case syntax for permutations, combinations, and derangements.
+// e.g. {_n C ^k} for n choose k or {!n} for n derangements.
 combinatorial returns[res: Ast.Expr]: 
 	LBRACE (UNDERSCORE|POW) n=a_expr op=ID {($op.text in Ast.CombOpId)}? POW k=a_expr RBRACE
 	{$res = Ast.combOpFromId($ctx, $n.res, $k.res, Ast.CombOpId($op.text))}
@@ -213,21 +261,9 @@ combinatorial returns[res: Ast.Expr]:
 
 
 
-// TODO: what should the last rule be called? which matches a index value, i.e. not a range or a catch all, just a concrete index
-singular_index: a_expr;
-range_index: from=a_expr? (COLON|DOTS) to=a_expr?;
-all_index: MULT | STAR;
-
-index_entry: singular_index | range_index | all_index | ;
-
-index_arg:
-	LBRACE (LBRACKET|LPAREN)? index_entry ((COMMA | SEMICOLON) index_entry)+ (LBRACKET|LPAREN)? RBRACE
-	| atom
-	| builtin_func;
-
 // these are exclusively built in math functions accessed via. latex commands,
 // as in \sqrt .., but not .. ! as this is *not* a command.
-builtin_func
+cmd_func
 	returns[res: Ast.BuiltinFunc]:
 	FRAC num = latex_cmd_arg den = latex_cmd_arg {$res = Ast.DivOp($ctx, $num.res, $den.res)}
 	| BINOM n = latex_cmd_arg k = latex_cmd_arg {$res = Ast.Binom($ctx, $n.res, $k.res)}
@@ -245,12 +281,11 @@ matrix_body
 	returns[res: list[list[Ast.Expr]] = []]:
 	| matrix_row {$res = [$matrix_row.res]} (ENV_ROW_SEP matrix_row {$res.append($matrix_row.res)})* ENV_ROW_SEP*;
 
+// matches a matrix, ==> expressions delimited by & and \\ in any matrix or array environment
 matrix
 	returns[res: Ast.Matrix]:
 	(beg=BEGIN_MATRIX matrix_body end=END_MATRIX | beg=BEGIN_ARRAY matrix_body end=END_ARRAY) {$res = Ast.Matrix($ctx, $matrix_body.res, $beg.text, $end.text)};
 
-
-expr_system_expr: a_expr {$expr_system_body::res.append($a_expr.res)};
-expr_system_body returns[res: list[Ast.Expr] = []]: | expr_system_expr (ENV_ROW_SEP expr_system_expr)* ENV_ROW_SEP*;
-expr_system returns[res: Ast.ExprSystem]: BEGIN_ENV body=expr_system_body END_ENV {$res = Ast.ExprSystem($ctx, $body.res)};
+// special case of matrix for the vmatrix environment
+det_matrix returns[res: Ast.Expr]: BEGIN_V_MATRIX matrix_body END_V_MATRIX;
 

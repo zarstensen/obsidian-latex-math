@@ -8,16 +8,18 @@ from antlr4 import ParserRuleContext
 
 
 class CombOpId(Enum):
-	Permutations = 'P'
-	Combinations = 'C'
+    Permutations = 'P'
+    Combinations = 'C'
 
-def combOpFromId(ctx: ParserRuleContext, n: Expr, kr: Expr, op: CombOpId):
-	match op:
-		case CombOpId.Permutations:
-			return Permutations(ctx, n, kr)
-		case CombOpId.Combinations:
-			return Binom(ctx, n, kr)
+def combOpFromId(ctx: ParserRuleContext, n: AExpr, kr: AExpr, op: CombOpId):
+    match op:
+        case CombOpId.Permutations:
+            return Permutations(ctx, n, kr)
+        case CombOpId.Combinations:
+            return Binom(ctx, n, kr)
 
+class Index:
+    pass
 
 @dataclass(frozen=True)
 class AstNode(ABC):
@@ -26,173 +28,152 @@ class AstNode(ABC):
     def mut_ctx[T: AstNode](self: T, ctx: ParserRuleContext) -> T:
         return replace(self, ctx=ctx)
 
+# ======== a_expr =========
+
+AExpr = int
+
+@dataclass(frozen=True)
+class BinOp(AstNode, ABC):
+    lhs: AExpr
+    rhs: AExpr
+
+@dataclass(frozen=True)
+class UnaryOp(AstNode, ABC):
+    arg: AExpr
+
 
 @dataclass(frozen=True)
 class Symbol(AstNode):
     symbol: str
 
 @dataclass(frozen=True)
-class SubscriptSymbol(AstNode):
-	symbol: Symbol
-	subscript: list[Expr]
-
-@dataclass(frozen=True)
 class Number(AstNode):
     number: str
 
-
-@dataclass(frozen=True)
-class Matrix(AstNode):
-    elements: list[list[Expr]]
-    beg_cmd: str
-    end_cmd: str
-
-
 @dataclass(frozen=True)
 class ExpOp(AstNode):
-    base: Expr
-    exponent: Expr
+    base: AExpr
+    exponent: AExpr
 
 
 @dataclass(frozen=True)
-class MultOp(AstNode):
-    lhs: Expr
-    rhs: Expr
+class IndexOp(AstNode):
+    IndexEntry = AExpr | tuple[AExpr | None, AExpr | None] | None
 
+    val: AExpr
+    index: tuple[IndexEntry, ...]
 
 @dataclass(frozen=True)
-class ModOp(AstNode):
-    lhs: Expr
-    rhs: Expr
+class MultOp(BinOp):
+    pass
+
+@dataclass(frozen=True)
+class ModOp(BinOp):
+    pass
 
 @dataclass(frozen=True)
 class DivOp(AstNode):
-    num: Expr
-    denom: Expr
-
+    num: AExpr
+    denom: AExpr
 
 @dataclass(frozen=True)
-class AddOp(AstNode):
-    lhs: Expr
-    rhs: Expr
-
+class AddOp(BinOp):
+    pass
 
 @dataclass(frozen=True)
 class SubOp(AstNode):
-    lhs: Expr
-    rhs: Expr
-
+    pass
 
 @dataclass(frozen=True)
-class UMinusOp(AstNode):
-    op: Expr
-
+class UMinusOp(UnaryOp):
+    pass
 
 @dataclass(frozen=True)
-class UPlusOp(AstNode):
-    op: Expr
+class UPlusOp(UnaryOp):
+    pass
 
 @dataclass(frozen=True)
 class Sum(AstNode):
-	expr: Expr
-	var: Expr
-	range: tuple[Expr, Expr]
+    expr: AExpr
+    var: AExpr
+    range: tuple[AExpr, AExpr]
 
 @dataclass(frozen=True)
 class Product(AstNode):
-	expr: Expr
-	var: Expr
-	range: tuple[Expr, Expr]
-
-@dataclass(frozen=True)
-class AppliedBuiltinFunc(AstNode):
-    func: BuiltinFunc
-
-
-Expr = (
-    ExpOp
-    | MultOp
-    | DivOp
-    | AddOp
-    | SubOp
-    | UMinusOp
-    | UPlusOp
-    | Symbol
-    | Number
-    | Matrix
-    | AppliedBuiltinFunc
-)
-
+    expr: AExpr
+    var: AExpr
+    range: tuple[AExpr, AExpr]
 
 @dataclass(frozen=True)
 class Integral(AstNode):
-    integrand: Expr
-    diff: Expr
-    bounds: tuple[Expr, Expr] | None
+    integrand: AExpr
+    diff: AExpr
+    bounds: tuple[AExpr, AExpr] | None
 
 
 @dataclass(frozen=True)
 class Differential(AstNode):
-	differentiand: Expr
-	differentials: list[tuple[Expr, Expr | None]]
+    differentiand: AExpr
+    differentials: list[tuple[AExpr, AExpr | None]]
+
 
 class LimitDir(Enum):
     POSITIVE = 1
     NEGATIVE = 2
     BOTH = 3
 
-
 @dataclass(frozen=True)
 class Limit:
-    expr: Expr
-    var: Expr
-    poa: Expr
+    expr: AExpr
+    var: AExpr
+    poa: AExpr
     dir: LimitDir
 
 
 @dataclass(frozen=True)
-class Factorial(AstNode):
-    op: Expr
-
-
-@dataclass(frozen=True)
-class Percent(AstNode):
-    op: Expr
-
+class Factorial(UnaryOp):
+    pass
 
 @dataclass(frozen=True)
-class Permille(AstNode):
-    op: Expr
+class Percent(UnaryOp):
+    pass
+
+@dataclass(frozen=True)
+class Permille(UnaryOp):
+    pass
 
 
 @dataclass(frozen=True)
 class Binom(AstNode):
-    n: Expr
-    k: Expr
+    n: AExpr
+    k: AExpr
 
 @dataclass(frozen=True)
 class Permutations(AstNode):
-	n: Expr
-	r: Expr
+    n: AExpr
+    r: AExpr
 
 @dataclass(frozen=True)
 class Derangements(AstNode):
-	n: Expr
+    n: AExpr
 
 @dataclass(frozen=True)
 class Root(AstNode):
-    op: Expr
-    index: Expr | None
+    op: AExpr
+    index: AExpr | None
 
 
 @dataclass(frozen=True)
-class Conjugate(AstNode):
-    op: Expr
+class Conjugate(UnaryOp):
+    pass
 
 
 @dataclass(frozen=True)
-class UnitVec(AstNode):
-    op: Expr
+class UnitVec(UnaryOp):
+    pass
 
-
-BuiltinFunc = Factorial | Percent | Permille | Binom | Root | Conjugate | UnitVec
+@dataclass(frozen=True)
+class Matrix(AstNode):
+    elements: list[list[AExpr]]
+    beg_cmd: str
+    end_cmd: str

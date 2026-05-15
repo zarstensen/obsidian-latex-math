@@ -24,15 +24,19 @@ extend-ignore = ["F405", "F403"]
 extend-safe-fixes = ["W291"]
 
 [tool.mypy]
+cache_dir = ".mypy_cache"
 
 check_untyped_defs = true
 cache_fine_grained = true
-enable_error_code = ["explicit-override", "override"]
+enable_error_code = ["explicit-override", "override", "exhaustive-match"]
+exclude = "(\\.venv|\\.mypy_cache|/tests/)"
 
 [[tool.mypy.overrides]]
 
 module = ["sympy.*", "jsonpickle.*", "antlr4.*"]
-follow_untyped_imports = true
+# Don't follow into heavy un-typed third-party packages; they slow down analysis.
+follow_untyped_imports = false
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 

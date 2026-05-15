@@ -71,7 +71,7 @@ export default class LatexMathPlugin extends Plugin {
 \\let\\originalleft\\left
 \\let\\originalright\\right
 \\renewcommand{\\left}{\\mathopen{}\\originalleft}
-\\renewcommand{\\right}[1]{\\originalright#1\\mathclose{}}
+\\renewcommand{\\right}[1]{\\mathclose{}\\originalright#1}
 `);
     }
 

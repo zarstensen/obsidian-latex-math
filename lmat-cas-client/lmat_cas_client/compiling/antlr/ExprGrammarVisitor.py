@@ -6,7 +6,10 @@ else:
     from ExprGrammar import ExprGrammar
 
 import lmat_cas_client.compiling.antlr.Ast as Ast
-from typing import cast
+from typing import cast, Type
+
+def rule_t[T](t: Type[T], v: T | None = None) -> T:
+	return cast(T, v)
 
 
 # This class defines a complete generic visitor for a parse tree produced by ExprGrammar.
@@ -15,6 +18,26 @@ class ExprGrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ExprGrammar#debug.
     def visitDebug(self, ctx:ExprGrammar.DebugContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#a_lmat_expr.
+    def visitA_lmat_expr(self, ctx:ExprGrammar.A_lmat_exprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#system_el.
+    def visitSystem_el(self, ctx:ExprGrammar.System_elContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#system_body.
+    def visitSystem_body(self, ctx:ExprGrammar.System_bodyContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#system.
+    def visitSystem(self, ctx:ExprGrammar.SystemContext):
         return self.visitChildren(ctx)
 
 
@@ -30,6 +53,11 @@ class ExprGrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ExprGrammar#DelimitedExpr.
     def visitDelimitedExpr(self, ctx:ExprGrammar.DelimitedExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#EvalAt.
+    def visitEvalAt(self, ctx:ExprGrammar.EvalAtContext):
         return self.visitChildren(ctx)
 
 
@@ -118,6 +146,26 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ExprGrammar#range_index.
+    def visitRange_index(self, ctx:ExprGrammar.Range_indexContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#all_index.
+    def visitAll_index(self, ctx:ExprGrammar.All_indexContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#index_entry.
+    def visitIndex_entry(self, ctx:ExprGrammar.Index_entryContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#index_arg.
+    def visitIndex_arg(self, ctx:ExprGrammar.Index_argContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ExprGrammar#int_bounds.
     def visitInt_bounds(self, ctx:ExprGrammar.Int_boundsContext):
         return self.visitChildren(ctx)
@@ -140,6 +188,16 @@ class ExprGrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ExprGrammar#series_range_args.
     def visitSeries_range_args(self, ctx:ExprGrammar.Series_range_argsContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#eval_at_sub_vars.
+    def visitEval_at_sub_vars(self, ctx:ExprGrammar.Eval_at_sub_varsContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#eval_at_arg.
+    def visitEval_at_arg(self, ctx:ExprGrammar.Eval_at_argContext):
         return self.visitChildren(ctx)
 
 
@@ -168,33 +226,8 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#singular_index.
-    def visitSingular_index(self, ctx:ExprGrammar.Singular_indexContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#range_index.
-    def visitRange_index(self, ctx:ExprGrammar.Range_indexContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#all_index.
-    def visitAll_index(self, ctx:ExprGrammar.All_indexContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#index_entry.
-    def visitIndex_entry(self, ctx:ExprGrammar.Index_entryContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#index_arg.
-    def visitIndex_arg(self, ctx:ExprGrammar.Index_argContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#builtin_func.
-    def visitBuiltin_func(self, ctx:ExprGrammar.Builtin_funcContext):
+    # Visit a parse tree produced by ExprGrammar#cmd_func.
+    def visitCmd_func(self, ctx:ExprGrammar.Cmd_funcContext):
         return self.visitChildren(ctx)
 
 
@@ -213,18 +246,8 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#expr_system_expr.
-    def visitExpr_system_expr(self, ctx:ExprGrammar.Expr_system_exprContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#expr_system_body.
-    def visitExpr_system_body(self, ctx:ExprGrammar.Expr_system_bodyContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#expr_system.
-    def visitExpr_system(self, ctx:ExprGrammar.Expr_systemContext):
+    # Visit a parse tree produced by ExprGrammar#det_matrix.
+    def visitDet_matrix(self, ctx:ExprGrammar.Det_matrixContext):
         return self.visitChildren(ctx)
 
 

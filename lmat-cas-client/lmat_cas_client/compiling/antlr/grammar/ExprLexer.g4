@@ -73,6 +73,12 @@ fragment BRACE_TEXT: '{' ( '\\' [{}] | .)*? '}';
 fragment F_TEXT: '\\text' 'tt'? F_WS? BRACE_TEXT;
 fragment COMMENT: '%' .*? '\n';
 
+fragment F_LEFT: '\\left';
+fragment F_RIGHT: '\\right';
+
+LBLANK: F_LEFT F_WS? '.';
+RBLANK: F_RIGHT F_WS? '.';
+
 fragment F_IGNORE:
     F_WS
     | F_SPACING
@@ -80,7 +86,8 @@ fragment F_IGNORE:
     | COMMENT
     | '\\' ('limits' | 'nolimits')
     | '\\displaystyle'
-    | '\\' ('left' | 'right');
+	| F_LEFT
+	| F_RIGHT;
 
 IGNORE: F_IGNORE -> skip;
 
@@ -95,6 +102,7 @@ PLUS: '+';
 MINUS: '-';
 MULT: F_MULT;
 DIV: '/' | '\\over';
+XPROD: '\\cross' 'product'? | '\\cp';
 POW: '^' -> pushMode(COMM_ARG);
 
 // relational operators
@@ -106,7 +114,6 @@ GT: '>';
 GTE: '>=' | '\\geq' 'slant'? | '\\ge';
 
 TIMES: '\\times';
-CROSS_PROD: '\\cross' 'product'? | '\\cp';
 DOT_PROD: '\\dotproduct' | '\\vdot';
 
 FRAC:
@@ -160,8 +167,10 @@ COMMA: ',';
 UNDERSCORE: '_' -> pushMode(COMM_ARG);
 
 SEMICOLON: ';';
+COLON: ':';
 STAR: '\\star';
 DOTS: '\\dots' [cbmio] | '\\' [lc]? 'dots' | ('\\cdot'|'.') ('\\cdot'|'.') ('\\cdot'|'.')?;
+
 
 // indexing? rethink a bit maybe, we have a more powerfull lexer + parser, should indexing work
 // differently for symbols v.s. functions? how does one know if a definition is a function vs symbol
@@ -171,37 +180,58 @@ DOTS: '\\dots' [cbmio] | '\\' [lc]? 'dots' | ('\\cdot'|'.') ('\\cdot'|'.') ('\\c
 // somehow lex {...} and {ID,ID,ID} differently... that should be possible?
 
 // === Delimiters === TODO: why the push and pop?, well because { } is special in latex
-LBRACE:
-    '{' {self.pushAddMode(AddMode.DEFAULT) } -> pushMode(DEFAULT_MODE);
-RBRACE: '}' {self.popAddMode() } -> popMode;
+fragment F_LBRACE: '{';
+LBRACE: F_LBRACE {self.pushAddMode(AddMode.DEFAULT) } -> pushMode(DEFAULT_MODE);
 
-LPAREN: '(' | '\\lparen';
-RPAREN: ')' | '\\rparen';
+fragment F_RBRACE: '}';
+RBRACE: F_RBRACE {self.popAddMode() } -> popMode;
 
-LBRACE_LITERAL: '\\{';
-RBRACE_LITERAL: '\\}';
+fragment F_LPAREN: '(' | '\\lparen';
+LPAREN: F_LPAREN;
+fragment F_RPAREN: ')' | '\\rparen';
+RPAREN: F_RPAREN;
 
-LBRACKET: '[';
-RBRACKET: ']' {
+fragment F_LBRACE_LITERAL: '\\{';
+LBRACE_LITERAL: F_LBRACE_LITERAL;
+fragment F_RBRACE_LITERAL: '\\}';
+RBRACE_LITERAL: F_RBRACE_LITERAL;
+
+fragment F_LBRACKET: '[';
+LBRACKET: F_LBRACKET;
+fragment F_RBRACKET: ']';
+RBRACKET: F_RBRACKET {
 if self.topAddMode() == AddMode.OPT_ARG:
     self.popAddMode()
     self.popMode()
 };
 
-LBRACK_CMD: '\\lbrack';
-RBRACK_CMD: '\\rbrack';
+fragment F_LBRACK_CMD: '\\lbrack';
+LBRACK_CMD: F_LBRACK_CMD;
+fragment F_RBRACK_CMD: '\\rbrack';
+RBRACK_CMD: F_RBRACK_CMD;
 
-LCEIL: '\\lceil';
-RCEIL: '\\rceil';
+fragment F_LCEIL: '\\lceil';
+LCEIL: F_LCEIL;
+fragment F_RCEIL: '\\rceil';
+RCEIL: F_RCEIL;
 
-LFLOOR: '\\lfloor';
-RFLOOR: '\\rfloor';
+fragment F_LFLOOR: '\\lfloor';
+LFLOOR: F_LFLOOR;
+fragment F_RFLOOR: '\\rfloor';
+RFLOOR: F_RFLOOR;
 
-LANGLE: '\\langle';
-RANGLE: '\\rangle';
+fragment F_LANGLE: '\\langle';
+LANGLE: F_LANGLE;
+fragment F_RANGLE: '\\rangle';
+RANGLE: F_RANGLE;
 
-BAR: '|' | '\\mid';
-DOUBLE_BAR: '||' | '\\mid' F_WS? '\\mid' | '\\' [lr] 'Vert';
+fragment F_BAR: '|' | '\\mid' | '\\' [lr]? 'vert';
+BAR: F_BAR;
+DOUBLE_BAR: '||' | '\\mid' F_WS? '\\mid' | '\\' [lr]? 'Vert';
+
+fragment F_DOT: '.';
+// SPECIAL lexing for this one?
+DOT: F_DOT;
 
 // === Command Math Functions === as in defined by a latex command, not just written plainly.
 // alternative: one can pass arguments to these without surrounding them with parenthesees. how do
@@ -229,30 +259,30 @@ END_V_MATRIX:
     CMD_END '{' F_WS? V_MATRIX_ENV F_WS? '}' {self.popAddMode()};
 
 BEGIN_ARRAY: (
-        '\\left' F_WS? (
-            '('
-			| '\\lparen'
-            | '\\{'
-            | '['
-            | '\\lbrack'
-            | '\\lfloor'
-            | '\\langle'
-            | '<'
+        F_LEFT F_WS? (
+			F_LPAREN
+			| F_LBRACE
+			| F_LBRACKET
+			| F_LFLOOR
+			| F_LCEIL
+			| F_LANGLE
+			| F_BAR
+			| '.'
         )
     )? F_WS? CMD_BEGIN F_WS? '{' F_WS? ARRAY_ENV F_WS? '}' F_WS? (
         '{' ([clr|:] | F_WS)+ '}'
     )? {self.pushAddMode(AddMode.MATRIX)};
 END_ARRAY:
     CMD_END F_WS? '{' F_WS? ARRAY_ENV F_WS? '}' F_WS? (
-        '\\right' F_WS? (
-            ')'
-			| '\\rparen'
-            | '\\}'
-            | ']'
-            | '\\rbrack'
-            | '\\rfloor'
-            | '\\rangle'
-            | '>'
+        F_RIGHT F_WS? (
+			F_RPAREN
+			| F_RBRACE
+			| F_RBRACKET
+			| F_RFLOOR
+			| F_RCEIL
+			| F_RANGLE
+			| F_BAR
+			| '.'
         )
     ) {self.popAddMode()};
 
@@ -287,7 +317,9 @@ fragment CMD_FORMAT:
     | '\\vb' '*'?
     | '\\vectorbold'
     | '\\hat'
-    | '\\tilde';
+    | '\\tilde'
+	| '\\pmb'
+	| '\\boldsymbol';
 
 // TODO: predicate which is just a list of formatters // vec arr as in the arrow above a symbol
 // fragment VEC_ARR_FORMAT: '\\vec' | '\\va' '*'? | '\\vectorarrow'; // vec bold as in non italic
