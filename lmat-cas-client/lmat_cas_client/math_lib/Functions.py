@@ -8,8 +8,8 @@ from sympy.core.numbers import int_valued
 from sympy.logic.boolalg import as_Boolean
 
 
-def permutations(n: Expr, k: Expr):
-    return Mul(factorial(n), factorial((n - k)) ** S.NegativeOne)
+def permutations(n: Expr, r: Expr):
+    return Mul(factorial(n), factorial((n - r)) ** S.NegativeOne)
 
 
 def derangements(n: Expr):

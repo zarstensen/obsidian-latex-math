@@ -656,8 +656,8 @@ class ExprLexer(Lexer):
 
     COMM_ARG = 1
 
-    FUNCTION = 1
-    CMD_FUNCTION = 2
+    FUNC_ID = 1
+    FUNC_CMD = 2
     LBLANK = 3
     RBLANK = 4
     IGNORE = 5
@@ -748,7 +748,7 @@ class ExprLexer(Lexer):
             "','", "'_'", "';'", "':'", "'\\star'", "'&'", "'\\\\'", "'\\Delta'" ]
 
     symbolicNames = [ "<INVALID>",
-            "FUNCTION", "CMD_FUNCTION", "LBLANK", "RBLANK", "IGNORE", "PLUS", 
+            "FUNC_ID", "FUNC_CMD", "LBLANK", "RBLANK", "IGNORE", "PLUS", 
             "MINUS", "MULT", "DIV", "XPROD", "POW", "EQ", "NEQ", "LT", "LTE", 
             "GT", "GTE", "TIMES", "DOT_PROD", "FRAC", "BINOM", "SQRT", "CONJUGATE", 
             "VEC_UNIT", "MOD", "INT", "DIFFERENTIAL", "PHYS_DERIVATIVE", 

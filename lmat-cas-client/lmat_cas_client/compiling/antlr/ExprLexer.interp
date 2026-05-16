@@ -84,8 +84,8 @@ null
 
 token symbolic names:
 null
-FUNCTION
-CMD_FUNCTION
+FUNC_ID
+FUNC_CMD
 LBLANK
 RBLANK
 IGNORE

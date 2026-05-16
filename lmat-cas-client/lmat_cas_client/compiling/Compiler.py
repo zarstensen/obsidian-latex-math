@@ -39,7 +39,7 @@ from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
 from lmat_cas_client.compiling.antlr.ExprLexer import ExprLexer
-from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import evalExprToSympy
+# from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import evalExprToSympy
 
 
 class Compiler[**PTransform, TRes](ABC):
@@ -155,9 +155,14 @@ class LatexToCasExprCompiler(CasExprCompiler):
             Expr: compiled sympy expression.
         """
 
-        ast = ExprGrammar(CommonTokenStream(ExprLexer(InputStream(latex_str)))).a_expr().res
+        ast = (
+            ExprGrammar(CommonTokenStream(ExprLexer(InputStream(latex_str))))
+            .a_expr()
+            .res
+        )
 
-        return evalExprToSympy(ast, None)
+        return None
+        # return evalExprToSympy(ast, None)
         # dependencies = dependencies_transformer_runner.transform(ast)
 
         # assert_acyclic_dependencies(def_store, dependencies)

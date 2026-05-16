@@ -38,8 +38,8 @@ def hasAddMode(self, mode: AddMode) -> bool:
 }
 
 tokens {
-    FUNCTION,
-    CMD_FUNCTION
+    FUNC_ID,
+    FUNC_CMD
 }
 
 // === Skip and Ignore tokens ===
