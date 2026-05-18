@@ -35,21 +35,25 @@ exclude = "(\\.venv|\\.mypy_cache|/tests/)"
 
 module = ["sympy.*", "jsonpickle.*", "antlr4.*"]
 # Don't follow into heavy un-typed third-party packages; they slow down analysis.
-follow_untyped_imports = false
-ignore_missing_imports = true
+follow_untyped_imports = true
+# ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 
-module = [ "lmat_cas_client.compiling.antlr.ExprGrammar", "lmat_cas_client.compiling.antlr.ExprLexer" ]
+module = [
+    "lmat_cas_client.compiling.antlr.ExprGrammar",
+    "lmat_cas_client.compiling.antlr.ExprLexer",
+]
 disable_error_code = [
-	"import-untyped",
-	"name-defined",
-	"misc",
-	"has-type",
-	"attr-defined",
-	"assignment",
-	"var-annotated",
-	"arg-type",
-	"index",
+    "explicit-override",
+    "import-untyped",
+    "name-defined",
+    "misc",
+    "has-type",
+    "attr-defined",
+    "assignment",
+    "var-annotated",
+    "arg-type",
+    "index",
 ]
 follow_untyped_imports = true

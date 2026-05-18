@@ -36,8 +36,23 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ExprGrammar#system_env.
+    def visitSystem_env(self, ctx:ExprGrammar.System_envContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#system_and_chain.
+    def visitSystem_and_chain(self, ctx:ExprGrammar.System_and_chainContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ExprGrammar#system.
     def visitSystem(self, ctx:ExprGrammar.SystemContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#rel_op.
+    def visitRel_op(self, ctx:ExprGrammar.Rel_opContext):
         return self.visitChildren(ctx)
 
 
@@ -48,11 +63,6 @@ class ExprGrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ExprGrammar#a_expr.
     def visitA_expr(self, ctx:ExprGrammar.A_exprContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#rel_op.
-    def visitRel_op(self, ctx:ExprGrammar.Rel_opContext):
         return self.visitChildren(ctx)
 
 

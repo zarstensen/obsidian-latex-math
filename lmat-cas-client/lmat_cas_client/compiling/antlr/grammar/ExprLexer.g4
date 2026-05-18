@@ -91,6 +91,29 @@ fragment F_IGNORE:
 
 IGNORE: F_IGNORE -> skip;
 
+// === Boolean Operators ===
+// should maybe be in a different lexer?
+
+fragment F_BAR: '\\bar';
+fragment F_OVERLINE: '\\overline';
+
+
+fragment F_AND: '\\' 'big'? 'wedge' | '\\land';
+NAND: (F_BAR | F_OVERLINE) F_WS? (F_AND | F_LBRACE F_WS? F_AND F_WS? F_RBRACE);
+AND: F_AND;
+
+fragment F_OR: '\\' 'big'? 'vee' | '\\lor';
+NOR: (F_BAR | F_OVERLINE) F_WS? (F_OR | F_LBRACE F_WS? F_OR F_WS? F_RBRACE);
+OR: F_OR;
+
+fragment F_XOR: '\\' 'big'? 'oplus' | '\\veebar' | '\\dot' F_WS? (F_OR | F_LBRACE F_WS? F_OR F_WS F_RBRACE);
+XOR: F_XOR;
+XNOR: '\\odot' | (F_BAR | F_OVERLINE) F_WS? (F_XOR | F_LBRACE F_WS? F_XOR F_WS? F_RBRACE);
+
+NOT: '\\not';
+
+EQUIV: '\\equiv';
+
 // === Hard Coded Operators (cannot be redefined because of special syntax requirements) ===
 
 fragment CDOT: '\\cdot';
@@ -124,7 +147,7 @@ BINOM:
 // all of these should somehow also be part of COMM_ARG.......... :(
 SQRT: '\\sqrt' -> pushMode(COMM_ARG);
 
-CONJUGATE: ('\\bar' | '\\overline') -> pushMode(COMM_ARG);
+CONJUGATE: (F_BAR | F_OVERLINE) -> pushMode(COMM_ARG);
 
 VEC_UNIT: ('\\vu' | '\\vectorunit') -> pushMode(COMM_ARG);
 
@@ -225,9 +248,9 @@ LANGLE: F_LANGLE;
 fragment F_RANGLE: '\\rangle';
 RANGLE: F_RANGLE;
 
-fragment F_BAR: '|' | '\\mid' | '\\' [lr]? 'vert';
-BAR: F_BAR;
-DOUBLE_BAR: '||' | '\\mid' F_WS? '\\mid' | '\\' [lr]? 'Vert';
+fragment F_PIPE: '|' | '\\mid' | '\\' [lr]? 'vert';
+PIPE: F_PIPE;
+DOUBLE_PIPE: '||' | '\\mid' F_WS? '\\mid' | '\\' [lr]? 'Vert';
 
 fragment F_DOT: '.';
 // SPECIAL lexing for this one?
@@ -266,7 +289,7 @@ BEGIN_ARRAY: (
 			| F_LFLOOR
 			| F_LCEIL
 			| F_LANGLE
-			| F_BAR
+			| F_PIPE
 			| '.'
         )
     )? F_WS? CMD_BEGIN F_WS? '{' F_WS? ARRAY_ENV F_WS? '}' F_WS? (
@@ -281,7 +304,7 @@ END_ARRAY:
 			| F_RFLOOR
 			| F_RCEIL
 			| F_RANGLE
-			| F_BAR
+			| F_PIPE
 			| '.'
         )
     ) {self.popAddMode()};

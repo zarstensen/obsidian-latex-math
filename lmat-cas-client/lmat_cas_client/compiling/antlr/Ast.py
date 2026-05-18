@@ -32,9 +32,40 @@ class AstNode(ABC):
     def mut_ctx[T: AstNode](self: T, ctx: ParserRuleContext) -> T:
         return replace(self, ctx=ctx)
 
+# ======== relational ========
 
-# ======== a_expr =========
+@dataclass(frozen=True)
+class RelOp(AstNode, ABC):
+    lhs: AExpr
+    rhs: AExpr | Rel
 
+@dataclass(frozen=True)
+class Eq(RelOp):
+	pass
+
+@dataclass(frozen=True)
+class Neq(RelOp):
+	pass
+
+@dataclass(frozen=True)
+class Lt(RelOp):
+	pass
+
+@dataclass(frozen=True)
+class Lte(RelOp):
+	pass
+
+@dataclass(frozen=True)
+class Gt(RelOp):
+	pass
+
+@dataclass(frozen=True)
+class Gte(RelOp):
+	pass
+
+Rel = Eq | Neq | Lt | Lte | Gt | Gte
+
+# ======== arithmetic expression ========
 
 @dataclass(frozen=True)
 class BinOp(AstNode, ABC):
@@ -45,7 +76,6 @@ class BinOp(AstNode, ABC):
 @dataclass(frozen=True)
 class UnaryOp(AstNode, ABC):
     arg: AExpr
-
 
 @dataclass(frozen=True)
 class Symbol(AstNode):
@@ -253,8 +283,6 @@ class Matrix(AstNode):
 @dataclass(frozen=True)
 class DetMatrix(AstNode):
     elements: list[list[AExpr]]
-    beg_cmd: str
-    end_cmd: str
 
 
 AExpr = (
@@ -295,3 +323,25 @@ AExpr = (
     | Matrix
     | DetMatrix
 )
+
+# ======== System ========
+
+@dataclass(frozen = True)
+class AExprEntry(AstNode):
+	a_expr: AExpr
+
+@dataclass(frozen = True)
+class RelEntry(AstNode):
+	a_expr: Rel
+
+SystemEntry = AExprEntry | RelEntry
+
+@dataclass(frozen=True)
+class SystemEnv(AstNode):
+	elems: list[SystemEntry]
+
+@dataclass(frozen=True)
+class AndChain(AstNode):
+	elems: list[SystemEntry]
+
+System = SystemEnv | AndChain

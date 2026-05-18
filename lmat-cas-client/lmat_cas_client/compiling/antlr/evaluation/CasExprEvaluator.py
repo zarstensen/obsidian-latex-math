@@ -18,7 +18,7 @@ CasExprV2 = tuple[ExprEntry, ...]
 
 
 def a_expr_2_sympy(expr: Ast.AExpr, scope: None) -> ExprEntry:
-    def ev(expr: Ast.AExpr, s: None):
+    def ev(expr: Ast.AExpr, s: None) -> sp.Basic:
         match expr:
             case Ast.ApplyFunc(_, _, _):
                 assert False
@@ -159,7 +159,7 @@ def a_expr_2_sympy(expr: Ast.AExpr, scope: None) -> ExprEntry:
                 )
 
             case Ast.EvalAt(_, _, _, _):
-                pass
+                assert False
 
             case Ast.Root(_, expr, None):
                 return sp.sqrt(ev(expr, s))

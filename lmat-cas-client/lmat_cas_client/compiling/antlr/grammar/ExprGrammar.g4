@@ -38,13 +38,27 @@ func_set: set[str] = set()
 debug returns[res = rule_t(Ast.AExpr)]:
 	a_lmat_expr {$res = $a_lmat_expr.res};
 
-a_lmat_expr returns[res = rule_t(Ast.AExpr)]: (a_expr {$res = $a_expr.res} | relation | system) EOF;
+a_lmat_expr returns[res = rule_t(Ast.AExpr | Ast.Rel | Ast.System)]: (a_expr {$res = $a_expr.res} | relation {$res = $relation.res} | system {$res = $system.res}) EOF;
 
-system_el: a_expr | relation;
-system_body: system_el (ENV_ROW_SEP system_el)* ENV_ROW_SEP*;
-system: BEGIN_ENV system_body END_ENV;
+system_el returns[res = rule_t(Ast.SystemEntry)]:
+	a_expr {$res = Ast.AExprEntry($ctx, $a_expr.res)} | relation {$res = Ast.RelEntry($ctx, $relation.res)};
+system_body returns[res = rule_t(list[Ast.SystemEntry], [])]:
+	system_el {$res.append($system_el.res)} (ENV_ROW_SEP system_el {$res.append($system_el.res)})* ENV_ROW_SEP*;
+system_env returns[res = rule_t(Ast.SystemEnv)]:
+	BEGIN_ENV system_body {$res = Ast.SystemEnv($ctx, $system_body.res)} END_ENV;
 
-relation: a_expr rel_op relation | a_expr rel_op a_expr;
+system_and_chain
+	returns[res = rule_t(Ast.AndChain)]
+	locals[elems = rule_t(list[Ast.SystemEntry], [])]:
+	system_el {$elems.append($system_el.res)} (AND system_el {$elems.append($system_el.res)})+
+		{$res = Ast.AndChain($ctx, $elems)};
+
+system returns[res = rule_t(Ast.System)]: system_env {$res = $system_env.res} | system_and_chain {$res = $system_and_chain.res};
+
+rel_op returns[op = rule_t(type)]: EQ {$op = Ast.Eq} | NEQ {$op = Ast.Neq} | LT {$op = Ast.Lt} | LTE {$op = Ast.Lte} | GT {$op = Ast.Gt} | GTE {$op = Ast.Gte};
+relation returns[res = rule_t(Ast.Rel)]:
+	a_expr rel_op relation {$res = $rel_op.op ($ctx, $a_expr.res, $relation.res)}
+	| lhs=a_expr rel_op rhs=a_expr {$res = $rel_op.op ($ctx, $lhs.res, $rhs.res)};
 
 
 // TODO: should probably begin implementing the visitor / transformer now that way tests can be set
@@ -88,7 +102,7 @@ a_expr
 
 
 	| LIMIT UNDERSCORE LBRACE lim_var=symbol LIMIT_ARROW lim_poa=a_expr limit_dir RBRACE a_expr
-		{$res = Ast.Limit($a_expr.res, $lim_var.res, $lim_poa.res, $limit_dir.res)}
+		{$res = Ast.Limit($ctx, $a_expr.res, $lim_var.res, $lim_poa.res, $limit_dir.res)}
 
 	| lhs = a_expr (
 		MULT {$node_t = Ast.MultOp}
@@ -115,13 +129,13 @@ a_expr
 		PLUS {$node_t = Ast.UPlusOp}
 		| MINUS {$node_t = Ast.UMinusOp}
 	) a_expr {$res = $node_t($ctx, $a_expr.res)}
-	| LPAREN expr=a_expr RPAREN BAR eval_at_arg
+	| LPAREN expr=a_expr RPAREN PIPE eval_at_arg
 		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
-	| LBLANK expr=a_expr BAR eval_at_arg
+	| LBLANK expr=a_expr PIPE eval_at_arg
 		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
 	| LBRACKET expr=a_expr RBRACKET eval_at_arg 
 		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
-	| expr=a_expr BAR eval_at_arg 
+	| expr=a_expr PIPE eval_at_arg 
 		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
 
 	| combinatorial {$res = $combinatorial.res}
@@ -133,7 +147,6 @@ a_expr
 	| NUMBER {$res = Ast.Number($ctx, $NUMBER.text) };
 
 
-rel_op: EQ | NEQ | LT | LTE | GT | GTE;
 
 // matches an atom value, provided the preceeding token,
 // pushed the COMM_ARG lexer mode.
@@ -165,7 +178,7 @@ range_index returns[res = rule_t(tuple[Ast.AExpr | None, Ast.AExpr | None])]:
     beg=a_expr? (COLON|DOTS) end=a_expr? {$res = ($beg.res, $end.res)};
 all_index: MULT | STAR;
 
-index_entry returns[res = rule_t(Ast.IndexOp.IndexEntry)]:
+index_entry returns[res = rule_t(Ast.IndexEntry)]:
     a_expr {$res = $a_expr.res}
     | range_index {$res = $range_index.res}
     | all_index {$res = None}
@@ -174,7 +187,7 @@ index_entry returns[res = rule_t(Ast.IndexOp.IndexEntry)]:
 // .. _ [[{..}]]
 //      ^ matches the argument to a subscript
 // must be a comma separated list of index_entry
-index_arg returns[res = rule_t(tuple[Ast.IndexOp.IndexEntry, ...])]:
+index_arg returns[res = rule_t(tuple[Ast.IndexEntry, ...])]:
     atom {$res = ($atom.res,)}
     | cmd_func {$res = ($cmd_func.res,)}
     | LBRACE (LBRACKET|LPAREN)? index_entry {$res = [$index_entry.res]} ((COMMA | SEMICOLON) index_entry {$res.append($index_entry.res)} )+ (LBRACKET|LPAREN)? RBRACE {$res = tuple($res)};
@@ -256,22 +269,22 @@ function
 	returns[res = rule_t(Ast.ApplyFunc)]
 	locals[args = rule_t(list[Ast.AExpr], [])]:
 	(func=FUNC_ID|func=FUNC_CMD) LPAREN (a_expr {$args.append($a_expr.res)} (COMMA a_expr {$args.append($a_expr.res)})*)? RPAREN
-		{$res = Ast.ApplyFunc(Ast.Function($func.text, tuple($args)))}
+		{$res = Ast.ApplyFunc($ctx, Ast.Function($func.text, tuple($args)), (,))}
 	| FUNC_CMD LBRACE a_expr RBRACE
-		{$res = Ast.ApplyFunc(Ast.Function($FUNC_CMD.text, ($a_expr.res,)))}
+		{$res = Ast.ApplyFunc($ctx, Ast.Function($FUNC_CMD.text, ($a_expr.res,)), (,))}
 	| FUNC_CMD a_expr
-		{$res = Ast.ApplyFunc(Ast.Function($FUNC_CMD.text, ($a_expr.res,)))};
+		{$res = Ast.ApplyFunc($ctx, Ast.Function($FUNC_CMD.text, ($a_expr.res,)), (,))};
 
 // matches operators which are notated via. surrounding an expression with delimiters.
 // e.g. (..), |..|
 delim_expr returns[res = rule_t(Ast.AExpr)]:
     LPAREN a_expr RPAREN {$res = $a_expr.res.mut_ctx($ctx)}
     | LBRACKET a_expr RBRACKET {$res = $a_expr.res.mut_ctx($ctx)}
-    | BAR a_expr BAR {$res = Ast.Abs($ctx, $a_expr.res)}
-    | DOUBLE_BAR a_expr DOUBLE_BAR {$res = Ast.Norm($ctx, $a_expr.res)}
+    | PIPE a_expr PIPE {$res = Ast.Abs($ctx, $a_expr.res)}
+    | DOUBLE_PIPE a_expr DOUBLE_PIPE {$res = Ast.Norm($ctx, $a_expr.res)}
     | LFLOOR a_expr RFLOOR {$res = Ast.Floor($ctx, $a_expr.res)}
     | LCEIL a_expr RCEIL {$res = Ast.Ceil($ctx, $a_expr.res)}
-    | LANGLE lhs=a_expr (BAR|COMMA) rhs=a_expr RANGLE {$res = Ast.DotProd($ctx, $lhs.res, $rhs.res)};
+    | LANGLE lhs=a_expr (PIPE|COMMA) rhs=a_expr RANGLE {$res = Ast.DotProd($ctx, $lhs.res, $rhs.res)};
 
 // matches special case syntax for permutations, combinations, and derangements.
 // e.g. {_n C ^k} for n choose k or {!n} for n derangements.

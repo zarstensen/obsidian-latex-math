@@ -15,13 +15,15 @@ def ensure_matrix(obj: Basic) -> MatrixBase:
         return Matrix([obj])
     return cast(MatrixBase, obj)
 
+
 def ensure_scalar(obj: Basic) -> Expr:
 
-	if is_matrix(obj):
-		mat = cast(MatrixBase, cast(object, obj))
-		if mat.shape == (1, 1):
-			return ensure_scalar(cast(Basic, cast(object, mat[0])))
-		else:
-			assert False
+    if is_matrix(obj):
+        mat = cast(MatrixBase, cast(object, obj))
+        if mat.shape == (1, 1):
+            return ensure_scalar(cast(Basic, cast(object, mat[0])))
+        else:
+            assert False
 
-	return obj
+    # TODO: maybe aasssert is instance here?
+    return cast(Expr, obj)
