@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-pythonpath = ["./lmat-cas-client/lmat_cas_client"]
+pythonpath = ["./lmat_cas_client"]
 addopts = "-n auto"
 
 [tool.ruff]
@@ -23,6 +23,9 @@ extend-ignore = ["F405", "F403"]
 
 extend-safe-fixes = ["W291"]
 
+[tool.pyrefly]
+infer-return-types = "checked"
+
 [tool.mypy]
 cache_dir = ".mypy_cache"
 
@@ -32,11 +35,9 @@ enable_error_code = ["explicit-override", "override", "exhaustive-match"]
 exclude = "(\\.venv|\\.mypy_cache|/tests/)"
 
 [[tool.mypy.overrides]]
-
 module = ["sympy.*", "jsonpickle.*", "antlr4.*"]
-# Don't follow into heavy un-typed third-party packages; they slow down analysis.
 follow_untyped_imports = true
-# ignore_missing_imports = true
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 
@@ -51,6 +52,7 @@ disable_error_code = [
     "misc",
     "has-type",
     "attr-defined",
+    "union-attr",
     "assignment",
     "var-annotated",
     "arg-type",

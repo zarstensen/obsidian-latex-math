@@ -13,7 +13,7 @@ from antlr4 import (
 )
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
 
-from .evaluation.CasExprEvaluator import a_expr_2_sympy
+from .evaluation.CasExprEvaluator import a_lmat_expr_2_cas_expr
 from .ExprGrammar import ExprGrammar
 from .ExprLexer import ExprLexer
 
@@ -180,5 +180,5 @@ with open(OUT_FILE, "w") as f:
 
 print(f"======== AST ========\n{tree.res}")
 print(f"Parse Time: {end - start} ms")
-print(f"======== EVAL ========\n{a_expr_2_sympy(tree.res, None)}")
+print(f"======== EVAL ========\n{a_lmat_expr_2_cas_expr(tree.res, None)}")
 

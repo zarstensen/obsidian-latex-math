@@ -54,19 +54,12 @@ export class EvaluateCommand extends LatexMathCommand {
 
     protected async insertResponse(response: EvaluateResponse, expression: Expression, editor: Editor): Promise<void> {
 
-        const insert_pos: EditorPosition = editor.offsetToPos(expression.to);
+        const insert_pos: EditorPosition = editor.offsetToPos(expression.from + response.metadata.end_pos + 1);
         let insert_content = ` ${response.metadata.separator} ` + await formatLatex(response.evaluated_expression);
 
         // remove any newlines from the formatted latex if the math block does not support newlines.
         if (!expression.is_multiline) {
             insert_content = insert_content.replaceAll('\n', ' ');
-        }
-
-        // check if we have gotten a preferred insert position from the cas client,
-        // if not just place it at the end of the expression.
-        if (response.metadata.end_line !== undefined) {
-            insert_pos.line = editor.offsetToPos(expression.from).line + response.metadata.end_line - 1;
-            insert_pos.ch = editor.getLine(insert_pos.line).length;
         }
 
         // insert result at the end of the expression.

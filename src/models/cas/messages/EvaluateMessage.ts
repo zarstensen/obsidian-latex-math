@@ -38,7 +38,7 @@ export class EvaluateMessage extends StartCommandMessage {
 export interface EvaluateResponse {
     metadata: {
         separator: string,
-        end_line: number
+        end_pos: number
     },
     evaluated_expression: string
 }

@@ -21,8 +21,8 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#a_lmat_expr.
-    def visitA_lmat_expr(self, ctx:ExprGrammar.A_lmat_exprContext):
+    # Visit a parse tree produced by ExprGrammar#alg_statement.
+    def visitAlg_statement(self, ctx:ExprGrammar.Alg_statementContext):
         return self.visitChildren(ctx)
 
 
@@ -81,23 +81,23 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#range_index.
-    def visitRange_index(self, ctx:ExprGrammar.Range_indexContext):
+    # Visit a parse tree produced by ExprGrammar#range_slot.
+    def visitRange_slot(self, ctx:ExprGrammar.Range_slotContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#all_index.
-    def visitAll_index(self, ctx:ExprGrammar.All_indexContext):
+    # Visit a parse tree produced by ExprGrammar#all_slot.
+    def visitAll_slot(self, ctx:ExprGrammar.All_slotContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#index_entry.
-    def visitIndex_entry(self, ctx:ExprGrammar.Index_entryContext):
+    # Visit a parse tree produced by ExprGrammar#slot_entry.
+    def visitSlot_entry(self, ctx:ExprGrammar.Slot_entryContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ExprGrammar#index_arg.
-    def visitIndex_arg(self, ctx:ExprGrammar.Index_argContext):
+    # Visit a parse tree produced by ExprGrammar#subscript_arg.
+    def visitSubscript_arg(self, ctx:ExprGrammar.Subscript_argContext):
         return self.visitChildren(ctx)
 
 

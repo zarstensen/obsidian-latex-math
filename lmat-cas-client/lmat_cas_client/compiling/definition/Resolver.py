@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import Optional
 
-from attr import frozen
+from attrs import frozen
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     Definition,
     FunctionDefinition,

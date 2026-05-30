@@ -124,7 +124,7 @@ fragment F_MULT: '*' | '\\ast' | CDOT;
 PLUS: '+';
 MINUS: '-';
 MULT: F_MULT;
-DIV: '/' | '\\over';
+DIV: '/' | '\\over' | '\\div';
 XPROD: '\\cross' 'product'? | '\\cp';
 POW: '^' -> pushMode(COMM_ARG);
 

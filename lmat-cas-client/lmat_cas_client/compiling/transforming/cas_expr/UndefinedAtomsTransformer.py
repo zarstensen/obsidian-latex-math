@@ -2,7 +2,7 @@ from abc import abstractmethod
 from ctypes import ArgumentError
 from typing import ClassVar, List, cast, final, override
 
-from attr import frozen
+from attrs import frozen
 from lark import Token, Transformer, v_args
 from lmat_cas_client.compiling.definition.DefinitionStore import (
     Definition,

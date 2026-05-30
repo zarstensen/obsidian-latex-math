@@ -24,12 +24,12 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#a_lmat_expr.
-    def enterA_lmat_expr(self, ctx:ExprGrammar.A_lmat_exprContext):
+    # Enter a parse tree produced by ExprGrammar#alg_statement.
+    def enterAlg_statement(self, ctx:ExprGrammar.Alg_statementContext):
         pass
 
-    # Exit a parse tree produced by ExprGrammar#a_lmat_expr.
-    def exitA_lmat_expr(self, ctx:ExprGrammar.A_lmat_exprContext):
+    # Exit a parse tree produced by ExprGrammar#alg_statement.
+    def exitAlg_statement(self, ctx:ExprGrammar.Alg_statementContext):
         pass
 
 
@@ -132,39 +132,39 @@ class ExprGrammarListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#range_index.
-    def enterRange_index(self, ctx:ExprGrammar.Range_indexContext):
+    # Enter a parse tree produced by ExprGrammar#range_slot.
+    def enterRange_slot(self, ctx:ExprGrammar.Range_slotContext):
         pass
 
-    # Exit a parse tree produced by ExprGrammar#range_index.
-    def exitRange_index(self, ctx:ExprGrammar.Range_indexContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#all_index.
-    def enterAll_index(self, ctx:ExprGrammar.All_indexContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#all_index.
-    def exitAll_index(self, ctx:ExprGrammar.All_indexContext):
+    # Exit a parse tree produced by ExprGrammar#range_slot.
+    def exitRange_slot(self, ctx:ExprGrammar.Range_slotContext):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#index_entry.
-    def enterIndex_entry(self, ctx:ExprGrammar.Index_entryContext):
+    # Enter a parse tree produced by ExprGrammar#all_slot.
+    def enterAll_slot(self, ctx:ExprGrammar.All_slotContext):
         pass
 
-    # Exit a parse tree produced by ExprGrammar#index_entry.
-    def exitIndex_entry(self, ctx:ExprGrammar.Index_entryContext):
+    # Exit a parse tree produced by ExprGrammar#all_slot.
+    def exitAll_slot(self, ctx:ExprGrammar.All_slotContext):
         pass
 
 
-    # Enter a parse tree produced by ExprGrammar#index_arg.
-    def enterIndex_arg(self, ctx:ExprGrammar.Index_argContext):
+    # Enter a parse tree produced by ExprGrammar#slot_entry.
+    def enterSlot_entry(self, ctx:ExprGrammar.Slot_entryContext):
         pass
 
-    # Exit a parse tree produced by ExprGrammar#index_arg.
-    def exitIndex_arg(self, ctx:ExprGrammar.Index_argContext):
+    # Exit a parse tree produced by ExprGrammar#slot_entry.
+    def exitSlot_entry(self, ctx:ExprGrammar.Slot_entryContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#subscript_arg.
+    def enterSubscript_arg(self, ctx:ExprGrammar.Subscript_argContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#subscript_arg.
+    def exitSubscript_arg(self, ctx:ExprGrammar.Subscript_argContext):
         pass
 
 

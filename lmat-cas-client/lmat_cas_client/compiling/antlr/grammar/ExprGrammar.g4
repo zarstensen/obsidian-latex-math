@@ -35,10 +35,10 @@ func_set: set[str] = set()
 // - [x] organize
 // - [ ] primes (for symbols, and derivatives)
 
-debug returns[res = rule_t(Ast.AExpr)]:
-	a_lmat_expr {$res = $a_lmat_expr.res};
+debug returns[res = rule_t(Ast.AlgStmt)]:
+	alg_statement {$res = $alg_statement.res};
 
-a_lmat_expr returns[res = rule_t(Ast.AExpr | Ast.Rel | Ast.System)]: (a_expr {$res = $a_expr.res} | relation {$res = $relation.res} | system {$res = $system.res}) EOF;
+alg_statement returns[res = rule_t(Ast.AlgStmt)]: (a_expr {$res = $a_expr.res} | relation {$res = $relation.res} | system {$res = $system.res}) EOF;
 
 system_el returns[res = rule_t(Ast.SystemEntry)]:
 	a_expr {$res = Ast.AExprEntry($ctx, $a_expr.res)} | relation {$res = Ast.RelEntry($ctx, $relation.res)};
@@ -67,12 +67,12 @@ relation returns[res = rule_t(Ast.Rel)]:
 a_expr
     returns[res = rule_t(Ast.AExpr)]
     locals[node_t = rule_t(type)]:
-	base = a_expr POW exp = pow_arg UNDERSCORE index = index_arg
-		{$res=Ast.ExpOp($ctx, $base.res, $exp.res)}
+	base = a_expr POW exp = pow_arg UNDERSCORE subscript = subscript_arg
+		{$res=Ast.ExpOp($ctx, Ast.SubscriptOp($base.res, $subscript.res), $exp.res)}
 	| <assoc = right> base = a_expr POW exp = pow_arg
 		{$res=Ast.ExpOp($ctx, $base.res, $exp.res)}
-	| base = a_expr UNDERSCORE index = index_arg
-		{$res = Ast.IndexOp($ctx, $base.res, $index.res)}
+	| base = a_expr UNDERSCORE subscript = subscript_arg
+		{$res = Ast.SubscriptOp($ctx, $base.res, $subscript.res)}
 
 	// \int \frac{\dd ...} {...} case
 	| INT int_bounds FRAC LBRACE DIFFERENTIAL diff=a_expr RBRACE recip_integrand=latex_cmd_arg
@@ -174,23 +174,34 @@ pow_arg
 	| cmd_func {$res = $cmd_func.res}
 	| LBRACE a_expr RBRACE {$res = $a_expr.res};
 
-range_index returns[res = rule_t(tuple[Ast.AExpr | None, Ast.AExpr | None])]:
-    beg=a_expr? (COLON|DOTS) end=a_expr? {$res = ($beg.res, $end.res)};
-all_index: MULT | STAR;
+range_slot returns[res = rule_t(tuple[Ast.AExpr | None, Ast.AExpr | None])]:
+    beg=a_expr? (delim=COLON|delim=DOTS) end=a_expr? {$res = ($beg.res, $end.res)};
+all_slot: MULT | STAR;
 
-index_entry returns[res = rule_t(Ast.IndexEntry)]:
+slot_entry returns[res = rule_t(Ast.IndexEntry)]:
     a_expr {$res = $a_expr.res}
-    | range_index {$res = $range_index.res}
-    | all_index {$res = None}
+    | range_slot {$res = $range_slot.res}
+    | all_slot {$res = None}
     | {$res = None};
 
 // .. _ [[{..}]]
 //      ^ matches the argument to a subscript
-// must be a comma separated list of index_entry
-index_arg returns[res = rule_t(tuple[Ast.IndexEntry, ...])]:
-    atom {$res = ($atom.res,)}
-    | cmd_func {$res = ($cmd_func.res,)}
-    | LBRACE (LBRACKET|LPAREN)? index_entry {$res = [$index_entry.res]} ((COMMA | SEMICOLON) index_entry {$res.append($index_entry.res)} )+ (LBRACKET|LPAREN)? RBRACE {$res = tuple($res)};
+// must be a comma separated list of slot_entry
+subscript_arg 
+	returns[res = rule_t(Ast.Subscript)]
+	locals[slots = [], seps = []]:
+    atom {$res = Ast.Subscript(($atom.res,), (), ())}
+    | cmd_func {$res = Ast.Subscript(($cmd_func.res,), (), ())}
+    | LBRACE (ldelim=LBRACKET|ldelim=LPAREN)?
+	slot_entry {$slots.append($slot_entry.res)}
+	(
+	(sep=COMMA | sep=SEMICOLON) slot_entry
+{
+$res.append($slot_entry.res)
+$seps.append($sep.text)
+}
+	)+
+	(rdelim=LBRACKET|rdelim=LPAREN)? RBRACE {$res = Ast.Subscript(tuple($slots), tuple($seps), ($ldelim.text, $rdelim.text))};
 
 // \int [[_a^b]] .. \dd ..
 //      ^ int_bounds matches the bounds of a bounded integral
@@ -269,11 +280,11 @@ function
 	returns[res = rule_t(Ast.ApplyFunc)]
 	locals[args = rule_t(list[Ast.AExpr], [])]:
 	(func=FUNC_ID|func=FUNC_CMD) LPAREN (a_expr {$args.append($a_expr.res)} (COMMA a_expr {$args.append($a_expr.res)})*)? RPAREN
-		{$res = Ast.ApplyFunc($ctx, Ast.Function($func.text, tuple($args)), (,))}
+		{$res = Ast.ApplyFunc($ctx, Ast.Function($func.text), tuple($args))}
 	| FUNC_CMD LBRACE a_expr RBRACE
-		{$res = Ast.ApplyFunc($ctx, Ast.Function($FUNC_CMD.text, ($a_expr.res,)), (,))}
+		{$res = Ast.ApplyFunc($ctx, Ast.Function($FUNC_CMD.text), ($a_expr.res,))}
 	| FUNC_CMD a_expr
-		{$res = Ast.ApplyFunc($ctx, Ast.Function($FUNC_CMD.text, ($a_expr.res,)), (,))};
+		{$res = Ast.ApplyFunc($ctx, Ast.Function($FUNC_CMD.text), ($a_expr.res,))};
 
 // matches operators which are notated via. surrounding an expression with delimiters.
 // e.g. (..), |..|

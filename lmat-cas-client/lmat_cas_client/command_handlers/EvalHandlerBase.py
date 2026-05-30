@@ -7,6 +7,7 @@ from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
+from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import LocRange
 from lmat_cas_client.compiling.Compiler import (
     lmat_env_to_definition_store,
 )
@@ -23,21 +24,17 @@ class EvaluateMessage(BaseModel):
 
 class EvaluateResult(CommandResult, ABC):
     def __init__(
-        self, sympy_expr: Expr, expr_separator: str, expr_lines: Iterable[int] | None
+        self, sympy_expr: Expr, expr_separator: str, expr_loc: LocRange
     ):
         super().__init__()
         self.sympy_expr = sympy_expr
         self.expr_separator = expr_separator
-        self.expr_lines = None if expr_lines is None else tuple(expr_lines)
+        self.expr_loc = expr_loc
 
     @override
-    def getResponsePayload(self):
-        metadata: dict[str, str | int] = dict(separator=self.expr_separator)
-
-        if self.expr_lines is not None and self.expr_lines[0] != self.expr_lines[1]:
-            metadata = dict(
-                **metadata, start_line=self.expr_lines[0], end_line=self.expr_lines[1]
-            )
+    def getResponsePayload(self) -> tuple[str, dict]:
+        _, expr_end_pos = self.expr_loc
+        metadata: dict[str, str | int] = dict(separator=self.expr_separator, end_pos = expr_end_pos)
 
         return CommandResult.result(
             dict(evaluated_expression=lmat_latex(self.sympy_expr), metadata=metadata)
@@ -63,19 +60,12 @@ class EvalHandlerBase(CompilingCommandHandler, ABC):
             message.environment, self._def_store_compiler
         )
 
-        [*_, (sympy_expr, expr_meta)] = self._cas_expr_compiler.compile(
+        [*_, (sympy_expr, expr_loc)] = self._cas_expr_compiler.compile(
             message.expression, definitions_store
-        ).expressions
-
-        expr_lines = (
-            expr_meta.line,
-            expr_meta.end_line,
         )
 
-        if expr_lines[1] is None:
-            expr_lines = (expr_lines[0], len(message.expression.splitlines()))
-
         # choose  right most evaluatable expression.
+        # TODO: technically this can only happen once?
         while isinstance(sympy_expr, Relational):
             sympy_expr = sympy_expr.rhs
 
@@ -96,4 +86,4 @@ class EvalHandlerBase(CompilingCommandHandler, ABC):
         else:
             sympy_expr = UnitUtils.auto_convert(sympy_expr)
 
-        return EvaluateResult(sympy_expr, separator, expr_lines)
+        return EvaluateResult(sympy_expr, separator, expr_loc)

@@ -1,3 +1,4 @@
+from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import alg_stmt_2_cas_expr
 import math
 import sys
 from abc import ABC, abstractmethod
@@ -39,7 +40,7 @@ from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
 from lmat_cas_client.compiling.antlr.ExprLexer import ExprLexer
-# from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import evalExprToSympy
+from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import system_2_cas_expr, CasExprV2
 
 
 class Compiler[**PTransform, TRes](ABC):
@@ -55,86 +56,11 @@ class Compiler[**PTransform, TRes](ABC):
         pass
 
 
-CasExprCompiler = Compiler[[DefinitionStore], CasExpr]
+CasExprCompiler = Compiler[[DefinitionStore], CasExprV2]
 
 
 class CompileError(Exception):
     pass
-
-
-def prettify_visit_error(compile):
-    """
-    generate a pretty error string from a caught lark VisitError, and the given input_str,
-    which is decorator is applied to.
-
-    the new error string highlights where in the original latex input string the caught error occured.
-
-    """
-    max_span = 30
-
-    def _wrapped(self: CasExprCompiler, input_str: str, *args, **kwargs):
-        try:
-            return compile(self, input_str, *args, **kwargs)
-        except VisitError as e:
-            match e.obj:
-                case Tree() as problem_tree:
-                    meta = problem_tree.meta
-                    # first get the relevant lines
-                    problem_lines = input_str.splitlines()[
-                        meta.line - 1 : meta.end_line
-                    ]
-                    # now pad the lines so they match the 'indentation' of the first line.
-                    start_line = problem_lines[0]
-                    rem_lines = [
-                        " " * (meta.column - 1) + line for line in problem_lines[1:]
-                    ]
-
-                    # now we can limit each line to the max_span.
-                    if meta.line == meta.end_line:
-                        err_span = min(
-                            (meta.end_column or sys.maxsize) - meta.column,
-                            max_span,
-                        )
-                    else:
-                        err_span = min(meta.end_column or sys.maxsize, max_span)
-
-                    # find out how far to the left we should start the snippet
-                    margin_extra = min(
-                        meta.column - 1, max(0, (max_span - err_span) // 2)
-                    )
-
-                    snippet_start = meta.column - 1 - math.floor(margin_extra)
-
-                    err_msg = ""
-
-                    # trim all of the problematic lines
-                    for line in [start_line, *rem_lines]:
-                        snippet_end = min(
-                            len(line),
-                            snippet_start + max_span,
-                        )
-
-                        line_snippet = line[snippet_start:snippet_end]
-
-                        err_msg += line_snippet + "\n"
-
-                    # add error highlighter
-                    err_msg += " " * math.floor(margin_extra) + "~" * err_span
-
-                    # finally, add the original exception message (or name if not present),
-                    # to the start of the new error message.
-                    if str(e.orig_exc).strip() == "":
-                        err_msg = type(e.orig_exc).__name__ + ":\n" + err_msg
-                    else:
-                        err_msg = str(e.orig_exc) + ":\n" + err_msg
-
-                    raise CompileError(err_msg) from e
-
-                case _:
-                    raise e
-
-    return _wrapped
-
 
 class LatexToCasExprCompiler(CasExprCompiler):
     """
@@ -143,8 +69,7 @@ class LatexToCasExprCompiler(CasExprCompiler):
     """
 
     @override
-    @prettify_visit_error
-    def compile(self, latex_str: str, def_store: DefinitionStore) -> CasExpr:
+    def compile(self, latex_str: str, def_store: DefinitionStore) -> CasExprV2:
         """
         Compile the given latex string to a sympy expression.
         Args:
@@ -155,21 +80,14 @@ class LatexToCasExprCompiler(CasExprCompiler):
             Expr: compiled sympy expression.
         """
 
+		# TODO: error handling
         ast = (
             ExprGrammar(CommonTokenStream(ExprLexer(InputStream(latex_str))))
-            .a_expr()
+            .alg_statement()
             .res
         )
 
-        return None
-        # return evalExprToSympy(ast, None)
-        # dependencies = dependencies_transformer_runner.transform(ast)
-
-        # assert_acyclic_dependencies(def_store, dependencies)
-
-        # return cas_expr_transformer_runner.transform(
-        #     ast, DefinitionStoreResolver(def_store, cas_expr_transformer_runner)
-        # )
+        return alg_stmt_2_cas_expr(ast, None)
 
 
 class LatexToLogicCasExprCompiler(CasExprCompiler):
@@ -179,7 +97,6 @@ class LatexToLogicCasExprCompiler(CasExprCompiler):
     """
 
     @override
-    @prettify_visit_error
     def compile(self, latex_str: str, def_store: DefinitionStore) -> CasExpr:
         ast = cas_logic_expr_parser.parse(latex_str)
 
@@ -202,7 +119,6 @@ class LatexToDefStoreCompiler(DefStoreCompiler):
     """
 
     @override
-    @prettify_visit_error
     def compile(self, latex_str: str) -> Any:
         ast = cas_expr_def_parser.parse(latex_str)
         return definitions_transformer_runner.transform(
@@ -216,7 +132,6 @@ class LatexToLogicDefStoreCompiler(DefStoreCompiler):
     """
 
     @override
-    @prettify_visit_error
     def compile(self, latex_str: str) -> Any:
         ast = cas_logic_expr_def_parser.parse(latex_str)
         return definitions_transformer_runner.transform(

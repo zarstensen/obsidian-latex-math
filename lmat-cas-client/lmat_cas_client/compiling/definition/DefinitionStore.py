@@ -3,7 +3,7 @@ from collections import deque
 from collections.abc import Iterable
 from typing import MutableMapping
 
-from attr import field, frozen
+from attrs import field, frozen
 from lark import Tree
 from sympy import Basic, Expr
 from sympy.core.function import UndefinedFunction

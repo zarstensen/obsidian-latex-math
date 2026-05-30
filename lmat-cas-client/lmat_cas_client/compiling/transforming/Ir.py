@@ -12,7 +12,7 @@ from typing import (
     runtime_checkable,
 )
 
-from attr import frozen
+from attrs import frozen
 
 
 @frozen

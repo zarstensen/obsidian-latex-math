@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC
-from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Union
 
 from antlr4 import ParserRuleContext
+from attrs import evolve, field, frozen
 
 
 class CombOpId(Enum):
@@ -20,160 +20,161 @@ def combOpFromId(ctx: ParserRuleContext, n: AExpr, kr: AExpr, op: CombOpId):
         case CombOpId.Combinations:
             return Binom(ctx, n, kr)
 
-
-class Index:
-    pass
-
-
-@dataclass(frozen=True)
+@frozen
 class AstNode(ABC):
     ctx: ParserRuleContext = field(repr=False)
 
     def mut_ctx[T: AstNode](self: T, ctx: ParserRuleContext) -> T:
-        return replace(self, ctx=ctx)
+        return evolve(self, ctx=ctx)
 
 # ======== relational ========
 
-@dataclass(frozen=True)
+@frozen
 class RelOp(AstNode, ABC):
     lhs: AExpr
     rhs: AExpr | Rel
 
-@dataclass(frozen=True)
+@frozen
 class Eq(RelOp):
-	pass
+    pass
 
-@dataclass(frozen=True)
+@frozen
 class Neq(RelOp):
-	pass
+    pass
 
-@dataclass(frozen=True)
+@frozen
 class Lt(RelOp):
-	pass
+    pass
 
-@dataclass(frozen=True)
+@frozen
 class Lte(RelOp):
-	pass
+    pass
 
-@dataclass(frozen=True)
+@frozen
 class Gt(RelOp):
-	pass
+    pass
 
-@dataclass(frozen=True)
+@frozen
 class Gte(RelOp):
-	pass
+    pass
 
 Rel = Eq | Neq | Lt | Lte | Gt | Gte
 
 # ======== arithmetic expression ========
 
-@dataclass(frozen=True)
+@frozen
 class BinOp(AstNode, ABC):
     lhs: AExpr
     rhs: AExpr
 
 
-@dataclass(frozen=True)
+@frozen
 class UnaryOp(AstNode, ABC):
     arg: AExpr
 
-@dataclass(frozen=True)
+@frozen
 class Symbol(AstNode):
     name: str
 
 
-@dataclass(frozen=True)
+@frozen
 class Number(AstNode):
     number: str
 
 
-@dataclass(frozen=True)
+@frozen
 class Function(AstNode):
     name: str
 
 
-@dataclass(frozen=True)
+@frozen
 class ApplyFunc(AstNode):
     func: Function
     args: tuple[AExpr, ...]
 
 
-@dataclass(frozen=True)
+@frozen
 class ExpOp(AstNode):
     base: AExpr
     exponent: AExpr
 
-IndexEntry = Union["AExpr", tuple[Union["AExpr", None], Union["AExpr", None]]] | None
+SubscriptSlot = Union["AExpr", tuple[Union["AExpr", None], Union["AExpr", None]]] | None
 
-@dataclass(frozen=True)
-class IndexOp(AstNode):
+@frozen
+class Subscript(AstNode):
+    slots: tuple[SubscriptSlot, ...]
+    separators: tuple[str, ...]
+    delimiters: tuple[str | None, str | None]
+
+@frozen
+class SubscriptOp(AstNode):
     val: AExpr
-    index: tuple[IndexEntry, ...]
+    sub: Subscript
 
 
-@dataclass(frozen=True)
+@frozen
 class MultOp(BinOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class XProdOp(BinOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class ModOp(BinOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class DivOp(AstNode):
     num: AExpr
     denom: AExpr
 
 
-@dataclass(frozen=True)
+@frozen
 class AddOp(BinOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class SubOp(BinOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class UMinusOp(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class UPlusOp(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Sum(AstNode):
     expr: AExpr
     var: AExpr
     range: tuple[AExpr, AExpr]
 
 
-@dataclass(frozen=True)
+@frozen
 class Product(AstNode):
     expr: AExpr
     var: AExpr
     range: tuple[AExpr, AExpr]
 
 
-@dataclass(frozen=True)
+@frozen
 class Integral(AstNode):
     integrand: AExpr
     diff: AExpr
     bounds: tuple[AExpr, AExpr] | None
 
 
-@dataclass(frozen=True)
+@frozen
 class Differential(AstNode):
     differentiand: AExpr
     differentials: list[tuple[AExpr, AExpr | None]]
@@ -185,7 +186,7 @@ class LimitDir(Enum):
     BOTH = "+-"
 
 
-@dataclass(frozen=True)
+@frozen
 class Limit(AstNode):
     expr: AExpr
     var: AExpr
@@ -193,94 +194,94 @@ class Limit(AstNode):
     dir: LimitDir
 
 
-@dataclass(frozen=True)
+@frozen
 class EvalAt(AstNode):
     expr: AExpr
     subs_start: tuple[tuple[AExpr, AExpr], ...]
     subs_end: tuple[tuple[AExpr, AExpr], ...] | None
 
 
-@dataclass(frozen=True)
+@frozen
 class Factorial(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Percent(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Permille(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Binom(AstNode):
     n: AExpr
     k: AExpr
 
 
-@dataclass(frozen=True)
+@frozen
 class Permutations(AstNode):
     n: AExpr
     r: AExpr
 
 
-@dataclass(frozen=True)
+@frozen
 class Derangements(AstNode):
     n: AExpr
 
 
-@dataclass(frozen=True)
+@frozen
 class Abs(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Norm(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Floor(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Ceil(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class DotProd(BinOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Root(AstNode):
     op: AExpr
     index: AExpr | None
 
 
-@dataclass(frozen=True)
+@frozen
 class Conjugate(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class UnitVec(UnaryOp):
     pass
 
 
-@dataclass(frozen=True)
+@frozen
 class Matrix(AstNode):
     elements: list[list[AExpr]]
     beg_cmd: str
     end_cmd: str
 
 
-@dataclass(frozen=True)
+@frozen
 class DetMatrix(AstNode):
     elements: list[list[AExpr]]
 
@@ -291,7 +292,7 @@ AExpr = (
     | Function
     | ApplyFunc
     | ExpOp
-    | IndexOp
+    | SubscriptOp
     | MultOp
     | XProdOp
     | ModOp
@@ -326,22 +327,24 @@ AExpr = (
 
 # ======== System ========
 
-@dataclass(frozen = True)
+@frozen
 class AExprEntry(AstNode):
-	a_expr: AExpr
+    a_expr: AExpr
 
-@dataclass(frozen = True)
+@frozen
 class RelEntry(AstNode):
-	a_expr: Rel
+    rel: Rel
 
 SystemEntry = AExprEntry | RelEntry
 
-@dataclass(frozen=True)
+@frozen
 class SystemEnv(AstNode):
-	elems: list[SystemEntry]
+    elems: list[SystemEntry]
 
-@dataclass(frozen=True)
+@frozen
 class AndChain(AstNode):
-	elems: list[SystemEntry]
+    elems: list[SystemEntry]
 
 System = SystemEnv | AndChain
+
+AlgStmt = System | AExpr | Rel

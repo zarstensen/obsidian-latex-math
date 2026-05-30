@@ -10,7 +10,7 @@ def is_matrix[T](obj: T) -> bool:
 
 # If the given object is not a matrix, try to construct a 0d (1 by 1) Matrix containing the given value.
 # If it is already a matrix, returns the matrix without modifying it in any way.
-def ensure_matrix(obj: Basic) -> MatrixBase:
+def ensure_matrix(obj: Basic | MatrixBase) -> MatrixBase:
     if not is_matrix(obj):
         return Matrix([obj])
     return cast(MatrixBase, obj)
