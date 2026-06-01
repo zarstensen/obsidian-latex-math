@@ -12,7 +12,7 @@ vim.schedule(function()
 	parse_gen_task:inc_reference()
 
 	local parse_tree_task = ovs.new_task({
-		cmd = '"../.venv/Scripts/python"',
+		cmd = '"python"',
 		args = { "-m", "lmat_cas_client.compiling.antlr.debug" },
 		cwd = "./lmat-cas-client/",
 		name = "Antlr4 Parse Tree Generate",

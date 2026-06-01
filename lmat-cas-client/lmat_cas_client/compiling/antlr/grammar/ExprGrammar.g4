@@ -300,9 +300,9 @@ delim_expr returns[res = rule_t(Ast.AExpr)]:
 // matches special case syntax for permutations, combinations, and derangements.
 // e.g. {_n C ^k} for n choose k or {!n} for n derangements.
 combinatorial returns[res = rule_t(Ast.AExpr)]: 
-    LBRACE (UNDERSCORE|POW) n=a_expr op=ID {($op.text in Ast.CombOpId)}? POW k=a_expr RBRACE
+    (LBRACE (UNDERSCORE|POW) n=a_expr op=ID {$ID.text == 'C'}? {($op.text in Ast.CombOpId)}? POW k=a_expr RBRACE
     {$res = Ast.combOpFromId($ctx, $n.res, $k.res, Ast.CombOpId($op.text))}
-    | LBRACE ID {$ID.text == 'D'}? POW n=a_expr RBRACE // TODO this should not be here maybe?
+    | LBRACE ID {$ID.text == 'D'}? POW n=a_expr RBRACE) // TODO this should not be here maybe?
     {$res = Ast.Derangements($ctx, $n.res)}
     | LBRACE BANG n=a_expr RBRACE {$res = Ast.Derangements($ctx, $n.res)};
 
