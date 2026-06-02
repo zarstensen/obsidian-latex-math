@@ -1,4 +1,5 @@
 # mypy: disable-error-code=operator
+from typing import Any
 from typing import Mapping, cast
 
 import sympy as sp
@@ -6,12 +7,11 @@ from antlr4 import ParserRuleContext
 from attrs import frozen
 
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
-    MutableLatexMatrix,
+	MutableLatexMatrix,
 )
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 
 from .. import Ast
-
 
 # @frozen
 # class SymbolAstDef:
@@ -63,49 +63,60 @@ from .. import Ast
 
 # so in overrides, bound slots are replaced with fixed slots
 @frozen
-class FixedSlot:
+class FixedParam:
 	ast: Ast.AExpr
 	canon: sp.Basic
 
 @frozen
-class BoundSlot:
+class BoundParam:
 	ast: Ast.AExpr
 	canon: sp.Basic
 
-Slot = FixedSlot | BoundSlot
+Param = FixedParam | BoundParam
+
+Params = tuple[Param, ...]
 
 @frozen
-class SubscriptSpec:
+class SubscriptId:
 	subscript_delims: tuple[str | None, str | None]
 	slot_seps: tuple[str, ...]
 
-# TODO: in the future, this could also differentiate between separators,
-# like the subscript spec.
 @frozen
 class CallSpec:
-	arg_count: int
-	subscript_spec: SubscriptSpec | None
+	subscript_slots: Params | None
+	call_params: Params | None
+
+# None, for no subscript.
+# None, for not a typical function definition? as in no () needed.
+# so, crucially for this, the 2'nd (or first idk) slot will always have same length / None value
+Overrides = list[tuple[CallSpec, Any]]
 
 # no, also a sympy expression maybe? definetly
 # or maybe this is where we have some custom objects
-Override = tuple[CallSpec, Ast.AExpr]
+# so... we map call spec to something, but should there be multiple layers to this?
+# i mean we can probably binary search through it? then it could just be a simple list?
+# then it just has to be ordered in a particular way, but thats just something which is defined i guess.
+# but does this even matter, does it not make sense that a definition has an arg count? maybe not?
+# like should it even be possible to do f(x) := ..., f(x, y) := ...
+# it makes stuff like \dv ambiguous so probably not?
+# but, it *should* be allowed for indexes, so f_{x} := ..., f_{x, y} := ... is allowed.
+# because it would not be ambituous for \dv.
+# so the only top level thing which makes sense to have is slot count somehow?, well slot count + delimiters + separators,
+# which i guess would be the subscript id? that would make sense
+SubDefinitions = Mapping[SubscriptId | None, Overrides]
 
-# so this should be like
-@frozen
-class Definition:
-	overrides: dict[CallSpec | None, tuple[Override, ...]]
-
-@frozen
-class HeadKey:
-	id: str
-	call_spec: CallSpec | None
+HeadId = str
 
 # maps to a list of overrides?
 # but how does this work for symbol v.s. function and so on.
 # makes sense its just pr. override i think?
 # that way x can be the default value (i.e. symbol) and x_1 is actually a function.
 # so everything is a function, they just get called in different ways i guess?
-Scope = Mapping[HeadKey, Definition]
+Scope = Mapping[HeadId, SubDefinitions]
+
+s: Scope = { "f": {
+	None: [ (CallSpec(None, None), "YAYYAYAYA") ]
+} }
 
 # maybe there shoud be like a main type?
 #

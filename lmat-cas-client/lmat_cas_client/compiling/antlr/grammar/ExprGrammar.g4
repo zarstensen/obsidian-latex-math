@@ -297,8 +297,6 @@ delim_expr returns[res = rule_t(Ast.AExpr)]:
     | LCEIL a_expr RCEIL {$res = Ast.Ceil($ctx, $a_expr.res)}
     | LANGLE lhs=a_expr (PIPE|COMMA) rhs=a_expr RANGLE {$res = Ast.DotProd($ctx, $lhs.res, $rhs.res)};
 
-// matches special case syntax for permutations, combinations, and derangements.
-// e.g. {_n C ^k} for n choose k or {!n} for n derangements.
 combinatorial returns[res = rule_t(Ast.AExpr)]: 
     (LBRACE (UNDERSCORE|POW) n=a_expr op=ID {$ID.text == 'C'}? {($op.text in Ast.CombOpId)}? POW k=a_expr RBRACE
     {$res = Ast.combOpFromId($ctx, $n.res, $k.res, Ast.CombOpId($op.text))}

@@ -15,7 +15,7 @@ node [shape=box, margin="0,0.05", height=0, width=1.75, style=filled, fillcolor=
 8 [label=symbol];
 9 [label="a_expr"];
 10 [label=relation];
-12 [label="a_lmat_expr"];
+12 [label="alg_statement"];
 13 [label=debug];
 }
 subgraph {

@@ -6,7 +6,7 @@ venv_bin_folder = "Scripts" if os.name == "nt" else "bin"
 
 print("Creating virtual environment")
 
-venv_dir = os.path.join(os.getcwd(), ".venv")
+venv_dir = os.path.join(os.getcwd(), ".venv-linux")
 builder = venv.EnvBuilder(with_pip=True)
 builder.create(venv_dir)
 
