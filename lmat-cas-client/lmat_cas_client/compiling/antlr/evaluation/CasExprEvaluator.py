@@ -1,13 +1,16 @@
 # mypy: disable-error-code=operator
-from typing import Any
-from typing import Mapping, cast
+from sortedcontainers import SortedDict
+import bisect
+from functools import total_ordering
+from typing import Any, Mapping, Self, cast
 
 import sympy as sp
 from antlr4 import ParserRuleContext
 from attrs import frozen
+from sortedcontainers import SortedList
 
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
-	MutableLatexMatrix,
+    MutableLatexMatrix,
 )
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 
@@ -64,32 +67,85 @@ from .. import Ast
 # so in overrides, bound slots are replaced with fixed slots
 @frozen
 class FixedParam:
-	ast: Ast.AExpr
-	canon: sp.Basic
+    ast: Ast.AExpr
+    canon: sp.Basic
+
 
 @frozen
 class BoundParam:
-	ast: Ast.AExpr
-	canon: sp.Basic
+    ast: Ast.AExpr
+    canon: sp.Basic
+
 
 Param = FixedParam | BoundParam
 
 Params = tuple[Param, ...]
 
-@frozen
-class SubscriptId:
-	subscript_delims: tuple[str | None, str | None]
-	slot_seps: tuple[str, ...]
 
 @frozen
+class SubscriptId:
+    subscript_delims: tuple[str | None, str | None]
+    slot_seps: tuple[str, ...]
+
+
+@frozen
+@total_ordering
 class CallSpec:
-	subscript_slots: Params | None
-	call_params: Params | None
+    subscript_slots: Params | None
+    call_params: Params | None
+
+    def __lt__(self, other: Self) -> bool:
+        def bound_count(params: Params) -> int:
+            return sum(1 for p in params if isinstance(p, BoundParam))
+
+        match self.subscript_slots, other.subscript_slots:
+            case None, None:
+                pass
+            case None, _:
+                return False
+            case _, None:
+                return True
+            case s_slots, o_slots:
+                assert s_slots is not None and o_slots is not None
+                s_slots_count = bound_count(s_slots)
+                o_slots_count = bound_count(o_slots)
+                if s_slots_count < o_slots_count:
+                    return True
+
+        match self.call_params, other.call_params:
+            case None, None:
+                return False
+            case None, _:
+                return False
+            case _, None:
+                return True
+            case s_params, o_params:
+                assert s_params is not None and o_params is not None
+                return bound_count(s_params) < bound_count(o_params)
+
+        return False
+
 
 # None, for no subscript.
 # None, for not a typical function definition? as in no () needed.
 # so, crucially for this, the 2'nd (or first idk) slot will always have same length / None value
 Overrides = list[tuple[CallSpec, Any]]
+
+Override = tuple[CallSpec, Any]
+
+
+class OverridesV2:
+    def __init__(self) -> None:
+        self.overrides: list[tuple[CallSpec, Any]] = []
+
+    def add(self, override: Override) -> Self:
+        call_spec, _ = override
+
+        bisect.insort_left(self.overrides, override, key=lambda x: x[0])
+        return self
+
+
+OverridesV3 = SortedDict[CallSpec, Any]
 
 # no, also a sympy expression maybe? definetly
 # or maybe this is where we have some custom objects
@@ -103,7 +159,7 @@ Overrides = list[tuple[CallSpec, Any]]
 # because it would not be ambituous for \dv.
 # so the only top level thing which makes sense to have is slot count somehow?, well slot count + delimiters + separators,
 # which i guess would be the subscript id? that would make sense
-SubDefinitions = Mapping[SubscriptId | None, Overrides]
+SubDefinitions = Mapping[SubscriptId | None, OverridesV3]
 
 HeadId = str
 
@@ -114,9 +170,22 @@ HeadId = str
 # so everything is a function, they just get called in different ways i guess?
 Scope = Mapping[HeadId, SubDefinitions]
 
-s: Scope = { "f": {
-	None: [ (CallSpec(None, None), "YAYYAYAYA") ]
-} }
+s: Scope = {
+    "f": {
+        # this specific one, or the list to the right, should be a class, instead of just a list
+        # it needs to maintain additional rules about its structure, which a simple list cannot help with.
+        # call arg check should be higher up, only the subscript check should be here.
+        # because call args must be the same for the symbol? no they must not, nvm...
+        # but then the call args should not be restricted here either...
+        # becuase
+        # f_{a}(x, y) :=...
+        # f_{b}(x) := ...
+        # would not be allowed right now...
+        None: SortedList([])
+    }
+}
+
+print(s)
 
 # maybe there shoud be like a main type?
 #
@@ -142,6 +211,7 @@ ExprEntry = tuple[sp.Basic | sp.MatrixBase, LocRange]
 
 CasExprV2 = tuple[ExprEntry, ...]
 
+
 def ctx_to_loc(ctx: ParserRuleContext) -> LocRange:
     start_token = ctx.start
     end_token = ctx.stop
@@ -149,6 +219,7 @@ def ctx_to_loc(ctx: ParserRuleContext) -> LocRange:
     assert start_token is not None and end_token is not None
 
     return (start_token.start, end_token.stop)
+
 
 def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scope) -> CasExprV2:
     match expr:
@@ -158,6 +229,7 @@ def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scope) -> CasExprV2:
             return rel_2_cas_expr(expr, scope)
         case _ if isinstance(expr, Ast.System):
             return system_2_cas_expr(expr, scope)
+
 
 def system_2_cas_expr(sys: Ast.System, scope: Scope) -> CasExprV2:
     def ev(elems: list[Ast.SystemEntry], scope: Scope) -> CasExprV2:
@@ -213,9 +285,10 @@ def rel_2_cas_expr(rel: Ast.Rel, scope: Scope) -> CasExprV2:
     else:
         return (entry,)
 
-def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
 
+def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
     return ((a_expr_2_sympy(expr, scope), ctx_to_loc(expr.ctx)),)
+
 
 def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
     ev = a_expr_2_sympy
@@ -338,9 +411,7 @@ def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
 
         case Ast.Product(_, expr, var, bounds):
             start, end = bounds
-            return sp.Product(
-                ev(expr, s), (ev(var, {}), ev(start, s), ev(end, s))
-            )
+            return sp.Product(ev(expr, s), (ev(var, {}), ev(start, s), ev(end, s)))
 
         case Ast.Integral(_, expr, diff, None):
             return sp.integrate(ev(expr, s), ev(diff, {}))
@@ -348,9 +419,7 @@ def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
         case Ast.Integral(_, expr, diff, bounds):
             assert bounds is not None
             start, end = bounds
-            return sp.integrate(
-                ev(expr, s), (ev(diff, {}), ev(start, s), ev(end, s))
-            )
+            return sp.integrate(ev(expr, s), (ev(diff, {}), ev(start, s), ev(end, s)))
 
         case Ast.Differential(_, expr, diffs):
             return sp.diff(
@@ -375,4 +444,3 @@ def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
         case Ast.Root(_, expr, index):
             assert index is not None
             return sp.root(ev(expr, s), ev(index, s))
-
