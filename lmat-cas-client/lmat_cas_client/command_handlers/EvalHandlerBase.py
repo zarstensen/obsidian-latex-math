@@ -7,7 +7,7 @@ from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
-from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import LocRange
+from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import LocRange
 from lmat_cas_client.compiling.Compiler import (
     lmat_env_to_definition_store,
 )

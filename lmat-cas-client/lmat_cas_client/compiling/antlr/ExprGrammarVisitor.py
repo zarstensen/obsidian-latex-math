@@ -6,7 +6,7 @@ else:
     from ExprGrammar import ExprGrammar
 
 import lmat_cas_client.compiling.antlr.Ast as Ast
-from typing import cast, Type
+from typing import cast, Type, Callable
 
 def rule_t[T](_t: Type[T], v: T | None = None) -> T:
 	return cast(T, v)
@@ -81,6 +81,16 @@ class ExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ExprGrammar#postfix_op.
+    def visitPostfix_op(self, ctx:ExprGrammar.Postfix_opContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ExprGrammar#func_args.
+    def visitFunc_args(self, ctx:ExprGrammar.Func_argsContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ExprGrammar#range_slot.
     def visitRange_slot(self, ctx:ExprGrammar.Range_slotContext):
         return self.visitChildren(ctx)
@@ -148,11 +158,6 @@ class ExprGrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ExprGrammar#symbol.
     def visitSymbol(self, ctx:ExprGrammar.SymbolContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ExprGrammar#function.
-    def visitFunction(self, ctx:ExprGrammar.FunctionContext):
         return self.visitChildren(ctx)
 
 

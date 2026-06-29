@@ -6,6 +6,10 @@ options {
 
 @header {
 from enum import Enum
+from antlr4 import CommonTokenStream, InputStream
+
+def stream_from_src(src: str) -> CommonTokenStream:
+	return CommonTokenStream(ExprLexer(InputStream(src)))
 
 class AddMode(Enum):
     DEFAULT = 0
@@ -35,11 +39,6 @@ def topAddMode(self) -> AddMode:
 
 def hasAddMode(self, mode: AddMode) -> bool:
     return mode in self.add_mode_stack
-}
-
-tokens {
-    FUNC_ID,
-    FUNC_CMD
 }
 
 // === Skip and Ignore tokens ===

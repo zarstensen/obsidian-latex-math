@@ -1,4 +1,4 @@
-from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import alg_stmt_2_cas_expr
+from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import alg_stmt_2_cas_expr
 import math
 import sys
 from abc import ABC, abstractmethod
@@ -40,7 +40,7 @@ from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
 from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
 from lmat_cas_client.compiling.antlr.ExprLexer import ExprLexer
-from lmat_cas_client.compiling.antlr.evaluation.CasExprEvaluator import system_2_cas_expr, CasExprV2
+from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import system_2_cas_expr, CasExprV2
 
 
 class Compiler[**PTransform, TRes](ABC):

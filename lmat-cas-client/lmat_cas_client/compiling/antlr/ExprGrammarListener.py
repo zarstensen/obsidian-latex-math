@@ -6,7 +6,7 @@ else:
     from ExprGrammar import ExprGrammar
 
 import lmat_cas_client.compiling.antlr.Ast as Ast
-from typing import cast, Type
+from typing import cast, Type, Callable
 
 def rule_t[T](_t: Type[T], v: T | None = None) -> T:
 	return cast(T, v)
@@ -129,6 +129,24 @@ class ExprGrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by ExprGrammar#pow_arg.
     def exitPow_arg(self, ctx:ExprGrammar.Pow_argContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#postfix_op.
+    def enterPostfix_op(self, ctx:ExprGrammar.Postfix_opContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#postfix_op.
+    def exitPostfix_op(self, ctx:ExprGrammar.Postfix_opContext):
+        pass
+
+
+    # Enter a parse tree produced by ExprGrammar#func_args.
+    def enterFunc_args(self, ctx:ExprGrammar.Func_argsContext):
+        pass
+
+    # Exit a parse tree produced by ExprGrammar#func_args.
+    def exitFunc_args(self, ctx:ExprGrammar.Func_argsContext):
         pass
 
 
@@ -255,15 +273,6 @@ class ExprGrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by ExprGrammar#symbol.
     def exitSymbol(self, ctx:ExprGrammar.SymbolContext):
-        pass
-
-
-    # Enter a parse tree produced by ExprGrammar#function.
-    def enterFunction(self, ctx:ExprGrammar.FunctionContext):
-        pass
-
-    # Exit a parse tree produced by ExprGrammar#function.
-    def exitFunction(self, ctx:ExprGrammar.FunctionContext):
         pass
 
 

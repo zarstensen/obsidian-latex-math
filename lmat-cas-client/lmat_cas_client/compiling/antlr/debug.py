@@ -13,10 +13,10 @@ from antlr4 import (
 )
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
 
-from .evaluation.CasExprEvaluator import alg_stmt_2_cas_expr
+from .evaluation.CasExprTransformer import alg_stmt_2_cas_expr, a_expr_resolve_ir
 from .ExprGrammar import ExprGrammar
 from .ExprLexer import ExprLexer
-
+
 IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
 
@@ -171,6 +171,10 @@ for t in tokens:
 print(f"Lex Time: {end - start} ms")
 start = time()
 parser = ExprGrammar(stream)
+def iff(x):
+	print(f"CHECKING {x}")
+	return False
+parser.is_func = iff
 tree = parser.debug()
 end = time()
 r = ParseTreeDotVisitor().visit(tree)
@@ -178,7 +182,7 @@ r = ParseTreeDotVisitor().visit(tree)
 with open(OUT_FILE, "w") as f:
     _ = f.write(str(r))
 
-print(f"======== AST ========\n{tree.res}")
+print(f"======== AST ========\n{a_expr_resolve_ir(tree.res, {})[0]}")
 print(f"Parse Time: {end - start} ms")
-print(f"======== EVAL ========\n{alg_stmt_2_cas_expr(tree.res, None)}")
+print(f"======== EVAL ========\n{alg_stmt_2_cas_expr(a_expr_resolve_ir(tree.res), {})}")
 

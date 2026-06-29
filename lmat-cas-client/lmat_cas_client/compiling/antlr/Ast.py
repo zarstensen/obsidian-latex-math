@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from enum import Enum
-from typing import Union
+from typing import Callable, Union
 
 from antlr4 import ParserRuleContext
 from attrs import evolve, field, frozen
@@ -26,6 +26,34 @@ class AstNode(ABC):
 
     def mut_ctx[T: AstNode](self: T, ctx: ParserRuleContext) -> T:
         return evolve(self, ctx=ctx)
+
+# ======== misc ========
+
+@frozen
+class Placeholder(AstNode):
+    pass
+
+@frozen
+class AmbigApplyFunc(AstNode):
+    apply_func_candidate: ApplyFunc
+    # additional exp_op which also needs to be resolved
+    # e.g. for f(x)^2 it should be seen as the following
+    # i guess this is true for any postfix operator actually...
+    # f *is* function:
+    # (f(x))^2
+    # f *is not* function:
+    # f * x^2
+    # what about... a \div f(x)
+    # in one case it would be
+    # (a / f) * x
+    # whilst in the other it would be
+    # a / (f(x))
+    # aaaaaaaaaaaaaaaaaaaaaaa
+    postfix_op: Callable[[ParserRuleContext, AExpr], PostfixOp] | None
+    prefix_op: Callable[[ParserRuleContext, AExpr], AExpr] | None
+
+Ir = Placeholder | AmbigApplyFunc
+
 
 # ======== relational ========
 
@@ -63,33 +91,24 @@ Rel = Eq | Neq | Lt | Lte | Gt | Gte
 # ======== arithmetic expression ========
 
 @frozen
-class BinOp(AstNode, ABC):
+class ABinOp(AstNode, ABC):
     lhs: AExpr
     rhs: AExpr
 
-
 @frozen
-class UnaryOp(AstNode, ABC):
-    arg: AExpr
+class AUnaryOp(AstNode, ABC):
+    operand: AExpr
 
 @frozen
 class Symbol(AstNode):
     name: str
 
-
 @frozen
 class Number(AstNode):
     number: str
 
-
 @frozen
-class Function(AstNode):
-    name: str
-
-
-@frozen
-class ApplyFunc(AstNode):
-    func: Function
+class ApplyFunc(AUnaryOp):
     args: tuple[AExpr, ...]
 
 
@@ -101,10 +120,18 @@ class ExpOp(AstNode):
 SubscriptSlot = Union["AExpr", tuple[Union["AExpr", None], Union["AExpr", None]]] | None
 
 @frozen
+class SubscriptForm:
+    """
+    Represents the form of the subscript of some symbol.
+    Specifically, this stores the brackets at the start / end of the subscript as well as the delimiters used in the subscript.
+    """
+    brackets: tuple[str | None, str | None]
+    slot_seps: tuple[str, ...]
+
+@frozen
 class Subscript(AstNode):
     slots: tuple[SubscriptSlot, ...]
-    separators: tuple[str, ...]
-    delimiters: tuple[str | None, str | None]
+    form: SubscriptForm
 
 @frozen
 class SubscriptOp(AstNode):
@@ -113,17 +140,17 @@ class SubscriptOp(AstNode):
 
 
 @frozen
-class MultOp(BinOp):
+class MultOp(ABinOp):
     pass
 
 
 @frozen
-class XProdOp(BinOp):
+class XProdOp(ABinOp):
     pass
 
 
 @frozen
-class ModOp(BinOp):
+class ModOp(ABinOp):
     pass
 
 
@@ -134,22 +161,22 @@ class DivOp(AstNode):
 
 
 @frozen
-class AddOp(BinOp):
+class AddOp(ABinOp):
     pass
 
 
 @frozen
-class SubOp(BinOp):
+class SubOp(ABinOp):
     pass
 
 
 @frozen
-class UMinusOp(UnaryOp):
+class UMinusOp(AUnaryOp):
     pass
 
 
 @frozen
-class UPlusOp(UnaryOp):
+class UPlusOp(AUnaryOp):
     pass
 
 
@@ -202,18 +229,20 @@ class EvalAt(AstNode):
 
 
 @frozen
-class Factorial(UnaryOp):
+class Factorial(AUnaryOp):
     pass
 
 
 @frozen
-class Percent(UnaryOp):
+class Percent(AUnaryOp):
     pass
 
 
 @frozen
-class Permille(UnaryOp):
+class Permille(AUnaryOp):
     pass
+
+PostfixOp = ExpOp | SubscriptOp | Factorial | Percent | Permille
 
 
 @frozen
@@ -232,29 +261,32 @@ class Permutations(AstNode):
 class Derangements(AstNode):
     n: AExpr
 
+@frozen
+class Parens(AUnaryOp):
+    pass
 
 @frozen
-class Abs(UnaryOp):
+class Abs(AUnaryOp):
     pass
 
 
 @frozen
-class Norm(UnaryOp):
+class Norm(AUnaryOp):
     pass
 
 
 @frozen
-class Floor(UnaryOp):
+class Floor(AUnaryOp):
     pass
 
 
 @frozen
-class Ceil(UnaryOp):
+class Ceil(AUnaryOp):
     pass
 
 
 @frozen
-class DotProd(BinOp):
+class DotProd(ABinOp):
     pass
 
 
@@ -265,12 +297,12 @@ class Root(AstNode):
 
 
 @frozen
-class Conjugate(UnaryOp):
+class Conjugate(AUnaryOp):
     pass
 
 
 @frozen
-class UnitVec(UnaryOp):
+class UnitVec(AUnaryOp):
     pass
 
 
@@ -289,7 +321,6 @@ class DetMatrix(AstNode):
 AExpr = (
     Symbol
     | Number
-    | Function
     | ApplyFunc
     | ExpOp
     | SubscriptOp
@@ -313,6 +344,7 @@ AExpr = (
     | Binom
     | Permutations
     | Derangements
+    | Parens
     | Abs
     | Norm
     | Floor
@@ -323,6 +355,7 @@ AExpr = (
     | UnitVec
     | Matrix
     | DetMatrix
+    | Ir
 )
 
 # ======== System ========
