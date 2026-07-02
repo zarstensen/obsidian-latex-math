@@ -30,6 +30,9 @@ CasExprV2 = tuple[ExprEntry, ...]
 
 
 def ctx_to_loc(ctx: ParserRuleContext) -> LocRange:
+    """
+    Extract location information from a ParserRuleContext object into a LocRange.
+    """
     start_token = ctx.start
     end_token = ctx.stop
 
@@ -38,24 +41,45 @@ def ctx_to_loc(ctx: ParserRuleContext) -> LocRange:
     return (start_token.start, end_token.stop)
 
 
-def get_ast_nodes(
-    node: Ast.AlgStmt,
-) -> dict[str, Ast.AlgStmt | tuple[Ast.AlgStmt, ...]]:
-    fields = cast(tuple[attrs.Attribute], attrs.fields(type(node)))
+def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
+    node: TNode,
+    visitor: Callable[[TChild], TChild],
+    exclude_children: set[attrs.Attribute] | None = None,
+):
+    """
+    Call visitor on all fields of node which extend AstNode.
+    This also includes all AstNode's in pure AstNode tuples.
 
-    alg_stmts: dict[str, Ast.AlgStmt | tuple[Ast.AlgStmt, ...]] = {}
+    the visitor returns a new child node which the previous child is replaced with.
+    returns a new version of node, which contains the newly replaced children.
 
-    for field in fields:
+    visitor is not invoked for fields present in exclude_children.
+    """
+    exclude_children = exclude_children or set()
+
+    node_fields: tuple[attrs.Attribute[TNode]] = attrs.fields(type(node))
+
+    new_children: dict[str, TChild | tuple[TChild, ...]] = {}
+
+    for field in node_fields:
         field_val = getattr(node, field.name)
 
-        if isinstance(field_val, Ast.AlgStmt):
-            alg_stmts[field.name] = field_val
-        elif isinstance(field_val, tuple) and all(
-            isinstance(v, Ast.AlgStmt) for v in field_val
-        ):
-            alg_stmts[field.name] = field_val
+        if field.name in exclude_children:
+            continue
 
-    return alg_stmts
+        match field_val:
+            case Ast.AstNode() as child:
+                new_children[field.name] = visitor(cast(TChild, child))
+            case tuple() as children if all(
+                isinstance(child, Ast.AstNode) for child in children
+            ):
+                new_children[field.name] = tuple(
+                    visitor(cast(TChild, child)) for child in children
+                )
+            case _:
+                pass
+
+    return attrs.evolve(node, **new_children)
 
 
 class AmbigCallResolveStrat(Enum):
@@ -157,36 +181,74 @@ def a_expr_resolve_ir(
             )
 
 
-def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
-    node: TNode,
-    visitor: Callable[[TChild], TChild],
-    exclude_children: set[attrs.Attribute] | None = None,
-):
-    exclude_children = exclude_children or set()
+def a_expr_subs(
+    expr: Ast.AExpr, scope: Scope, lit_eq_checker: LiteralParam.EqChecker
+) -> Ast.AExpr:
+    """
+    Substitutes values...
+    """
 
-    node_fields = cast(tuple[attrs.Attribute[TNode]], attrs.fields(type(node)))
+    head_id = None
+    subscript_form = Ast.SubscriptForm((None, None), ())
+    index_params: tuple[Ast.AExpr, ...] = ()
+    arg_params: tuple[Ast.AExpr, ...] = ()
 
-    new_children: dict[str, TChild | tuple[TChild, ...]] = {}
+    match expr:
+        # x
+        case Ast.Symbol(_, symbol_name):
+            head_id = symbol_name
+            pass
+        # x_i
+        case Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript) if all(
+            isinstance(slot, Ast.AExpr) for slot in subscript.slots
+        ):
+            head_id = symbol_name
+            subscript_form = subscript.form
+            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
+        # f(x)
+        case Ast.ApplyFunc(_, Ast.Symbol(_, symbol_name), args):
+            head_id = symbol_name
+            arg_params = args
+        # f_i(x)
+        case Ast.ApplyFunc(
+            _, Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript), args
+        ) if all(isinstance(slot, Ast.AExpr) for slot in subscript.slots):
+            head_id = symbol_name
+            subscript_form = subscript.form
+            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
+            arg_params = args
+        # all other expression types, just recursively invoke this...
+        case _:
+            return visit_children(expr, lambda c: a_expr_subs(c, scope, lit_eq_checker))
 
-    for field in node_fields:
-        field_val = getattr(node, field.name)
+    # get the signature for the potential substitution target
+    sig = Signature(
+        head_id,
+        subscript_form,
+        tuple(LiteralParam(e) for e in index_params),
+        tuple(LiteralParam(e) for e in arg_params),
+    )
 
-        if field.name in exclude_children:
-            continue
+    resolve_result = scope.resolve(sig, lit_eq_checker)
 
-        match field_val:
-            case Ast.AstNode() as child:
-                new_children[field.name] = visitor(cast(TChild, child))
-            case tuple() as children if all(
-                isinstance(child, Ast.AstNode) for child in children
-            ):
-                new_children[field.name] = tuple(
-                    visitor(cast(TChild, child)) for child in children
-                )
-            case _:
-                pass
+    if resolve_result is not None:
+        expr, defs = resolve_result
 
-    return attrs.evolve(node, **new_children)
+        defs = tuple(
+            (sig, a_expr_subs(bod, scope, lit_eq_checker)) for (sig, bod) in defs
+        )
+
+        # AT THIS POINT defs body things must have had a_expr_subs called on them...
+        scope.register(defs)
+
+        transformed_expr = a_expr_subs(expr, scope, lit_eq_checker)
+
+        scope.unregister(defs)
+
+        return transformed_expr
+
+    # there was no definition to be found, so we just return it here anyways.
+    return expr
 
 
 # Transform an Ast.AlgStmt into a CasExpr,
@@ -269,83 +331,24 @@ def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
     return ((a_expr_2_sympy(expr, scope), ctx_to_loc(expr.ctx)),)
 
 
-def try_substitute(
-    expr: Ast.AExpr,
-    s: Scope,
-    transformer: Callable[[Ast.AExpr, Scope], sp.Basic | sp.MatrixBase],
-) -> sp.Basic | sp.MatrixBase:
-    head_id = None
-    subscript_form = Ast.SubscriptForm((None, None), ())
-    index_params: tuple[Ast.AExpr, ...] = ()
-    arg_params: tuple[Ast.AExpr, ...] = ()
-
-    match expr:
-        # x
-        case Ast.Symbol(_, symbol_name):
-            head_id = symbol_name
-            pass
-        # x_i
-        case Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript) if all(
-            isinstance(slot, Ast.AExpr) for slot in subscript.slots
-        ):
-            head_id = symbol_name
-            subscript_form = subscript.form
-            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
-        # f(x)
-        case Ast.ApplyFunc(_, Ast.Symbol(_, symbol_name), args):
-            head_id = symbol_name
-            arg_params = args
-        # f_i(x)
-        case Ast.ApplyFunc(
-            _, Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript), args
-        ) if all(isinstance(slot, Ast.AExpr) for slot in subscript.slots):
-            head_id = symbol_name
-            subscript_form = subscript.form
-            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
-            arg_params = args
-        case _:
-            return transformer(expr, s)
-
-    sig = Signature(
-        head_id,
-        subscript_form,
-        tuple(LiteralParam(e) for e in index_params),
-        tuple(LiteralParam(e) for e in arg_params),
-    )
-
-    resolve_result = s.resolve(
-        sig, lambda la, lb: transformer(la.value, s) == transformer(lb.value, s)
-    )
-
-    if resolve_result is not None:
-        expr, defs = resolve_result
-        s.register(defs)
-
-        transformed_expr = try_substitute(expr, s, transformer)
-
-        s.unregister(defs)
-
-        return transformed_expr
-
-    return transformer(expr, s)
-
-
 def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
-    return try_substitute(expr, s, _a_expr_2_sympy)
+    expr = a_expr_subs(
+        expr,
+        s,
+        lambda la, lb: a_expr_2_sympy(la.value, s) == a_expr_2_sympy(lb.value, s),
+    )
+    return _a_expr_2_sympy(expr, s)
 
 
 # Transform an Ast.AExpr into a sympy expression,
 # Substituting variables defined in the given scope along the way.
 def _a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
-    ev = lambda e, s: try_substitute(e, s, a_expr_2_sympy)
+    ev = _a_expr_2_sympy
     match expr:
         case Ast.ApplyFunc(_, _, _):
             assert False, "Cannot handle ApplyFunc without definitions"
 
-        case Ast.SubscriptOp(_, Ast.Symbol(_, name), subscript) if (
-            name,
-            None,
-        ) not in s:
+        case Ast.SubscriptOp(_, Ast.Symbol(_, name), subscript):
             lbrack, rbrack = subscript.form.brackets
             return sp.Symbol(f"{name}_{{{lbrack}WHAAAAAT{rbrack}}}")
 

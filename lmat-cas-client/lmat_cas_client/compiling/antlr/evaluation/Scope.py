@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections import defaultdict
-from typing import Callable, Iterator, MutableMapping, Protocol, Self
+from typing import Callable, Iterable, Iterator, MutableMapping, Protocol, Self
 
 import sympy as sp
 from attrs import frozen
@@ -56,12 +56,12 @@ class Signature:
         return (self.head_id, self.subscript_form, len(self.arg_params))
 
     def sort_key(self) -> SortKey:
-        def bound_count(params: Params) -> int:
-            return sum(1 for p in params if p is BoundParam)
+        def litteral_count(params: Params) -> int:
+            return sum(1 for p in params if p is LiteralParam)
 
         return (
-            bound_count(self.index_params),
-            bound_count(self.arg_params),
+            litteral_count(self.index_params),
+            litteral_count(self.arg_params),
         )
 
     def overrideSigs(
@@ -108,8 +108,9 @@ class Signature:
 type Definition = tuple[Signature, Ast.AExpr]
 
 
-# do a substitution on the entire AST?
-
+# this stays the same right?
+# its just the transformer which is new?
+# this is also cleaner interms of separation and stuff i guess...
 class Scope:
 
     @staticmethod
@@ -145,8 +146,8 @@ class Scope:
             del self.signatures[signature.group_key()]
 
     # so just loop over this one until it matches one, and then that is it
-    def _overrides(self, signature: Signature) -> Iterator[Definition]:
-        return self.signatures.get(signature.group_key(), ())
+    def _overrides(self, signature: Signature) -> Iterable[Definition]:
+        return reversed(self.signatures.get(signature.group_key(), ()))
 
     # what should this return even? a list of the new signatures + bodies, and the body itself maybe?
     # so this resolves the expression the signature is associated with + the definitions which should be present when evaluating it.

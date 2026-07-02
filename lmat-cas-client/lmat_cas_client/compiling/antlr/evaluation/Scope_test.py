@@ -43,7 +43,9 @@ class TestScope:
                         head_id="x",
                         index_params=(BoundParam(Signature(head_id="i")),),
                     ),
-                    ExprGrammar(ExprLexer.stream_from_src("x_{i - 1}")).a_expr().res,
+                    ExprGrammar(ExprLexer.stream_from_src("x_{i - 1} + i"))
+                    .a_expr()
+                    .res,
                 ),
                 (
                     Signature(
