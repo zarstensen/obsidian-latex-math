@@ -10,3 +10,5 @@ tabulate~=0.9
 pydantic~=2.11
 attrs~=25.4
 antlr4-python3-runtime~=4.13
+sortedcontainers~=2.4
+sortedcontainers-stubs~=2.4

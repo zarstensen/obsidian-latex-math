@@ -38,6 +38,7 @@ exclude = "(\\.venv|\\.mypy_cache|/tests/)"
 module = ["sympy.*", "jsonpickle.*", "antlr4.*"]
 follow_untyped_imports = true
 ignore_missing_imports = true
+strict_equality = false
 
 [[tool.mypy.overrides]]
 

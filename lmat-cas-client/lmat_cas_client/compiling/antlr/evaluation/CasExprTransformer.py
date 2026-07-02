@@ -9,160 +9,17 @@ import sympy as sp
 from antlr4 import ParserRuleContext
 from attrs import frozen
 
+from lmat_cas_client.compiling.antlr.evaluation.Scope import (
+    LiteralParam,
+    Scope,
+    Signature,
+)
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
     MutableLatexMatrix,
 )
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 
 from .. import Ast
-
-
-@frozen
-class FixedParam:
-    """
-    Represents a parameter to a definition,
-    which is a part of the definition symbol itself.
-    FixedParam is *not* substituted into the value of the definition.
-    """
-
-    ast: Ast.Symbol | Ast.SubscriptOp
-
-    def inject_definition(scope: Scope):
-        match ast:
-            case Ast.Symbol(_, name):
-                scope[(name, None)].add()
-        pass
-
-
-@frozen
-class BoundParam:
-    """
-    Represents a parameter to a definition,
-    which is not a part of the definition symbol, but is instead a parameter to the definitions value,
-    which is substituted with another value when the definition is resolved.
-    """
-
-    ast: Ast.AExpr
-
-
-type Param = FixedParam | BoundParam
-
-type Params = tuple[Param, ...]
-
-
-@frozen
-@total_ordering
-class OverrideSpec:
-    """
-    Represents the requirements a symbol / function call must uphold,
-    for some override to be considered.
-    Specifically, each parameter in the subscripts and call arguments
-    of some resolve target must uphold httetehthethethethehth
-    """
-
-    subscript_slots: Params
-    call_params: Params
-
-    def __lt__(self, other: Self) -> bool:
-        """
-        OverrideSpec's are ordered first by their no. BoundParam in subscript_slots,
-        and secondly by their no. BoundParam in call_params.
-        """
-
-        def bound_count(params: Params) -> int:
-            return sum(1 for p in params if isinstance(p, BoundParam))
-
-        if bound_count(self.subscript_slots) < bound_count(other.subscript_slots):
-            return True
-
-        return bound_count(self.call_params) < bound_count(other.call_params)
-
-
-type Override = tuple[OverrideSpec, Ast.AExpr]
-
-
-class Overrides:
-    def __init__(self, slot_count: int) -> None:
-        assert slot_count >= 0, "slout_count must be non-negative"
-
-        self.slot_count = slot_count
-        self.overrides: list[tuple[OverrideSpec, Any]] = []
-
-    def add(self, override: Override) -> Self:
-        call_spec, _ = override
-
-        assert len(call_spec.subscript_slots) == self.slot_count
-
-        bisect.insort_left(self.overrides, override, key=lambda x: x[0])
-
-        return self
-
-    # this should also return the scope which the expr should be evaluated in...
-    # feels like it makes sense its created here.
-    # some logic may need to be shared for the definition grammar transformer,
-    # but thats fine...
-    def resolve(
-        self, args: tuple[sp.Basic, ...], slots: tuple[sp.Basic, ...]
-    ) -> Ast.AExpr | None:
-        if self.slot_count != len(slots):
-            return None
-
-        for override, defi in self.overrides:
-            valid_override = True
-
-            if len(override.call_params) != len(args):
-                valid_override = False
-            else:
-                for param, ss in zip(
-                    (*override.subscript_slots, *override.call_params), (*slots, *args)
-                ):
-                    match param:
-                        case BoundParam(_):
-                            pass
-                        case FixedParam(param_ast):
-                            # so why can it not just be sympy all the way down?
-                            # i mean, we already now the definition id, do we actually?
-                            if not a_expr_2_sympy(param_ast, {}).equals(ss):
-                                valid_override = False
-                                break
-
-            if valid_override:
-                return defi
-
-        return None
-
-    def __repr__(self) -> str:
-        return f"Overrides({self.overrides!r})"
-
-    def __str__(self) -> str:
-        return self.__repr__()
-
-
-type HeadId = str
-
-# IT HAS BEEN DECIDED this should be a CLASS, that way it can also handle merging multiple scopes cleanly
-# would be messy otherwise, so...
-type DefId = tuple[HeadId, Ast.SubscriptForm | None]
-type ScopeMap = Mapping[DefId, Overrides]
-
-
-class Scope:
-    def __init__(self, scope_map: ScopeMap):
-        self.scope_map = dict(scope_map)
-
-    @staticmethod
-    def empty() -> "Scope":
-        return Scope({})
-
-    def add_override(self, id: DefId, override: Override) -> Self:
-        _, sub_form = id
-        if id not in self.scope_map:
-            self.scope_map[id] = Overrides(
-                len(sub_form.slot_seps) if sub_form is not None else 0
-            )
-        self.scope_map[id].add(override)
-        return self
-
 
 LocRange = tuple[int, int]
 
@@ -418,9 +275,9 @@ def try_substitute(
     transformer: Callable[[Ast.AExpr, Scope], sp.Basic | sp.MatrixBase],
 ) -> sp.Basic | sp.MatrixBase:
     head_id = None
-    subscript_form = None
-    call_args: tuple[Ast.AExpr, ...] = ()
-    subscript_slots: tuple[Ast.AExpr, ...] = ()
+    subscript_form = Ast.SubscriptForm((None, None), ())
+    index_params: tuple[Ast.AExpr, ...] = ()
+    arg_params: tuple[Ast.AExpr, ...] = ()
 
     match expr:
         # x
@@ -433,34 +290,42 @@ def try_substitute(
         ):
             head_id = symbol_name
             subscript_form = subscript.form
-            subscript_slots = cast(tuple[Ast.AExpr, ...], subscript.slots)
+            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
         # f(x)
         case Ast.ApplyFunc(_, Ast.Symbol(_, symbol_name), args):
             head_id = symbol_name
-            call_args = args
+            arg_params = args
         # f_i(x)
         case Ast.ApplyFunc(
             _, Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript), args
         ) if all(isinstance(slot, Ast.AExpr) for slot in subscript.slots):
             head_id = symbol_name
             subscript_form = subscript.form
-            subscript_slots = cast(tuple[Ast.AExpr, ...], subscript.slots)
-            call_args = args
+            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
+            arg_params = args
         case _:
             return transformer(expr, s)
 
-    def_id = (head_id, subscript_form)
+    sig = Signature(
+        head_id,
+        subscript_form,
+        tuple(LiteralParam(e) for e in index_params),
+        tuple(LiteralParam(e) for e in arg_params),
+    )
 
-    resolved_val = None
+    resolve_result = s.resolve(
+        sig, lambda la, lb: transformer(la.value, s) == transformer(lb.value, s)
+    )
 
-    if def_id in s:
-        resolved_val = s[def_id].resolve(call_args, subscript_slots)
+    if resolve_result is not None:
+        expr, defs = resolve_result
+        s.register(defs)
 
-    if resolved_val is not None:
-        # so here, we need to inject variables to substitute
-        # is call_args and subscript_slots... shomehow...
-        # but again, a function is needed for this anyways, so not really that bad...
-        return transformer(resolved_val, s)
+        transformed_expr = try_substitute(expr, s, transformer)
+
+        s.unregister(defs)
+
+        return transformed_expr
 
     return transformer(expr, s)
 
