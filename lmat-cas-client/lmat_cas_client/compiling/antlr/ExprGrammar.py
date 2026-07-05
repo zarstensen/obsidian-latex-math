@@ -1,4 +1,4 @@
-# Generated from ExprGrammar.g4 by ANTLR 4.13.2
+# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/lmat-cas-client/lmat_cas_client/compiling/antlr/grammar/ExprGrammar.g4 by ANTLR 4.13.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -1926,7 +1926,7 @@ class ExprGrammar ( Parser ):
                         localctx._func_args = self.func_args()
                         self.state = 380
                         self.match(ExprGrammar.RPAREN)
-                        localctx.res = Ast.AmbigApplyFunc(localctx, Ast.ApplyFunc(localctx, localctx.lhs.res, localctx._func_args.res), None, None)
+                        localctx.res = Ast.AmbigApplyFunc(localctx, Ast.ApplyFunc(localctx, localctx.lhs.res, localctx._func_args.res))
                         pass
 
                     elif la_ == 7:

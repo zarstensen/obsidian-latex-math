@@ -1,3 +1,4 @@
+import sys
 from typing import Self
 import sympy as sp
 
@@ -9,14 +10,14 @@ from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     BoundParam,
     LiteralParam,
-    Scope,
+    Scopes,
     Signature,
 )
 
 
 class TestScope:
     def test_scope(self: Self) -> None:
-        s: Scope = Scope()
+        s: Scopes = Scopes()
 
         s.register_single(
             (
@@ -34,7 +35,8 @@ class TestScope:
         assert tsp == 42
 
     def test_scope_more(self: Self) -> None:
-        s: Scope = Scope()
+        sys.setrecursionlimit(100000)
+        s: Scopes = Scopes()
 
         s.register(
             (
@@ -43,7 +45,9 @@ class TestScope:
                         head_id="x",
                         index_params=(BoundParam(Signature(head_id="i")),),
                     ),
-                    ExprGrammar(ExprLexer.stream_from_src("x_{i - 1} + i"))
+                    ExprGrammar(
+                        ExprLexer.stream_from_src("x_{i - 1} + \sum_{i=0}^{i} i^2")
+                    )
                     .a_expr()
                     .res,
                 ),

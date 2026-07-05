@@ -1,4 +1,4 @@
-# Generated from ExprLexer.g4 by ANTLR 4.13.2
+# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/lmat-cas-client/lmat_cas_client/compiling/antlr/grammar/ExprLexer.g4 by ANTLR 4.13.2
 from antlr4 import *
 from io import StringIO
 import sys

@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections import defaultdict
-from typing import Callable, Iterable, Iterator, MutableMapping, Protocol, Self
+from typing import Callable, Iterable, MutableMapping, Protocol, Self, cast
 
-import sympy as sp
 from attrs import frozen
 from sortedcontainers import SortedList
 
 from lmat_cas_client.compiling.antlr import Ast
-
-type SpVal = sp.Basic | sp.MatrixBase
 
 
 # literal param stores the literal value itself +
@@ -51,6 +48,52 @@ class Signature:
     subscript_form: Ast.SubscriptForm = Ast.SubscriptForm((None, None), ())
     index_params: Params = ()
     arg_params: Params = ()
+
+    @staticmethod
+    def from_a_expr(a_expr: Ast.AExpr) -> Signature | None:
+
+        """
+        Convert the given AExpr to an equivalent scope Signature, if it were to be a definition in a Scope.
+        If this is not possible, return None.
+        """
+        head_id = None
+        subscript_form = Ast.SubscriptForm((None, None), ())
+        index_params: tuple[Ast.AExpr, ...] = ()
+        arg_params: tuple[Ast.AExpr, ...] = ()
+
+        match a_expr:
+            # lone symbol: x
+            case Ast.Symbol(_, symbol_name):
+                head_id = symbol_name
+                pass
+            # subscritped symbol: x_i
+            case Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript) if all(
+                isinstance(slot, Ast.AExpr) for slot in subscript.slots
+            ):
+                head_id = symbol_name
+                subscript_form = subscript.form
+                index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
+            # function call: f(x)
+            case Ast.ApplyFunc(_, Ast.Symbol(_, symbol_name), args):
+                head_id = symbol_name
+                arg_params = args
+            # function call with subscripted symbol: f_i(x)
+            case Ast.ApplyFunc(
+                _, Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript), args
+            ) if all(isinstance(slot, Ast.AExpr) for slot in subscript.slots):
+                head_id = symbol_name
+                subscript_form = subscript.form
+                index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
+                arg_params = args
+            case _:
+                return None
+
+        return Signature(
+            head_id,
+            subscript_form,
+            tuple(LiteralParam(e) for e in index_params),
+            tuple(LiteralParam(e) for e in arg_params),
+        )
 
     def group_key(self) -> GroupKey:
         return (self.head_id, self.subscript_form, len(self.arg_params))
@@ -104,14 +147,13 @@ class Signature:
             or index_param_count - 1 == slot_seps_count
         ), "Subscript form separators and index parameters did not match up!"
 
-
 type Definition = tuple[Signature, Ast.AExpr]
 
 
 # this stays the same right?
 # its just the transformer which is new?
 # this is also cleaner interms of separation and stuff i guess...
-class Scope:
+class Scopes:
 
     @staticmethod
     def _definition_key(definition: Definition):
@@ -120,9 +162,16 @@ class Scope:
 
     def __init__(self: Self):
         self.signatures: MutableMapping[Signature.GroupKey, SortedList[Definition]] = (
-            defaultdict(lambda: SortedList(key=Scope._definition_key))
+            defaultdict(lambda: SortedList(key=Scopes._definition_key))
         )
 
+    # TODO: there are some ways of going about undefining variables:
+    # a) remove all definitions from the scope (this could also be a function?)
+    # b) have an explicit value, which indicates variable is undefined
+    # c) have an explicit function, which marks the variable as being undefined
+	# d) have a stack of scopes which can be pushed and popped, then somehow one can also mutate a scope already in the stack.
+	#    finding a definition is then a matter of searching through the scopes individually?
+	#    Its a bit wierd because a scope in this context is not intuitive? so resolving a definition happens in a new scope, as well as sum, limits, products, integrals and differentials maybe?
     def register(self: Self, definitions: tuple[Definition, ...]):
         for defi in definitions:
             self.register_single(defi)
@@ -145,6 +194,23 @@ class Scope:
         if len(self.signatures[signature.group_key()]) == 0:
             del self.signatures[signature.group_key()]
 
+    def unregister_signature(self: Self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker) -> tuple[Definition, ...]:
+        unregistered_defs: list[Definition] = []
+
+        resolved = self.resolve(signature, lit_eq_checker)
+
+        while resolved is not None:
+
+            resolved_sig, resolved_body, _ = resolved
+
+            self.unregister_single((resolved_sig, resolved_body))
+            unregistered_defs.append((resolved_sig, resolved_body))
+
+            resolved = self.resolve(signature, lit_eq_checker)
+
+        return tuple(reversed(unregistered_defs))
+
+
     # so just loop over this one until it matches one, and then that is it
     def _overrides(self, signature: Signature) -> Iterable[Definition]:
         return reversed(self.signatures.get(signature.group_key(), ()))
@@ -153,10 +219,32 @@ class Scope:
     # so this resolves the expression the signature is associated with + the definitions which should be present when evaluating it.
     def resolve(
         self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker
-    ) -> tuple[Ast.AExpr, tuple[Definition, ...]] | None:
+    ) -> tuple[Signature,Ast.AExpr, tuple[Definition, ...]] | None:
 
         for sig, bod in self._overrides(signature):
             res = sig.overrideSigs(signature, lit_eq_checker)
             if res is not None:
-                return (bod, res)
+                # body is None => this should explicitly *not* be defined
+                return (sig, bod, res) if bod is not None else None 
         return None
+
+class Scopes:
+	def __init__(self):
+		self.scopes = []
+	
+	def push_scope(self, scope: Scopes):
+		self.scopes.append(scope)
+	
+	def remove_scope(self, scope: Scopes):
+		self.scopes.remove(scope)
+	
+	def resolve(self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker) -> tuple[Signature, Ast.AExpr, tuple[Definition, ...], Scopes] | None:
+		for scope in reversed(self.scopes):
+
+			res = scope.resolve(signature, lit_eq_checker)
+
+			if res is not None:
+				sig, bod, defs = res
+				return sig, bod, defs, scope
+
+		return None

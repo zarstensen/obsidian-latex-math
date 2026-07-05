@@ -91,7 +91,7 @@ a_expr
 		{$res = Ast.Differential($ctx, $a_expr.res, $diff_vars.res)}
 
 	| lhs = a_expr LPAREN func_args RPAREN
-		{$res = Ast.AmbigApplyFunc($ctx, Ast.ApplyFunc($ctx, $lhs.res, $func_args.res), None, None)}
+		{$res = Ast.AmbigApplyFunc($ctx, Ast.ApplyFunc($ctx, $lhs.res, $func_args.res))}
 	| lhs = a_expr DIV rhs = a_expr {$res = Ast.DivOp($ctx, $lhs.res, $rhs.res)}
 	| lhs = a_expr 
 		(
@@ -104,7 +104,7 @@ a_expr
 		{$res = $node_t($ctx, $lhs.res, $rhs.res)}
 	// dissallow if rhs is number (maybe should be toh number?) or if the following token is a PLUS / MINUS (i.e. a -b does should never be seen as a * (-b)).
 	// also cases like ... (...) should not be matched by this rule, this is instead handled by the ApplyFunc production
-	// 	{$res = Ast.AmbigApplyFunc($ctx, Ast.ApplyFunc($ctx, $a_expr.res, $func_args.res), None)}
+	// 	{$res = Ast.AmbigApplyFunc($ctx, Ast.ApplyFunc($ctx, $a_expr.res, $func_args.res))}
 	// so i *could* do this, or its just like a manual thing i guess for the IR stuff.
 	// maybe its best to split stuff into unary binary ternary and so on then...
 	// probably that yes

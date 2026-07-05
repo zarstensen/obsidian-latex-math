@@ -1,17 +1,14 @@
 # mypy: disable-error-code=operator
-import bisect
 from enum import Enum
-from functools import total_ordering
-from typing import Any, Callable, Mapping, Self, cast
+from typing import Callable, cast
 
 import attrs
 import sympy as sp
 from antlr4 import ParserRuleContext
-from attrs import frozen
 
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     LiteralParam,
-    Scope,
+    Scopes,
     Signature,
 )
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
@@ -27,6 +24,16 @@ ExprEntry = tuple[sp.Basic | sp.MatrixBase, LocRange]
 
 # TODO: rename to CasExpr when old one is no longer needed
 CasExprV2 = tuple[ExprEntry, ...]
+
+
+def literal_eq_checker(scope: Scopes) -> LiteralParam.EqChecker:
+    """
+    Check if 2 literal parameters are considered equal, in the context of the given scope.
+    This checks if their transformed sympy values are equal.
+    """
+    return lambda la, lb: a_expr_2_sympy(la.value, scope) == a_expr_2_sympy(
+        lb.value, scope
+    )
 
 
 def ctx_to_loc(ctx: ParserRuleContext) -> LocRange:
@@ -59,22 +66,24 @@ def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
 
     node_fields: tuple[attrs.Attribute[TNode]] = attrs.fields(type(node))
 
-    new_children: dict[str, TChild | tuple[TChild, ...]] = {}
+    new_children: dict[str, TChild | tuple[TChild | None, ...]] = {}
 
     for field in node_fields:
         field_val = getattr(node, field.name)
 
-        if field.name in exclude_children:
+        if field in exclude_children:
             continue
 
         match field_val:
             case Ast.AstNode() as child:
                 new_children[field.name] = visitor(cast(TChild, child))
+            # TODO: this should just be any nested iterable here...
             case tuple() as children if all(
-                isinstance(child, Ast.AstNode) for child in children
+                isinstance(child, Ast.AstNode) or child is None for child in children
             ):
                 new_children[field.name] = tuple(
-                    visitor(cast(TChild, child)) for child in children
+                    visitor(cast(TChild, child)) if child is not None else None
+                    for child in children
                 )
             case _:
                 pass
@@ -82,179 +91,210 @@ def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
     return attrs.evolve(node, **new_children)
 
 
-class AmbigCallResolveStrat(Enum):
+class AmbigCallResolution(Enum):
+    """
+    TEST
+    """
+
     BubbleUp = 0
-    Mul = 1
+    """
+    TEST2
+    """
+
+    ImplicitMult = 1
+    """
+    TEST3
+    """
 
 
-# implementing this in the grammar is sort of a lost cause?
-# this is really close to working though, all i need is some way to know what to do with the result of a_expr_resolve_ir, also this should probably be specificallyf or resolving the ambiguous call only, so dont mix any other stuff in it.
-# but thats jujs
-def a_expr_resolve_ir(
-    expr: Ast.AlgStmt, scope: Scope
-) -> tuple[Ast.AlgStmt, AmbigCallResolveStrat]:
+def a_expr_resolve_ambig_calls(
+    expr: Ast.AlgStmt, scopes: Scopes
+) -> tuple[Ast.AlgStmt, AmbigCallResolution]:
+    """
+    Given an AlgStmt AST and a Scope which it should be transformed in,
+    this function recursively resolves all AmbigApplyFunc nodes in the AST.
+    """
     match expr:
-        case Ast.AmbigApplyFunc(ctx, Ast.ApplyFunc(_, func, args), _, _):
+        # handle case where we actually need to resolve an ambiguity.
+        case Ast.AmbigApplyFunc(ctx, Ast.ApplyFunc(_, func, args)):
+            # first check if func is an AExpr whic could potentially have a definition
+            signature = Signature.from_a_expr(func)
+
+            if signature is not None:
+
+                # now check if it has a definition and that definition is a function.
+                resolved = scopes.resolve(signature, literal_eq_checker(scopes))
+
+                if resolved is not None and len(resolved[0].arg_params) >= 1:
+                    # it is, so resolve it to an ApplyFunc
+                    return (
+                        Ast.ApplyFunc(ctx, func, args),
+                        AmbigCallResolution.BubbleUp,
+                    )
+
+            # the func expr could not be resolved to a function definition,
+            # so it is resolved to a multipication instead.
+            # i.e. (1 + 1)(x) becomes (1 + 1) * x and f(x) becomes f * x
             assert len(args) == 1
-            return (Ast.MultOp(ctx, func, args[0]), AmbigCallResolveStrat.Mul)
-        case Ast.SubscriptOp(_, val, _):
-            new_val, strat = a_expr_resolve_ir(val, scope)
-            assert isinstance(new_val, Ast.AExpr)
+            return (Ast.MultOp(ctx, func, args[0]), AmbigCallResolution.ImplicitMult)
+
+        # handle case where a postfix operator is appled to an ambiguous expression.
+        # the operator should be applied to the right most side of a potential multiplication resolution.
+        # e.x.
+        # f(x)_i
+        # ImplicitMult -> f * (x)_i
+        # BubbleUp -> (f(x))_i
+        case (
+            Ast.ExpOp(_, val, _)
+            | Ast.SubscriptOp(_, val, _)
+            | Ast.Factorial(_, val)
+            | Ast.Percent(_, val)
+            | Ast.Permille(_, val)
+        ):
+
+            # select which field we need to pick the AmbigCallResolution from.
+            # e.g. in ExpOp its base, as this is the field which is ambiguous (e.g. f(x)^y is ambig where as y^{f(x)} is not )
+            match expr:
+                case Ast.ExpOp():
+                    ambig_field = attrs.fields(Ast.ExpOp).base
+                case Ast.SubscriptOp():
+                    ambig_field = attrs.fields(Ast.SubscriptOp).val
+                case Ast.Factorial() | Ast.Percent() | Ast.Permille():
+                    ambig_field = attrs.fields(type(expr)).operand
+
+            # resolve ambiguity and keep the resolution enum
+            unambig_val, strat = a_expr_resolve_ambig_calls(val, scopes)
+            assert isinstance(unambig_val, Ast.AExpr)
+
+            # resolve ambiguities in the rest of the expr
+            unambig_expr = visit_children(
+                expr, lambda c: a_expr_resolve_ambig_calls(c, scopes)[0], {ambig_field}
+            )
 
             match strat:
-                case AmbigCallResolveStrat.BubbleUp:
-                    return (
-                        attrs.evolve(expr, val=new_val),
-                        AmbigCallResolveStrat.BubbleUp,
-                    )
-                case AmbigCallResolveStrat.Mul:
-                    assert isinstance(new_val, Ast.MultOp)
-                    return (
-                        Ast.MultOp(
-                            expr.ctx, new_val.lhs, attrs.evolve(expr, val=new_val.rhs)
-                        ),
-                        AmbigCallResolveStrat.Mul,
-                    )
-
-        case Ast.ExpOp(_, base, _):
-            new_base, strat = a_expr_resolve_ir(base, scope)
-
-            assert isinstance(new_base, Ast.AExpr)
-
-            match strat:
-                case AmbigCallResolveStrat.BubbleUp:
+                case AmbigCallResolution.BubbleUp:
+                    # in this case, the operand should be applied to the entire unambig_expr,
+                    # as it was resolved to not be a binary expr (implicit multiplication)
+                    # so we just inject the resolved value into the unambig_expr
                     return (
                         attrs.evolve(
-                            visit_children(
-                                expr,
-                                lambda c: a_expr_resolve_ir(c, scope)[0],
-                                {attrs.fields(Ast.ExpOp).base},
-                            ),
-                            base=new_base,
+                            unambig_expr,
+                            **{ambig_field.name: unambig_val},
                         ),
-                        AmbigCallResolveStrat.BubbleUp,
+                        AmbigCallResolution.BubbleUp,
                     )
-                case AmbigCallResolveStrat.Mul:
-                    assert isinstance(new_base, Ast.MultOp)
+                case AmbigCallResolution.ImplicitMult:
+                    # in this case, the operand should be applied to the rhs of unambig_expr,
+                    # as it was resolved to be a binary expr (implicit multiplication)
+                    assert isinstance(unambig_val, Ast.MultOp)
                     return (
                         Ast.MultOp(
                             expr.ctx,
-                            new_base.lhs,
+                            unambig_val.lhs,
                             attrs.evolve(
-                                visit_children(
-                                    expr,
-                                    lambda c: a_expr_resolve_ir(c, scope)[0],
-                                    {attrs.fields(Ast.ExpOp).base},
-                                ),
-                                base=new_base.rhs,
+                                unambig_expr,
+                                **{ambig_field.name: unambig_val.rhs},
                             ),
                         ),
-                        AmbigCallResolveStrat.BubbleUp,
+                        AmbigCallResolution.BubbleUp,
                     )
 
-        case Ast.Factorial(_, o) | Ast.Percent(_, o) | Ast.Permille(_, o):
-            new_o, strat = a_expr_resolve_ir(o, scope)
-            assert isinstance(new_o, Ast.AExpr)
-
-            match strat:
-                case AmbigCallResolveStrat.BubbleUp:
-                    # this could be whatever, but there is an apply func down there somehwere.
-                    # the important bit is that we do the following.
-                    return (
-                        attrs.evolve(expr, operand=new_o),
-                        AmbigCallResolveStrat.BubbleUp,
-                    )
-                case AmbigCallResolveStrat.Mul:
-                    assert isinstance(new_o, Ast.MultOp)
-                    return (
-                        Ast.MultOp(
-                            expr.ctx, new_o.lhs, attrs.evolve(expr, operand=new_o.rhs)
-                        ),
-                        AmbigCallResolveStrat.Mul,
-                    )
-
-            pass
         case Ast.AstNode(_) as node:
             return (
-                visit_children(node, lambda c: a_expr_resolve_ir(c, scope)[0]),
-                AmbigCallResolveStrat.BubbleUp,
+                visit_children(node, lambda c: a_expr_resolve_ambig_calls(c, scopes)[0]),
+                AmbigCallResolution.BubbleUp,
             )
 
 
 def a_expr_subs(
-    expr: Ast.AExpr, scope: Scope, lit_eq_checker: LiteralParam.EqChecker
+    expr: Ast.AExpr, scopes: Scopes, lit_eq_checker: LiteralParam.EqChecker
 ) -> Ast.AExpr:
     """
-    Substitutes values...
+    Goes through the given expr and substitutes values in the AST, based on definitions in the provided scope.
     """
 
-    head_id = None
-    subscript_form = Ast.SubscriptForm((None, None), ())
-    index_params: tuple[Ast.AExpr, ...] = ()
-    arg_params: tuple[Ast.AExpr, ...] = ()
-
-    match expr:
-        # x
-        case Ast.Symbol(_, symbol_name):
-            head_id = symbol_name
-            pass
-        # x_i
-        case Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript) if all(
-            isinstance(slot, Ast.AExpr) for slot in subscript.slots
-        ):
-            head_id = symbol_name
-            subscript_form = subscript.form
-            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
-        # f(x)
-        case Ast.ApplyFunc(_, Ast.Symbol(_, symbol_name), args):
-            head_id = symbol_name
-            arg_params = args
-        # f_i(x)
-        case Ast.ApplyFunc(
-            _, Ast.SubscriptOp(_, Ast.Symbol(_, symbol_name), subscript), args
-        ) if all(isinstance(slot, Ast.AExpr) for slot in subscript.slots):
-            head_id = symbol_name
-            subscript_form = subscript.form
-            index_params = cast(tuple[Ast.AExpr, ...], subscript.slots)
-            arg_params = args
-        # all other expression types, just recursively invoke this...
-        case _:
-            return visit_children(expr, lambda c: a_expr_subs(c, scope, lit_eq_checker))
-
     # get the signature for the potential substitution target
-    sig = Signature(
-        head_id,
-        subscript_form,
-        tuple(LiteralParam(e) for e in index_params),
-        tuple(LiteralParam(e) for e in arg_params),
-    )
+    signature = Signature.from_a_expr(expr)
 
-    resolve_result = scope.resolve(sig, lit_eq_checker)
+    if signature is not None:
 
-    if resolve_result is not None:
-        expr, defs = resolve_result
+        resolve_result = scopes.resolve(signature, lit_eq_checker)
 
-        defs = tuple(
-            (sig, a_expr_subs(bod, scope, lit_eq_checker)) for (sig, bod) in defs
-        )
+        if resolve_result is not None:
+            _, expr, defs, scope = resolve_result
 
-        # AT THIS POINT defs body things must have had a_expr_subs called on them...
-        scope.register(defs)
+            defs = tuple(
+                (sig, a_expr_subs(bod, scopes, lit_eq_checker)) for (sig, bod) in defs
+            )
 
-        transformed_expr = a_expr_subs(expr, scope, lit_eq_checker)
+            # AT THIS POINT defs body things must have had a_expr_subs called on them...
+            defs_scope = Scope()
+            defs_scope.register(defs)
+            scopes.push_scope(defs_scope)
 
-        scope.unregister(defs)
+            transformed_expr = a_expr_2_sympy(expr, scopes)
 
-        return transformed_expr
+            scopes.remove_scope(defs)
+
+            sp_const = Ast.SympyConstant(expr.ctx, transformed_expr)
+
+            if not isinstance(expr, Ast.SympyConstant):
+                scope.unregister_single((signature, expr))
+                scope.register_single((signature, sp_const))
+
+            return sp_const
+
+    sub = lambda c: a_expr_subs(c, scopes, lit_eq_checker)
 
     # there was no definition to be found, so we just return it here anyways.
-    return expr
+    match expr:
+        case (
+            Ast.Sum(_, sexpr, var, _)
+            | Ast.Product(_, sexpr, var, _)
+            | Ast.Limit(_, sexpr, var, _, _)
+        ):
+            var_sig = Signature.from_a_expr(var)
+            assert var_sig is not None
+            # remove from scope here, and then add it again afterwards
+
+            subbed_expr = visit_children(
+                expr,
+                sub,
+                {
+                    attrs.fields(Ast.Sum).var,
+                    attrs.fields(Ast.Sum).expr,
+                    attrs.fields(Ast.Product).var,
+                    attrs.fields(Ast.Product).expr,
+                    attrs.fields(Ast.Limit).var,
+                    attrs.fields(Ast.Limit).expr,
+                },
+            )
+
+            # ok here it does not make any sense...
+            var_defs = scopes.unregister_signature(var_sig, lit_eq_checker)
+
+            subbed_expr = attrs.evolve(
+                subbed_expr, expr=a_expr_subs(sexpr, scopes, lit_eq_checker)
+            )
+
+            scopes.register(var_defs)
+
+            return subbed_expr
+        case _:
+            return visit_children(
+                expr,
+                sub,
+                {
+                    attrs.fields(Ast.Integral).diff,
+                    attrs.fields(Ast.Differential).differentials,
+                },
+            )
 
 
 # Transform an Ast.AlgStmt into a CasExpr,
 # this is basically a wrapper around the 3 main transformers (a_expr_2_cas_expr, rel_2_cas_expr, system_2_cas_rel_2_cas_expr, system_2_cas_expr),
 # and picks the correct function to call, based on the type of expr.
-def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scope) -> CasExprV2:
+def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scopes) -> CasExprV2:
     match expr:
         case _ if isinstance(expr, Ast.AExpr):
             return a_expr_2_cas_expr(expr, scope)
@@ -265,8 +305,8 @@ def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scope) -> CasExprV2:
 
 
 # Transform an Ast.System into a CasExpr
-def system_2_cas_expr(sys: Ast.System, scope: Scope) -> CasExprV2:
-    def ev(elems: list[Ast.SystemEntry], scope: Scope) -> CasExprV2:
+def system_2_cas_expr(sys: Ast.System, scope: Scopes) -> CasExprV2:
+    def ev(elems: list[Ast.SystemEntry], scope: Scopes) -> CasExprV2:
         if len(elems) == 0:
             return ()
 
@@ -286,7 +326,7 @@ def system_2_cas_expr(sys: Ast.System, scope: Scope) -> CasExprV2:
 # Transform an Ast.Rel into a CasExpr,
 # The CasExpr may contain multiple sympy relations, in the c that rel,
 # contains chained relations (e.g. a < b < c becomes, a < b and b < c in the CasExpr)
-def rel_2_cas_expr(rel: Ast.Rel, scope: Scope) -> CasExprV2:
+def rel_2_cas_expr(rel: Ast.Rel, scope: Scopes) -> CasExprV2:
     ev = a_expr_2_sympy
 
     remaining_rels = None
@@ -327,23 +367,24 @@ def rel_2_cas_expr(rel: Ast.Rel, scope: Scope) -> CasExprV2:
 
 
 # Transform an Ast.AExpr into a CasExpr
-def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
+def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scopes) -> CasExprV2:
     return ((a_expr_2_sympy(expr, scope), ctx_to_loc(expr.ctx)),)
 
 
-def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
+def a_expr_2_sympy(expr: Ast.AExpr, s: Scopes) -> sp.Basic | sp.MatrixBase:
     expr = a_expr_subs(
         expr,
         s,
         lambda la, lb: a_expr_2_sympy(la.value, s) == a_expr_2_sympy(lb.value, s),
     )
-    return _a_expr_2_sympy(expr, s)
+    return _a_expr_2_sympy(expr)
 
 
 # Transform an Ast.AExpr into a sympy expression,
 # Substituting variables defined in the given scope along the way.
-def _a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
+def _a_expr_2_sympy(expr: Ast.AExpr) -> sp.Basic | sp.MatrixBase:
     ev = _a_expr_2_sympy
+    # TODO: scope should not be here, it should be in a_expr_subs
     match expr:
         case Ast.ApplyFunc(_, _, _):
             assert False, "Cannot handle ApplyFunc without definitions"
@@ -368,51 +409,51 @@ def _a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
 
         case Ast.Matrix(_, elems, beg_cmd, end_cmd):
             return MutableLatexMatrix(
-                [[ev(e, s) for e in r] for r in elems],
+                [[ev(e) for e in r] for r in elems],
                 env_begin=beg_cmd,
                 env_end=end_cmd,
             )
 
         case Ast.DetMatrix(_, elems):
-            return sp.Matrix([[ev(e, s) for e in r] for r in elems]).det()
+            return sp.Matrix([[ev(e) for e in r] for r in elems]).det()
 
         case Ast.ExpOp(_, base, exp):
-            return ev(base, s) ** ev(exp, s)
+            return ev(base) ** ev(exp)
 
         case Ast.MultOp(_, lhs, rhs):
-            return ev(lhs, s) * ev(rhs, s)
+            return ev(lhs) * ev(rhs)
 
         case Ast.XProdOp(_, lhs, rhs):
-            return MatrixUtils.ensure_matrix(ev(lhs, s)).cross(ev(rhs, s))
+            return MatrixUtils.ensure_matrix(ev(lhs)).cross(ev(rhs))
 
         case Ast.DotProd(_, lhs, rhs):
-            return MatrixUtils.ensure_matrix(ev(lhs, s)).dot(
-                ev(rhs, s), conjugate_convention="right"
+            return MatrixUtils.ensure_matrix(ev(lhs)).dot(
+                ev(rhs), conjugate_convention="right"
             )
 
         case Ast.DivOp(_, lhs, rhs):
-            return ev(lhs, s) / ev(rhs, s)
+            return ev(lhs) / ev(rhs)
 
         case Ast.ModOp(_, lhs, rhs):
-            return sp.Mod(ev(lhs, s), ev(rhs, s))
+            return sp.Mod(ev(lhs), ev(rhs))
 
         case Ast.AddOp(_, lhs, rhs):
-            return ev(lhs, s) + ev(rhs, s)
+            return ev(lhs) + ev(rhs)
 
         case Ast.SubOp(_, lhs, rhs):
-            return ev(lhs, s) - ev(rhs, s)
+            return ev(lhs) - ev(rhs)
 
         case Ast.UPlusOp(_, op):
-            return +ev(op, s)
+            return +ev(op)
 
         case Ast.UMinusOp(_, op):
-            return -ev(op, s)
+            return -ev(op)
 
         case Ast.Parens(_, expr):
-            return ev(expr, s)
+            return ev(expr)
 
         case Ast.Abs(_, expr):
-            evd_expr = ev(expr, s)
+            evd_expr = ev(expr)
 
             if MatrixUtils.is_matrix(evd_expr):
                 return cast(sp.MatrixBase, evd_expr).det()
@@ -420,80 +461,76 @@ def _a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
             return sp.Abs(evd_expr)
 
         case Ast.Norm(_, expr):
-            return MatrixUtils.ensure_matrix(ev(expr, s)).norm()
+            return MatrixUtils.ensure_matrix(ev(expr)).norm()
 
         case Ast.UnitVec(_, expr):
-            return MatrixUtils.ensure_matrix(ev(expr, s)).normalized()
+            return MatrixUtils.ensure_matrix(ev(expr)).normalized()
 
         case Ast.Floor(_, expr):
-            return sp.floor(ev(expr, s))
+            return sp.floor(ev(expr))
 
         case Ast.Ceil(_, expr):
-            return sp.ceiling(ev(expr, s))
+            return sp.ceiling(ev(expr))
 
         case Ast.Conjugate(_, expr):
-            return sp.conjugate(ev(expr, s))
+            return sp.conjugate(ev(expr))
 
         case Ast.Binom(_, n, k):
-            return sp.binomial(ev(n, s), ev(k, s))
+            return sp.binomial(ev(n), ev(k))
 
         case Ast.Permutations(_, n, r):
-            return Functions.permutations(
-                cast(sp.Expr, ev(n, s)), cast(sp.Expr, ev(r, s))
-            )
+            return Functions.permutations(cast(sp.Expr, ev(n)), cast(sp.Expr, ev(r)))
 
         case Ast.Derangements(_, n):
-            return Functions.derangements(cast(sp.Expr, ev(n, s)))
+            return Functions.derangements(cast(sp.Expr, ev(n)))
 
         case Ast.Factorial(_, expr):
             return sp.factorial(expr)
 
         case Ast.Percent(_, expr):
-            return sp.Mul(cast(sp.Expr, ev(expr, s)), 100**-1)
+            return sp.Mul(cast(sp.Expr, ev(expr)), 100**-1)
 
         case Ast.Permille(_, expr):
-            return sp.Mul(cast(sp.Expr, ev(expr, s)), 1000**-1)
+            return sp.Mul(cast(sp.Expr, ev(expr)), 1000**-1)
 
         case Ast.Sum(_, expr, var, bounds):
             start, end = bounds
-            return sp.Sum(ev(expr, s), (ev(var, {}), ev(start, s), ev(end, s)))
+            return sp.Sum(ev(expr), (ev(var), ev(start), ev(end)))
 
         case Ast.Product(_, expr, var, bounds):
             start, end = bounds
-            return sp.Product(ev(expr, s), (ev(var, {}), ev(start, s), ev(end, s)))
+            return sp.Product(ev(expr), (ev(var), ev(start), ev(end)))
 
         case Ast.Integral(_, expr, diff, None):
-            return sp.integrate(ev(expr, s), ev(diff, {}))
+            return sp.integrate(ev(expr), ev(diff))
 
         case Ast.Integral(_, expr, diff, bounds):
             assert bounds is not None
             start, end = bounds
-            return sp.integrate(ev(expr, s), (ev(diff, {}), ev(start, s), ev(end, s)))
+            return sp.integrate(ev(exp), (ev(diff), ev(star), ev(end)))
 
         case Ast.Differential(_, expr, diffs):
             return sp.diff(
-                ev(expr, s),
-                (
-                    (ev(diff, {}), ev(deg, s) if deg is not None else 1)
-                    for diff, deg in diffs
-                ),
+                ev(expr),
+                ((ev(diff), ev(deg) if deg is not None else 1) for diff, deg in diffs),
             )
 
         case Ast.Limit(_, expr, var, point_of_approach, dir):
-            return sp.limit(
-                ev(expr, s), ev(var, {}), ev(point_of_approach, s), dir.value
-            )
+            return sp.limit(ev(expr), ev(var), ev(point_of_approach), dir.value)
 
         case Ast.EvalAt(_, _, _, _):
             assert False
             return None
 
         case Ast.Root(_, expr, None):
-            return sp.sqrt(ev(expr, s))
+            return sp.sqrt(ev(expr))
 
         case Ast.Root(_, expr, index):
             assert index is not None
-            return sp.root(ev(expr, s), ev(index, s))
+            return sp.root(ev(expr), ev(index))
+
+        case Ast.SympyConstant(_, val):
+            return val
 
         case ir if isinstance(ir, Ast.Ir):
             assert "Cannot evaluate if Ir object is present in AST"

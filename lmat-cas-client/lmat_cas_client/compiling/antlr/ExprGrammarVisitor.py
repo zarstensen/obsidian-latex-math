@@ -1,4 +1,4 @@
-# Generated from ExprGrammar.g4 by ANTLR 4.13.2
+# Generated from d:/DTU/School/.obsidian/plugins/obsidian-latex-math/lmat-cas-client/lmat_cas_client/compiling/antlr/grammar/ExprGrammar.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .ExprGrammar import ExprGrammar
