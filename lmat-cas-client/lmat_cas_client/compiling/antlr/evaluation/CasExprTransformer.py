@@ -8,7 +8,7 @@ from antlr4 import ParserRuleContext
 
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     LiteralParam,
-    Scopes,
+    Scope,
     Signature,
 )
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
@@ -26,7 +26,7 @@ ExprEntry = tuple[sp.Basic | sp.MatrixBase, LocRange]
 CasExprV2 = tuple[ExprEntry, ...]
 
 
-def literal_eq_checker(scope: Scopes) -> LiteralParam.EqChecker:
+def literal_eq_checker(scope: Scope) -> LiteralParam.EqChecker:
     """
     Check if 2 literal parameters are considered equal, in the context of the given scope.
     This checks if their transformed sympy values are equal.
@@ -108,7 +108,7 @@ class AmbigCallResolution(Enum):
 
 
 def a_expr_resolve_ambig_calls(
-    expr: Ast.AlgStmt, scopes: Scopes
+    expr: Ast.AlgStmt, scope: Scope
 ) -> tuple[Ast.AlgStmt, AmbigCallResolution]:
     """
     Given an AlgStmt AST and a Scope which it should be transformed in,
@@ -123,9 +123,9 @@ def a_expr_resolve_ambig_calls(
             if signature is not None:
 
                 # now check if it has a definition and that definition is a function.
-                resolved = scopes.resolve(signature, literal_eq_checker(scopes))
+                resolved = scope.resolve(signature, literal_eq_checker(scope))
 
-                if resolved is not None and len(resolved[0].arg_params) >= 1:
+                if resolved is not None and len(scope.get_definition(resolved[0])[0].arg_params) >= 1:
                     # it is, so resolve it to an ApplyFunc
                     return (
                         Ast.ApplyFunc(ctx, func, args),
@@ -163,12 +163,12 @@ def a_expr_resolve_ambig_calls(
                     ambig_field = attrs.fields(type(expr)).operand
 
             # resolve ambiguity and keep the resolution enum
-            unambig_val, strat = a_expr_resolve_ambig_calls(val, scopes)
+            unambig_val, strat = a_expr_resolve_ambig_calls(val, scope)
             assert isinstance(unambig_val, Ast.AExpr)
 
             # resolve ambiguities in the rest of the expr
             unambig_expr = visit_children(
-                expr, lambda c: a_expr_resolve_ambig_calls(c, scopes)[0], {ambig_field}
+                expr, lambda c: a_expr_resolve_ambig_calls(c, scope)[0], {ambig_field}
             )
 
             match strat:
@@ -201,13 +201,13 @@ def a_expr_resolve_ambig_calls(
 
         case Ast.AstNode(_) as node:
             return (
-                visit_children(node, lambda c: a_expr_resolve_ambig_calls(c, scopes)[0]),
+                visit_children(node, lambda c: a_expr_resolve_ambig_calls(c, scope)[0]),
                 AmbigCallResolution.BubbleUp,
             )
 
 
 def a_expr_subs(
-    expr: Ast.AExpr, scopes: Scopes, lit_eq_checker: LiteralParam.EqChecker
+    expr: Ast.AExpr, scope: Scope, lit_eq_checker: LiteralParam.EqChecker
 ) -> Ast.AExpr:
     """
     Goes through the given expr and substitutes values in the AST, based on definitions in the provided scope.
@@ -218,33 +218,32 @@ def a_expr_subs(
 
     if signature is not None:
 
-        resolve_result = scopes.resolve(signature, lit_eq_checker)
+        resolve_result = scope.resolve(signature, lit_eq_checker)
 
         if resolve_result is not None:
-            _, expr, defs, scope = resolve_result
+            did, defs = resolve_result
+
+            signature, expr = scope.get_definition(did)
 
             defs = tuple(
-                (sig, a_expr_subs(bod, scopes, lit_eq_checker)) for (sig, bod) in defs
+                (sig, a_expr_subs(bod, scope, lit_eq_checker)) for (sig, bod) in defs
             )
 
             # AT THIS POINT defs body things must have had a_expr_subs called on them...
-            defs_scope = Scope()
-            defs_scope.register(defs)
-            scopes.push_scope(defs_scope)
+            def_ids = scope.register(defs)
 
-            transformed_expr = a_expr_2_sympy(expr, scopes)
+            transformed_expr = a_expr_2_sympy(expr, scope)
 
-            scopes.remove_scope(defs)
+            scope.unregister(def_ids)
 
             sp_const = Ast.SympyConstant(expr.ctx, transformed_expr)
 
             if not isinstance(expr, Ast.SympyConstant):
-                scope.unregister_single((signature, expr))
-                scope.register_single((signature, sp_const))
+                scope.reregister_single((signature, sp_const), did)
 
             return sp_const
 
-    sub = lambda c: a_expr_subs(c, scopes, lit_eq_checker)
+    sub = lambda c: a_expr_subs(c, scope, lit_eq_checker)
 
     # there was no definition to be found, so we just return it here anyways.
     match expr:
@@ -271,13 +270,20 @@ def a_expr_subs(
             )
 
             # ok here it does not make any sense...
-            var_defs = scopes.unregister_signature(var_sig, lit_eq_checker)
+            # this should just reregister to None right?
+            rvd = scope.resolve(var_sig, lit_eq_checker)
+            if rvd is not None:
+                vd, _ = rvd
+                var_sig, var_bod = scope.get_definition(vd)
+
+                scope.reregister_single((var_sig, None), vd)
 
             subbed_expr = attrs.evolve(
-                subbed_expr, expr=a_expr_subs(sexpr, scopes, lit_eq_checker)
+                subbed_expr, expr=a_expr_subs(sexpr, scope, lit_eq_checker)
             )
 
-            scopes.register(var_defs)
+            if rvd is not None:
+                scope.reregister_single((var_sig, var_bod), vd)
 
             return subbed_expr
         case _:
@@ -294,7 +300,7 @@ def a_expr_subs(
 # Transform an Ast.AlgStmt into a CasExpr,
 # this is basically a wrapper around the 3 main transformers (a_expr_2_cas_expr, rel_2_cas_expr, system_2_cas_rel_2_cas_expr, system_2_cas_expr),
 # and picks the correct function to call, based on the type of expr.
-def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scopes) -> CasExprV2:
+def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scope) -> CasExprV2:
     match expr:
         case _ if isinstance(expr, Ast.AExpr):
             return a_expr_2_cas_expr(expr, scope)
@@ -305,8 +311,8 @@ def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scopes) -> CasExprV2:
 
 
 # Transform an Ast.System into a CasExpr
-def system_2_cas_expr(sys: Ast.System, scope: Scopes) -> CasExprV2:
-    def ev(elems: list[Ast.SystemEntry], scope: Scopes) -> CasExprV2:
+def system_2_cas_expr(sys: Ast.System, scope: Scope) -> CasExprV2:
+    def ev(elems: list[Ast.SystemEntry], scope: Scope) -> CasExprV2:
         if len(elems) == 0:
             return ()
 
@@ -326,7 +332,7 @@ def system_2_cas_expr(sys: Ast.System, scope: Scopes) -> CasExprV2:
 # Transform an Ast.Rel into a CasExpr,
 # The CasExpr may contain multiple sympy relations, in the c that rel,
 # contains chained relations (e.g. a < b < c becomes, a < b and b < c in the CasExpr)
-def rel_2_cas_expr(rel: Ast.Rel, scope: Scopes) -> CasExprV2:
+def rel_2_cas_expr(rel: Ast.Rel, scope: Scope) -> CasExprV2:
     ev = a_expr_2_sympy
 
     remaining_rels = None
@@ -367,11 +373,11 @@ def rel_2_cas_expr(rel: Ast.Rel, scope: Scopes) -> CasExprV2:
 
 
 # Transform an Ast.AExpr into a CasExpr
-def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scopes) -> CasExprV2:
+def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
     return ((a_expr_2_sympy(expr, scope), ctx_to_loc(expr.ctx)),)
 
 
-def a_expr_2_sympy(expr: Ast.AExpr, s: Scopes) -> sp.Basic | sp.MatrixBase:
+def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
     expr = a_expr_subs(
         expr,
         s,

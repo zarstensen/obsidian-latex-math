@@ -10,14 +10,14 @@ from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     BoundParam,
     LiteralParam,
-    Scopes,
+    Scope,
     Signature,
 )
 
 
 class TestScope:
     def test_scope(self: Self) -> None:
-        s: Scopes = Scopes()
+        s: Scope = Scope()
 
         s.register_single(
             (
@@ -36,7 +36,7 @@ class TestScope:
 
     def test_scope_more(self: Self) -> None:
         sys.setrecursionlimit(100000)
-        s: Scopes = Scopes()
+        s: Scope = Scope()
 
         s.register(
             (

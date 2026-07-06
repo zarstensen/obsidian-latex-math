@@ -148,54 +148,74 @@ class Signature:
         ), "Subscript form separators and index parameters did not match up!"
 
 type Definition = tuple[Signature, Ast.AExpr]
+type Definition = tuple[Signature, Ast.AExpr]
 
 
 # this stays the same right?
 # its just the transformer which is new?
 # this is also cleaner interms of separation and stuff i guess...
-class Scopes:
+class Scope:
 
-    @staticmethod
-    def _definition_key(definition: Definition):
-        signature, _ = definition
-        return signature.sort_key()
+    type DefinitionId = int
+    type _DefEntry = tuple[Signature.SortKey, DefinitionId]
 
     def __init__(self: Self):
-        self.signatures: MutableMapping[Signature.GroupKey, SortedList[Definition]] = (
-            defaultdict(lambda: SortedList(key=Scopes._definition_key))
+        self._next_id = 0
+        self._definitions: MutableMapping[Scope.DefinitionId, Definition] = dict()
+
+        self.signatures: MutableMapping[Signature.GroupKey, SortedList[Scope._DefEntry]] = (
+            defaultdict(lambda: SortedList())
         )
 
-    # TODO: there are some ways of going about undefining variables:
-    # a) remove all definitions from the scope (this could also be a function?)
-    # b) have an explicit value, which indicates variable is undefined
-    # c) have an explicit function, which marks the variable as being undefined
-	# d) have a stack of scopes which can be pushed and popped, then somehow one can also mutate a scope already in the stack.
-	#    finding a definition is then a matter of searching through the scopes individually?
-	#    Its a bit wierd because a scope in this context is not intuitive? so resolving a definition happens in a new scope, as well as sum, limits, products, integrals and differentials maybe?
-    def register(self: Self, definitions: tuple[Definition, ...]):
+    def register(self: Self, definitions: tuple[Definition, ...]) -> tuple[DefinitionId, ...]:
+        ids = []
+
         for defi in definitions:
-            self.register_single(defi)
+            ids.append(self.register_single(defi))
 
-    def register_single(self: Self, definition: Definition):
-        signature, body = definition
-        self.signatures[signature.group_key()].add((signature, body))
+        return tuple(ids)
 
-    def unregister(self: Self, definitions: tuple[Definition, ...]):
-        for defi in definitions:
-            self.unregister_single(defi)
+    def register_single(self: Self, definition: Definition) -> DefinitionId:
+        def_id = self._next_id
+        self._next_id += 1
 
-    def unregister_single(self: Self, definition: Definition):
+        return self.reregister_single(definition, def_id)
+
+
+    # also adds a definition with the given ID if it does not exist, but overwrites if it does exist
+    def reregister_single(self, definition: Definition, definition_id: DefinitionId):
+        if definition_id in self._definitions:
+            self.unregister_single(definition_id)
+
+        self._definitions[definition_id] = definition
+
         signature, _ = definition
-        if signature.group_key() not in self.signatures:
+        self.signatures[signature.group_key()].add((signature.sort_key(), definition_id))
+
+        return definition_id
+
+    def unregister(self: Self, definition_ids: tuple[DefinitionId, ...]):
+        for def_id in definition_ids:
+            self.unregister_single(def_id)
+
+    def unregister_single(self: Self, definition_id: DefinitionId):
+        if definition_id not in self._definitions:
             return
 
-        self.signatures[signature.group_key()].discard(definition)
+        signature, _ = self._definitions[definition_id]
 
-        if len(self.signatures[signature.group_key()]) == 0:
+        signature_group = self.signatures[signature.group_key()]
+
+        signature_group.discard(next(filter(lambda de: de[1] == definition_id, signature_group)))
+
+        del self._definitions[definition_id]
+
+        if len(signature_group) == 0:
             del self.signatures[signature.group_key()]
 
-    def unregister_signature(self: Self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker) -> tuple[Definition, ...]:
-        unregistered_defs: list[Definition] = []
+    # this should maybe just be a function which finds all definition ids which is matched by a signature? idk...
+    def unregister_signature(self: Self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker) -> tuple[DefinitionId, ...]:
+        unregistered_defs: list[DefinitionId] = []
 
         resolved = self.resolve(signature, lit_eq_checker)
 
@@ -212,39 +232,21 @@ class Scopes:
 
 
     # so just loop over this one until it matches one, and then that is it
-    def _overrides(self, signature: Signature) -> Iterable[Definition]:
-        return reversed(self.signatures.get(signature.group_key(), ()))
+    def _overrides(self, signature: Signature) -> Iterable[DefinitionId]:
+        return map(lambda de: de[1], reversed(self.signatures.get(signature.group_key(), ())))
 
-    # what should this return even? a list of the new signatures + bodies, and the body itself maybe?
-    # so this resolves the expression the signature is associated with + the definitions which should be present when evaluating it.
+    def get_definition(self, id: DefinitionId) -> Definition:
+        return self._definitions[id]
+
+    # this should return DefinitionId instead of the other stuff
     def resolve(
         self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker
-    ) -> tuple[Signature,Ast.AExpr, tuple[Definition, ...]] | None:
+    ) -> tuple[DefinitionId, tuple[Definition, ...]] | None:
 
-        for sig, bod in self._overrides(signature):
+        for def_id in self._overrides(signature):
+            sig, bod = self.get_definition(def_id)
             res = sig.overrideSigs(signature, lit_eq_checker)
             if res is not None:
                 # body is None => this should explicitly *not* be defined
-                return (sig, bod, res) if bod is not None else None 
+                return def_id, res if bod is not None else None 
         return None
-
-class Scopes:
-	def __init__(self):
-		self.scopes = []
-	
-	def push_scope(self, scope: Scopes):
-		self.scopes.append(scope)
-	
-	def remove_scope(self, scope: Scopes):
-		self.scopes.remove(scope)
-	
-	def resolve(self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker) -> tuple[Signature, Ast.AExpr, tuple[Definition, ...], Scopes] | None:
-		for scope in reversed(self.scopes):
-
-			res = scope.resolve(signature, lit_eq_checker)
-
-			if res is not None:
-				sig, bod, defs = res
-				return sig, bod, defs, scope
-
-		return None
