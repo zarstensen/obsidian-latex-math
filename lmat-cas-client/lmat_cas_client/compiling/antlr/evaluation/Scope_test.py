@@ -10,14 +10,14 @@ from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     BoundParam,
     LiteralParam,
-    Scope,
+    Definitions,
     Signature,
 )
 
 
 class TestScope:
     def test_scope(self: Self) -> None:
-        s: Scope = Scope()
+        s: Definitions = Definitions()
 
         s.register_single(
             (
@@ -36,7 +36,7 @@ class TestScope:
 
     def test_scope_more(self: Self) -> None:
         sys.setrecursionlimit(100000)
-        s: Scope = Scope()
+        s: Definitions = Definitions()
 
         s.register(
             (
@@ -46,7 +46,7 @@ class TestScope:
                         index_params=(BoundParam(Signature(head_id="i")),),
                     ),
                     ExprGrammar(
-                        ExprLexer.stream_from_src("x_{i - 1} + \sum_{i=0}^{i} i^2")
+                        ExprLexer.stream_from_src(r"x_{i - 1} + (\sum_{i=0}^{i} i^2)^i")
                     )
                     .a_expr()
                     .res,

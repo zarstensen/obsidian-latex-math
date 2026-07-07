@@ -147,27 +147,28 @@ class Signature:
             or index_param_count - 1 == slot_seps_count
         ), "Subscript form separators and index parameters did not match up!"
 
+type OptDefinition = tuple[Signature, Ast.AExpr | None]
 type Definition = tuple[Signature, Ast.AExpr]
-type Definition = tuple[Signature, Ast.AExpr]
+
 
 
 # this stays the same right?
 # its just the transformer which is new?
 # this is also cleaner interms of separation and stuff i guess...
-class Scope:
+class Definitions:
 
-    type DefinitionId = int
-    type _DefEntry = tuple[Signature.SortKey, DefinitionId]
+    type Id = int
+    type _DefEntry = tuple[Signature.SortKey, Id]
 
     def __init__(self: Self):
         self._next_id = 0
-        self._definitions: MutableMapping[Scope.DefinitionId, Definition] = dict()
+        self._definitions: MutableMapping[Definitions.Id, OptDefinition] = dict()
 
-        self.signatures: MutableMapping[Signature.GroupKey, SortedList[Scope._DefEntry]] = (
+        self.signatures: MutableMapping[Signature.GroupKey, SortedList[Definitions._DefEntry]] = (
             defaultdict(lambda: SortedList())
         )
 
-    def register(self: Self, definitions: tuple[Definition, ...]) -> tuple[DefinitionId, ...]:
+    def register(self: Self, definitions: tuple[OptDefinition, ...]) -> tuple[Id, ...]:
         ids = []
 
         for defi in definitions:
@@ -175,7 +176,7 @@ class Scope:
 
         return tuple(ids)
 
-    def register_single(self: Self, definition: Definition) -> DefinitionId:
+    def register_single(self: Self, definition: OptDefinition) -> Id:
         def_id = self._next_id
         self._next_id += 1
 
@@ -183,7 +184,7 @@ class Scope:
 
 
     # also adds a definition with the given ID if it does not exist, but overwrites if it does exist
-    def reregister_single(self, definition: Definition, definition_id: DefinitionId):
+    def reregister_single(self, definition: OptDefinition, definition_id: Id):
         if definition_id in self._definitions:
             self.unregister_single(definition_id)
 
@@ -194,11 +195,11 @@ class Scope:
 
         return definition_id
 
-    def unregister(self: Self, definition_ids: tuple[DefinitionId, ...]):
+    def unregister(self: Self, definition_ids: tuple[Id, ...]):
         for def_id in definition_ids:
             self.unregister_single(def_id)
 
-    def unregister_single(self: Self, definition_id: DefinitionId):
+    def unregister_single(self: Self, definition_id: Id):
         if definition_id not in self._definitions:
             return
 
@@ -213,40 +214,29 @@ class Scope:
         if len(signature_group) == 0:
             del self.signatures[signature.group_key()]
 
-    # this should maybe just be a function which finds all definition ids which is matched by a signature? idk...
-    def unregister_signature(self: Self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker) -> tuple[DefinitionId, ...]:
-        unregistered_defs: list[DefinitionId] = []
-
-        resolved = self.resolve(signature, lit_eq_checker)
-
-        while resolved is not None:
-
-            resolved_sig, resolved_body, _ = resolved
-
-            self.unregister_single((resolved_sig, resolved_body))
-            unregistered_defs.append((resolved_sig, resolved_body))
-
-            resolved = self.resolve(signature, lit_eq_checker)
-
-        return tuple(reversed(unregistered_defs))
-
-
     # so just loop over this one until it matches one, and then that is it
-    def _overrides(self, signature: Signature) -> Iterable[DefinitionId]:
+    def _overrides(self, signature: Signature) -> Iterable[Id]:
         return map(lambda de: de[1], reversed(self.signatures.get(signature.group_key(), ())))
 
-    def get_definition(self, id: DefinitionId) -> Definition:
+    def get_definition(self, id: Id) -> Definition:
+        opt_def = self.get_opt_definition(id)
+
+        match opt_def:
+            case _, None:
+                raise KeyError("The given definition id points to a defintion with a None body")
+            case sig, bod:
+                return (sig, bod)
+
+    def get_opt_definition(self, id: Id) -> OptDefinition:
         return self._definitions[id]
 
-    # this should return DefinitionId instead of the other stuff
     def resolve(
         self, signature: Signature, lit_eq_checker: LiteralParam.EqChecker
-    ) -> tuple[DefinitionId, tuple[Definition, ...]] | None:
+    ) -> tuple[Id, tuple[Definition, ...]] | None:
 
         for def_id in self._overrides(signature):
-            sig, bod = self.get_definition(def_id)
+            sig, bod = self.get_opt_definition(def_id)
             res = sig.overrideSigs(signature, lit_eq_checker)
             if res is not None:
-                # body is None => this should explicitly *not* be defined
-                return def_id, res if bod is not None else None 
+                return (def_id, res) if bod is not None else None
         return None
