@@ -132,13 +132,13 @@ class SubscriptForm:
     Specifically, this stores the brackets at the start / end of the subscript as well as the delimiters used in the subscript.
     """
 
-    brackets: tuple[str | None, str | None]
-    slot_seps: tuple[str, ...]
+    brackets: tuple[str | None, str | None] = (None, None)
+    slot_seps: tuple[str, ...] = ()
 
 
 @frozen
 class Subscript(AstNode):
-	# TODO: visit_children does not catch this?
+    # TODO: visit_children does not catch this?
     slots: tuple[SubscriptSlot, ...]
     form: SubscriptForm
 
@@ -214,7 +214,7 @@ class Integral(AstNode):
 @frozen
 class Differential(AstNode):
     differentiand: AExpr
-	# TODO: visit_children does not catch this?
+    # TODO: visit_children does not catch this?
     differentials: list[tuple[AExpr, AExpr | None]]
 
 
@@ -235,7 +235,7 @@ class Limit(AstNode):
 @frozen
 class EvalAt(AstNode):
     expr: AExpr
-	# TODO: visit_children does not catch this?
+    # TODO: visit_children does not catch this?
     subs_start: tuple[tuple[AExpr, AExpr], ...]
     subs_end: tuple[tuple[AExpr, AExpr], ...] | None
 
@@ -323,7 +323,7 @@ class UnitVec(AUnaryOp):
 
 @frozen
 class Matrix(AstNode):
-	# TODO: visit_children does not catch this?
+    # TODO: visit_children does not catch this?
     elements: list[list[AExpr]]
     beg_cmd: str
     end_cmd: str
@@ -331,7 +331,7 @@ class Matrix(AstNode):
 
 @frozen
 class DetMatrix(AstNode):
-	# TODO: visit_children does not catch this?
+    # TODO: visit_children does not catch this?
     elements: list[list[AExpr]]
 
 

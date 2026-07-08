@@ -8,7 +8,7 @@ from antlr4 import ParserRuleContext
 
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     LiteralParam,
-    Definitions,
+    Scope,
     Signature,
 )
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
@@ -26,13 +26,13 @@ ExprEntry = tuple[sp.Basic | sp.MatrixBase, LocRange]
 CasExprV2 = tuple[ExprEntry, ...]
 
 
-def literal_eq_checker(scope: Definitions) -> LiteralParam.EqChecker:
+def literal_sp_comparer(scope: Scope) -> LiteralParam.EqChecker:
     """
     Check if 2 literal parameters are considered equal, in the context of the given scope.
     This checks if their transformed sympy values are equal.
     """
-    return lambda la, lb: a_expr_2_sympy(la.value, scope) == a_expr_2_sympy(
-        lb.value, scope
+    return lambda la, lb: a_expr_2_sympy(la.literal, scope) == a_expr_2_sympy(
+        lb.literal, scope
     )
 
 
@@ -108,7 +108,7 @@ class AmbigCallResolution(Enum):
 
 
 def a_expr_resolve_ambig_calls(
-    expr: Ast.AlgStmt, scope: Definitions
+    expr: Ast.AlgStmt, scope: Scope
 ) -> tuple[Ast.AlgStmt, AmbigCallResolution]:
     """
     Given an AlgStmt AST and a Scope which it should be transformed in,
@@ -123,9 +123,9 @@ def a_expr_resolve_ambig_calls(
             if signature is not None:
 
                 # now check if it has a definition and that definition is a function.
-                resolved = scope.resolve(signature, literal_eq_checker(scope))
+                resolved_binding_id = scope.resolve(signature, literal_sp_comparer(scope))
 
-                if resolved is not None and len(scope.get_definition(resolved[0])[0].arg_params) >= 1:
+                if resolved_binding_id is not None and len(scope.get_binding(resolved_binding_id)[0].arg_params) >= 1:
                     # it is, so resolve it to an ApplyFunc
                     return (
                         Ast.ApplyFunc(ctx, func, args),
@@ -206,55 +206,65 @@ def a_expr_resolve_ambig_calls(
             )
 
 
-def a_expr_subs(
-    expr: Ast.AExpr, scope: Definitions, lit_eq_checker: LiteralParam.EqChecker
+def a_expr_sub_bindings(
+    expr: Ast.AExpr, scope: Scope, lit_eq_checker: LiteralParam.EqChecker
 ) -> Ast.AExpr:
     """
-    Goes through the given expr and substitutes values in the AST, based on definitions in the provided scope.
+    Goes through the given expr and substitutes values in the AST, based on bindings in the provided scope.
     """
 
     # get the signature for the potential substitution target
     signature = Signature.from_a_expr(expr)
 
     if signature is not None:
+        resolved_binding_id = scope.resolve(signature, lit_eq_checker)
 
-        resolve_result = scope.resolve(signature, lit_eq_checker)
+        if resolved_binding_id is not None:
+            # a binding has been found for the expression at this point
+            # now we need to transform its bound value, and introduce new bindings in the scope,
+            # coming from binding the signature to the resolved binding.
+            binding_signature, bound_val = scope.get_binding(resolved_binding_id)
 
-        if resolve_result is not None:
-            did, defs = resolve_result
+            bindings = binding_signature.bind(signature, lit_eq_checker)
 
-            signature, expr = scope.get_definition(did)
-
-            defs = tuple(
-                (sig, a_expr_subs(bod, scope, lit_eq_checker)) for (sig, bod) in defs
+            # also make sure bindings are resolved in the bindings...
+            bindings = tuple(
+                (sig, a_expr_sub_bindings(val, scope, lit_eq_checker)) for (sig, val) in bindings
             )
 
-            # AT THIS POINT defs body things must have had a_expr_subs called on them...
-            def_ids = scope.register(defs)
+            binding_ids = scope.register(bindings)
 
-            transformed_expr = a_expr_2_sympy(expr, scope)
+            # instead of recursively calling a_expr_subs here,
+            # we call a_expr_2_sympy and memoize the result instead.
+            # this greatly improves performance for recursive bindings with multiple recursive variables.
+            sp_expr = a_expr_2_sympy(expr, scope)
 
-            scope.unregister(def_ids)
+            scope.unregister(binding_ids)
 
-            sp_const = Ast.SympyConstant(expr.ctx, transformed_expr)
+            sp_const = Ast.SympyConstant(expr.ctx, sp_expr)
 
-            scope.reregister_single((signature, sp_const), did)
+            scope.reregister_single((signature, sp_const), resolved_binding_id)
 
             return sp_const
 
-    sub = lambda c: a_expr_subs(c, scope, lit_eq_checker)
+    sub = lambda c: a_expr_sub_bindings(c, scope, lit_eq_checker)
 
-    # there was no definition to be found, so we just return it here anyways.
+    # expression should not be substituted itself
+    # there are still some special cases where scope must be modified.
     match expr:
         case (
             Ast.Sum(_, sexpr, var, _)
             | Ast.Product(_, sexpr, var, _)
             | Ast.Limit(_, sexpr, var, _, _)
         ):
-            var_sig = Signature.from_a_expr(var)
-            assert var_sig is not None
-            # remove from scope here, and then add it again afterwards
+            # if an AstNode introduces a variable / symbol, this symbol must be temporarily unbounded in the scope.
 
+            # first substitute bindings in fields which should use the current scope.
+            # in the above cases, its the expr field which we want to evaluate with a new scope.
+            # we also dont want to try to substitute in the value of the variable itself, in the field which stores the variable.
+            # e.g. \sum_{i=0}^9 i
+            #            ^      ^
+            #            we dont want to substitute either of these occurenses of the symbol 'i'
             subbed_expr = visit_children(
                 expr,
                 sub,
@@ -268,21 +278,26 @@ def a_expr_subs(
                 },
             )
 
-            # ok here it does not make any sense...
-            # this should just reregister to None right?
-            rvd = scope.resolve(var_sig, lit_eq_checker)
-            if rvd is not None:
-                vd, _ = rvd
-                var_sig, var_bod = scope.get_definition(vd)
 
-                scope.reregister_single((var_sig, None), vd)
+            var_signature = Signature.from_a_expr(var)
+            assert var_signature is not None
+
+
+            var_binding_id = scope.resolve(var_signature, lit_eq_checker)
+
+            if var_binding_id is not None:
+                var_signature, var_bound_value = scope.get_binding(var_binding_id)
+
+                # the variable was bound to something, so bind it to None temprorarily whilst evaluating the expr field.
+                scope.reregister_single((var_signature, None), var_binding_id)
 
             subbed_expr = attrs.evolve(
-                subbed_expr, expr=a_expr_subs(sexpr, scope, lit_eq_checker)
+                subbed_expr, expr=a_expr_sub_bindings(sexpr, scope, lit_eq_checker)
             )
 
-            if rvd is not None:
-                scope.reregister_single((var_sig, var_bod), vd)
+            # now reregister the original binding in the scope.
+            if var_binding_id is not None:
+                scope.reregister_single((var_signature, var_bound_value), var_binding_id)
 
             return subbed_expr
         case _:
@@ -299,7 +314,7 @@ def a_expr_subs(
 # Transform an Ast.AlgStmt into a CasExpr,
 # this is basically a wrapper around the 3 main transformers (a_expr_2_cas_expr, rel_2_cas_expr, system_2_cas_rel_2_cas_expr, system_2_cas_expr),
 # and picks the correct function to call, based on the type of expr.
-def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Definitions) -> CasExprV2:
+def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scope) -> CasExprV2:
     match expr:
         case _ if isinstance(expr, Ast.AExpr):
             return a_expr_2_cas_expr(expr, scope)
@@ -310,8 +325,8 @@ def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Definitions) -> CasExprV2:
 
 
 # Transform an Ast.System into a CasExpr
-def system_2_cas_expr(sys: Ast.System, scope: Definitions) -> CasExprV2:
-    def ev(elems: list[Ast.SystemEntry], scope: Definitions) -> CasExprV2:
+def system_2_cas_expr(sys: Ast.System, scope: Scope) -> CasExprV2:
+    def ev(elems: list[Ast.SystemEntry], scope: Scope) -> CasExprV2:
         if len(elems) == 0:
             return ()
 
@@ -331,7 +346,7 @@ def system_2_cas_expr(sys: Ast.System, scope: Definitions) -> CasExprV2:
 # Transform an Ast.Rel into a CasExpr,
 # The CasExpr may contain multiple sympy relations, in the c that rel,
 # contains chained relations (e.g. a < b < c becomes, a < b and b < c in the CasExpr)
-def rel_2_cas_expr(rel: Ast.Rel, scope: Definitions) -> CasExprV2:
+def rel_2_cas_expr(rel: Ast.Rel, scope: Scope) -> CasExprV2:
     ev = a_expr_2_sympy
 
     remaining_rels = None
@@ -372,15 +387,15 @@ def rel_2_cas_expr(rel: Ast.Rel, scope: Definitions) -> CasExprV2:
 
 
 # Transform an Ast.AExpr into a CasExpr
-def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Definitions) -> CasExprV2:
+def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
     return ((a_expr_2_sympy(expr, scope), ctx_to_loc(expr.ctx)),)
 
 
-def a_expr_2_sympy(expr: Ast.AExpr, s: Definitions) -> sp.Basic | sp.MatrixBase:
-    expr = a_expr_subs(
+def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
+    expr = a_expr_sub_bindings(
         expr,
         s,
-        lambda la, lb: a_expr_2_sympy(la.value, s) == a_expr_2_sympy(lb.value, s),
+        literal_sp_comparer(s)
     )
     return _a_expr_2_sympy(expr)
 
@@ -512,7 +527,7 @@ def _a_expr_2_sympy(expr: Ast.AExpr) -> sp.Basic | sp.MatrixBase:
         case Ast.Integral(_, expr, diff, bounds):
             assert bounds is not None
             start, end = bounds
-            return sp.integrate(ev(exp), (ev(diff), ev(star), ev(end)))
+            return sp.integrate(ev(expr), (ev(diff), ev(start), ev(end)))
 
         case Ast.Differential(_, expr, diffs):
             return sp.diff(

@@ -10,14 +10,14 @@ from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     BoundParam,
     LiteralParam,
-    Definitions,
+    Scope,
     Signature,
 )
 
 
 class TestScope:
     def test_scope(self: Self) -> None:
-        s: Definitions = Definitions()
+        s = Scope()
 
         s.register_single(
             (
@@ -36,7 +36,7 @@ class TestScope:
 
     def test_scope_more(self: Self) -> None:
         sys.setrecursionlimit(100000)
-        s: Definitions = Definitions()
+        s = Scope()
 
         s.register(
             (
@@ -65,3 +65,4 @@ class TestScope:
 
         tsp = a_expr_2_sympy(expr, s)
         assert tsp == sum(range(11))
+
