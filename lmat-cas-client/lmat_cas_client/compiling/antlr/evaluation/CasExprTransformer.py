@@ -48,6 +48,8 @@ def ctx_to_loc(ctx: ParserRuleContext) -> LocRange:
     return (start_token.start, end_token.stop)
 
 
+
+
 def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
     node: TNode,
     visitor: Callable[[TChild], TChild],
@@ -55,18 +57,34 @@ def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
 ):
     """
     Call visitor on all fields of node which extend AstNode.
-    This also includes all AstNode's in pure AstNode tuples.
+    This also includes all AstNode's in arbitrarily nested tuples and lists.
 
     the visitor returns a new child node which the previous child is replaced with.
     returns a new version of node, which contains the newly replaced children.
 
     visitor is not invoked for fields present in exclude_children.
     """
+
+    def _visit_nested(
+        val: object,
+        visitor: Callable[[TChild], TChild],
+    ) -> object:
+        match val:
+            case Ast.AstNode() as child:
+                return visitor(cast(TChild, child))
+            case (list() | tuple()) as children:
+                return type(children)(
+                    _visit_nested(child, visitor)
+                    for child in children
+                )
+            case _:
+                return val
+
     exclude_children = exclude_children or set()
 
     node_fields: tuple[attrs.Attribute[TNode]] = attrs.fields(type(node))
 
-    new_children: dict[str, TChild | tuple[TChild | None, ...]] = {}
+    new_children: dict[str, object] = {}
 
     for field in node_fields:
         field_val = getattr(node, field.name)
@@ -74,19 +92,9 @@ def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
         if field in exclude_children:
             continue
 
-        match field_val:
-            case Ast.AstNode() as child:
-                new_children[field.name] = visitor(cast(TChild, child))
-            # TODO: this should just be any nested iterable here...
-            case tuple() as children if all(
-                isinstance(child, Ast.AstNode) or child is None for child in children
-            ):
-                new_children[field.name] = tuple(
-                    visitor(cast(TChild, child)) if child is not None else None
-                    for child in children
-                )
-            case _:
-                pass
+        new_val = _visit_nested(field_val, visitor)
+        if new_val is not field_val:
+            new_children[field.name] = new_val
 
     return attrs.evolve(node, **new_children)
 

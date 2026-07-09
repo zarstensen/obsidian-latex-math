@@ -1,4 +1,4 @@
-# Generated from ExprLexer.g4 by ANTLR 4.13.2
+# Generated from AlgExprLexer.g4 by ANTLR 4.13.2
 from antlr4 import *
 from io import StringIO
 import sys
@@ -12,7 +12,7 @@ from enum import Enum
 from antlr4 import CommonTokenStream, InputStream
 
 def stream_from_src(src: str) -> CommonTokenStream:
-	return CommonTokenStream(ExprLexer(InputStream(src)))
+	return CommonTokenStream(AlgExprLexer(InputStream(src)))
 
 class AddMode(Enum):
     DEFAULT = 0
@@ -735,7 +735,7 @@ def serializedATN():
         0,1,133,13,7,12,0,7,13,0,1,136,14,7,49,0,2,0,0,1,137,15,7,55,0
     ]
 
-class ExprLexer(Lexer):
+class AlgExprLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -886,7 +886,7 @@ class ExprLexer(Lexer):
                   "ARG_PLUS", "ARG_MINUS", "ARG_LBRACE", "ARG_LBRACKET", 
                   "ARG_WS" ]
 
-    grammarFileName = "ExprLexer.g4"
+    grammarFileName = "AlgExprLexer.g4"
 
     def __init__(self, input=None, output:TextIO = sys.stdout):
         super().__init__(input, output)

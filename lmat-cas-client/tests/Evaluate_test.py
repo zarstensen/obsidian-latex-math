@@ -1,4 +1,6 @@
 import pytest
+from sympy import *
+
 from lmat_cas_client.command_handlers.ApartHandler import *
 from lmat_cas_client.command_handlers.EvalfHandler import *
 from lmat_cas_client.command_handlers.EvalHandler import *
@@ -9,7 +11,6 @@ from lmat_cas_client.compiling.Compiler import (
     LatexToDefStoreCompiler,
 )
 from lmat_cas_client.LmatEnvironment import EnvDefinition
-from sympy import *
 
 
 ## Tests the evaluate mode.

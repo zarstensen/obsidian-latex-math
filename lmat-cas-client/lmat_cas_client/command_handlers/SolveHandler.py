@@ -7,7 +7,7 @@ from sympy.solvers.solveset import NonlinearError
 
 from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.compiling.Compiler import (
-    lmat_env_to_definition_store,
+    lmat_env_to_scope,
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
@@ -105,7 +105,7 @@ class SolveHandler(CompilingCommandHandler):
     def handle(self, message: SolveMessage | MessageLike) -> SolveResult:
         message = SolveMessage.model_validate(message)
 
-        definition_store = lmat_env_to_definition_store(
+        definition_store = lmat_env_to_scope(
             message.environment, self._def_store_compiler
         )
 
@@ -199,7 +199,7 @@ class SolveInfoHandler(CompilingCommandHandler):
     @override
     def handle(self, message: SolveInfoMessage | MessageLike) -> SolveInfoResult:
         message = SolveInfoMessage.model_validate(message)
-        definition_store = lmat_env_to_definition_store(
+        definition_store = lmat_env_to_scope(
             message.environment, self._def_store_compiler
         )
         equations = list(

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sympy import *
 
 from lmat_cas_client.compiling.Compiler import (
-    lmat_env_to_definition_store,
+    lmat_env_to_scope,
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
@@ -34,7 +34,7 @@ class ConvertSympyHandler(CompilingCommandHandler):
         return ConvertSympyResult(
             self._cas_expr_compiler.compile(
                 message.expression,
-                lmat_env_to_definition_store(
+                lmat_env_to_scope(
                     message.environment, self._def_store_compiler
                 ),
             ).get_expr(-1)

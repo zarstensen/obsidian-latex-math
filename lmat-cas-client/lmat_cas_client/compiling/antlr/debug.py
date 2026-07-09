@@ -14,8 +14,8 @@ from antlr4 import (
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
 
 from .evaluation.CasExprTransformer import alg_stmt_2_cas_expr, a_expr_resolve_ir
-from .ExprGrammar import ExprGrammar
-from .ExprLexer import ExprLexer
+from .AlgExprGrammar import AlgExprGrammar
+from .AlgExprLexer import AlgExprLexer
 
 IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
@@ -94,7 +94,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
 
         rule_alias = type(node).__name__.removesuffix("Context")
 
-        rule_name = ExprGrammar.ruleNames[node.getRuleIndex()]
+        rule_name = AlgExprGrammar.ruleNames[node.getRuleIndex()]
 
         if rule_alias.lower() == rule_name.lower():
             label = f"{rule_name}"
@@ -117,7 +117,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         self.__term_subgraph.add_node(
             pydot.Node(
                 id,
-                label=f'<{ExprGrammar.symbolicNames[node.getSymbol().type]}<br/><font fontname="monospace">{html.escape(node.getText())}</font>>',
+                label=f'<{AlgExprGrammar.symbolicNames[node.getSymbol().type]}<br/><font fontname="monospace">{html.escape(node.getText())}</font>>',
                 xlabel=f'<<font color="#004D62">* {node.getSymbol().tokenIndex}</font>>',
             )
         )
@@ -133,7 +133,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         symbol = node.getSymbol()
 
         if symbol and symbol.tokenIndex != -1:
-            label = f"{ExprGrammar.symbolicNames[symbol.type]}\n\\<unexpected: {symbol.text}\\>"
+            label = f"{AlgExprGrammar.symbolicNames[symbol.type]}\n\\<unexpected: {symbol.text}\\>"
 
         self.__err_subgraph.add_node(pydot.Node(id, label=label))
         return id
@@ -152,7 +152,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
 #     print("syntax errors")
 
 input_stream = FileStream(IN_FILE)
-lexer = ExprLexer(input_stream)
+lexer = AlgExprLexer(input_stream)
 stream = CommonTokenStream(lexer)
 
 # Debug: print all tokens lexed from the input stream
@@ -163,14 +163,14 @@ end = time()
 print("======== TOKENS ========")
 for t in tokens:
     try:
-        name = ExprGrammar.symbolicNames[t.type]
+        name = AlgExprGrammar.symbolicNames[t.type]
     except Exception:
         name = str(t.type)
     print(f"{t.tokenIndex}: {name}\t{repr(t.text)}")
 
 print(f"Lex Time: {end - start} ms")
 start = time()
-parser = ExprGrammar(stream)
+parser = AlgExprGrammar(stream)
 def iff(x):
 	print(f"CHECKING {x}")
 	return False

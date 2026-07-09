@@ -7,7 +7,7 @@ from lmat_cas_client.compiling.Compiler import (
     LatexToDefStoreCompiler,
     LatexToLogicCasExprCompiler,
     LatexToLogicDefStoreCompiler,
-    lmat_env_to_definition_store,
+    lmat_env_to_scope,
 )
 from lmat_cas_client.compiling.definition.DefinitionStore import CyclicDependencyError
 from lmat_cas_client.compiling.parsing import PrettyParserError

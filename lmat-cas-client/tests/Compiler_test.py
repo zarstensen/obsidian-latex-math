@@ -7,7 +7,7 @@ from lmat_cas_client.compiling.Compiler import (
     LatexToDefStoreCompiler,
     LatexToLogicCasExprCompiler,
     LatexToLogicDefStoreCompiler,
-    lmat_env_to_definition_store,
+    lmat_env_to_scope,
 )
 from lmat_cas_client.compiling.definition.DefinitionStore import CyclicDependencyError
 from lmat_cas_client.compiling.parsing import PrettyParserError
@@ -28,7 +28,7 @@ class TestLatexToCasExprCompiler:
     ) -> CasExpr:
         environment = LmatEnvironment.model_validate(environment)
         return self.expr_compiler.compile(
-            expr, lmat_env_to_definition_store(environment, self.store_compiler)
+            expr, lmat_env_to_scope(environment, self.store_compiler)
         )
 
     def _parse_single_expr(
@@ -932,7 +932,7 @@ class TestLatexToLogicCompiler:
         environment = LmatEnvironment.model_validate(environment)
         return self.compiler.compile(
             expr,
-            lmat_env_to_definition_store(environment, self.store_compiler),
+            lmat_env_to_scope(environment, self.store_compiler),
         )
 
     def _parse_single_expr(

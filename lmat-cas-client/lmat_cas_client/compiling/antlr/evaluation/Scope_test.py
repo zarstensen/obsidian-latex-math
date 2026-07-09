@@ -3,7 +3,7 @@ from typing import Self
 
 import pytest
 
-from lmat_cas_client.compiling.antlr import Ast, ExprLexer
+from lmat_cas_client.compiling.antlr import Ast, AlgExprLexer
 from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import (
     a_expr_2_sympy,
     a_expr_resolve_ambig_calls,
@@ -15,11 +15,11 @@ from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     Scope,
     Signature,
 )
-from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
+from lmat_cas_client.compiling.antlr.AlgExprGrammar import AlgExprGrammar
 
 
 def parse(src: str) -> Ast.AExpr:
-    return ExprGrammar(ExprLexer.stream_from_src(src)).a_expr().res
+    return AlgExprGrammar(AlgExprLexer.stream_from_src(src)).a_expr().res
 
 
 def lit_eq(a: LiteralParam, b: LiteralParam) -> bool:
@@ -419,11 +419,11 @@ class TestScopeIntegration:
                     head_id="x",
                     index_params=(LiteralParam(parse("i")),),
                 ),
-                ExprGrammar(ExprLexer.stream_from_src("42")).a_expr().res,
+                AlgExprGrammar(AlgExprLexer.stream_from_src("42")).a_expr().res,
             )
         )
 
-        expr = ExprGrammar(ExprLexer.stream_from_src("x_i")).a_expr().res
+        expr = AlgExprGrammar(AlgExprLexer.stream_from_src("x_i")).a_expr().res
 
         tsp = a_expr_2_sympy(expr, s)
         assert tsp == 42
@@ -440,8 +440,8 @@ class TestScopeIntegration:
                         head_id="x",
                         index_params=(BoundParam(Signature(head_id="i")),),
                     ),
-                    ExprGrammar(
-                        ExprLexer.stream_from_src(r"x_{i - 1} + (\sum_{i=0}^{i} i^2)^i")
+                    AlgExprGrammar(
+                        AlgExprLexer.stream_from_src(r"x_{i - 1} + (\sum_{i=0}^{i} i^2)^i")
                     )
                     .a_expr()
                     .res,
@@ -451,12 +451,12 @@ class TestScopeIntegration:
                         head_id="x",
                         index_params=(LiteralParam(parse("0")),),
                     ),
-                    ExprGrammar(ExprLexer.stream_from_src("0")).a_expr().res,
+                    AlgExprGrammar(AlgExprLexer.stream_from_src("0")).a_expr().res,
                 ),
             )
         )
 
-        expr = ExprGrammar(ExprLexer.stream_from_src("x_{10}")).a_expr().res
+        expr = AlgExprGrammar(AlgExprLexer.stream_from_src("x_{10}")).a_expr().res
 
         tsp = a_expr_2_sympy(expr, s)
         assert tsp == sum(range(11))

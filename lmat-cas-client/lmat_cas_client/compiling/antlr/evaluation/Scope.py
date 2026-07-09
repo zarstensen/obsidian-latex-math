@@ -26,6 +26,7 @@ class LiteralParam:
 
     literal: Ast.AExpr
 
+
 type LiteralParams = tuple[LiteralParam, ...]
 
 
@@ -50,6 +51,7 @@ Type alias for the "head" of a :class:`Signature`.
 This refers to the primary symbol of the :class:`Signature`, appearing before any potential subscript or function arguments.
 e.g. ``"x"`` is the head id for ``x_{i}`` and ``"f"`` is the head id for ``f(x)``
 """
+
 
 @frozen
 class Signature:
@@ -139,7 +141,12 @@ class Signature:
         """
         Construct a :class:`GroupKey` for the current :class:`Signature`.
         """
-        return (self.head_id, self.subscript_form, len(self.index_params), len(self.arg_params))
+        return (
+            self.head_id,
+            self.subscript_form,
+            len(self.index_params),
+            len(self.arg_params),
+        )
 
     def override_priority_key(self) -> OverridePriorityKey:
         """
@@ -202,7 +209,9 @@ class Signature:
 
         return tuple(bindings)
 
-    def bind(self, target: Signature, literal_comparer: LiteralParam.EqChecker) -> tuple[Binding, ...]:
+    def bind(
+        self, target: Signature, literal_comparer: LiteralParam.EqChecker
+    ) -> tuple[Binding, ...]:
         bindings = self.try_bind(target, literal_comparer)
 
         if bindings is None:
@@ -247,7 +256,9 @@ class Scope:
             Signature.GroupKey, SortedList[Scope._DefEntry]
         ] = defaultdict(lambda: SortedList())
 
-    def register(self: Self, definitions: tuple[OptBinding, ...]) -> tuple[BindingId, ...]:
+    def register(
+        self: Self, definitions: Iterable[OptBinding]
+    ) -> tuple[BindingId, ...]:
         ids = []
 
         for defi in definitions:
@@ -283,7 +294,7 @@ class Scope:
             (signature.override_priority_key(), binding_id)
         )
 
-    def unregister(self: Self, definition_ids: tuple[BindingId, ...]):
+    def unregister(self: Self, definition_ids: Iterable[BindingId]):
         for def_id in definition_ids:
             self.unregister_single(def_id)
 
@@ -307,7 +318,6 @@ class Scope:
 
         if len(signature_group) == 0:
             del self._signature_priority_list[signature.group_key()]
-
 
     def get_binding(self, id: BindingId) -> Binding:
         """
@@ -359,5 +369,6 @@ class Scope:
         This function ensures the list is returned in the correct order.
         """
         return map(
-            lambda de: de[1], reversed(self._signature_priority_list.get(signature.group_key(), ()))
+            lambda de: de[1],
+            reversed(self._signature_priority_list.get(signature.group_key(), ())),
         )

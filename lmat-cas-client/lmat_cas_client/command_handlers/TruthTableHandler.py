@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 from lmat_cas_client.Client import HandlerError
 from lmat_cas_client.compiling.Compiler import (
-    lmat_env_to_definition_store,
+    lmat_env_to_scope,
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
@@ -94,7 +94,7 @@ class TruthTableHandler(CompilingCommandHandler):
     def handle(self, message: TruthTableMessage | MessageLike) -> TruthTableResult:
         message = TruthTableMessage.model_validate(message)
 
-        definitions_store = lmat_env_to_definition_store(
+        definitions_store = lmat_env_to_scope(
             message.environment, self._def_store_compiler
         )
         sympy_expr = self._cas_expr_compiler.compile(

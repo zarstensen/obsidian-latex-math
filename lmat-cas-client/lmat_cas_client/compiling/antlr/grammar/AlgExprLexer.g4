@@ -1,4 +1,4 @@
-lexer grammar ExprLexer;
+lexer grammar AlgExprLexer;
 
 options {
     language = Python3;
@@ -9,7 +9,7 @@ from enum import Enum
 from antlr4 import CommonTokenStream, InputStream
 
 def stream_from_src(src: str) -> CommonTokenStream:
-	return CommonTokenStream(ExprLexer(InputStream(src)))
+	return CommonTokenStream(AlgExprLexer(InputStream(src)))
 
 class AddMode(Enum):
     DEFAULT = 0

@@ -10,7 +10,7 @@ from typing import Any
 from lmat_cas_client.compiling.Compiler import (
     LatexToCasExprCompiler,
     LatexToDefStoreCompiler,
-    lmat_env_to_definition_store,
+    lmat_env_to_scope,
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from sympy import (
@@ -100,7 +100,7 @@ def parse_latex_lark(latex_str, lmat_env: LmatEnvironment | Any = LmatEnvironmen
     return (
         LatexToCasExprCompiler()
         .compile(
-            latex_str, lmat_env_to_definition_store(lmat_env, LatexToDefStoreCompiler())
+            latex_str, lmat_env_to_scope(lmat_env, LatexToDefStoreCompiler())
         )
         .get_expr(-1)
     )

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Mapping
 
-from lmat_cas_client.compiling.Compiler import CasExprCompiler, DefStoreCompiler
+from lmat_cas_client.compiling.Compiler import CasExprCompiler, BindingsCompiler
 
 
 class CommandResult(ABC):
@@ -42,7 +42,7 @@ class CompilingCommandHandler(CommandHandler, ABC):
     """
 
     def __init__(
-        self, cas_expr_compiler: CasExprCompiler, def_store_compiler: DefStoreCompiler
+        self, cas_expr_compiler: CasExprCompiler, def_store_compiler: BindingsCompiler
     ):
         super().__init__()
         self._cas_expr_compiler = cas_expr_compiler

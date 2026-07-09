@@ -1,4 +1,4 @@
-# Generated from ExprGrammar.g4 by ANTLR 4.13.2
+# Generated from AlgExprGrammar.g4 by ANTLR 4.13.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -310,9 +310,9 @@ def serializedATN():
         777,780,790
     ]
 
-class ExprGrammar ( Parser ):
+class AlgExprGrammar ( Parser ):
 
-    grammarFileName = "ExprGrammar.g4"
+    grammarFileName = "AlgExprGrammar.g4"
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -517,11 +517,11 @@ class ExprGrammar ( Parser ):
             self._alg_statement = None # Alg_statementContext
 
         def alg_statement(self):
-            return self.getTypedRuleContext(ExprGrammar.Alg_statementContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Alg_statementContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_debug
+            return AlgExprGrammar.RULE_debug
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterDebug" ):
@@ -542,7 +542,7 @@ class ExprGrammar ( Parser ):
 
     def debug(self):
 
-        localctx = ExprGrammar.DebugContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.DebugContext(self, self._ctx, self.state)
         self.enterRule(localctx, 0, self.RULE_debug)
         try:
             self.enterOuterAlt(localctx, 1)
@@ -570,22 +570,22 @@ class ExprGrammar ( Parser ):
             self._system = None # SystemContext
 
         def EOF(self):
-            return self.getToken(ExprGrammar.EOF, 0)
+            return self.getToken(AlgExprGrammar.EOF, 0)
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def relation(self):
-            return self.getTypedRuleContext(ExprGrammar.RelationContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.RelationContext,0)
 
 
         def system(self):
-            return self.getTypedRuleContext(ExprGrammar.SystemContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.SystemContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_alg_statement
+            return AlgExprGrammar.RULE_alg_statement
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterAlg_statement" ):
@@ -606,7 +606,7 @@ class ExprGrammar ( Parser ):
 
     def alg_statement(self):
 
-        localctx = ExprGrammar.Alg_statementContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Alg_statementContext(self, self._ctx, self.state)
         self.enterRule(localctx, 2, self.RULE_alg_statement)
         try:
             self.enterOuterAlt(localctx, 1)
@@ -633,7 +633,7 @@ class ExprGrammar ( Parser ):
 
 
             self.state = 86
-            self.match(ExprGrammar.EOF)
+            self.match(AlgExprGrammar.EOF)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -654,15 +654,15 @@ class ExprGrammar ( Parser ):
             self._relation = None # RelationContext
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def relation(self):
-            return self.getTypedRuleContext(ExprGrammar.RelationContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.RelationContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_system_el
+            return AlgExprGrammar.RULE_system_el
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSystem_el" ):
@@ -683,7 +683,7 @@ class ExprGrammar ( Parser ):
 
     def system_el(self):
 
-        localctx = ExprGrammar.System_elContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.System_elContext(self, self._ctx, self.state)
         self.enterRule(localctx, 4, self.RULE_system_el)
         try:
             self.state = 94
@@ -724,19 +724,19 @@ class ExprGrammar ( Parser ):
 
         def system_el(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.System_elContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.System_elContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.System_elContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.System_elContext,i)
 
 
         def ENV_ROW_SEP(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.ENV_ROW_SEP)
+                return self.getTokens(AlgExprGrammar.ENV_ROW_SEP)
             else:
-                return self.getToken(ExprGrammar.ENV_ROW_SEP, i)
+                return self.getToken(AlgExprGrammar.ENV_ROW_SEP, i)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_system_body
+            return AlgExprGrammar.RULE_system_body
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSystem_body" ):
@@ -757,7 +757,7 @@ class ExprGrammar ( Parser ):
 
     def system_body(self):
 
-        localctx = ExprGrammar.System_bodyContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.System_bodyContext(self, self._ctx, self.state)
         self.enterRule(localctx, 6, self.RULE_system_body)
         self._la = 0 # Token type
         try:
@@ -771,7 +771,7 @@ class ExprGrammar ( Parser ):
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
                     self.state = 98
-                    self.match(ExprGrammar.ENV_ROW_SEP)
+                    self.match(AlgExprGrammar.ENV_ROW_SEP)
                     self.state = 99
                     localctx._system_el = self.system_el()
                     localctx.res.append(localctx._system_el.res) 
@@ -784,7 +784,7 @@ class ExprGrammar ( Parser ):
             _la = self._input.LA(1)
             while _la==77:
                 self.state = 107
-                self.match(ExprGrammar.ENV_ROW_SEP)
+                self.match(AlgExprGrammar.ENV_ROW_SEP)
                 self.state = 112
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
@@ -808,17 +808,17 @@ class ExprGrammar ( Parser ):
             self._system_body = None # System_bodyContext
 
         def BEGIN_ENV(self):
-            return self.getToken(ExprGrammar.BEGIN_ENV, 0)
+            return self.getToken(AlgExprGrammar.BEGIN_ENV, 0)
 
         def system_body(self):
-            return self.getTypedRuleContext(ExprGrammar.System_bodyContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.System_bodyContext,0)
 
 
         def END_ENV(self):
-            return self.getToken(ExprGrammar.END_ENV, 0)
+            return self.getToken(AlgExprGrammar.END_ENV, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_system_env
+            return AlgExprGrammar.RULE_system_env
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSystem_env" ):
@@ -839,17 +839,17 @@ class ExprGrammar ( Parser ):
 
     def system_env(self):
 
-        localctx = ExprGrammar.System_envContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.System_envContext(self, self._ctx, self.state)
         self.enterRule(localctx, 8, self.RULE_system_env)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 113
-            self.match(ExprGrammar.BEGIN_ENV)
+            self.match(AlgExprGrammar.BEGIN_ENV)
             self.state = 114
             localctx._system_body = self.system_body()
             localctx.res = Ast.SystemEnv(localctx, localctx._system_body.res)
             self.state = 116
-            self.match(ExprGrammar.END_ENV)
+            self.match(AlgExprGrammar.END_ENV)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -871,19 +871,19 @@ class ExprGrammar ( Parser ):
 
         def system_el(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.System_elContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.System_elContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.System_elContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.System_elContext,i)
 
 
         def AND(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.AND)
+                return self.getTokens(AlgExprGrammar.AND)
             else:
-                return self.getToken(ExprGrammar.AND, i)
+                return self.getToken(AlgExprGrammar.AND, i)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_system_and_chain
+            return AlgExprGrammar.RULE_system_and_chain
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSystem_and_chain" ):
@@ -904,7 +904,7 @@ class ExprGrammar ( Parser ):
 
     def system_and_chain(self):
 
-        localctx = ExprGrammar.System_and_chainContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.System_and_chainContext(self, self._ctx, self.state)
         self.enterRule(localctx, 10, self.RULE_system_and_chain)
         self._la = 0 # Token type
         try:
@@ -917,7 +917,7 @@ class ExprGrammar ( Parser ):
             _la = self._input.LA(1)
             while True:
                 self.state = 120
-                self.match(ExprGrammar.AND)
+                self.match(AlgExprGrammar.AND)
                 self.state = 121
                 localctx._system_el = self.system_el()
                 localctx.elems.append(localctx._system_el.res)
@@ -948,15 +948,15 @@ class ExprGrammar ( Parser ):
             self._system_and_chain = None # System_and_chainContext
 
         def system_env(self):
-            return self.getTypedRuleContext(ExprGrammar.System_envContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.System_envContext,0)
 
 
         def system_and_chain(self):
-            return self.getTypedRuleContext(ExprGrammar.System_and_chainContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.System_and_chainContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_system
+            return AlgExprGrammar.RULE_system
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSystem" ):
@@ -977,7 +977,7 @@ class ExprGrammar ( Parser ):
 
     def system(self):
 
-        localctx = ExprGrammar.SystemContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.SystemContext(self, self._ctx, self.state)
         self.enterRule(localctx, 12, self.RULE_system)
         try:
             self.state = 136
@@ -1016,25 +1016,25 @@ class ExprGrammar ( Parser ):
             self.op = rule_t(type)
 
         def EQ(self):
-            return self.getToken(ExprGrammar.EQ, 0)
+            return self.getToken(AlgExprGrammar.EQ, 0)
 
         def NEQ(self):
-            return self.getToken(ExprGrammar.NEQ, 0)
+            return self.getToken(AlgExprGrammar.NEQ, 0)
 
         def LT(self):
-            return self.getToken(ExprGrammar.LT, 0)
+            return self.getToken(AlgExprGrammar.LT, 0)
 
         def LTE(self):
-            return self.getToken(ExprGrammar.LTE, 0)
+            return self.getToken(AlgExprGrammar.LTE, 0)
 
         def GT(self):
-            return self.getToken(ExprGrammar.GT, 0)
+            return self.getToken(AlgExprGrammar.GT, 0)
 
         def GTE(self):
-            return self.getToken(ExprGrammar.GTE, 0)
+            return self.getToken(AlgExprGrammar.GTE, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_rel_op
+            return AlgExprGrammar.RULE_rel_op
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterRel_op" ):
@@ -1055,7 +1055,7 @@ class ExprGrammar ( Parser ):
 
     def rel_op(self):
 
-        localctx = ExprGrammar.Rel_opContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Rel_opContext(self, self._ctx, self.state)
         self.enterRule(localctx, 14, self.RULE_rel_op)
         try:
             self.state = 150
@@ -1064,37 +1064,37 @@ class ExprGrammar ( Parser ):
             if token in [18]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 138
-                self.match(ExprGrammar.EQ)
+                self.match(AlgExprGrammar.EQ)
                 localctx.op = Ast.Eq
                 pass
             elif token in [19]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 140
-                self.match(ExprGrammar.NEQ)
+                self.match(AlgExprGrammar.NEQ)
                 localctx.op = Ast.Neq
                 pass
             elif token in [20]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 142
-                self.match(ExprGrammar.LT)
+                self.match(AlgExprGrammar.LT)
                 localctx.op = Ast.Lt
                 pass
             elif token in [21]:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 144
-                self.match(ExprGrammar.LTE)
+                self.match(AlgExprGrammar.LTE)
                 localctx.op = Ast.Lte
                 pass
             elif token in [22]:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 146
-                self.match(ExprGrammar.GT)
+                self.match(AlgExprGrammar.GT)
                 localctx.op = Ast.Gt
                 pass
             elif token in [23]:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 148
-                self.match(ExprGrammar.GTE)
+                self.match(AlgExprGrammar.GTE)
                 localctx.op = Ast.Gte
                 pass
             else:
@@ -1124,21 +1124,21 @@ class ExprGrammar ( Parser ):
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def rel_op(self):
-            return self.getTypedRuleContext(ExprGrammar.Rel_opContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Rel_opContext,0)
 
 
         def relation(self):
-            return self.getTypedRuleContext(ExprGrammar.RelationContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.RelationContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_relation
+            return AlgExprGrammar.RULE_relation
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterRelation" ):
@@ -1159,7 +1159,7 @@ class ExprGrammar ( Parser ):
 
     def relation(self):
 
-        localctx = ExprGrammar.RelationContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.RelationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 16, self.RULE_relation)
         try:
             self.state = 162
@@ -1236,157 +1236,157 @@ class ExprGrammar ( Parser ):
             self._func_args = None # Func_argsContext
 
         def INT(self):
-            return self.getToken(ExprGrammar.INT, 0)
+            return self.getToken(AlgExprGrammar.INT, 0)
 
         def int_bounds(self):
-            return self.getTypedRuleContext(ExprGrammar.Int_boundsContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Int_boundsContext,0)
 
 
         def FRAC(self):
-            return self.getToken(ExprGrammar.FRAC, 0)
+            return self.getToken(AlgExprGrammar.FRAC, 0)
 
         def LBRACE(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.LBRACE)
+                return self.getTokens(AlgExprGrammar.LBRACE)
             else:
-                return self.getToken(ExprGrammar.LBRACE, i)
+                return self.getToken(AlgExprGrammar.LBRACE, i)
 
         def DIFFERENTIAL(self):
-            return self.getToken(ExprGrammar.DIFFERENTIAL, 0)
+            return self.getToken(AlgExprGrammar.DIFFERENTIAL, 0)
 
         def RBRACE(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.RBRACE)
+                return self.getTokens(AlgExprGrammar.RBRACE)
             else:
-                return self.getToken(ExprGrammar.RBRACE, i)
+                return self.getToken(AlgExprGrammar.RBRACE, i)
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def latex_cmd_arg(self):
-            return self.getTypedRuleContext(ExprGrammar.Latex_cmd_argContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Latex_cmd_argContext,0)
 
 
         def PHYS_PARTIAL_DERIVATIVE(self):
-            return self.getToken(ExprGrammar.PHYS_PARTIAL_DERIVATIVE, 0)
+            return self.getToken(AlgExprGrammar.PHYS_PARTIAL_DERIVATIVE, 0)
 
         def LBRACKET(self):
-            return self.getToken(ExprGrammar.LBRACKET, 0)
+            return self.getToken(AlgExprGrammar.LBRACKET, 0)
 
         def RBRACKET(self):
-            return self.getToken(ExprGrammar.RBRACKET, 0)
+            return self.getToken(AlgExprGrammar.RBRACKET, 0)
 
         def PHYS_DERIVATIVE(self):
-            return self.getToken(ExprGrammar.PHYS_DERIVATIVE, 0)
+            return self.getToken(AlgExprGrammar.PHYS_DERIVATIVE, 0)
 
         def diff_vars(self):
-            return self.getTypedRuleContext(ExprGrammar.Diff_varsContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Diff_varsContext,0)
 
 
         def LIMIT(self):
-            return self.getToken(ExprGrammar.LIMIT, 0)
+            return self.getToken(AlgExprGrammar.LIMIT, 0)
 
         def UNDERSCORE(self):
-            return self.getToken(ExprGrammar.UNDERSCORE, 0)
+            return self.getToken(AlgExprGrammar.UNDERSCORE, 0)
 
         def LIMIT_ARROW(self):
-            return self.getToken(ExprGrammar.LIMIT_ARROW, 0)
+            return self.getToken(AlgExprGrammar.LIMIT_ARROW, 0)
 
         def limit_dir(self):
-            return self.getTypedRuleContext(ExprGrammar.Limit_dirContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Limit_dirContext,0)
 
 
         def symbol(self):
-            return self.getTypedRuleContext(ExprGrammar.SymbolContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.SymbolContext,0)
 
 
         def series_range_args(self):
-            return self.getTypedRuleContext(ExprGrammar.Series_range_argsContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Series_range_argsContext,0)
 
 
         def LPAREN(self):
-            return self.getToken(ExprGrammar.LPAREN, 0)
+            return self.getToken(AlgExprGrammar.LPAREN, 0)
 
         def RPAREN(self):
-            return self.getToken(ExprGrammar.RPAREN, 0)
+            return self.getToken(AlgExprGrammar.RPAREN, 0)
 
         def SUM(self):
-            return self.getToken(ExprGrammar.SUM, 0)
+            return self.getToken(AlgExprGrammar.SUM, 0)
 
         def PRODUCT(self):
-            return self.getToken(ExprGrammar.PRODUCT, 0)
+            return self.getToken(AlgExprGrammar.PRODUCT, 0)
 
         def PLUS(self):
-            return self.getToken(ExprGrammar.PLUS, 0)
+            return self.getToken(AlgExprGrammar.PLUS, 0)
 
         def MINUS(self):
-            return self.getToken(ExprGrammar.MINUS, 0)
+            return self.getToken(AlgExprGrammar.MINUS, 0)
 
         def PIPE(self):
-            return self.getToken(ExprGrammar.PIPE, 0)
+            return self.getToken(AlgExprGrammar.PIPE, 0)
 
         def eval_at_arg(self):
-            return self.getTypedRuleContext(ExprGrammar.Eval_at_argContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Eval_at_argContext,0)
 
 
         def LBLANK(self):
-            return self.getToken(ExprGrammar.LBLANK, 0)
+            return self.getToken(AlgExprGrammar.LBLANK, 0)
 
         def combinatorial(self):
-            return self.getTypedRuleContext(ExprGrammar.CombinatorialContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.CombinatorialContext,0)
 
 
         def delim_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.Delim_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Delim_exprContext,0)
 
 
         def cmd_func(self):
-            return self.getTypedRuleContext(ExprGrammar.Cmd_funcContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Cmd_funcContext,0)
 
 
         def matrix(self):
-            return self.getTypedRuleContext(ExprGrammar.MatrixContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.MatrixContext,0)
 
 
         def det_matrix(self):
-            return self.getTypedRuleContext(ExprGrammar.Det_matrixContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Det_matrixContext,0)
 
 
         def NUMBER(self):
-            return self.getToken(ExprGrammar.NUMBER, 0)
+            return self.getToken(AlgExprGrammar.NUMBER, 0)
 
         def DIV(self):
-            return self.getToken(ExprGrammar.DIV, 0)
+            return self.getToken(AlgExprGrammar.DIV, 0)
 
         def MULT(self):
-            return self.getToken(ExprGrammar.MULT, 0)
+            return self.getToken(AlgExprGrammar.MULT, 0)
 
         def DOT_PROD(self):
-            return self.getToken(ExprGrammar.DOT_PROD, 0)
+            return self.getToken(AlgExprGrammar.DOT_PROD, 0)
 
         def MOD(self):
-            return self.getToken(ExprGrammar.MOD, 0)
+            return self.getToken(AlgExprGrammar.MOD, 0)
 
         def TIMES(self):
-            return self.getToken(ExprGrammar.TIMES, 0)
+            return self.getToken(AlgExprGrammar.TIMES, 0)
 
         def XPROD(self):
-            return self.getToken(ExprGrammar.XPROD, 0)
+            return self.getToken(AlgExprGrammar.XPROD, 0)
 
         def postfix_op(self):
-            return self.getTypedRuleContext(ExprGrammar.Postfix_opContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Postfix_opContext,0)
 
 
         def func_args(self):
-            return self.getTypedRuleContext(ExprGrammar.Func_argsContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Func_argsContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_a_expr
+            return AlgExprGrammar.RULE_a_expr
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterA_expr" ):
@@ -1407,7 +1407,7 @@ class ExprGrammar ( Parser ):
     def a_expr(self, _p:int=0):
         _parentctx = self._ctx
         _parentState = self.state
-        localctx = ExprGrammar.A_exprContext(self, self._ctx, _parentState)
+        localctx = AlgExprGrammar.A_exprContext(self, self._ctx, _parentState)
         _prevctx = localctx
         _startState = 18
         self.enterRecursionRule(localctx, 18, self.RULE_a_expr, _p)
@@ -1419,19 +1419,19 @@ class ExprGrammar ( Parser ):
             la_ = self._interp.adaptivePredict(self._input,16,self._ctx)
             if la_ == 1:
                 self.state = 165
-                self.match(ExprGrammar.INT)
+                self.match(AlgExprGrammar.INT)
                 self.state = 166
                 localctx._int_bounds = self.int_bounds()
                 self.state = 167
-                self.match(ExprGrammar.FRAC)
+                self.match(AlgExprGrammar.FRAC)
                 self.state = 168
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 169
-                self.match(ExprGrammar.DIFFERENTIAL)
+                self.match(AlgExprGrammar.DIFFERENTIAL)
                 self.state = 170
                 localctx.diff = localctx._a_expr = self.a_expr(0)
                 self.state = 171
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 172
                 localctx.recip_integrand = localctx._latex_cmd_arg = self.latex_cmd_arg()
                 localctx.res = Ast.Integral(localctx, Ast.DivOp(localctx.recip_integrand, Ast.Number(localctx.recip_integrand, "1"), localctx.recip_integrand.res), localctx.diff.res, localctx._int_bounds.bounds)
@@ -1439,13 +1439,13 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 2:
                 self.state = 175
-                self.match(ExprGrammar.INT)
+                self.match(AlgExprGrammar.INT)
                 self.state = 176
                 localctx._int_bounds = self.int_bounds()
                 self.state = 177
                 localctx.integrand = localctx._a_expr = self.a_expr(0)
                 self.state = 178
-                self.match(ExprGrammar.DIFFERENTIAL)
+                self.match(AlgExprGrammar.DIFFERENTIAL)
                 self.state = 179
                 localctx.diff = localctx._a_expr = self.a_expr(26)
                 localctx.res = Ast.Integral(localctx, localctx.integrand.res, localctx.diff.res, localctx._int_bounds.bounds)
@@ -1453,33 +1453,33 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 3:
                 self.state = 182
-                self.match(ExprGrammar.PHYS_PARTIAL_DERIVATIVE)
+                self.match(AlgExprGrammar.PHYS_PARTIAL_DERIVATIVE)
                 self.state = 187
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==55:
                     self.state = 183
-                    self.match(ExprGrammar.LBRACKET)
+                    self.match(AlgExprGrammar.LBRACKET)
                     self.state = 184
                     localctx._a_expr = self.a_expr(0)
                     self.state = 185
-                    self.match(ExprGrammar.RBRACKET)
+                    self.match(AlgExprGrammar.RBRACKET)
 
 
                 self.state = 189
                 localctx._latex_cmd_arg = self.latex_cmd_arg()
                 self.state = 190
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 191
                 localctx.diff_l = localctx._a_expr = self.a_expr(0)
                 self.state = 192
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 193
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 194
                 localctx.diff_r = localctx._a_expr = self.a_expr(0)
                 self.state = 195
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = Ast.Differential(localctx, localctx._latex_cmd_arg.res, [(localctx.diff_l.res, None), (localctx.diff_r.res, None)])
                 pass
 
@@ -1496,21 +1496,21 @@ class ExprGrammar ( Parser ):
                 _la = self._input.LA(1)
                 if _la==55:
                     self.state = 199
-                    self.match(ExprGrammar.LBRACKET)
+                    self.match(AlgExprGrammar.LBRACKET)
                     self.state = 200
                     localctx.degree = localctx._a_expr = self.a_expr(0)
                     self.state = 201
-                    self.match(ExprGrammar.RBRACKET)
+                    self.match(AlgExprGrammar.RBRACKET)
 
 
                 self.state = 205
                 localctx._latex_cmd_arg = self.latex_cmd_arg()
                 self.state = 206
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 207
                 localctx._a_expr = self.a_expr(0)
                 self.state = 208
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = Ast.Differential(localctx, localctx._latex_cmd_arg.res, [(localctx._a_expr.res, localctx.degree.res)])
                 pass
 
@@ -1527,11 +1527,11 @@ class ExprGrammar ( Parser ):
                 _la = self._input.LA(1)
                 if _la==55:
                     self.state = 212
-                    self.match(ExprGrammar.LBRACKET)
+                    self.match(AlgExprGrammar.LBRACKET)
                     self.state = 213
                     localctx.degree = localctx._a_expr = self.a_expr(0)
                     self.state = 214
-                    self.match(ExprGrammar.RBRACKET)
+                    self.match(AlgExprGrammar.RBRACKET)
 
 
                 self.state = 218
@@ -1543,63 +1543,63 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 6:
                 self.state = 222
-                self.match(ExprGrammar.FRAC)
+                self.match(AlgExprGrammar.FRAC)
                 self.state = 223
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 224
-                self.match(ExprGrammar.DIFFERENTIAL)
+                self.match(AlgExprGrammar.DIFFERENTIAL)
                 self.state = 229
                 self._errHandler.sync(self)
                 la_ = self._interp.adaptivePredict(self._input,11,self._ctx)
                 if la_ == 1:
                     self.state = 225
-                    self.match(ExprGrammar.LBRACKET)
+                    self.match(AlgExprGrammar.LBRACKET)
                     self.state = 226
                     localctx.degree = localctx._a_expr = self.a_expr(0)
                     self.state = 227
-                    self.match(ExprGrammar.RBRACKET)
+                    self.match(AlgExprGrammar.RBRACKET)
 
 
                 self.state = 231
                 localctx._a_expr = self.a_expr(0)
                 self.state = 232
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 233
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 234
                 localctx._diff_vars = self.diff_vars()
                 self.state = 235
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = Ast.Differential(localctx, localctx._a_expr.res, localctx._diff_vars.res)
                 pass
 
             elif la_ == 7:
                 self.state = 238
-                self.match(ExprGrammar.FRAC)
+                self.match(AlgExprGrammar.FRAC)
                 self.state = 239
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 240
-                self.match(ExprGrammar.DIFFERENTIAL)
+                self.match(AlgExprGrammar.DIFFERENTIAL)
                 self.state = 245
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==55:
                     self.state = 241
-                    self.match(ExprGrammar.LBRACKET)
+                    self.match(AlgExprGrammar.LBRACKET)
                     self.state = 242
                     localctx.degree = localctx._a_expr = self.a_expr(0)
                     self.state = 243
-                    self.match(ExprGrammar.RBRACKET)
+                    self.match(AlgExprGrammar.RBRACKET)
 
 
                 self.state = 247
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 248
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 249
                 localctx._diff_vars = self.diff_vars()
                 self.state = 250
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 251
                 localctx._a_expr = self.a_expr(21)
                 localctx.res = Ast.Differential(localctx, localctx._a_expr.res, localctx._diff_vars.res)
@@ -1607,21 +1607,21 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 8:
                 self.state = 254
-                self.match(ExprGrammar.LIMIT)
+                self.match(AlgExprGrammar.LIMIT)
                 self.state = 255
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 256
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 257
                 localctx.lim_var = localctx._symbol = self.symbol()
                 self.state = 258
-                self.match(ExprGrammar.LIMIT_ARROW)
+                self.match(AlgExprGrammar.LIMIT_ARROW)
                 self.state = 259
                 localctx.lim_poa = localctx._a_expr = self.a_expr(0)
                 self.state = 260
                 localctx._limit_dir = self.limit_dir()
                 self.state = 261
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 262
                 localctx._a_expr = self.a_expr(16)
                 localctx.res = Ast.Limit(localctx, localctx._a_expr.res, localctx.lim_var.res, localctx.lim_poa.res, localctx._limit_dir.res)
@@ -1633,12 +1633,12 @@ class ExprGrammar ( Parser ):
                 token = self._input.LA(1)
                 if token in [38]:
                     self.state = 265
-                    self.match(ExprGrammar.SUM)
+                    self.match(AlgExprGrammar.SUM)
                     localctx.node_t = Ast.Sum
                     pass
                 elif token in [39]:
                     self.state = 267
-                    self.match(ExprGrammar.PRODUCT)
+                    self.match(AlgExprGrammar.PRODUCT)
                     localctx.node_t = Ast.Product
                     pass
                 else:
@@ -1647,11 +1647,11 @@ class ExprGrammar ( Parser ):
                 self.state = 271
                 localctx._series_range_args = self.series_range_args()
                 self.state = 272
-                self.match(ExprGrammar.LPAREN)
+                self.match(AlgExprGrammar.LPAREN)
                 self.state = 273
                 localctx._a_expr = self.a_expr(0)
                 self.state = 274
-                self.match(ExprGrammar.RPAREN)
+                self.match(AlgExprGrammar.RPAREN)
                 localctx.res = localctx.node_t(localctx, localctx._a_expr.res, localctx._series_range_args.symb, (localctx._series_range_args.start, localctx._series_range_args.end))
                 pass
 
@@ -1661,12 +1661,12 @@ class ExprGrammar ( Parser ):
                 token = self._input.LA(1)
                 if token in [38]:
                     self.state = 277
-                    self.match(ExprGrammar.SUM)
+                    self.match(AlgExprGrammar.SUM)
                     localctx.node_t = Ast.Sum
                     pass
                 elif token in [39]:
                     self.state = 279
-                    self.match(ExprGrammar.PRODUCT)
+                    self.match(AlgExprGrammar.PRODUCT)
                     localctx.node_t = Ast.Product
                     pass
                 else:
@@ -1685,12 +1685,12 @@ class ExprGrammar ( Parser ):
                 token = self._input.LA(1)
                 if token in [12]:
                     self.state = 287
-                    self.match(ExprGrammar.PLUS)
+                    self.match(AlgExprGrammar.PLUS)
                     localctx.node_t = Ast.UPlusOp
                     pass
                 elif token in [13]:
                     self.state = 289
-                    self.match(ExprGrammar.MINUS)
+                    self.match(AlgExprGrammar.MINUS)
                     localctx.node_t = Ast.UMinusOp
                     pass
                 else:
@@ -1703,13 +1703,13 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 12:
                 self.state = 296
-                self.match(ExprGrammar.LPAREN)
+                self.match(AlgExprGrammar.LPAREN)
                 self.state = 297
                 localctx.expr = localctx._a_expr = self.a_expr(0)
                 self.state = 298
-                self.match(ExprGrammar.RPAREN)
+                self.match(AlgExprGrammar.RPAREN)
                 self.state = 299
-                self.match(ExprGrammar.PIPE)
+                self.match(AlgExprGrammar.PIPE)
                 self.state = 300
                 localctx._eval_at_arg = self.eval_at_arg()
                 localctx.res = Ast.EvalAt(localctx, localctx.expr.res, localctx._eval_at_arg.subs_start, localctx._eval_at_arg.subs_end)
@@ -1717,11 +1717,11 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 13:
                 self.state = 303
-                self.match(ExprGrammar.LBLANK)
+                self.match(AlgExprGrammar.LBLANK)
                 self.state = 304
                 localctx.expr = localctx._a_expr = self.a_expr(0)
                 self.state = 305
-                self.match(ExprGrammar.PIPE)
+                self.match(AlgExprGrammar.PIPE)
                 self.state = 306
                 localctx._eval_at_arg = self.eval_at_arg()
                 localctx.res = Ast.EvalAt(localctx, localctx.expr.res, localctx._eval_at_arg.subs_start, localctx._eval_at_arg.subs_end)
@@ -1729,11 +1729,11 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 14:
                 self.state = 309
-                self.match(ExprGrammar.LBRACKET)
+                self.match(AlgExprGrammar.LBRACKET)
                 self.state = 310
                 localctx.expr = localctx._a_expr = self.a_expr(0)
                 self.state = 311
-                self.match(ExprGrammar.RBRACKET)
+                self.match(AlgExprGrammar.RBRACKET)
                 self.state = 312
                 localctx._eval_at_arg = self.eval_at_arg()
                 localctx.res = Ast.EvalAt(localctx, localctx.expr.res, localctx._eval_at_arg.subs_start, localctx._eval_at_arg.subs_end)
@@ -1777,7 +1777,7 @@ class ExprGrammar ( Parser ):
 
             elif la_ == 21:
                 self.state = 333
-                localctx._NUMBER = self.match(ExprGrammar.NUMBER)
+                localctx._NUMBER = self.match(AlgExprGrammar.NUMBER)
                 localctx.res = Ast.Number(localctx, (None if localctx._NUMBER is None else localctx._NUMBER.text)) 
                 pass
 
@@ -1795,7 +1795,7 @@ class ExprGrammar ( Parser ):
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,19,self._ctx)
                     if la_ == 1:
-                        localctx = ExprGrammar.A_exprContext(self, _parentctx, _parentState)
+                        localctx = AlgExprGrammar.A_exprContext(self, _parentctx, _parentState)
                         localctx.lhs = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 337
@@ -1803,14 +1803,14 @@ class ExprGrammar ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 19)")
                         self.state = 338
-                        self.match(ExprGrammar.DIV)
+                        self.match(AlgExprGrammar.DIV)
                         self.state = 339
                         localctx.rhs = localctx._a_expr = self.a_expr(20)
                         localctx.res = Ast.DivOp(localctx, localctx.lhs.res, localctx.rhs.res)
                         pass
 
                     elif la_ == 2:
-                        localctx = ExprGrammar.A_exprContext(self, _parentctx, _parentState)
+                        localctx = AlgExprGrammar.A_exprContext(self, _parentctx, _parentState)
                         localctx.lhs = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 342
@@ -1822,27 +1822,27 @@ class ExprGrammar ( Parser ):
                         token = self._input.LA(1)
                         if token in [14]:
                             self.state = 343
-                            self.match(ExprGrammar.MULT)
+                            self.match(AlgExprGrammar.MULT)
                             localctx.node_t = Ast.MultOp
                             pass
                         elif token in [25]:
                             self.state = 345
-                            self.match(ExprGrammar.DOT_PROD)
+                            self.match(AlgExprGrammar.DOT_PROD)
                             localctx.node_t = Ast.MultOp
                             pass
                         elif token in [31]:
                             self.state = 347
-                            self.match(ExprGrammar.MOD)
+                            self.match(AlgExprGrammar.MOD)
                             localctx.node_t = Ast.ModOp
                             pass
                         elif token in [24]:
                             self.state = 349
-                            self.match(ExprGrammar.TIMES)
+                            self.match(AlgExprGrammar.TIMES)
                             localctx.node_t = Ast.XProdOp
                             pass
                         elif token in [16]:
                             self.state = 351
-                            self.match(ExprGrammar.XPROD)
+                            self.match(AlgExprGrammar.XPROD)
                             localctx.node_t = Ast.XProdOp
                             pass
                         else:
@@ -1854,7 +1854,7 @@ class ExprGrammar ( Parser ):
                         pass
 
                     elif la_ == 3:
-                        localctx = ExprGrammar.A_exprContext(self, _parentctx, _parentState)
+                        localctx = AlgExprGrammar.A_exprContext(self, _parentctx, _parentState)
                         localctx.lhs = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 358
@@ -1871,7 +1871,7 @@ class ExprGrammar ( Parser ):
                         pass
 
                     elif la_ == 4:
-                        localctx = ExprGrammar.A_exprContext(self, _parentctx, _parentState)
+                        localctx = AlgExprGrammar.A_exprContext(self, _parentctx, _parentState)
                         localctx.lhs = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 363
@@ -1883,12 +1883,12 @@ class ExprGrammar ( Parser ):
                         token = self._input.LA(1)
                         if token in [12]:
                             self.state = 364
-                            self.match(ExprGrammar.PLUS)
+                            self.match(AlgExprGrammar.PLUS)
                             localctx.node_t = Ast.AddOp
                             pass
                         elif token in [13]:
                             self.state = 366
-                            self.match(ExprGrammar.MINUS)
+                            self.match(AlgExprGrammar.MINUS)
                             localctx.node_t = Ast.SubOp
                             pass
                         else:
@@ -1900,7 +1900,7 @@ class ExprGrammar ( Parser ):
                         pass
 
                     elif la_ == 5:
-                        localctx = ExprGrammar.A_exprContext(self, _parentctx, _parentState)
+                        localctx = AlgExprGrammar.A_exprContext(self, _parentctx, _parentState)
                         localctx.base = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 373
@@ -1913,7 +1913,7 @@ class ExprGrammar ( Parser ):
                         pass
 
                     elif la_ == 6:
-                        localctx = ExprGrammar.A_exprContext(self, _parentctx, _parentState)
+                        localctx = AlgExprGrammar.A_exprContext(self, _parentctx, _parentState)
                         localctx.lhs = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 377
@@ -1921,16 +1921,16 @@ class ExprGrammar ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 20)")
                         self.state = 378
-                        self.match(ExprGrammar.LPAREN)
+                        self.match(AlgExprGrammar.LPAREN)
                         self.state = 379
                         localctx._func_args = self.func_args()
                         self.state = 380
-                        self.match(ExprGrammar.RPAREN)
+                        self.match(AlgExprGrammar.RPAREN)
                         localctx.res = Ast.AmbigApplyFunc(localctx, Ast.ApplyFunc(localctx, localctx.lhs.res, localctx._func_args.res))
                         pass
 
                     elif la_ == 7:
-                        localctx = ExprGrammar.A_exprContext(self, _parentctx, _parentState)
+                        localctx = AlgExprGrammar.A_exprContext(self, _parentctx, _parentState)
                         localctx.expr = _prevctx
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_a_expr)
                         self.state = 383
@@ -1938,7 +1938,7 @@ class ExprGrammar ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
                         self.state = 384
-                        self.match(ExprGrammar.PIPE)
+                        self.match(AlgExprGrammar.PIPE)
                         self.state = 385
                         localctx._eval_at_arg = self.eval_at_arg()
                         localctx.res = Ast.EvalAt(localctx, localctx.expr.res, localctx._eval_at_arg.subs_start, localctx._eval_at_arg.subs_end)
@@ -1969,14 +1969,14 @@ class ExprGrammar ( Parser ):
             self._NUMBER = None # Token
 
         def primary_symbol(self):
-            return self.getTypedRuleContext(ExprGrammar.Primary_symbolContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Primary_symbolContext,0)
 
 
         def NUMBER(self):
-            return self.getToken(ExprGrammar.NUMBER, 0)
+            return self.getToken(AlgExprGrammar.NUMBER, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_atom
+            return AlgExprGrammar.RULE_atom
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterAtom" ):
@@ -1997,7 +1997,7 @@ class ExprGrammar ( Parser ):
 
     def atom(self):
 
-        localctx = ExprGrammar.AtomContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.AtomContext(self, self._ctx, self.state)
         self.enterRule(localctx, 20, self.RULE_atom)
         try:
             self.state = 398
@@ -2012,7 +2012,7 @@ class ExprGrammar ( Parser ):
             elif token in [79]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 396
-                localctx._NUMBER = self.match(ExprGrammar.NUMBER)
+                localctx._NUMBER = self.match(AlgExprGrammar.NUMBER)
                 localctx.res = Ast.Number(localctx, (None if localctx._NUMBER is None else localctx._NUMBER.text))
                 pass
             else:
@@ -2038,21 +2038,21 @@ class ExprGrammar ( Parser ):
             self._a_expr = None # A_exprContext
 
         def atom(self):
-            return self.getTypedRuleContext(ExprGrammar.AtomContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.AtomContext,0)
 
 
         def LBRACE(self):
-            return self.getToken(ExprGrammar.LBRACE, 0)
+            return self.getToken(AlgExprGrammar.LBRACE, 0)
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def RBRACE(self):
-            return self.getToken(ExprGrammar.RBRACE, 0)
+            return self.getToken(AlgExprGrammar.RBRACE, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_latex_cmd_arg
+            return AlgExprGrammar.RULE_latex_cmd_arg
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterLatex_cmd_arg" ):
@@ -2073,7 +2073,7 @@ class ExprGrammar ( Parser ):
 
     def latex_cmd_arg(self):
 
-        localctx = ExprGrammar.Latex_cmd_argContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Latex_cmd_argContext(self, self._ctx, self.state)
         self.enterRule(localctx, 22, self.RULE_latex_cmd_arg)
         try:
             self.state = 408
@@ -2088,11 +2088,11 @@ class ExprGrammar ( Parser ):
             elif token in [49]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 403
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 404
                 localctx._a_expr = self.a_expr(0)
                 self.state = 405
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = localctx._a_expr.res
                 pass
             else:
@@ -2119,25 +2119,25 @@ class ExprGrammar ( Parser ):
             self._a_expr = None # A_exprContext
 
         def atom(self):
-            return self.getTypedRuleContext(ExprGrammar.AtomContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.AtomContext,0)
 
 
         def cmd_func(self):
-            return self.getTypedRuleContext(ExprGrammar.Cmd_funcContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Cmd_funcContext,0)
 
 
         def LBRACE(self):
-            return self.getToken(ExprGrammar.LBRACE, 0)
+            return self.getToken(AlgExprGrammar.LBRACE, 0)
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def RBRACE(self):
-            return self.getToken(ExprGrammar.RBRACE, 0)
+            return self.getToken(AlgExprGrammar.RBRACE, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_pow_arg
+            return AlgExprGrammar.RULE_pow_arg
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterPow_arg" ):
@@ -2158,7 +2158,7 @@ class ExprGrammar ( Parser ):
 
     def pow_arg(self):
 
-        localctx = ExprGrammar.Pow_argContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Pow_argContext(self, self._ctx, self.state)
         self.enterRule(localctx, 24, self.RULE_pow_arg)
         try:
             self.state = 421
@@ -2179,11 +2179,11 @@ class ExprGrammar ( Parser ):
             elif token in [49]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 416
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 417
                 localctx._a_expr = self.a_expr(0)
                 self.state = 418
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = localctx._a_expr.res
                 pass
             else:
@@ -2209,30 +2209,30 @@ class ExprGrammar ( Parser ):
             self.subscript = None # Subscript_argContext
 
         def POW(self):
-            return self.getToken(ExprGrammar.POW, 0)
+            return self.getToken(AlgExprGrammar.POW, 0)
 
         def UNDERSCORE(self):
-            return self.getToken(ExprGrammar.UNDERSCORE, 0)
+            return self.getToken(AlgExprGrammar.UNDERSCORE, 0)
 
         def pow_arg(self):
-            return self.getTypedRuleContext(ExprGrammar.Pow_argContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Pow_argContext,0)
 
 
         def subscript_arg(self):
-            return self.getTypedRuleContext(ExprGrammar.Subscript_argContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Subscript_argContext,0)
 
 
         def BANG(self):
-            return self.getToken(ExprGrammar.BANG, 0)
+            return self.getToken(AlgExprGrammar.BANG, 0)
 
         def PERCENT(self):
-            return self.getToken(ExprGrammar.PERCENT, 0)
+            return self.getToken(AlgExprGrammar.PERCENT, 0)
 
         def PERMILLE(self):
-            return self.getToken(ExprGrammar.PERMILLE, 0)
+            return self.getToken(AlgExprGrammar.PERMILLE, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_postfix_op
+            return AlgExprGrammar.RULE_postfix_op
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterPostfix_op" ):
@@ -2253,7 +2253,7 @@ class ExprGrammar ( Parser ):
 
     def postfix_op(self):
 
-        localctx = ExprGrammar.Postfix_opContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Postfix_opContext(self, self._ctx, self.state)
         self.enterRule(localctx, 26, self.RULE_postfix_op)
         try:
             self.state = 443
@@ -2262,11 +2262,11 @@ class ExprGrammar ( Parser ):
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 423
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 424
                 localctx.exp = self.pow_arg()
                 self.state = 425
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 426
                 localctx.subscript = self.subscript_arg()
                 localctx.op=lambda ctx, base: Ast.ExpOp(ctx, Ast.SubscriptOp(ctx, base, localctx.subscript.res), localctx.exp.res)
@@ -2275,7 +2275,7 @@ class ExprGrammar ( Parser ):
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 429
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 430
                 localctx.exp = self.pow_arg()
                 localctx.op=lambda ctx, base: Ast.ExpOp(ctx, base, localctx.exp.res)
@@ -2284,7 +2284,7 @@ class ExprGrammar ( Parser ):
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 433
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 434
                 localctx.subscript = self.subscript_arg()
                 localctx.op = lambda ctx, target: Ast.SubscriptOp(ctx, target, localctx.subscript.res)
@@ -2293,21 +2293,21 @@ class ExprGrammar ( Parser ):
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 437
-                self.match(ExprGrammar.BANG)
+                self.match(AlgExprGrammar.BANG)
                 localctx.op = lambda ctx, target: Ast.Factorial(ctx, target)
                 pass
 
             elif la_ == 5:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 439
-                self.match(ExprGrammar.PERCENT)
+                self.match(AlgExprGrammar.PERCENT)
                 localctx.op = lambda ctx, target: Ast.Percent(ctx, target)
                 pass
 
             elif la_ == 6:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 441
-                self.match(ExprGrammar.PERMILLE)
+                self.match(AlgExprGrammar.PERMILLE)
                 localctx.op = lambda ctx, target: Ast.Permille(ctx, target)
                 pass
 
@@ -2332,19 +2332,19 @@ class ExprGrammar ( Parser ):
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def COMMA(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.COMMA)
+                return self.getTokens(AlgExprGrammar.COMMA)
             else:
-                return self.getToken(ExprGrammar.COMMA, i)
+                return self.getToken(AlgExprGrammar.COMMA, i)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_func_args
+            return AlgExprGrammar.RULE_func_args
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterFunc_args" ):
@@ -2365,7 +2365,7 @@ class ExprGrammar ( Parser ):
 
     def func_args(self):
 
-        localctx = ExprGrammar.Func_argsContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Func_argsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 28, self.RULE_func_args)
         self._la = 0 # Token type
         try:
@@ -2378,7 +2378,7 @@ class ExprGrammar ( Parser ):
             _la = self._input.LA(1)
             while _la==43:
                 self.state = 447
-                self.match(ExprGrammar.COMMA)
+                self.match(AlgExprGrammar.COMMA)
                 self.state = 448
                 localctx._a_expr = self.a_expr(0)
                 localctx.res.append(localctx._a_expr.res)
@@ -2407,20 +2407,20 @@ class ExprGrammar ( Parser ):
             self.end = None # A_exprContext
 
         def COLON(self):
-            return self.getToken(ExprGrammar.COLON, 0)
+            return self.getToken(AlgExprGrammar.COLON, 0)
 
         def DOTS(self):
-            return self.getToken(ExprGrammar.DOTS, 0)
+            return self.getToken(AlgExprGrammar.DOTS, 0)
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_range_slot
+            return AlgExprGrammar.RULE_range_slot
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterRange_slot" ):
@@ -2441,7 +2441,7 @@ class ExprGrammar ( Parser ):
 
     def range_slot(self):
 
-        localctx = ExprGrammar.Range_slotContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Range_slotContext(self, self._ctx, self.state)
         self.enterRule(localctx, 30, self.RULE_range_slot)
         self._la = 0 # Token type
         try:
@@ -2459,11 +2459,11 @@ class ExprGrammar ( Parser ):
             token = self._input.LA(1)
             if token in [46]:
                 self.state = 459
-                localctx.delim = self.match(ExprGrammar.COLON)
+                localctx.delim = self.match(AlgExprGrammar.COLON)
                 pass
             elif token in [48]:
                 self.state = 460
-                localctx.delim = self.match(ExprGrammar.DOTS)
+                localctx.delim = self.match(AlgExprGrammar.DOTS)
                 pass
             else:
                 raise NoViableAltException(self)
@@ -2494,13 +2494,13 @@ class ExprGrammar ( Parser ):
             self.parser = parser
 
         def MULT(self):
-            return self.getToken(ExprGrammar.MULT, 0)
+            return self.getToken(AlgExprGrammar.MULT, 0)
 
         def STAR(self):
-            return self.getToken(ExprGrammar.STAR, 0)
+            return self.getToken(AlgExprGrammar.STAR, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_all_slot
+            return AlgExprGrammar.RULE_all_slot
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterAll_slot" ):
@@ -2521,7 +2521,7 @@ class ExprGrammar ( Parser ):
 
     def all_slot(self):
 
-        localctx = ExprGrammar.All_slotContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.All_slotContext(self, self._ctx, self.state)
         self.enterRule(localctx, 32, self.RULE_all_slot)
         self._la = 0 # Token type
         try:
@@ -2553,19 +2553,19 @@ class ExprGrammar ( Parser ):
             self._range_slot = None # Range_slotContext
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def range_slot(self):
-            return self.getTypedRuleContext(ExprGrammar.Range_slotContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Range_slotContext,0)
 
 
         def all_slot(self):
-            return self.getTypedRuleContext(ExprGrammar.All_slotContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.All_slotContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_slot_entry
+            return AlgExprGrammar.RULE_slot_entry
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSlot_entry" ):
@@ -2586,7 +2586,7 @@ class ExprGrammar ( Parser ):
 
     def slot_entry(self):
 
-        localctx = ExprGrammar.Slot_entryContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Slot_entryContext(self, self._ctx, self.state)
         self.enterRule(localctx, 34, self.RULE_slot_entry)
         try:
             self.state = 480
@@ -2646,56 +2646,56 @@ class ExprGrammar ( Parser ):
             self.rdelim = None # Token
 
         def atom(self):
-            return self.getTypedRuleContext(ExprGrammar.AtomContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.AtomContext,0)
 
 
         def cmd_func(self):
-            return self.getTypedRuleContext(ExprGrammar.Cmd_funcContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Cmd_funcContext,0)
 
 
         def LBRACE(self):
-            return self.getToken(ExprGrammar.LBRACE, 0)
+            return self.getToken(AlgExprGrammar.LBRACE, 0)
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def RBRACE(self):
-            return self.getToken(ExprGrammar.RBRACE, 0)
+            return self.getToken(AlgExprGrammar.RBRACE, 0)
 
         def slot_entry(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.Slot_entryContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.Slot_entryContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.Slot_entryContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.Slot_entryContext,i)
 
 
         def LBRACKET(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.LBRACKET)
+                return self.getTokens(AlgExprGrammar.LBRACKET)
             else:
-                return self.getToken(ExprGrammar.LBRACKET, i)
+                return self.getToken(AlgExprGrammar.LBRACKET, i)
 
         def LPAREN(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.LPAREN)
+                return self.getTokens(AlgExprGrammar.LPAREN)
             else:
-                return self.getToken(ExprGrammar.LPAREN, i)
+                return self.getToken(AlgExprGrammar.LPAREN, i)
 
         def COMMA(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.COMMA)
+                return self.getTokens(AlgExprGrammar.COMMA)
             else:
-                return self.getToken(ExprGrammar.COMMA, i)
+                return self.getToken(AlgExprGrammar.COMMA, i)
 
         def SEMICOLON(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.SEMICOLON)
+                return self.getTokens(AlgExprGrammar.SEMICOLON)
             else:
-                return self.getToken(ExprGrammar.SEMICOLON, i)
+                return self.getToken(AlgExprGrammar.SEMICOLON, i)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_subscript_arg
+            return AlgExprGrammar.RULE_subscript_arg
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSubscript_arg" ):
@@ -2716,7 +2716,7 @@ class ExprGrammar ( Parser ):
 
     def subscript_arg(self):
 
-        localctx = ExprGrammar.Subscript_argContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Subscript_argContext(self, self._ctx, self.state)
         self.enterRule(localctx, 36, self.RULE_subscript_arg)
         self._la = 0 # Token type
         try:
@@ -2738,17 +2738,17 @@ class ExprGrammar ( Parser ):
             elif token in [49]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 488
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 491
                 self._errHandler.sync(self)
                 la_ = self._interp.adaptivePredict(self._input,30,self._ctx)
                 if la_ == 1:
                     self.state = 489
-                    localctx.ldelim = self.match(ExprGrammar.LBRACKET)
+                    localctx.ldelim = self.match(AlgExprGrammar.LBRACKET)
 
                 elif la_ == 2:
                     self.state = 490
-                    localctx.ldelim = self.match(ExprGrammar.LPAREN)
+                    localctx.ldelim = self.match(AlgExprGrammar.LPAREN)
 
 
                 self.state = 493
@@ -2763,11 +2763,11 @@ class ExprGrammar ( Parser ):
                     token = self._input.LA(1)
                     if token in [43]:
                         self.state = 495
-                        localctx.sep = self.match(ExprGrammar.COMMA)
+                        localctx.sep = self.match(AlgExprGrammar.COMMA)
                         pass
                     elif token in [45]:
                         self.state = 496
-                        localctx.sep = self.match(ExprGrammar.SEMICOLON)
+                        localctx.sep = self.match(AlgExprGrammar.SEMICOLON)
                         pass
                     else:
                         raise NoViableAltException(self)
@@ -2787,18 +2787,18 @@ class ExprGrammar ( Parser ):
                 token = self._input.LA(1)
                 if token in [55]:
                     self.state = 507
-                    localctx.rdelim = self.match(ExprGrammar.LBRACKET)
+                    localctx.rdelim = self.match(AlgExprGrammar.LBRACKET)
                     pass
                 elif token in [51]:
                     self.state = 508
-                    localctx.rdelim = self.match(ExprGrammar.LPAREN)
+                    localctx.rdelim = self.match(AlgExprGrammar.LPAREN)
                     pass
                 elif token in [50]:
                     pass
                 else:
                     pass
                 self.state = 511
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = Ast.Subscript(localctx, tuple(localctx.slots), Ast.SubscriptForm(((None if localctx.ldelim is None else localctx.ldelim.text), (None if localctx.rdelim is None else localctx.rdelim.text)), tuple(localctx.seps)))
                 pass
             else:
@@ -2824,20 +2824,20 @@ class ExprGrammar ( Parser ):
             self.lower = None # Latex_cmd_argContext
 
         def POW(self):
-            return self.getToken(ExprGrammar.POW, 0)
+            return self.getToken(AlgExprGrammar.POW, 0)
 
         def UNDERSCORE(self):
-            return self.getToken(ExprGrammar.UNDERSCORE, 0)
+            return self.getToken(AlgExprGrammar.UNDERSCORE, 0)
 
         def latex_cmd_arg(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.Latex_cmd_argContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.Latex_cmd_argContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.Latex_cmd_argContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.Latex_cmd_argContext,i)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_int_bounds
+            return AlgExprGrammar.RULE_int_bounds
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterInt_bounds" ):
@@ -2858,7 +2858,7 @@ class ExprGrammar ( Parser ):
 
     def int_bounds(self):
 
-        localctx = ExprGrammar.Int_boundsContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Int_boundsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 38, self.RULE_int_bounds)
         try:
             self.state = 529
@@ -2867,11 +2867,11 @@ class ExprGrammar ( Parser ):
             if token in [17]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 516
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 517
                 localctx.upper = self.latex_cmd_arg()
                 self.state = 518
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 519
                 localctx.lower = self.latex_cmd_arg()
                 localctx.bounds = (localctx.lower.res, localctx.upper.res)
@@ -2879,11 +2879,11 @@ class ExprGrammar ( Parser ):
             elif token in [44]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 522
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 523
                 localctx.lower = self.latex_cmd_arg()
                 self.state = 524
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 525
                 localctx.upper = self.latex_cmd_arg()
                 localctx.bounds = (localctx.lower.res, localctx.upper.res)
@@ -2915,21 +2915,21 @@ class ExprGrammar ( Parser ):
             self._latex_cmd_arg = None # Latex_cmd_argContext
 
         def DIFFERENTIAL(self):
-            return self.getToken(ExprGrammar.DIFFERENTIAL, 0)
+            return self.getToken(AlgExprGrammar.DIFFERENTIAL, 0)
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def POW(self):
-            return self.getToken(ExprGrammar.POW, 0)
+            return self.getToken(AlgExprGrammar.POW, 0)
 
         def latex_cmd_arg(self):
-            return self.getTypedRuleContext(ExprGrammar.Latex_cmd_argContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Latex_cmd_argContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_diff_var
+            return AlgExprGrammar.RULE_diff_var
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterDiff_var" ):
@@ -2950,7 +2950,7 @@ class ExprGrammar ( Parser ):
 
     def diff_var(self):
 
-        localctx = ExprGrammar.Diff_varContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Diff_varContext(self, self._ctx, self.state)
         self.enterRule(localctx, 40, self.RULE_diff_var)
         try:
             self.state = 541
@@ -2959,11 +2959,11 @@ class ExprGrammar ( Parser ):
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 531
-                self.match(ExprGrammar.DIFFERENTIAL)
+                self.match(AlgExprGrammar.DIFFERENTIAL)
                 self.state = 532
                 localctx._a_expr = self.a_expr(0)
                 self.state = 533
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 534
                 localctx._latex_cmd_arg = self.latex_cmd_arg()
                 self.getInvokingContext(21).res.append((localctx._a_expr.res, localctx._latex_cmd_arg.res))
@@ -2972,7 +2972,7 @@ class ExprGrammar ( Parser ):
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 537
-                self.match(ExprGrammar.DIFFERENTIAL)
+                self.match(AlgExprGrammar.DIFFERENTIAL)
                 self.state = 538
                 localctx._a_expr = self.a_expr(0)
                 self.getInvokingContext(21).res.append((localctx._a_expr.res, None))
@@ -2998,13 +2998,13 @@ class ExprGrammar ( Parser ):
 
         def diff_var(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.Diff_varContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.Diff_varContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.Diff_varContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.Diff_varContext,i)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_diff_vars
+            return AlgExprGrammar.RULE_diff_vars
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterDiff_vars" ):
@@ -3025,7 +3025,7 @@ class ExprGrammar ( Parser ):
 
     def diff_vars(self):
 
-        localctx = ExprGrammar.Diff_varsContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Diff_varsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 42, self.RULE_diff_vars)
         self._la = 0 # Token type
         try:
@@ -3060,22 +3060,22 @@ class ExprGrammar ( Parser ):
             self.res = rule_t(Ast.LimitDir)
 
         def POW(self):
-            return self.getToken(ExprGrammar.POW, 0)
+            return self.getToken(AlgExprGrammar.POW, 0)
 
         def LBRACE(self):
-            return self.getToken(ExprGrammar.LBRACE, 0)
+            return self.getToken(AlgExprGrammar.LBRACE, 0)
 
         def RBRACE(self):
-            return self.getToken(ExprGrammar.RBRACE, 0)
+            return self.getToken(AlgExprGrammar.RBRACE, 0)
 
         def PLUS(self):
-            return self.getToken(ExprGrammar.PLUS, 0)
+            return self.getToken(AlgExprGrammar.PLUS, 0)
 
         def MINUS(self):
-            return self.getToken(ExprGrammar.MINUS, 0)
+            return self.getToken(AlgExprGrammar.MINUS, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_limit_dir
+            return AlgExprGrammar.RULE_limit_dir
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterLimit_dir" ):
@@ -3096,7 +3096,7 @@ class ExprGrammar ( Parser ):
 
     def limit_dir(self):
 
-        localctx = ExprGrammar.Limit_dirContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Limit_dirContext(self, self._ctx, self.state)
         self.enterRule(localctx, 44, self.RULE_limit_dir)
         self._la = 0 # Token type
         try:
@@ -3111,9 +3111,9 @@ class ExprGrammar ( Parser ):
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 549
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 550
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 551
                 _la = self._input.LA(1)
                 if not(_la==12 or _la==13):
@@ -3122,25 +3122,25 @@ class ExprGrammar ( Parser ):
                     self._errHandler.reportMatch(self)
                     self.consume()
                 self.state = 552
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = Ast.LimitDir.BOTH
                 pass
 
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 554
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 555
-                self.match(ExprGrammar.PLUS)
+                self.match(AlgExprGrammar.PLUS)
                 localctx.res = Ast.LimitDir.POSITIVE
                 pass
 
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 557
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 558
-                self.match(ExprGrammar.MINUS)
+                self.match(AlgExprGrammar.MINUS)
                 localctx.res = Ast.LimitDir.NEGATIVE
                 pass
 
@@ -3168,33 +3168,33 @@ class ExprGrammar ( Parser ):
             self.e = None # Pow_argContext
 
         def UNDERSCORE(self):
-            return self.getToken(ExprGrammar.UNDERSCORE, 0)
+            return self.getToken(AlgExprGrammar.UNDERSCORE, 0)
 
         def LBRACE(self):
-            return self.getToken(ExprGrammar.LBRACE, 0)
+            return self.getToken(AlgExprGrammar.LBRACE, 0)
 
         def EQ(self):
-            return self.getToken(ExprGrammar.EQ, 0)
+            return self.getToken(AlgExprGrammar.EQ, 0)
 
         def RBRACE(self):
-            return self.getToken(ExprGrammar.RBRACE, 0)
+            return self.getToken(AlgExprGrammar.RBRACE, 0)
 
         def POW(self):
-            return self.getToken(ExprGrammar.POW, 0)
+            return self.getToken(AlgExprGrammar.POW, 0)
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def pow_arg(self):
-            return self.getTypedRuleContext(ExprGrammar.Pow_argContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Pow_argContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_series_range_args
+            return AlgExprGrammar.RULE_series_range_args
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSeries_range_args" ):
@@ -3215,7 +3215,7 @@ class ExprGrammar ( Parser ):
 
     def series_range_args(self):
 
-        localctx = ExprGrammar.Series_range_argsContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Series_range_argsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 46, self.RULE_series_range_args)
         try:
             self.state = 582
@@ -3224,19 +3224,19 @@ class ExprGrammar ( Parser ):
             if token in [44]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 562
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 563
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 564
                 localctx.var = self.a_expr(0)
                 self.state = 565
-                self.match(ExprGrammar.EQ)
+                self.match(AlgExprGrammar.EQ)
                 self.state = 566
                 localctx.s = self.a_expr(0)
                 self.state = 567
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 568
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 569
                 localctx.e = self.pow_arg()
 
@@ -3248,21 +3248,21 @@ class ExprGrammar ( Parser ):
             elif token in [17]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 572
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 573
                 localctx.e = self.pow_arg()
                 self.state = 574
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 575
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 576
                 localctx.var = self.a_expr(0)
                 self.state = 577
-                self.match(ExprGrammar.EQ)
+                self.match(AlgExprGrammar.EQ)
                 self.state = 578
                 localctx.s = self.a_expr(0)
                 self.state = 579
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
 
                 localctx.symb = localctx.var.res
                 localctx.start = localctx.s.res
@@ -3293,25 +3293,25 @@ class ExprGrammar ( Parser ):
 
         def EQ(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.EQ)
+                return self.getTokens(AlgExprGrammar.EQ)
             else:
-                return self.getToken(ExprGrammar.EQ, i)
+                return self.getToken(AlgExprGrammar.EQ, i)
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def COMMA(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.COMMA)
+                return self.getTokens(AlgExprGrammar.COMMA)
             else:
-                return self.getToken(ExprGrammar.COMMA, i)
+                return self.getToken(AlgExprGrammar.COMMA, i)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_eval_at_sub_vars
+            return AlgExprGrammar.RULE_eval_at_sub_vars
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterEval_at_sub_vars" ):
@@ -3332,7 +3332,7 @@ class ExprGrammar ( Parser ):
 
     def eval_at_sub_vars(self):
 
-        localctx = ExprGrammar.Eval_at_sub_varsContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Eval_at_sub_varsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 48, self.RULE_eval_at_sub_vars)
         self._la = 0 # Token type
         try:
@@ -3340,7 +3340,7 @@ class ExprGrammar ( Parser ):
             self.state = 584
             localctx.var = self.a_expr(0)
             self.state = 585
-            self.match(ExprGrammar.EQ)
+            self.match(AlgExprGrammar.EQ)
             self.state = 586
             localctx.sub = self.a_expr(0)
             localctx.res.append((localctx.var.res, localctx.sub.res))
@@ -3349,11 +3349,11 @@ class ExprGrammar ( Parser ):
             _la = self._input.LA(1)
             while _la==43:
                 self.state = 588
-                self.match(ExprGrammar.COMMA)
+                self.match(AlgExprGrammar.COMMA)
                 self.state = 589
                 localctx.var = self.a_expr(0)
                 self.state = 590
-                self.match(ExprGrammar.EQ)
+                self.match(AlgExprGrammar.EQ)
                 self.state = 591
                 localctx.sub = self.a_expr(0)
                 localctx.res.append((localctx.var.res, localctx.sub.res))
@@ -3383,32 +3383,32 @@ class ExprGrammar ( Parser ):
             self.send = None # Eval_at_sub_varsContext
 
         def UNDERSCORE(self):
-            return self.getToken(ExprGrammar.UNDERSCORE, 0)
+            return self.getToken(AlgExprGrammar.UNDERSCORE, 0)
 
         def LBRACE(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.LBRACE)
+                return self.getTokens(AlgExprGrammar.LBRACE)
             else:
-                return self.getToken(ExprGrammar.LBRACE, i)
+                return self.getToken(AlgExprGrammar.LBRACE, i)
 
         def eval_at_sub_vars(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.Eval_at_sub_varsContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.Eval_at_sub_varsContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.Eval_at_sub_varsContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.Eval_at_sub_varsContext,i)
 
 
         def RBRACE(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.RBRACE)
+                return self.getTokens(AlgExprGrammar.RBRACE)
             else:
-                return self.getToken(ExprGrammar.RBRACE, i)
+                return self.getToken(AlgExprGrammar.RBRACE, i)
 
         def POW(self):
-            return self.getToken(ExprGrammar.POW, 0)
+            return self.getToken(AlgExprGrammar.POW, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_eval_at_arg
+            return AlgExprGrammar.RULE_eval_at_arg
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterEval_at_arg" ):
@@ -3429,7 +3429,7 @@ class ExprGrammar ( Parser ):
 
     def eval_at_arg(self):
 
-        localctx = ExprGrammar.Eval_at_argContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Eval_at_argContext(self, self._ctx, self.state)
         self.enterRule(localctx, 50, self.RULE_eval_at_arg)
         try:
             self.state = 625
@@ -3438,34 +3438,34 @@ class ExprGrammar ( Parser ):
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 599
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 600
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 601
                 localctx._eval_at_sub_vars = self.eval_at_sub_vars()
                 self.state = 602
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.subs_start = tuple(localctx._eval_at_sub_vars.res)
                 pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 605
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 606
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 607
                 localctx.sstart = self.eval_at_sub_vars()
                 self.state = 608
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 609
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 610
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 611
                 localctx.send = self.eval_at_sub_vars()
                 self.state = 612
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
 
                 localctx.subs_start = tuple(localctx.sstart.res)
                 localctx.subs_end=tuple(localctx.send.res)
@@ -3475,21 +3475,21 @@ class ExprGrammar ( Parser ):
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 615
-                self.match(ExprGrammar.POW)
+                self.match(AlgExprGrammar.POW)
                 self.state = 616
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 617
                 localctx.send = self.eval_at_sub_vars()
                 self.state = 618
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 self.state = 619
-                self.match(ExprGrammar.UNDERSCORE)
+                self.match(AlgExprGrammar.UNDERSCORE)
                 self.state = 620
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 621
                 localctx.sstart = self.eval_at_sub_vars()
                 self.state = 622
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
 
                 localctx.subs_start = tuple(localctx.sstart.res)
                 localctx.subs_end=tuple(localctx.send.res)
@@ -3517,13 +3517,13 @@ class ExprGrammar ( Parser ):
             self._COMMAND = None # Token
 
         def ID(self):
-            return self.getToken(ExprGrammar.ID, 0)
+            return self.getToken(AlgExprGrammar.ID, 0)
 
         def COMMAND(self):
-            return self.getToken(ExprGrammar.COMMAND, 0)
+            return self.getToken(AlgExprGrammar.COMMAND, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_primary_symbol
+            return AlgExprGrammar.RULE_primary_symbol
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterPrimary_symbol" ):
@@ -3544,7 +3544,7 @@ class ExprGrammar ( Parser ):
 
     def primary_symbol(self):
 
-        localctx = ExprGrammar.Primary_symbolContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Primary_symbolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 52, self.RULE_primary_symbol)
         try:
             self.state = 631
@@ -3553,13 +3553,13 @@ class ExprGrammar ( Parser ):
             if token in [84]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 627
-                localctx._ID = self.match(ExprGrammar.ID)
+                localctx._ID = self.match(AlgExprGrammar.ID)
                 localctx.res = Ast.Symbol(localctx, (None if localctx._ID is None else localctx._ID.text))
                 pass
             elif token in [85]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 629
-                localctx._COMMAND = self.match(ExprGrammar.COMMAND)
+                localctx._COMMAND = self.match(AlgExprGrammar.COMMAND)
                 localctx.res = Ast.Symbol(localctx, (None if localctx._COMMAND is None else localctx._COMMAND.text))
                 pass
             else:
@@ -3585,14 +3585,14 @@ class ExprGrammar ( Parser ):
             self._primary_symbol = None # Primary_symbolContext
 
         def DELTA(self):
-            return self.getToken(ExprGrammar.DELTA, 0)
+            return self.getToken(AlgExprGrammar.DELTA, 0)
 
         def primary_symbol(self):
-            return self.getTypedRuleContext(ExprGrammar.Primary_symbolContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Primary_symbolContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_delta_symbol
+            return AlgExprGrammar.RULE_delta_symbol
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterDelta_symbol" ):
@@ -3613,12 +3613,12 @@ class ExprGrammar ( Parser ):
 
     def delta_symbol(self):
 
-        localctx = ExprGrammar.Delta_symbolContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Delta_symbolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 54, self.RULE_delta_symbol)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 633
-            localctx._DELTA = self.match(ExprGrammar.DELTA)
+            localctx._DELTA = self.match(AlgExprGrammar.DELTA)
             self.state = 634
             localctx._primary_symbol = self.primary_symbol()
             localctx.res = Ast.Symbol(localctx, f"{(None if localctx._DELTA is None else localctx._DELTA.text)} {localctx._primary_symbol.res.symbol}")
@@ -3642,15 +3642,15 @@ class ExprGrammar ( Parser ):
             self._delta_symbol = None # Delta_symbolContext
 
         def primary_symbol(self):
-            return self.getTypedRuleContext(ExprGrammar.Primary_symbolContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Primary_symbolContext,0)
 
 
         def delta_symbol(self):
-            return self.getTypedRuleContext(ExprGrammar.Delta_symbolContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Delta_symbolContext,0)
 
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_symbol
+            return AlgExprGrammar.RULE_symbol
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterSymbol" ):
@@ -3671,7 +3671,7 @@ class ExprGrammar ( Parser ):
 
     def symbol(self):
 
-        localctx = ExprGrammar.SymbolContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.SymbolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 56, self.RULE_symbol)
         try:
             self.state = 643
@@ -3713,59 +3713,59 @@ class ExprGrammar ( Parser ):
             self.rhs = None # A_exprContext
 
         def LPAREN(self):
-            return self.getToken(ExprGrammar.LPAREN, 0)
+            return self.getToken(AlgExprGrammar.LPAREN, 0)
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def RPAREN(self):
-            return self.getToken(ExprGrammar.RPAREN, 0)
+            return self.getToken(AlgExprGrammar.RPAREN, 0)
 
         def LBRACKET(self):
-            return self.getToken(ExprGrammar.LBRACKET, 0)
+            return self.getToken(AlgExprGrammar.LBRACKET, 0)
 
         def RBRACKET(self):
-            return self.getToken(ExprGrammar.RBRACKET, 0)
+            return self.getToken(AlgExprGrammar.RBRACKET, 0)
 
         def PIPE(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.PIPE)
+                return self.getTokens(AlgExprGrammar.PIPE)
             else:
-                return self.getToken(ExprGrammar.PIPE, i)
+                return self.getToken(AlgExprGrammar.PIPE, i)
 
         def DOUBLE_PIPE(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.DOUBLE_PIPE)
+                return self.getTokens(AlgExprGrammar.DOUBLE_PIPE)
             else:
-                return self.getToken(ExprGrammar.DOUBLE_PIPE, i)
+                return self.getToken(AlgExprGrammar.DOUBLE_PIPE, i)
 
         def LFLOOR(self):
-            return self.getToken(ExprGrammar.LFLOOR, 0)
+            return self.getToken(AlgExprGrammar.LFLOOR, 0)
 
         def RFLOOR(self):
-            return self.getToken(ExprGrammar.RFLOOR, 0)
+            return self.getToken(AlgExprGrammar.RFLOOR, 0)
 
         def LCEIL(self):
-            return self.getToken(ExprGrammar.LCEIL, 0)
+            return self.getToken(AlgExprGrammar.LCEIL, 0)
 
         def RCEIL(self):
-            return self.getToken(ExprGrammar.RCEIL, 0)
+            return self.getToken(AlgExprGrammar.RCEIL, 0)
 
         def LANGLE(self):
-            return self.getToken(ExprGrammar.LANGLE, 0)
+            return self.getToken(AlgExprGrammar.LANGLE, 0)
 
         def RANGLE(self):
-            return self.getToken(ExprGrammar.RANGLE, 0)
+            return self.getToken(AlgExprGrammar.RANGLE, 0)
 
         def COMMA(self):
-            return self.getToken(ExprGrammar.COMMA, 0)
+            return self.getToken(AlgExprGrammar.COMMA, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_delim_expr
+            return AlgExprGrammar.RULE_delim_expr
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterDelim_expr" ):
@@ -3786,7 +3786,7 @@ class ExprGrammar ( Parser ):
 
     def delim_expr(self):
 
-        localctx = ExprGrammar.Delim_exprContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Delim_exprContext(self, self._ctx, self.state)
         self.enterRule(localctx, 58, self.RULE_delim_expr)
         self._la = 0 # Token type
         try:
@@ -3796,67 +3796,67 @@ class ExprGrammar ( Parser ):
             if token in [51]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 645
-                self.match(ExprGrammar.LPAREN)
+                self.match(AlgExprGrammar.LPAREN)
                 self.state = 646
                 localctx._a_expr = self.a_expr(0)
                 self.state = 647
-                self.match(ExprGrammar.RPAREN)
+                self.match(AlgExprGrammar.RPAREN)
                 localctx.res = Ast.Parens(localctx, localctx._a_expr.res)
                 pass
             elif token in [55]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 650
-                self.match(ExprGrammar.LBRACKET)
+                self.match(AlgExprGrammar.LBRACKET)
                 self.state = 651
                 localctx._a_expr = self.a_expr(0)
                 self.state = 652
-                self.match(ExprGrammar.RBRACKET)
+                self.match(AlgExprGrammar.RBRACKET)
                 localctx.res = Ast.Parens(localctx, localctx._a_expr.res)
                 pass
             elif token in [65]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 655
-                self.match(ExprGrammar.PIPE)
+                self.match(AlgExprGrammar.PIPE)
                 self.state = 656
                 localctx._a_expr = self.a_expr(0)
                 self.state = 657
-                self.match(ExprGrammar.PIPE)
+                self.match(AlgExprGrammar.PIPE)
                 localctx.res = Ast.Abs(localctx, localctx._a_expr.res)
                 pass
             elif token in [66]:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 660
-                self.match(ExprGrammar.DOUBLE_PIPE)
+                self.match(AlgExprGrammar.DOUBLE_PIPE)
                 self.state = 661
                 localctx._a_expr = self.a_expr(0)
                 self.state = 662
-                self.match(ExprGrammar.DOUBLE_PIPE)
+                self.match(AlgExprGrammar.DOUBLE_PIPE)
                 localctx.res = Ast.Norm(localctx, localctx._a_expr.res)
                 pass
             elif token in [61]:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 665
-                self.match(ExprGrammar.LFLOOR)
+                self.match(AlgExprGrammar.LFLOOR)
                 self.state = 666
                 localctx._a_expr = self.a_expr(0)
                 self.state = 667
-                self.match(ExprGrammar.RFLOOR)
+                self.match(AlgExprGrammar.RFLOOR)
                 localctx.res = Ast.Floor(localctx, localctx._a_expr.res)
                 pass
             elif token in [59]:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 670
-                self.match(ExprGrammar.LCEIL)
+                self.match(AlgExprGrammar.LCEIL)
                 self.state = 671
                 localctx._a_expr = self.a_expr(0)
                 self.state = 672
-                self.match(ExprGrammar.RCEIL)
+                self.match(AlgExprGrammar.RCEIL)
                 localctx.res = Ast.Ceil(localctx, localctx._a_expr.res)
                 pass
             elif token in [63]:
                 self.enterOuterAlt(localctx, 7)
                 self.state = 675
-                self.match(ExprGrammar.LANGLE)
+                self.match(AlgExprGrammar.LANGLE)
                 self.state = 676
                 localctx.lhs = self.a_expr(0)
                 self.state = 677
@@ -3869,7 +3869,7 @@ class ExprGrammar ( Parser ):
                 self.state = 678
                 localctx.rhs = self.a_expr(0)
                 self.state = 679
-                self.match(ExprGrammar.RANGLE)
+                self.match(AlgExprGrammar.RANGLE)
                 localctx.res = Ast.DotProd(localctx, localctx.lhs.res, localctx.rhs.res)
                 pass
             else:
@@ -3897,35 +3897,35 @@ class ExprGrammar ( Parser ):
             self._ID = None # Token
 
         def LBRACE(self):
-            return self.getToken(ExprGrammar.LBRACE, 0)
+            return self.getToken(AlgExprGrammar.LBRACE, 0)
 
         def POW(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.POW)
+                return self.getTokens(AlgExprGrammar.POW)
             else:
-                return self.getToken(ExprGrammar.POW, i)
+                return self.getToken(AlgExprGrammar.POW, i)
 
         def RBRACE(self):
-            return self.getToken(ExprGrammar.RBRACE, 0)
+            return self.getToken(AlgExprGrammar.RBRACE, 0)
 
         def ID(self):
-            return self.getToken(ExprGrammar.ID, 0)
+            return self.getToken(AlgExprGrammar.ID, 0)
 
         def UNDERSCORE(self):
-            return self.getToken(ExprGrammar.UNDERSCORE, 0)
+            return self.getToken(AlgExprGrammar.UNDERSCORE, 0)
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def BANG(self):
-            return self.getToken(ExprGrammar.BANG, 0)
+            return self.getToken(AlgExprGrammar.BANG, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_combinatorial
+            return AlgExprGrammar.RULE_combinatorial
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterCombinatorial" ):
@@ -3946,7 +3946,7 @@ class ExprGrammar ( Parser ):
 
     def combinatorial(self):
 
-        localctx = ExprGrammar.CombinatorialContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.CombinatorialContext(self, self._ctx, self.state)
         self.enterRule(localctx, 60, self.RULE_combinatorial)
         self._la = 0 # Token type
         try:
@@ -3960,7 +3960,7 @@ class ExprGrammar ( Parser ):
                 la_ = self._interp.adaptivePredict(self._input,45,self._ctx)
                 if la_ == 1:
                     self.state = 684
-                    self.match(ExprGrammar.LBRACE)
+                    self.match(AlgExprGrammar.LBRACE)
                     self.state = 685
                     _la = self._input.LA(1)
                     if not(_la==17 or _la==44):
@@ -3971,7 +3971,7 @@ class ExprGrammar ( Parser ):
                     self.state = 686
                     localctx.n = self.a_expr(0)
                     self.state = 687
-                    localctx.op = self.match(ExprGrammar.ID)
+                    localctx.op = self.match(AlgExprGrammar.ID)
                     self.state = 688
                     if not (None if localctx._ID is None else localctx._ID.text) == 'C':
                         from antlr4.error.Errors import FailedPredicateException
@@ -3981,29 +3981,29 @@ class ExprGrammar ( Parser ):
                         from antlr4.error.Errors import FailedPredicateException
                         raise FailedPredicateException(self, "($op.text in Ast.CombOpId)")
                     self.state = 690
-                    self.match(ExprGrammar.POW)
+                    self.match(AlgExprGrammar.POW)
                     self.state = 691
                     localctx.k = self.a_expr(0)
                     self.state = 692
-                    self.match(ExprGrammar.RBRACE)
+                    self.match(AlgExprGrammar.RBRACE)
                     localctx.res = Ast.combOpFromId(localctx, localctx.n.res, localctx.k.res, Ast.CombOpId((None if localctx.op is None else localctx.op.text)))
                     pass
 
                 elif la_ == 2:
                     self.state = 695
-                    self.match(ExprGrammar.LBRACE)
+                    self.match(AlgExprGrammar.LBRACE)
                     self.state = 696
-                    localctx._ID = self.match(ExprGrammar.ID)
+                    localctx._ID = self.match(AlgExprGrammar.ID)
                     self.state = 697
                     if not (None if localctx._ID is None else localctx._ID.text) == 'D':
                         from antlr4.error.Errors import FailedPredicateException
                         raise FailedPredicateException(self, "$ID.text == 'D'")
                     self.state = 698
-                    self.match(ExprGrammar.POW)
+                    self.match(AlgExprGrammar.POW)
                     self.state = 699
                     localctx.n = self.a_expr(0)
                     self.state = 700
-                    self.match(ExprGrammar.RBRACE)
+                    self.match(AlgExprGrammar.RBRACE)
                     pass
 
 
@@ -4013,13 +4013,13 @@ class ExprGrammar ( Parser ):
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 706
-                self.match(ExprGrammar.LBRACE)
+                self.match(AlgExprGrammar.LBRACE)
                 self.state = 707
-                self.match(ExprGrammar.BANG)
+                self.match(AlgExprGrammar.BANG)
                 self.state = 708
                 localctx.n = self.a_expr(0)
                 self.state = 709
-                self.match(ExprGrammar.RBRACE)
+                self.match(AlgExprGrammar.RBRACE)
                 localctx.res = Ast.Derangements(localctx, localctx.n.res)
                 pass
 
@@ -4048,39 +4048,39 @@ class ExprGrammar ( Parser ):
             self.root_index = None # A_exprContext
 
         def FRAC(self):
-            return self.getToken(ExprGrammar.FRAC, 0)
+            return self.getToken(AlgExprGrammar.FRAC, 0)
 
         def latex_cmd_arg(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.Latex_cmd_argContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.Latex_cmd_argContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.Latex_cmd_argContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.Latex_cmd_argContext,i)
 
 
         def BINOM(self):
-            return self.getToken(ExprGrammar.BINOM, 0)
+            return self.getToken(AlgExprGrammar.BINOM, 0)
 
         def SQRT(self):
-            return self.getToken(ExprGrammar.SQRT, 0)
+            return self.getToken(AlgExprGrammar.SQRT, 0)
 
         def LBRACKET(self):
-            return self.getToken(ExprGrammar.LBRACKET, 0)
+            return self.getToken(AlgExprGrammar.LBRACKET, 0)
 
         def RBRACKET(self):
-            return self.getToken(ExprGrammar.RBRACKET, 0)
+            return self.getToken(AlgExprGrammar.RBRACKET, 0)
 
         def a_expr(self):
-            return self.getTypedRuleContext(ExprGrammar.A_exprContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,0)
 
 
         def CONJUGATE(self):
-            return self.getToken(ExprGrammar.CONJUGATE, 0)
+            return self.getToken(AlgExprGrammar.CONJUGATE, 0)
 
         def VEC_UNIT(self):
-            return self.getToken(ExprGrammar.VEC_UNIT, 0)
+            return self.getToken(AlgExprGrammar.VEC_UNIT, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_cmd_func
+            return AlgExprGrammar.RULE_cmd_func
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterCmd_func" ):
@@ -4101,7 +4101,7 @@ class ExprGrammar ( Parser ):
 
     def cmd_func(self):
 
-        localctx = ExprGrammar.Cmd_funcContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Cmd_funcContext(self, self._ctx, self.state)
         self.enterRule(localctx, 62, self.RULE_cmd_func)
         self._la = 0 # Token type
         try:
@@ -4111,7 +4111,7 @@ class ExprGrammar ( Parser ):
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 714
-                self.match(ExprGrammar.FRAC)
+                self.match(AlgExprGrammar.FRAC)
                 self.state = 715
                 localctx.num = self.latex_cmd_arg()
                 self.state = 716
@@ -4122,7 +4122,7 @@ class ExprGrammar ( Parser ):
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 719
-                self.match(ExprGrammar.BINOM)
+                self.match(AlgExprGrammar.BINOM)
                 self.state = 720
                 localctx.n = self.latex_cmd_arg()
                 self.state = 721
@@ -4133,7 +4133,7 @@ class ExprGrammar ( Parser ):
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 724
-                self.match(ExprGrammar.SQRT)
+                self.match(AlgExprGrammar.SQRT)
                 self.state = 725
                 localctx._latex_cmd_arg = self.latex_cmd_arg()
                 localctx.res = Ast.Root(localctx, localctx._latex_cmd_arg.res, None) 
@@ -4142,17 +4142,17 @@ class ExprGrammar ( Parser ):
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 728
-                self.match(ExprGrammar.SQRT)
+                self.match(AlgExprGrammar.SQRT)
                 self.state = 733
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==55:
                     self.state = 729
-                    self.match(ExprGrammar.LBRACKET)
+                    self.match(AlgExprGrammar.LBRACKET)
                     self.state = 730
                     localctx.root_index = self.a_expr(0)
                     self.state = 731
-                    self.match(ExprGrammar.RBRACKET)
+                    self.match(AlgExprGrammar.RBRACKET)
 
 
                 self.state = 735
@@ -4164,7 +4164,7 @@ class ExprGrammar ( Parser ):
             elif la_ == 5:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 738
-                self.match(ExprGrammar.CONJUGATE)
+                self.match(AlgExprGrammar.CONJUGATE)
                 self.state = 739
                 localctx._latex_cmd_arg = self.latex_cmd_arg()
                 localctx.res = Ast.Conjugate(localctx, localctx._latex_cmd_arg.res)
@@ -4173,7 +4173,7 @@ class ExprGrammar ( Parser ):
             elif la_ == 6:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 742
-                self.match(ExprGrammar.VEC_UNIT)
+                self.match(AlgExprGrammar.VEC_UNIT)
                 self.state = 743
                 localctx._latex_cmd_arg = self.latex_cmd_arg()
                 localctx.res = Ast.VecUnit(localctx, localctx._latex_cmd_arg.res)
@@ -4200,19 +4200,19 @@ class ExprGrammar ( Parser ):
 
         def a_expr(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.A_exprContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.A_exprContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.A_exprContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.A_exprContext,i)
 
 
         def ENV_EL_SEP(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.ENV_EL_SEP)
+                return self.getTokens(AlgExprGrammar.ENV_EL_SEP)
             else:
-                return self.getToken(ExprGrammar.ENV_EL_SEP, i)
+                return self.getToken(AlgExprGrammar.ENV_EL_SEP, i)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_matrix_row
+            return AlgExprGrammar.RULE_matrix_row
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterMatrix_row" ):
@@ -4233,7 +4233,7 @@ class ExprGrammar ( Parser ):
 
     def matrix_row(self):
 
-        localctx = ExprGrammar.Matrix_rowContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Matrix_rowContext(self, self._ctx, self.state)
         self.enterRule(localctx, 64, self.RULE_matrix_row)
         self._la = 0 # Token type
         try:
@@ -4254,7 +4254,7 @@ class ExprGrammar ( Parser ):
                 _la = self._input.LA(1)
                 while _la==76:
                     self.state = 751
-                    self.match(ExprGrammar.ENV_EL_SEP)
+                    self.match(AlgExprGrammar.ENV_EL_SEP)
                     self.state = 752
                     localctx._a_expr = self.a_expr(0)
                     localctx.res.append(localctx._a_expr.res)
@@ -4286,19 +4286,19 @@ class ExprGrammar ( Parser ):
 
         def matrix_row(self, i:int=None):
             if i is None:
-                return self.getTypedRuleContexts(ExprGrammar.Matrix_rowContext)
+                return self.getTypedRuleContexts(AlgExprGrammar.Matrix_rowContext)
             else:
-                return self.getTypedRuleContext(ExprGrammar.Matrix_rowContext,i)
+                return self.getTypedRuleContext(AlgExprGrammar.Matrix_rowContext,i)
 
 
         def ENV_ROW_SEP(self, i:int=None):
             if i is None:
-                return self.getTokens(ExprGrammar.ENV_ROW_SEP)
+                return self.getTokens(AlgExprGrammar.ENV_ROW_SEP)
             else:
-                return self.getToken(ExprGrammar.ENV_ROW_SEP, i)
+                return self.getToken(AlgExprGrammar.ENV_ROW_SEP, i)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_matrix_body
+            return AlgExprGrammar.RULE_matrix_body
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterMatrix_body" ):
@@ -4319,7 +4319,7 @@ class ExprGrammar ( Parser ):
 
     def matrix_body(self):
 
-        localctx = ExprGrammar.Matrix_bodyContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Matrix_bodyContext(self, self._ctx, self.state)
         self.enterRule(localctx, 66, self.RULE_matrix_body)
         self._la = 0 # Token type
         try:
@@ -4342,7 +4342,7 @@ class ExprGrammar ( Parser ):
                 while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                     if _alt==1:
                         self.state = 765
-                        self.match(ExprGrammar.ENV_ROW_SEP)
+                        self.match(AlgExprGrammar.ENV_ROW_SEP)
                         self.state = 766
                         localctx._matrix_row = self.matrix_row()
                         localctx.res.append(localctx._matrix_row.res) 
@@ -4355,7 +4355,7 @@ class ExprGrammar ( Parser ):
                 _la = self._input.LA(1)
                 while _la==77:
                     self.state = 774
-                    self.match(ExprGrammar.ENV_ROW_SEP)
+                    self.match(AlgExprGrammar.ENV_ROW_SEP)
                     self.state = 779
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
@@ -4384,23 +4384,23 @@ class ExprGrammar ( Parser ):
             self.end = None # Token
 
         def matrix_body(self):
-            return self.getTypedRuleContext(ExprGrammar.Matrix_bodyContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Matrix_bodyContext,0)
 
 
         def BEGIN_MATRIX(self):
-            return self.getToken(ExprGrammar.BEGIN_MATRIX, 0)
+            return self.getToken(AlgExprGrammar.BEGIN_MATRIX, 0)
 
         def END_MATRIX(self):
-            return self.getToken(ExprGrammar.END_MATRIX, 0)
+            return self.getToken(AlgExprGrammar.END_MATRIX, 0)
 
         def BEGIN_ARRAY(self):
-            return self.getToken(ExprGrammar.BEGIN_ARRAY, 0)
+            return self.getToken(AlgExprGrammar.BEGIN_ARRAY, 0)
 
         def END_ARRAY(self):
-            return self.getToken(ExprGrammar.END_ARRAY, 0)
+            return self.getToken(AlgExprGrammar.END_ARRAY, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_matrix
+            return AlgExprGrammar.RULE_matrix
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterMatrix" ):
@@ -4421,7 +4421,7 @@ class ExprGrammar ( Parser ):
 
     def matrix(self):
 
-        localctx = ExprGrammar.MatrixContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.MatrixContext(self, self._ctx, self.state)
         self.enterRule(localctx, 68, self.RULE_matrix)
         try:
             self.enterOuterAlt(localctx, 1)
@@ -4430,19 +4430,19 @@ class ExprGrammar ( Parser ):
             token = self._input.LA(1)
             if token in [68]:
                 self.state = 782
-                localctx.beg = self.match(ExprGrammar.BEGIN_MATRIX)
+                localctx.beg = self.match(AlgExprGrammar.BEGIN_MATRIX)
                 self.state = 783
                 localctx._matrix_body = self.matrix_body()
                 self.state = 784
-                localctx.end = self.match(ExprGrammar.END_MATRIX)
+                localctx.end = self.match(AlgExprGrammar.END_MATRIX)
                 pass
             elif token in [72]:
                 self.state = 786
-                localctx.beg = self.match(ExprGrammar.BEGIN_ARRAY)
+                localctx.beg = self.match(AlgExprGrammar.BEGIN_ARRAY)
                 self.state = 787
                 localctx._matrix_body = self.matrix_body()
                 self.state = 788
-                localctx.end = self.match(ExprGrammar.END_ARRAY)
+                localctx.end = self.match(AlgExprGrammar.END_ARRAY)
                 pass
             else:
                 raise NoViableAltException(self)
@@ -4467,17 +4467,17 @@ class ExprGrammar ( Parser ):
             self._matrix_body = None # Matrix_bodyContext
 
         def BEGIN_V_MATRIX(self):
-            return self.getToken(ExprGrammar.BEGIN_V_MATRIX, 0)
+            return self.getToken(AlgExprGrammar.BEGIN_V_MATRIX, 0)
 
         def matrix_body(self):
-            return self.getTypedRuleContext(ExprGrammar.Matrix_bodyContext,0)
+            return self.getTypedRuleContext(AlgExprGrammar.Matrix_bodyContext,0)
 
 
         def END_V_MATRIX(self):
-            return self.getToken(ExprGrammar.END_V_MATRIX, 0)
+            return self.getToken(AlgExprGrammar.END_V_MATRIX, 0)
 
         def getRuleIndex(self):
-            return ExprGrammar.RULE_det_matrix
+            return AlgExprGrammar.RULE_det_matrix
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterDet_matrix" ):
@@ -4498,16 +4498,16 @@ class ExprGrammar ( Parser ):
 
     def det_matrix(self):
 
-        localctx = ExprGrammar.Det_matrixContext(self, self._ctx, self.state)
+        localctx = AlgExprGrammar.Det_matrixContext(self, self._ctx, self.state)
         self.enterRule(localctx, 70, self.RULE_det_matrix)
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 794
-            self.match(ExprGrammar.BEGIN_V_MATRIX)
+            self.match(AlgExprGrammar.BEGIN_V_MATRIX)
             self.state = 795
             localctx._matrix_body = self.matrix_body()
             self.state = 796
-            self.match(ExprGrammar.END_V_MATRIX)
+            self.match(AlgExprGrammar.END_V_MATRIX)
             localctx.res = Ast.DetMatrix(localctx, localctx._matrix_body.res)
         except RecognitionException as re:
             localctx.exception = re

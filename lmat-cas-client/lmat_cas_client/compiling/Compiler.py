@@ -1,30 +1,20 @@
-from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import alg_stmt_2_cas_expr
-import math
-import sys
 from abc import ABC, abstractmethod
 from typing import Any, ChainMap, override
 
-from antlr4 import CommonTokenStream, InputStream
-from lark import LarkError, Tree
-from lark.exceptions import VisitError
+from lark import LarkError
 
-from lmat_cas_client.compiling.definition.DefinitionStore import (
-    DefinitionStore,
-    assert_acyclic_dependencies,
+from lmat_cas_client.compiling.antlr import AlgExprLexer
+from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import (
+    CasExprV2,
+    alg_stmt_2_cas_expr,
 )
-from lmat_cas_client.compiling.definition.DefinitionStoreResolver import (
-    DefinitionStoreResolver,
-)
-from lmat_cas_client.compiling.parsing.CasExprParser import (
-    cas_expr_parser,
-)
-from lmat_cas_client.compiling.parsing.CasLogicExprParser import cas_logic_expr_parser
+from lmat_cas_client.compiling.antlr.evaluation.Scope import Scope, OptBinding
+from lmat_cas_client.compiling.antlr.AlgExprGrammar import AlgExprGrammar
 from lmat_cas_client.compiling.parsing.DefinitionsParser import (
     cas_expr_def_parser,
     cas_logic_expr_def_parser,
 )
 from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
-    CasExpr,
     cas_expr_transformer_runner,
 )
 from lmat_cas_client.compiling.transforming.cas_logic_expr.PropositionsTransformer import (
@@ -37,10 +27,6 @@ from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
     dependencies_transformer_runner,
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
-from lmat_cas_client.math_lib.StandardDefinitionStore import StandardDefinitionStore
-from lmat_cas_client.compiling.antlr.ExprGrammar import ExprGrammar
-from lmat_cas_client.compiling.antlr.ExprLexer import ExprLexer
-from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import system_2_cas_expr, CasExprV2
 
 
 class Compiler[**PTransform, TRes](ABC):
@@ -56,7 +42,7 @@ class Compiler[**PTransform, TRes](ABC):
         pass
 
 
-CasExprCompiler = Compiler[[DefinitionStore], CasExprV2]
+CasExprCompiler = Compiler[[Scope], CasExprV2]
 
 
 class CompileError(Exception):
@@ -69,25 +55,26 @@ class LatexToCasExprCompiler(CasExprCompiler):
     """
 
     @override
-    def compile(self, latex_str: str, def_store: DefinitionStore) -> CasExprV2:
+    def compile(self, latex_str: str, scope: Scope) -> CasExprV2:
         """
         Compile the given latex string to a sympy expression.
         Args:
             latex_str (str): input latex math string
-            def_store (DefinitionStore): DefinitionStore to take substitution values from.
+            scope (DefinitionStore): DefinitionStore to take substitution values from.
 
         Returns:
             Expr: compiled sympy expression.
         """
 
-		# TODO: error handling
+        # TODO: error handling
         ast = (
-            ExprGrammar(CommonTokenStream(ExprLexer(InputStream(latex_str))))
+            AlgExprGrammar(AlgExprLexer.stream_from_src(latex_str))
             .alg_statement()
             .res
         )
 
-        return alg_stmt_2_cas_expr(ast, None)
+        # TODO: scope should be some default thingy, not just empty
+        return alg_stmt_2_cas_expr(ast, scope)
 
 
 class LatexToLogicCasExprCompiler(CasExprCompiler):
@@ -97,22 +84,22 @@ class LatexToLogicCasExprCompiler(CasExprCompiler):
     """
 
     @override
-    def compile(self, latex_str: str, def_store: DefinitionStore) -> CasExpr:
-        ast = cas_logic_expr_parser.parse(latex_str)
-
-        dependencies = dependencies_transformer_runner.transform(ast)
-
-        assert_acyclic_dependencies(def_store, dependencies)
-
-        return cas_logic_expr_transformer_runner.transform(
-            ast, DefinitionStoreResolver(def_store, cas_logic_expr_transformer_runner)
-        )
-
-
-DefStoreCompiler = Compiler[[], DefinitionStore]
+    def compile(self, latex_str: str, scope: Scope) -> CasExprV2:
+        return ()
+        # ast = cas_logic_expr_parser.parse(latex_str)
+        #
+        # dependencies = dependencies_transformer_runner.transform(ast)
+        #
+        # assert_acyclic_dependencies(scope, dependencies)
+        #
+        # return cas_logic_expr_transformer_runner.transform(
+        #     ast, DefinitionStoreResolver(scope, cas_logic_expr_transformer_runner)
+        # )
 
 
-class LatexToDefStoreCompiler(DefStoreCompiler):
+BindingsCompiler = Compiler[[], tuple[OptBinding, ...]]
+
+class LatexToDefStoreCompiler(BindingsCompiler):
     """
     Produces a DefinitionStore from a latex string, according to the cas_def.lark grammar.
     These definition stores can be chained to combine multiple such definitions into a singular definition store.
@@ -126,7 +113,7 @@ class LatexToDefStoreCompiler(DefStoreCompiler):
         )
 
 
-class LatexToLogicDefStoreCompiler(DefStoreCompiler):
+class LatexToLogicDefStoreCompiler(BindingsCompiler):
     """
     Same as LatexToDefStoreCompiler but expects logic definitions (i.e. right hand side of symbol definitions are cas logic expressions)
     """
@@ -139,9 +126,9 @@ class LatexToLogicDefStoreCompiler(DefStoreCompiler):
         )
 
 
-def lmat_env_to_definition_store(
-    env: LmatEnvironment, compiler: DefStoreCompiler
-) -> DefinitionStore:
+def lmat_env_to_scope(
+    env: LmatEnvironment, compiler: BindingsCompiler
+) -> Scope:
     """
     Constructs a definition store from the given LmatEnvironment
     and definition compiler, by going through all definition strings
@@ -149,14 +136,17 @@ def lmat_env_to_definition_store(
     definition store.
     """
     env = LmatEnvironment.model_validate(env)
-    stores = [StandardDefinitionStore]
+
+    # TODO: standard bindings here
+    bindings = []
 
     for definition_str in env.definitionsv2:
-        try:
-            stores.append(compiler.compile(definition_str))
-        except LarkError:
-            # TODO: how can we distinguish between not-a-definition latex and definition with error latex?
-            # right now we just assume that any latex which produces a parse error is not intended to be a definition.
-            pass
+        bindings.append(compiler.compile(definition_str))
+        # TODO: how can we distinguish between not-a-definition latex and definition with error latex?
+        # right now we just assume that any latex which produces a parse error is not intended to be a definition.
+        # if it contains := maybe? so dont accept any failuers here
 
-    return ChainMap(*reversed(stores))
+    scope = Scope()
+    scope.register(bindings)
+
+    return scope

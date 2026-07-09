@@ -9,7 +9,7 @@ from sympy.physics.units.unitsystem import UnitSystem
 import lmat_cas_client.math_lib.units.UnitUtils as UnitUtils
 from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import LocRange
 from lmat_cas_client.compiling.Compiler import (
-    lmat_env_to_definition_store,
+    lmat_env_to_scope,
 )
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 from lmat_cas_client.LmatLatexPrinter import lmat_latex
@@ -56,7 +56,7 @@ class EvalHandlerBase(CompilingCommandHandler, ABC):
     def handle(self, message: EvaluateMessage | MessageLike) -> EvaluateResult:
         message = EvaluateMessage.model_validate(message)
 
-        definitions_store = lmat_env_to_definition_store(
+        definitions_store = lmat_env_to_scope(
             message.environment, self._def_store_compiler
         )
 
