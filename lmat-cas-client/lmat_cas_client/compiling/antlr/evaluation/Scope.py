@@ -57,7 +57,7 @@ class Signature:
     Represents a "key" in a :class:`Definitions` object which maps the signature of a symbol to a concrete defined value.
     """
 
-    type GroupKey = tuple[HeadId, Ast.SubscriptForm, int]
+    type GroupKey = tuple[HeadId, Ast.SubscriptForm, int, int]
     """
     If 2 signatures have the same :class:`GroupKey` they act as overrides for the same symbol.
     If they do not have the same :class:`GroupKey`, they are not signatures for the same symbol.
@@ -139,7 +139,7 @@ class Signature:
         """
         Construct a :class:`GroupKey` for the current :class:`Signature`.
         """
-        return (self.head_id, self.subscript_form, len(self.arg_params))
+        return (self.head_id, self.subscript_form, len(self.index_params), len(self.arg_params))
 
     def override_priority_key(self) -> OverridePriorityKey:
         """
@@ -147,7 +147,7 @@ class Signature:
         """
 
         def litteral_count(params: Params) -> int:
-            return sum(1 for p in params if p is LiteralParam)
+            return sum(1 for p in params if isinstance(p, LiteralParam))
 
         return (
             litteral_count(self.index_params),
@@ -264,7 +264,9 @@ class Scope:
         def_id = self._next_id
         self._next_id += 1
 
-        return self.reregister_single(binding, def_id)
+        self.reregister_single(binding, def_id)
+
+        return def_id
 
     def reregister_single(self, binding: OptBinding, binding_id: BindingId):
         """

@@ -118,14 +118,19 @@ def a_expr_resolve_ambig_calls(
         # handle case where we actually need to resolve an ambiguity.
         case Ast.AmbigApplyFunc(ctx, Ast.ApplyFunc(_, func, args)):
             # first check if func is an AExpr whic could potentially have a definition
-            signature = Signature.from_a_expr(func)
+            signature = Signature.from_a_expr(expr.apply_func_candidate)
 
             if signature is not None:
 
                 # now check if it has a definition and that definition is a function.
-                resolved_binding_id = scope.resolve(signature, literal_sp_comparer(scope))
+                resolved_binding_id = scope.resolve(
+                    signature, literal_sp_comparer(scope)
+                )
 
-                if resolved_binding_id is not None and len(scope.get_binding(resolved_binding_id)[0].arg_params) >= 1:
+                if (
+                    resolved_binding_id is not None
+                    and len(scope.get_binding(resolved_binding_id)[0].arg_params) >= 1
+                ):
                     # it is, so resolve it to an ApplyFunc
                     return (
                         Ast.ApplyFunc(ctx, func, args),
@@ -229,7 +234,8 @@ def a_expr_sub_bindings(
 
             # also make sure bindings are resolved in the bindings...
             bindings = tuple(
-                (sig, a_expr_sub_bindings(val, scope, lit_eq_checker)) for (sig, val) in bindings
+                (sig, a_expr_sub_bindings(val, scope, lit_eq_checker))
+                for (sig, val) in bindings
             )
 
             binding_ids = scope.register(bindings)
@@ -237,13 +243,13 @@ def a_expr_sub_bindings(
             # instead of recursively calling a_expr_subs here,
             # we call a_expr_2_sympy and memoize the result instead.
             # this greatly improves performance for recursive bindings with multiple recursive variables.
-            sp_expr = a_expr_2_sympy(expr, scope)
+            sp_expr = a_expr_2_sympy(bound_val, scope)
 
             scope.unregister(binding_ids)
 
-            sp_const = Ast.SympyConstant(expr.ctx, sp_expr)
+            sp_const = Ast.SympyConstant(bound_val.ctx, sp_expr)
 
-            scope.reregister_single((signature, sp_const), resolved_binding_id)
+            scope.reregister_single((binding_signature, sp_const), resolved_binding_id)
 
             return sp_const
 
@@ -278,10 +284,8 @@ def a_expr_sub_bindings(
                 },
             )
 
-
             var_signature = Signature.from_a_expr(var)
             assert var_signature is not None
-
 
             var_binding_id = scope.resolve(var_signature, lit_eq_checker)
 
@@ -297,7 +301,9 @@ def a_expr_sub_bindings(
 
             # now reregister the original binding in the scope.
             if var_binding_id is not None:
-                scope.reregister_single((var_signature, var_bound_value), var_binding_id)
+                scope.reregister_single(
+                    (var_signature, var_bound_value), var_binding_id
+                )
 
             return subbed_expr
         case _:
@@ -392,11 +398,7 @@ def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
 
 
 def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
-    expr = a_expr_sub_bindings(
-        expr,
-        s,
-        literal_sp_comparer(s)
-    )
+    expr = a_expr_sub_bindings(expr, s, literal_sp_comparer(s))
     return _a_expr_2_sympy(expr)
 
 
