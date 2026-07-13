@@ -1,31 +1,20 @@
+from lmat_cas_client.compiling.antlr.parser.ErrorListener import ParseError
 from abc import ABC, abstractmethod
-from typing import Any, ChainMap, override
+from typing import Any, override
 
-from lark import LarkError
-
-from lmat_cas_client.compiling.antlr import AlgExprLexer
 from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import (
     CasExprV2,
     alg_stmt_2_cas_expr,
 )
-from lmat_cas_client.compiling.antlr.evaluation.Scope import Scope, OptBinding
-from lmat_cas_client.compiling.antlr.AlgExprGrammar import AlgExprGrammar
-from lmat_cas_client.compiling.parsing.DefinitionsParser import (
-    cas_expr_def_parser,
-    cas_logic_expr_def_parser,
+from lmat_cas_client.compiling.antlr.evaluation.DefExprTransformer import (
+    binding_stmts_2_bindings,
 )
-from lmat_cas_client.compiling.transforming.cas_expr.CasExprTransformer import (
-    cas_expr_transformer_runner,
-)
-from lmat_cas_client.compiling.transforming.cas_logic_expr.PropositionsTransformer import (
-    cas_logic_expr_transformer_runner,
-)
-from lmat_cas_client.compiling.transforming.DefinitionsTransformer import (
-    definitions_transformer_runner,
-)
-from lmat_cas_client.compiling.transforming.DependenciesTransformer import (
-    dependencies_transformer_runner,
-)
+from lmat_cas_client.compiling.antlr.evaluation.Scope import OptBinding, Scope
+from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
+from lmat_cas_client.compiling.antlr.parser.AlgExprLexer import AlgExprLexer
+from lmat_cas_client.compiling.antlr.parser.DefExprGrammar import DefExprGrammar
+from lmat_cas_client.compiling.antlr.parser.DefExprLexer import DefExprLexer
+from lmat_cas_client.compiling.antlr.parser.ErrorListener import ParseErrorListener
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 
@@ -48,6 +37,7 @@ CasExprCompiler = Compiler[[Scope], CasExprV2]
 class CompileError(Exception):
     pass
 
+
 class LatexToCasExprCompiler(CasExprCompiler):
     """
     Combines a latex parser and a sympy transformer to provide a latex to sympy compiler.
@@ -66,14 +56,22 @@ class LatexToCasExprCompiler(CasExprCompiler):
             Expr: compiled sympy expression.
         """
 
-        # TODO: error handling
-        ast = (
-            AlgExprGrammar(AlgExprLexer.stream_from_src(latex_str))
-            .alg_statement()
-            .res
-        )
+        err_listener = ParseErrorListener()
 
-        # TODO: scope should be some default thingy, not just empty
+        stream = AlgExprLexer.stream_from_src(latex_str)
+        stream.tokenSource.removeErrorListeners()
+        stream.tokenSource.addErrorListener(err_listener)
+
+        parser = AlgExprGrammar(stream)
+
+        parser.removeErrorListeners()
+        parser.addErrorListener(err_listener)
+
+        ast = parser.alg_statement().res
+
+        if err_listener.has_errors():
+            raise err_listener.build_parse_error(latex_str)
+
         return alg_stmt_2_cas_expr(ast, scope)
 
 
@@ -99,6 +97,7 @@ class LatexToLogicCasExprCompiler(CasExprCompiler):
 
 BindingsCompiler = Compiler[[], tuple[OptBinding, ...]]
 
+
 class LatexToDefStoreCompiler(BindingsCompiler):
     """
     Produces a DefinitionStore from a latex string, according to the cas_def.lark grammar.
@@ -106,11 +105,25 @@ class LatexToDefStoreCompiler(BindingsCompiler):
     """
 
     @override
-    def compile(self, latex_str: str) -> Any:
-        ast = cas_expr_def_parser.parse(latex_str)
-        return definitions_transformer_runner.transform(
-            ast, cas_expr_transformer_runner, dependencies_transformer_runner
-        )
+    def compile(self, latex_str: str) -> tuple[OptBinding, ...]:
+        # TODO: error handling
+        err_listener = ParseErrorListener()
+
+        stream = DefExprLexer.stream_from_src(latex_str)
+        stream.tokenSource.removeErrorListeners()
+        stream.tokenSource.addErrorListener(err_listener)
+
+        parser = DefExprGrammar(stream)
+
+        parser.removeErrorListeners()
+        parser.addErrorListener(err_listener)
+
+        ast = parser.bindings().res
+
+        if err_listener.has_errors():
+            raise err_listener.build_parse_error(latex_str)
+
+        return binding_stmts_2_bindings(ast)
 
 
 class LatexToLogicDefStoreCompiler(BindingsCompiler):
@@ -120,15 +133,14 @@ class LatexToLogicDefStoreCompiler(BindingsCompiler):
 
     @override
     def compile(self, latex_str: str) -> Any:
-        ast = cas_logic_expr_def_parser.parse(latex_str)
-        return definitions_transformer_runner.transform(
-            ast, cas_logic_expr_transformer_runner, dependencies_transformer_runner
-        )
+        return ()
+        # ast = cas_logic_expr_def_parser.parse(latex_str)
+        # return definitions_transformer_runner.transform(
+        #     ast, cas_logic_expr_transformer_runner, dependencies_transformer_runner
+        # )
 
 
-def lmat_env_to_scope(
-    env: LmatEnvironment, compiler: BindingsCompiler
-) -> Scope:
+def lmat_env_to_scope(env: LmatEnvironment, compiler: BindingsCompiler) -> Scope:
     """
     Constructs a definition store from the given LmatEnvironment
     and definition compiler, by going through all definition strings
@@ -138,13 +150,13 @@ def lmat_env_to_scope(
     env = LmatEnvironment.model_validate(env)
 
     # TODO: standard bindings here
-    bindings = []
+    bindings: list[OptBinding] = []
 
-    for definition_str in env.definitionsv2:
-        bindings.append(compiler.compile(definition_str))
-        # TODO: how can we distinguish between not-a-definition latex and definition with error latex?
-        # right now we just assume that any latex which produces a parse error is not intended to be a definition.
-        # if it contains := maybe? so dont accept any failuers here
+    for i, definition_str in enumerate(env.definitionsv2):
+        try:
+            bindings.extend(compiler.compile(definition_str))
+        except ParseError as e:
+            raise RuntimeError(f"Error whilst parsing definition {i}:\n{e}") from e
 
     scope = Scope()
     scope.register(bindings)

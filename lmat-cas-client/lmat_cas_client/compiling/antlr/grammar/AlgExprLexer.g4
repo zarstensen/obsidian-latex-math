@@ -2,14 +2,14 @@ lexer grammar AlgExprLexer;
 
 options {
     language = Python3;
+	superClass = BaseLexer;
 }
 
 @header {
 from enum import Enum
+from .BaseLexer import BaseLexer
 from antlr4 import CommonTokenStream, InputStream
 
-def stream_from_src(src: str) -> CommonTokenStream:
-	return CommonTokenStream(AlgExprLexer(InputStream(src)))
 
 class AddMode(Enum):
     DEFAULT = 0
@@ -130,10 +130,15 @@ POW: '^' -> pushMode(COMM_ARG);
 // relational operators
 EQ: '=';
 NEQ: '\\ne' 'q'?;
-LT: '<';
-LTE: '<=' | '\\leq' 'slant'? | '\\le';
-GT: '>';
-GTE: '>=' | '\\geq' 'slant'? | '\\ge';
+
+fragment F_LT: '<';
+LT: F_LT;
+fragment F_LTE: '<=' | '\\leq' 'slant'? | '\\le';
+LTE: F_LTE;
+fragment F_GT: '>';
+GT: F_GT;
+fragment F_GTE: '>=' | '\\geq' 'slant'? | '\\ge';
+GTE: F_GTE;
 
 TIMES: '\\times';
 DOT_PROD: '\\dotproduct' | '\\vdot';

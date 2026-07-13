@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, cast, override
+from typing import cast, override
 
 from pydantic import BaseModel
-from sympy import *
+from sympy import Expr, sympify
 from sympy.core.relational import Relational
 from sympy.physics.units.unitsystem import UnitSystem
 
@@ -56,12 +56,12 @@ class EvalHandlerBase(CompilingCommandHandler, ABC):
     def handle(self, message: EvaluateMessage | MessageLike) -> EvaluateResult:
         message = EvaluateMessage.model_validate(message)
 
-        definitions_store = lmat_env_to_scope(
+        scope = lmat_env_to_scope(
             message.environment, self._def_store_compiler
         )
 
         [*_, (sympy_expr, expr_loc)] = self._cas_expr_compiler.compile(
-            message.expression, definitions_store
+            message.expression, scope
         )
 
         # choose  right most evaluatable expression.

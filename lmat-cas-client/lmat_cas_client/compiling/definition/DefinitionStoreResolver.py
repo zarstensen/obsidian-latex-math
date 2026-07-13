@@ -25,7 +25,7 @@ from .Resolver import (
     SymbolResToken,
 )
 
-type AstTransformer = TransformerRunner[[DefinitionResolver], CasExpr]
+AstTransformer = TransformerRunner[[DefinitionResolver], CasExpr]
 
 
 class DefinitionStoreResolver(DefinitionResolver):

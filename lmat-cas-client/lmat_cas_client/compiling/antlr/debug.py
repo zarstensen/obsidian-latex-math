@@ -1,4 +1,8 @@
 # type: ignore
+from lmat_cas_client.compiling.antlr.parser.AlgExprLexer import AlgExprLexer
+from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
+from lmat_cas_client.compiling.antlr.evaluation.Scope import Scope
+from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import a_expr_2_sympy
 import html
 import sys
 from time import time
@@ -12,14 +16,16 @@ from antlr4 import (
     ParseTreeVisitor,
 )
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
+from antlr4.error.ErrorListener import ConsoleErrorListener
 
-from .evaluation.CasExprTransformer import alg_stmt_2_cas_expr, a_expr_resolve_ir
-from .AlgExprGrammar import AlgExprGrammar
-from .AlgExprLexer import AlgExprLexer
+from .parser.DefExprGrammar import DefExprGrammar
+from .parser.DefExprLexer import DefExprLexer
 
 IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
 
+Grammar = AlgExprGrammar
+Lexer = AlgExprLexer
 
 class ParseTreeDotVisitor(ParseTreeVisitor):
     """
@@ -94,7 +100,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
 
         rule_alias = type(node).__name__.removesuffix("Context")
 
-        rule_name = AlgExprGrammar.ruleNames[node.getRuleIndex()]
+        rule_name = Grammar.ruleNames[node.getRuleIndex()]
 
         if rule_alias.lower() == rule_name.lower():
             label = f"{rule_name}"
@@ -117,7 +123,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         self.__term_subgraph.add_node(
             pydot.Node(
                 id,
-                label=f'<{AlgExprGrammar.symbolicNames[node.getSymbol().type]}<br/><font fontname="monospace">{html.escape(node.getText())}</font>>',
+                label=f'<{Grammar.symbolicNames[node.getSymbol().type]}<br/><font fontname="monospace">{html.escape(node.getText())}</font>>',
                 xlabel=f'<<font color="#004D62">* {node.getSymbol().tokenIndex}</font>>',
             )
         )
@@ -133,7 +139,7 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         symbol = node.getSymbol()
 
         if symbol and symbol.tokenIndex != -1:
-            label = f"{AlgExprGrammar.symbolicNames[symbol.type]}\n\\<unexpected: {symbol.text}\\>"
+            label = f"{Grammar.symbolicNames[symbol.type]}\n\\<unexpected: {symbol.text}\\>"
 
         self.__err_subgraph.add_node(pydot.Node(id, label=label))
         return id
@@ -148,11 +154,9 @@ class ParseTreeDotVisitor(ParseTreeVisitor):
         return aggregate
 
 
-# if parser.getNumberOfSyntaxErrors() > 0:
-#     print("syntax errors")
 
 input_stream = FileStream(IN_FILE)
-lexer = AlgExprLexer(input_stream)
+lexer = Lexer(input_stream)
 stream = CommonTokenStream(lexer)
 
 # Debug: print all tokens lexed from the input stream
@@ -163,26 +167,28 @@ end = time()
 print("======== TOKENS ========")
 for t in tokens:
     try:
-        name = AlgExprGrammar.symbolicNames[t.type]
+        name = Grammar.symbolicNames[t.type]
     except Exception:
         name = str(t.type)
     print(f"{t.tokenIndex}: {name}\t{repr(t.text)}")
 
-print(f"Lex Time: {end - start} ms")
+print(f"Lex Time: {end - start} s")
 start = time()
-parser = AlgExprGrammar(stream)
-def iff(x):
-	print(f"CHECKING {x}")
-	return False
-parser.is_func = iff
+parser = Grammar(stream)
+
 tree = parser.debug()
 end = time()
 r = ParseTreeDotVisitor().visit(tree)
+if parser.getNumberOfSyntaxErrors() > 0:
+    print("syntax errors")
 
 with open(OUT_FILE, "w") as f:
     _ = f.write(str(r))
 
-print(f"======== AST ========\n{a_expr_resolve_ir(tree.res, {})[0]}")
-print(f"Parse Time: {end - start} ms")
-print(f"======== EVAL ========\n{alg_stmt_2_cas_expr(a_expr_resolve_ir(tree.res), {})}")
+print(f"======== AST ========\n{tree.res}")
+print(f"Parse Time: {end - start} s")
+start = time()
+print(f"======== EVAL ========\n{a_expr_2_sympy(tree.res, Scope())}")
+end = time()
+print(f"Eval Time: {end - start} s")
 

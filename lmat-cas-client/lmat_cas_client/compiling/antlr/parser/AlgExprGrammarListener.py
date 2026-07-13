@@ -5,7 +5,7 @@ if "." in __name__:
 else:
     from AlgExprGrammar import AlgExprGrammar
 
-import lmat_cas_client.compiling.antlr.Ast as Ast
+from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
 from typing import cast, Type, Callable
 
 def rule_t[T](_t: Type[T], v: T | None = None) -> T:

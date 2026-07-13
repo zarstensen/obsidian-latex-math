@@ -198,3 +198,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 latest_asset_version.json
+lmat-cas-client/in.txt
+lmat-cas-client/out.dot

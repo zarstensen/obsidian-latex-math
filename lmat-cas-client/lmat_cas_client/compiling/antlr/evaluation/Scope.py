@@ -6,7 +6,7 @@ from typing import Callable, Iterable, MutableMapping, Self, cast
 from attrs import frozen
 from sortedcontainers import SortedList
 
-from lmat_cas_client.compiling.antlr import Ast
+from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
 
 
 @frozen
@@ -27,7 +27,7 @@ class LiteralParam:
     literal: Ast.AExpr
 
 
-type LiteralParams = tuple[LiteralParam, ...]
+LiteralParams = tuple[LiteralParam, ...]
 
 
 @frozen
@@ -42,10 +42,10 @@ class BoundParam:
     """
 
 
-type Param = LiteralParam | BoundParam
-type Params = tuple[Param, ...]
+Param = LiteralParam | BoundParam
+Params = tuple[Param, ...]
 
-type HeadId = str
+HeadId = str
 """
 Type alias for the "head" of a :class:`Signature`.
 This refers to the primary symbol of the :class:`Signature`, appearing before any potential subscript or function arguments.
@@ -232,9 +232,9 @@ class Signature:
         )
 
 
-type OptBinding = tuple[Signature, Ast.AExpr | None]
+OptBinding = tuple[Signature, Ast.AExpr | None]
 
-type Binding = tuple[Signature, Ast.AExpr]
+Binding = tuple[Signature, Ast.AExpr]
 
 
 class Scope:
@@ -245,7 +245,7 @@ class Scope:
     """
 
     type BindingId = int
-    type _DefEntry = tuple[Signature.OverridePriorityKey, Scope.BindingId]
+    _DefEntry = tuple[Signature.OverridePriorityKey, BindingId]
 
     def __init__(self: Self):
         self._next_id = 0
@@ -259,7 +259,7 @@ class Scope:
     def register(
         self: Self, definitions: Iterable[OptBinding]
     ) -> tuple[BindingId, ...]:
-        ids = []
+        ids: list[Scope.BindingId] = []
 
         for defi in definitions:
             ids.append(self.register_single(defi))

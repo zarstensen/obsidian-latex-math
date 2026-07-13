@@ -1,11 +1,16 @@
 # mypy: disable-error-code=operator
 from enum import Enum
-from typing import Callable, cast
+from typing import cast
 
 import attrs
 import sympy as sp
-from antlr4 import ParserRuleContext
 
+from lmat_cas_client.compiling.antlr.ast.AstNode import (
+    AstNode,
+    LocRange,
+    ctx_to_loc,
+    visit_children,
+)
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     LiteralParam,
     Scope,
@@ -14,11 +19,10 @@ from lmat_cas_client.compiling.antlr.evaluation.Scope import (
 from lmat_cas_client.compiling.transforming.LatexMatrix import (
     MutableLatexMatrix,
 )
+from lmat_cas_client.LmatLatexPrinter import lmat_latex
 from lmat_cas_client.math_lib import Functions, MatrixUtils
 
-from .. import Ast
-
-LocRange = tuple[int, int]
+from ..ast import AlgStmtAst as Ast
 
 ExprEntry = tuple[sp.Basic | sp.MatrixBase, LocRange]
 
@@ -36,67 +40,6 @@ def literal_sp_comparer(scope: Scope) -> LiteralParam.EqChecker:
     )
 
 
-def ctx_to_loc(ctx: ParserRuleContext) -> LocRange:
-    """
-    Extract location information from a ParserRuleContext object into a LocRange.
-    """
-    start_token = ctx.start
-    end_token = ctx.stop
-
-    assert start_token is not None and end_token is not None
-
-    return (start_token.start, end_token.stop)
-
-
-
-
-def visit_children[TNode: Ast.AstNode, TChild: Ast.AstNode](
-    node: TNode,
-    visitor: Callable[[TChild], TChild],
-    exclude_children: set[attrs.Attribute] | None = None,
-):
-    """
-    Call visitor on all fields of node which extend AstNode.
-    This also includes all AstNode's in arbitrarily nested tuples and lists.
-
-    the visitor returns a new child node which the previous child is replaced with.
-    returns a new version of node, which contains the newly replaced children.
-
-    visitor is not invoked for fields present in exclude_children.
-    """
-
-    def _visit_nested(
-        val: object,
-        visitor: Callable[[TChild], TChild],
-    ) -> object:
-        match val:
-            case Ast.AstNode() as child:
-                return visitor(cast(TChild, child))
-            case (list() | tuple()) as children:
-                return type(children)(
-                    _visit_nested(child, visitor)
-                    for child in children
-                )
-            case _:
-                return val
-
-    exclude_children = exclude_children or set()
-
-    node_fields: tuple[attrs.Attribute[TNode]] = attrs.fields(type(node))
-
-    new_children: dict[str, object] = {}
-
-    for field in node_fields:
-        field_val = getattr(node, field.name)
-
-        if field in exclude_children:
-            continue
-
-        new_val = _visit_nested(field_val, visitor)
-        if new_val is not field_val:
-            new_children[field.name] = new_val
-
-    return attrs.evolve(node, **new_children)
 
 
 class AmbigCallResolution(Enum):
@@ -129,7 +72,6 @@ def a_expr_resolve_ambig_calls(
             signature = Signature.from_a_expr(expr.apply_func_candidate)
 
             if signature is not None:
-
                 # now check if it has a definition and that definition is a function.
                 resolved_binding_id = scope.resolve(
                     signature, literal_sp_comparer(scope)
@@ -164,7 +106,6 @@ def a_expr_resolve_ambig_calls(
             | Ast.Percent(_, val)
             | Ast.Permille(_, val)
         ):
-
             # select which field we need to pick the AmbigCallResolution from.
             # e.g. in ExpOp its base, as this is the field which is ambiguous (e.g. f(x)^y is ambig where as y^{f(x)} is not )
             match expr:
@@ -177,7 +118,7 @@ def a_expr_resolve_ambig_calls(
 
             # resolve ambiguity and keep the resolution enum
             unambig_val, strat = a_expr_resolve_ambig_calls(val, scope)
-            assert isinstance(unambig_val, Ast.AExpr)
+            assert isinstance(unambig_val, Ast.AExpr.__value__)
 
             # resolve ambiguities in the rest of the expr
             unambig_expr = visit_children(
@@ -212,7 +153,7 @@ def a_expr_resolve_ambig_calls(
                         AmbigCallResolution.BubbleUp,
                     )
 
-        case Ast.AstNode(_) as node:
+        case AstNode(_) as node:
             return (
                 visit_children(node, lambda c: a_expr_resolve_ambig_calls(c, scope)[0]),
                 AmbigCallResolution.BubbleUp,
@@ -266,6 +207,7 @@ def a_expr_sub_bindings(
     # expression should not be substituted itself
     # there are still some special cases where scope must be modified.
     match expr:
+		# TODO: also eval at here...
         case (
             Ast.Sum(_, sexpr, var, _)
             | Ast.Product(_, sexpr, var, _)
@@ -378,19 +320,20 @@ def rel_2_cas_expr(rel: Ast.Rel, scope: Scope) -> CasExprV2:
 
     sp_rel: sp.Basic
 
-    match rel:
-        case Ast.Eq(_, lhs, _):
-            sp_rel = sp.Eq(ev(lhs, scope), ev(rhs, scope))
-        case Ast.Neq(_, lhs, _):
-            sp_rel = sp.Ne(ev(lhs, scope), ev(rhs, scope))
-        case Ast.Lt(_, lhs, _):
-            sp_rel = sp.Lt(ev(lhs, scope), ev(rhs, scope))
-        case Ast.Lte(_, lhs, _):
-            sp_rel = sp.Le(ev(lhs, scope), ev(rhs, scope))
-        case Ast.Gt(_, lhs, _):
-            sp_rel = sp.Gt(ev(lhs, scope), ev(rhs, scope))
-        case Ast.Gte(_, lhs, _):
-            sp_rel = sp.Ge(ev(lhs, scope), ev(rhs, scope))
+    with sp.evaluate(False):
+        match rel:
+            case Ast.Eq(_, lhs, _):
+                sp_rel = sp.Eq(ev(lhs, scope), ev(rhs, scope))
+            case Ast.Neq(_, lhs, _):
+                sp_rel = sp.Ne(ev(lhs, scope), ev(rhs, scope))
+            case Ast.Lt(_, lhs, _):
+                sp_rel = sp.Lt(ev(lhs, scope), ev(rhs, scope))
+            case Ast.Lte(_, lhs, _):
+                sp_rel = sp.Le(ev(lhs, scope), ev(rhs, scope))
+            case Ast.Gt(_, lhs, _):
+                sp_rel = sp.Gt(ev(lhs, scope), ev(rhs, scope))
+            case Ast.Gte(_, lhs, _):
+                sp_rel = sp.Ge(ev(lhs, scope), ev(rhs, scope))
 
     entry = (sp_rel, ctx_to_loc(rel.ctx))
 
@@ -405,9 +348,32 @@ def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
     return ((a_expr_2_sympy(expr, scope), ctx_to_loc(expr.ctx)),)
 
 
+# TODO: there is no point in this, just have them be 2 separate functions
 def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
     expr = a_expr_sub_bindings(expr, s, literal_sp_comparer(s))
     return _a_expr_2_sympy(expr)
+
+
+def symbol_2_str(symbol: Ast.Symbol, subscript: Ast.Subscript | None):
+    match (symbol, subscript):
+        case Ast.Symbol(_, name), None:
+            return name
+        case Ast.Symbol(_, head_name), Ast.Subscript(_, slots, form):
+            slot_strs: list[str] = []
+
+            for slot in slots:
+                match slot:
+                    case expr if isinstance(expr, Ast.AExpr):
+                        slot_strs.append(lmat_latex(_a_expr_2_sympy(slot)))
+                    case None:
+                        slot_strs.append("")
+                    case _:
+                        raise ValueError("Range slices is unsupported in this context")
+            subscript_str = "".join(
+                slot + sep for slot, sep in zip(slot_strs, form.slot_seps + [""])
+            )
+
+            return f"{head_name}_{{{form.brackets[0] or ""}{subscript_str}{form.brackets[1] or ""}}}"
 
 
 # Transform an Ast.AExpr into a sympy expression,
@@ -423,13 +389,15 @@ def _a_expr_2_sympy(expr: Ast.AExpr) -> sp.Basic | sp.MatrixBase:
             lbrack, rbrack = subscript.form.brackets
             return sp.Symbol(f"{name}_{{{lbrack}WHAAAAAT{rbrack}}}")
 
+        case Ast.SubscriptOp(_, Ast.Symbol(_, name), subscript):
+            return sp.Symbol(symbol_2_str(name, subscript))
+
         case Ast.SubscriptOp(_, expr, subscript):
             # TODO: check if expr is indexable, if not raise / assert
-            # wait no...
             return None
 
         case Ast.Symbol(_, name):
-            return sp.Symbol(name)
+            return sp.Symbol(symbol_2_str(name, None))
 
         case Ast.Number(_, n_str):
             if "." in n_str:

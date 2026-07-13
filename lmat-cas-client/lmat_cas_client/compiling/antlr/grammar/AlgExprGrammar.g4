@@ -5,15 +5,11 @@ options {
 }
 
 @header {
-import lmat_cas_client.compiling.antlr.Ast as Ast
+from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
 from typing import cast, Type, Callable
 
 def rule_t[T](_t: Type[T], v: T | None = None) -> T:
 	return cast(T, v)
-}
-
-@members {
-func_set: set[str] = set()
 }
 
 //TODO:
@@ -125,7 +121,7 @@ a_expr
 		{$res = $node_t($ctx, $lhs.res, $rhs.res)}
 	// matches implicit multiplication (juxtaposition without an explicit operator)
 	// e.g. 2x, a b
-	| lhs = a_expr {((self._input.LA(-1), self._input.LA(1)) != (self.NUMBER, self.NUMBER) and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN))}? rhs = a_expr
+	| lhs = a_expr {(self._input.LA(1) != self.NUMBER and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN))}? rhs = a_expr
 		{$res = Ast.MultOp($ctx, $lhs.res, $rhs.res)}
 
 	// matches a limit expression
@@ -314,7 +310,7 @@ primary_symbol returns[res = rule_t(Ast.AExpr)]:
 // matches a symbol prefixed with a \Delta symbol.
 // e.g. \Delta x
 delta_symbol returns[res = rule_t(Ast.AExpr)]:
-    DELTA primary_symbol {$res = Ast.Symbol($ctx, f"{$DELTA.text} {$primary_symbol.res.symbol}")};
+    DELTA primary_symbol {$res = Ast.Symbol($ctx, f"{$DELTA.text} {$primary_symbol.res.name}")};
 
 
 // matches any symbol: a plain identifier, a \command, or a \Delta-prefixed symbol
@@ -361,7 +357,7 @@ cmd_func
 // e.g. a & b & c
 matrix_row
     returns[res = rule_t(list[Ast.AExpr])]:
-    | a_expr {$res = [$a_expr.res]} (ENV_EL_SEP a_expr {$res.append($a_expr.res)})* ;
+    | a_expr {$res = [$a_expr.res]} (ENV_EL_SEP a_expr {$res.append($a_expr.res)})*;
 // matches the full body of a matrix (rows separated by \\)
 // e.g. a & b \\ c & d
 matrix_body

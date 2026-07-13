@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from abc import ABC
 from enum import Enum
-from typing import Callable, Union
+from typing import Union
 
 import sympy as sp
 from antlr4 import ParserRuleContext
-from attrs import evolve, field, frozen
+from attrs import frozen
+
+from .AstNode import AstNode
 
 
 class CombOpId(Enum):
@@ -21,29 +23,14 @@ def combOpFromId(ctx: ParserRuleContext, n: AExpr, kr: AExpr, op: CombOpId):
         case CombOpId.Combinations:
             return Binom(ctx, n, kr)
 
-
-@frozen
-class AstNode(ABC):
-    ctx: ParserRuleContext = field(repr=False)
-
-    def mut_ctx[T: AstNode](self: T, ctx: ParserRuleContext) -> T:
-        return evolve(self, ctx=ctx)
-
-
 # ======== misc ========
-
-
-@frozen
-class Placeholder(AstNode):
-    pass
-
 
 @frozen
 class AmbigApplyFunc(AstNode):
     apply_func_candidate: ApplyFunc
 
 
-Ir = Placeholder | AmbigApplyFunc
+Ir = AmbigApplyFunc
 
 
 # ======== relational ========
@@ -122,7 +109,7 @@ class ExpOp(AstNode):
     exponent: AExpr
 
 
-SubscriptSlot = Union["AExpr", tuple[Union["AExpr", None], Union["AExpr", None]]] | None
+SubscriptSlot = Union["AExpr", tuple[Union["AExpr", None], Union["AExpr", None]], None]
 
 
 @frozen
@@ -335,7 +322,7 @@ class DetMatrix(AstNode):
     elements: list[list[AExpr]]
 
 
-type SpVal = sp.Basic | sp.MatrixBase
+SpVal = sp.Basic | sp.MatrixBase
 
 
 @frozen

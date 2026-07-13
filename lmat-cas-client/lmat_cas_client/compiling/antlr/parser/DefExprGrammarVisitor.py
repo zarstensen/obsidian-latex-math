@@ -5,7 +5,10 @@ if "." in __name__:
 else:
     from DefExprGrammar import DefExprGrammar
 
-import lmat_cas_client.compiling.antlr.Ast as Ast
+from lmat_cas_client.compiling.antlr.ast import DefStmtAst as DefAst
+
+
+from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
 from typing import cast, Type, Callable
 
 def rule_t[T](_t: Type[T], v: T | None = None) -> T:
@@ -18,6 +21,136 @@ class DefExprGrammarVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by DefExprGrammar#debug.
     def visitDebug(self, ctx:DefExprGrammar.DebugContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#bindings.
+    def visitBindings(self, ctx:DefExprGrammar.BindingsContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#binding.
+    def visitBinding(self, ctx:DefExprGrammar.BindingContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#definition.
+    def visitDefinition(self, ctx:DefExprGrammar.DefinitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#def_body.
+    def visitDef_body(self, ctx:DefExprGrammar.Def_bodyContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#symbol_assumption.
+    def visitSymbol_assumption(self, ctx:DefExprGrammar.Symbol_assumptionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#function_assumption.
+    def visitFunction_assumption(self, ctx:DefExprGrammar.Function_assumptionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#assum_body.
+    def visitAssum_body(self, ctx:DefExprGrammar.Assum_bodyContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set.
+    def visitSet(self, ctx:DefExprGrammar.SetContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_complex.
+    def visitSet_complex(self, ctx:DefExprGrammar.Set_complexContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_real.
+    def visitSet_real(self, ctx:DefExprGrammar.Set_realContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_imaginary.
+    def visitSet_imaginary(self, ctx:DefExprGrammar.Set_imaginaryContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_rational.
+    def visitSet_rational(self, ctx:DefExprGrammar.Set_rationalContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_integer.
+    def visitSet_integer(self, ctx:DefExprGrammar.Set_integerContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_natural.
+    def visitSet_natural(self, ctx:DefExprGrammar.Set_naturalContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_even.
+    def visitSet_even(self, ctx:DefExprGrammar.Set_evenContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_odd.
+    def visitSet_odd(self, ctx:DefExprGrammar.Set_oddContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#set_prime.
+    def visitSet_prime(self, ctx:DefExprGrammar.Set_primeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#algebraic_set.
+    def visitAlgebraic_set(self, ctx:DefExprGrammar.Algebraic_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#ext_real_set.
+    def visitExt_real_set(self, ctx:DefExprGrammar.Ext_real_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#unsigned_set.
+    def visitUnsigned_set(self, ctx:DefExprGrammar.Unsigned_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#signed_set.
+    def visitSigned_set(self, ctx:DefExprGrammar.Signed_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#positive_set.
+    def visitPositive_set(self, ctx:DefExprGrammar.Positive_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#nonnegative_set.
+    def visitNonnegative_set(self, ctx:DefExprGrammar.Nonnegative_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#negative_set.
+    def visitNegative_set(self, ctx:DefExprGrammar.Negative_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#nonpositive_set.
+    def visitNonpositive_set(self, ctx:DefExprGrammar.Nonpositive_setContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#natural0_set.
+    def visitNatural0_set(self, ctx:DefExprGrammar.Natural0_setContext):
         return self.visitChildren(ctx)
 
 

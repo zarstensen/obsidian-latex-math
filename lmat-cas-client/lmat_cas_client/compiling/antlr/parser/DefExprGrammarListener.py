@@ -5,7 +5,10 @@ if "." in __name__:
 else:
     from DefExprGrammar import DefExprGrammar
 
-import lmat_cas_client.compiling.antlr.Ast as Ast
+from lmat_cas_client.compiling.antlr.ast import DefStmtAst as DefAst
+
+
+from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
 from typing import cast, Type, Callable
 
 def rule_t[T](_t: Type[T], v: T | None = None) -> T:
@@ -21,6 +24,240 @@ class DefExprGrammarListener(ParseTreeListener):
 
     # Exit a parse tree produced by DefExprGrammar#debug.
     def exitDebug(self, ctx:DefExprGrammar.DebugContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#bindings.
+    def enterBindings(self, ctx:DefExprGrammar.BindingsContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#bindings.
+    def exitBindings(self, ctx:DefExprGrammar.BindingsContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#binding.
+    def enterBinding(self, ctx:DefExprGrammar.BindingContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#binding.
+    def exitBinding(self, ctx:DefExprGrammar.BindingContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#definition.
+    def enterDefinition(self, ctx:DefExprGrammar.DefinitionContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#definition.
+    def exitDefinition(self, ctx:DefExprGrammar.DefinitionContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#def_body.
+    def enterDef_body(self, ctx:DefExprGrammar.Def_bodyContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#def_body.
+    def exitDef_body(self, ctx:DefExprGrammar.Def_bodyContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#symbol_assumption.
+    def enterSymbol_assumption(self, ctx:DefExprGrammar.Symbol_assumptionContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#symbol_assumption.
+    def exitSymbol_assumption(self, ctx:DefExprGrammar.Symbol_assumptionContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#function_assumption.
+    def enterFunction_assumption(self, ctx:DefExprGrammar.Function_assumptionContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#function_assumption.
+    def exitFunction_assumption(self, ctx:DefExprGrammar.Function_assumptionContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#assum_body.
+    def enterAssum_body(self, ctx:DefExprGrammar.Assum_bodyContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#assum_body.
+    def exitAssum_body(self, ctx:DefExprGrammar.Assum_bodyContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set.
+    def enterSet(self, ctx:DefExprGrammar.SetContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set.
+    def exitSet(self, ctx:DefExprGrammar.SetContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_complex.
+    def enterSet_complex(self, ctx:DefExprGrammar.Set_complexContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_complex.
+    def exitSet_complex(self, ctx:DefExprGrammar.Set_complexContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_real.
+    def enterSet_real(self, ctx:DefExprGrammar.Set_realContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_real.
+    def exitSet_real(self, ctx:DefExprGrammar.Set_realContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_imaginary.
+    def enterSet_imaginary(self, ctx:DefExprGrammar.Set_imaginaryContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_imaginary.
+    def exitSet_imaginary(self, ctx:DefExprGrammar.Set_imaginaryContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_rational.
+    def enterSet_rational(self, ctx:DefExprGrammar.Set_rationalContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_rational.
+    def exitSet_rational(self, ctx:DefExprGrammar.Set_rationalContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_integer.
+    def enterSet_integer(self, ctx:DefExprGrammar.Set_integerContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_integer.
+    def exitSet_integer(self, ctx:DefExprGrammar.Set_integerContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_natural.
+    def enterSet_natural(self, ctx:DefExprGrammar.Set_naturalContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_natural.
+    def exitSet_natural(self, ctx:DefExprGrammar.Set_naturalContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_even.
+    def enterSet_even(self, ctx:DefExprGrammar.Set_evenContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_even.
+    def exitSet_even(self, ctx:DefExprGrammar.Set_evenContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_odd.
+    def enterSet_odd(self, ctx:DefExprGrammar.Set_oddContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_odd.
+    def exitSet_odd(self, ctx:DefExprGrammar.Set_oddContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#set_prime.
+    def enterSet_prime(self, ctx:DefExprGrammar.Set_primeContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#set_prime.
+    def exitSet_prime(self, ctx:DefExprGrammar.Set_primeContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#algebraic_set.
+    def enterAlgebraic_set(self, ctx:DefExprGrammar.Algebraic_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#algebraic_set.
+    def exitAlgebraic_set(self, ctx:DefExprGrammar.Algebraic_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#ext_real_set.
+    def enterExt_real_set(self, ctx:DefExprGrammar.Ext_real_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#ext_real_set.
+    def exitExt_real_set(self, ctx:DefExprGrammar.Ext_real_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#unsigned_set.
+    def enterUnsigned_set(self, ctx:DefExprGrammar.Unsigned_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#unsigned_set.
+    def exitUnsigned_set(self, ctx:DefExprGrammar.Unsigned_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#signed_set.
+    def enterSigned_set(self, ctx:DefExprGrammar.Signed_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#signed_set.
+    def exitSigned_set(self, ctx:DefExprGrammar.Signed_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#positive_set.
+    def enterPositive_set(self, ctx:DefExprGrammar.Positive_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#positive_set.
+    def exitPositive_set(self, ctx:DefExprGrammar.Positive_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#nonnegative_set.
+    def enterNonnegative_set(self, ctx:DefExprGrammar.Nonnegative_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#nonnegative_set.
+    def exitNonnegative_set(self, ctx:DefExprGrammar.Nonnegative_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#negative_set.
+    def enterNegative_set(self, ctx:DefExprGrammar.Negative_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#negative_set.
+    def exitNegative_set(self, ctx:DefExprGrammar.Negative_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#nonpositive_set.
+    def enterNonpositive_set(self, ctx:DefExprGrammar.Nonpositive_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#nonpositive_set.
+    def exitNonpositive_set(self, ctx:DefExprGrammar.Nonpositive_setContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#natural0_set.
+    def enterNatural0_set(self, ctx:DefExprGrammar.Natural0_setContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#natural0_set.
+    def exitNatural0_set(self, ctx:DefExprGrammar.Natural0_setContext):
         pass
 
 

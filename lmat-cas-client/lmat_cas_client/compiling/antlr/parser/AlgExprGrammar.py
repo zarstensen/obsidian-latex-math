@@ -9,7 +9,7 @@ else:
 	from typing.io import TextIO
 
 
-import lmat_cas_client.compiling.antlr.Ast as Ast
+from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
 from typing import cast, Type, Callable
 
 def rule_t[T](_t: Type[T], v: T | None = None) -> T:
@@ -324,22 +324,22 @@ class AlgExprGrammar ( Parser ):
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "'\\not'", "'\\equiv'", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                     "'^'", "'='", "<INVALID>", "'<'", "<INVALID>", "'>'", 
-                     "<INVALID>", "'\\times'", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "'\\sqrt'", "<INVALID>", "<INVALID>", 
+                     "'^'", "'='", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "'\\times'", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "'\\sqrt'", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "'\\lim'", "<INVALID>", "'\\sum'", "'\\prod'", 
-                     "'!'", "'\\%'", "'\\textperthousand'", "','", "'_'", 
-                     "';'", "':'", "'\\star'", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "'\\lim'", "<INVALID>", "'\\sum'", 
+                     "'\\prod'", "'!'", "'\\%'", "'\\textperthousand'", 
+                     "','", "'_'", "';'", "':'", "'\\star'", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "<INVALID>", "'&'", "'\\\\'", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                     "'\\Delta'" ]
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "'&'", "'\\\\'", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "'\\Delta'" ]
 
     symbolicNames = [ "<INVALID>", "LBLANK", "RBLANK", "IGNORE", "NAND", 
                       "AND", "NOR", "OR", "XOR", "XNOR", "NOT", "EQUIV", 
@@ -501,9 +501,6 @@ class AlgExprGrammar ( Parser ):
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
-
-
-    func_set: set[str] = set()
 
 
 
@@ -1862,9 +1859,9 @@ class AlgExprGrammar ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 17)")
                         self.state = 359
-                        if not ((self._input.LA(-1), self._input.LA(1)) != (self.NUMBER, self.NUMBER) and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN)):
+                        if not (self._input.LA(1) != self.NUMBER and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN)):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "((self._input.LA(-1), self._input.LA(1)) != (self.NUMBER, self.NUMBER) and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN))")
+                            raise FailedPredicateException(self, "(self._input.LA(1) != self.NUMBER and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN))")
                         self.state = 360
                         localctx.rhs = localctx._a_expr = self.a_expr(18)
                         localctx.res = Ast.MultOp(localctx, localctx.lhs.res, localctx.rhs.res)
@@ -3621,7 +3618,7 @@ class AlgExprGrammar ( Parser ):
             localctx._DELTA = self.match(AlgExprGrammar.DELTA)
             self.state = 634
             localctx._primary_symbol = self.primary_symbol()
-            localctx.res = Ast.Symbol(localctx, f"{(None if localctx._DELTA is None else localctx._DELTA.text)} {localctx._primary_symbol.res.symbol}")
+            localctx.res = Ast.Symbol(localctx, f"{(None if localctx._DELTA is None else localctx._DELTA.text)} {localctx._primary_symbol.res.name}")
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -4544,7 +4541,7 @@ class AlgExprGrammar ( Parser ):
          
 
             if predIndex == 3:
-                return ((self._input.LA(-1), self._input.LA(1)) != (self.NUMBER, self.NUMBER) and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN))
+                return (self._input.LA(1) != self.NUMBER and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN))
          
 
             if predIndex == 4:

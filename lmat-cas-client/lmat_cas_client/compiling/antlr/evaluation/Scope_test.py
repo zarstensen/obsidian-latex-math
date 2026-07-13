@@ -3,7 +3,7 @@ from typing import Self
 
 import pytest
 
-from lmat_cas_client.compiling.antlr import Ast, AlgExprLexer
+from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
 from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import (
     a_expr_2_sympy,
     a_expr_resolve_ambig_calls,
@@ -15,7 +15,8 @@ from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     Scope,
     Signature,
 )
-from lmat_cas_client.compiling.antlr.AlgExprGrammar import AlgExprGrammar
+from lmat_cas_client.compiling.antlr.parser import AlgExprLexer
+from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
 
 
 def parse(src: str) -> Ast.AExpr:

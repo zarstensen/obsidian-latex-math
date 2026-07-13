@@ -56,7 +56,7 @@ class SympyUndefFunDef:
     undef_fun: UndefinedFunction
 
 
-type SymDefVal = AstDef | SympyDef
+SymDefVal = AstDef | SympyDef
 """
 UnionType representing all symbol-like definitions definable in a DefinitionStore
 """
@@ -145,7 +145,7 @@ class CyclicDeps:
     deps: frozenset[str]
 
 
-type DepsResolveResult = OrderedDeps | CyclicDeps
+DepsResolveResult = OrderedDeps | CyclicDeps
 
 
 def resolve_dependencies(

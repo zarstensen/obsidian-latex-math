@@ -5,7 +5,7 @@ vim.schedule(function()
 
 	local parse_gen_task = ovs.new_task({
 		cmd = "antlr4",
-		args = { "*.g4", "-visitor", "-o", "../" },
+		args = { "*.g4", "-visitor", "-o", "../parser" },
 		cwd = "./lmat-cas-client/lmat_cas_client/compiling/antlr/grammar/",
 		name = "Antlr4 Parser Generate",
 	})
