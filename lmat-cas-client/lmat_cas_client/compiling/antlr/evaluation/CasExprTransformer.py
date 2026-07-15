@@ -207,7 +207,7 @@ def a_expr_sub_bindings(
     # expression should not be substituted itself
     # there are still some special cases where scope must be modified.
     match expr:
-		# TODO: also eval at here...
+        # TODO: also eval at here...
         case (
             Ast.Sum(_, sexpr, var, _)
             | Ast.Product(_, sexpr, var, _)
@@ -374,6 +374,7 @@ def symbol_2_str(symbol: Ast.Symbol, subscript: Ast.Subscript | None):
             )
 
             return f"{head_name}_{{{form.brackets[0] or ""}{subscript_str}{form.brackets[1] or ""}}}"
+    assert False, "unreachable"
 
 
 # Transform an Ast.AExpr into a sympy expression,
@@ -385,19 +386,15 @@ def _a_expr_2_sympy(expr: Ast.AExpr) -> sp.Basic | sp.MatrixBase:
         case Ast.ApplyFunc(_, _, _):
             assert False, "Cannot handle ApplyFunc without definitions"
 
-        case Ast.SubscriptOp(_, Ast.Symbol(_, name), subscript):
-            lbrack, rbrack = subscript.form.brackets
-            return sp.Symbol(f"{name}_{{{lbrack}WHAAAAAT{rbrack}}}")
-
-        case Ast.SubscriptOp(_, Ast.Symbol(_, name), subscript):
-            return sp.Symbol(symbol_2_str(name, subscript))
+        case Ast.SubscriptOp(_, Ast.Symbol() as symbol, subscript):
+            return sp.Symbol(symbol_2_str(symbol, subscript))
 
         case Ast.SubscriptOp(_, expr, subscript):
             # TODO: check if expr is indexable, if not raise / assert
             return None
 
-        case Ast.Symbol(_, name):
-            return sp.Symbol(symbol_2_str(name, None))
+        case Ast.Symbol():
+            return sp.Symbol(symbol_2_str(expr, None))
 
         case Ast.Number(_, n_str):
             if "." in n_str:

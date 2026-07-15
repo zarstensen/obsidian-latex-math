@@ -2,44 +2,55 @@ lexer grammar AlgExprLexer;
 
 options {
     language = Python3;
-	superClass = BaseLexer;
 }
 
 @header {
-from enum import Enum
-from .BaseLexer import BaseLexer
-from antlr4 import CommonTokenStream, InputStream
-
-
-class AddMode(Enum):
-    DEFAULT = 0
-    OPT_ARG = 1
-    ENV = 2
-    MATRIX = 3
-    LIM = 4
+from ..lexer.AddModes import AddMode
 }
 
 @members {
 
-add_mode_stack = [ AddMode.DEFAULT ]
+ADJ_TOKENS = {
+	ID,
+	(None, DELTA),
+	COMMAND,
+	NUMBER,
+	BIN_NUMBER,
+	OCT_NUMBER,
+	HEX_NUMBER,
 
-def pushAddMode(self, mode: AddMode):
-    self.add_mode_stack.append(mode)
+	(LBLANK, RBLANK),
+	(LBRACE, RBRACE),
+	(LPAREN, RPAREN),
+	(LBRACE_LITERAL, RBRACE_LITERAL),
+	(LBRACKET, RBRACKET),
+	(LBRACK_CMD, RBRACK_CMD),
+	(LCEIL, RCEIL),
+	(LFLOOR, RFLOOR),
+	(LANGLE, RANGLE),
+	PIPE,
+	DOUBLE_PIPE,
 
-def popAddMode(self) -> AddMode:
-    return self.add_mode_stack.pop()
+	(BEGIN_MATRIX, END_MATRIX),
+	(BEGIN_V_MATRIX, END_V_MATRIX),
+	(BEGIN_ARRAY, END_ARRAY),
 
-def remAddMode(self, mode: AddMode):
-    self.add_mode_stack.reverse()
-    self.add_mode_stack.remove(mode)
-    self.add_mode_stack.reverse()
-
-def topAddMode(self) -> AddMode:
-    return self.add_mode_stack[-1]
-
-def hasAddMode(self, mode: AddMode) -> bool:
-    return mode in self.add_mode_stack
+	FRAC,
+	BINOM,
+	SQRT,
+	CONJUGATE,
+	VEC_UNIT,
+	MOD,
+	INT,
+	PHYS_DERIVATIVE,
+	PHYS_PARTIAL_DERIVATIVE,
+	LIMIT,
+	SUM,
+	PRODUCT,
 }
+}
+
+tokens { ADJ_OP }
 
 // === Skip and Ignore tokens ===
 
@@ -173,11 +184,11 @@ PHYS_PARTIAL_DERIVATIVE: (
 
 LIMIT: '\\lim' {self.pushAddMode(AddMode.LIM)};
 LIMIT_ARROW:
-    {self.hasAddMode(AddMode.LIM)}? (
+    (
         '\\to'
         | '\\' 'long' 'rightarrow' '\\mapsto'
         | '\\xrightarrow' BRACE_TEXT
-    ) {self.remAddMode(AddMode.LIM)};
+    ) {self.hasAddMode(AddMode.LIM)}? {self.remAddMode(AddMode.LIM)};
 
 SUM: '\\sum';
 PRODUCT: '\\prod';
@@ -320,7 +331,9 @@ ENV_EL_SEP: '&' { self.topAddMode() == AddMode.MATRIX }?;
 ENV_ROW_SEP: '\\\\' { self.topAddMode() in (AddMode.MATRIX, AddMode.ENV) }?;
 ENV_SEP_SKIP: ('&' | '\\\\') -> skip;
 
-// === Literals === TODO: primes? TODO: code action for remapping this to function
+// === Literals ===
+// TODO: primes? (')
+// TODO: code action for remapping this to function
 
 NUMBER: DIGIT+ | DIGIT* '.' DIGIT+;
 

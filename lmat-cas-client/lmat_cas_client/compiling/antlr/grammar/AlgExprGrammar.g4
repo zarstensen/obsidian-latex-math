@@ -14,7 +14,7 @@ def rule_t[T](_t: Type[T], v: T | None = None) -> T:
 
 //TODO:
 // - [x] matrices / environments - [x] derivatives (physics + frac) - [x] integrals - [x] optional
-// latex arg (\\sqrt[...]{}) - [ ] abs + norm + maybe other things i have missed? - [x]
+// latex arg (\\sqrt[...]{}) - [x] abs + norm + maybe other things i have missed? - [x]
 // combinatorics special notation {_n C ^k} - [x] differential grammar, this maybe depends on
 // optional latex arg?
 // - [x] how to handle args to derivatives VERY IMPORTANT!!!!!!
@@ -30,6 +30,7 @@ def rule_t[T](_t: Type[T], v: T | None = None) -> T:
 // - [x] cross product
 // - [x] organize
 // - [ ] primes (for symbols, and derivatives)
+// - [ ] trigonometric functions
 
 debug returns[res = rule_t(Ast.AlgStmt)]:
 	alg_statement {$res = $alg_statement.res};
@@ -80,30 +81,30 @@ a_expr
 	<assoc = right> base=a_expr postfix_op {$res = $postfix_op.op ($ctx, $base.res)}
 
 	// \int \frac{\dd ...} {...} case
-	| INT int_bounds FRAC LBRACE DIFFERENTIAL diff=a_expr RBRACE recip_integrand=latex_cmd_arg
+	| INT int_bounds ADJ_OP FRAC LBRACE DIFFERENTIAL diff=a_expr RBRACE ADJ_OP recip_integrand=latex_cmd_arg
 		{$res = Ast.Integral($ctx, Ast.DivOp($recip_integrand.ctx, Ast.Number($recip_integrand.ctx, "1"), $recip_integrand.res), $diff.res, $int_bounds.bounds)}
 	// \int ... \dd ... case
-	| INT int_bounds integrand=a_expr DIFFERENTIAL diff=a_expr
+	| INT int_bounds ADJ_OP integrand=a_expr DIFFERENTIAL diff=a_expr
 		{$res = Ast.Integral($ctx, $integrand.res, $diff.res, $int_bounds.bounds)}
 
 	// \dv{...}{...} cases
-	| PHYS_PARTIAL_DERIVATIVE (LBRACKET a_expr RBRACKET)? latex_cmd_arg LBRACE diff_l=a_expr RBRACE LBRACE diff_r=a_expr RBRACE
+	| PHYS_PARTIAL_DERIVATIVE ADJ_OP (LBRACKET a_expr RBRACKET ADJ_OP)?  latex_cmd_arg ADJ_OP LBRACE diff_l=a_expr RBRACE ADJ_OP LBRACE diff_r=a_expr RBRACE
 		{$res = Ast.Differential($ctx, $latex_cmd_arg.res, [($diff_l.res, None), ($diff_r.res, None)])}
-	| (PHYS_DERIVATIVE | PHYS_PARTIAL_DERIVATIVE) (LBRACKET degree=a_expr RBRACKET)? latex_cmd_arg LBRACE a_expr RBRACE
+	| (PHYS_DERIVATIVE | PHYS_PARTIAL_DERIVATIVE) ADJ_OP (LBRACKET degree=a_expr RBRACKET ADJ_OP)? latex_cmd_arg ADJ_OP LBRACE a_expr RBRACE
 		{$res = Ast.Differential($ctx, $latex_cmd_arg.res, [($a_expr.res, $degree.res)])}
-	| (PHYS_DERIVATIVE | PHYS_PARTIAL_DERIVATIVE) (LBRACKET degree=a_expr RBRACKET)? latex_cmd_arg diffand_last=a_expr
+	| (PHYS_DERIVATIVE | PHYS_PARTIAL_DERIVATIVE) ADJ_OP (LBRACKET degree=a_expr RBRACKET ADJ_OP)? latex_cmd_arg ADJ_OP diffand_last=a_expr
 		{$res = Ast.Differential($ctx, $a_expr.res, [($latex_cmd_arg.res, $degree.res)])}
 
 	// \frac{\dd ...}{\dd .. \dd ..} cases
-	| FRAC LBRACE DIFFERENTIAL (LBRACKET degree=a_expr RBRACKET)? a_expr RBRACE LBRACE diff_vars RBRACE    
+	| FRAC ADJ_OP LBRACE DIFFERENTIAL (LBRACKET degree=a_expr RBRACKET ADJ_OP)? a_expr RBRACE ADJ_OP LBRACE diff_vars RBRACE
 		{$res = Ast.Differential($ctx, $a_expr.res, $diff_vars.res)}
-	| FRAC LBRACE DIFFERENTIAL (LBRACKET degree=a_expr RBRACKET)? RBRACE LBRACE diff_vars RBRACE a_expr    
+	| FRAC ADJ_OP LBRACE DIFFERENTIAL (LBRACKET degree=a_expr RBRACKET)? RBRACE ADJ_OP LBRACE diff_vars RBRACE ADJ_OP a_expr
 		{$res = Ast.Differential($ctx, $a_expr.res, $diff_vars.res)}
 
 	// matches expr(args) — ambiguous between function application and implicit multiplication
 	// resolved at evaluation time: if expr is a known function, becomes ApplyFunc; otherwise, MultOp
 	// e.g. f(x, y)  or  (1+1)(x)
-	| lhs = a_expr LPAREN func_args RPAREN
+	| lhs = a_expr ADJ_OP LPAREN func_args RPAREN
 		{$res = Ast.AmbigApplyFunc($ctx, Ast.ApplyFunc($ctx, $lhs.res, $func_args.res))}
 	// matches division operator
 	// e.g. a / b
@@ -113,6 +114,7 @@ a_expr
 	| lhs = a_expr 
 		(
 		MULT {$node_t = Ast.MultOp}
+		| ADJ_OP {$node_t = Ast.MultOp}
 		| DOT_PROD {$node_t = Ast.MultOp}
 		| MOD {$node_t = Ast.ModOp}
 		| TIMES {$node_t = Ast.XProdOp}
@@ -121,18 +123,20 @@ a_expr
 		{$res = $node_t($ctx, $lhs.res, $rhs.res)}
 	// matches implicit multiplication (juxtaposition without an explicit operator)
 	// e.g. 2x, a b
-	| lhs = a_expr {(self._input.LA(1) != self.NUMBER and self._input.LA(1) not in (self.PLUS, self.MINUS, self.LPAREN))}? rhs = a_expr
-		{$res = Ast.MultOp($ctx, $lhs.res, $rhs.res)}
+	// TODO: should probably just split it up here..., so have one rule which matches things which can be implicitly multiplied,
+	// and also things which cannot...
+	// otherwise performance is completely broken
+	// the only thing here is basically that rhs just must not be a unary plus or minus 
 
 	// matches a limit expression
 	// e.g. \lim_{x \to 0} x
-	| LIMIT UNDERSCORE LBRACE lim_var=symbol LIMIT_ARROW lim_poa=a_expr limit_dir RBRACE a_expr
+	| LIMIT UNDERSCORE LBRACE lim_var=symbol LIMIT_ARROW lim_poa=a_expr limit_dir RBRACE ADJ_OP a_expr
 		{$res = Ast.Limit($ctx, $a_expr.res, $lim_var.res, $lim_poa.res, $limit_dir.res)}
 	// matches a sum (\sum) or product (\prod) with range arguments
 	// e.g. \sum_{i=1}^n i^2
-	| (SUM {$node_t = Ast.Sum} | PRODUCT {$node_t = Ast.Product}) series_range_args LPAREN a_expr RPAREN
+	| (SUM {$node_t = Ast.Sum} | PRODUCT {$node_t = Ast.Product}) series_range_args ADJ_OP LPAREN a_expr RPAREN
 		{$res = $node_t($ctx, $a_expr.res, $series_range_args.symb, ($series_range_args.start, $series_range_args.end))}
-	| (SUM {$node_t = Ast.Sum} | PRODUCT {$node_t = Ast.Product}) series_range_args a_expr
+	| (SUM {$node_t = Ast.Sum} | PRODUCT {$node_t = Ast.Product}) series_range_args ADJ_OP a_expr
 		{$res = $node_t($ctx, $a_expr.res, $series_range_args.symb, ($series_range_args.start, $series_range_args.end))}
 
 	// matches addition and subtraction operators
@@ -145,7 +149,7 @@ a_expr
 		{$res = $node_t($ctx, $a_expr.res)}
 	// matches an "evaluate at" expression with variable substitution
 	// e.g. \left. x^2 \right|_{x=1}
-	| LPAREN expr=a_expr RPAREN PIPE eval_at_arg
+	| LPAREN expr=a_expr RPAREN ADJ_OP PIPE eval_at_arg
 		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
 	| LBLANK expr=a_expr PIPE eval_at_arg
 		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
@@ -328,7 +332,7 @@ delim_expr returns[res = rule_t(Ast.AExpr)]:
     | DOUBLE_PIPE a_expr DOUBLE_PIPE {$res = Ast.Norm($ctx, $a_expr.res)}
     | LFLOOR a_expr RFLOOR {$res = Ast.Floor($ctx, $a_expr.res)}
     | LCEIL a_expr RCEIL {$res = Ast.Ceil($ctx, $a_expr.res)}
-    | LANGLE lhs=a_expr (PIPE|COMMA) rhs=a_expr RANGLE {$res = Ast.DotProd($ctx, $lhs.res, $rhs.res)};
+    | LANGLE lhs=a_expr (ADJ_OP PIPE|COMMA) rhs=a_expr RANGLE {$res = Ast.DotProd($ctx, $lhs.res, $rhs.res)};
 
 // matches combinatorial notation: combinations ({_n C^k}) and derangements ({!n})
 // e.g. {_n C^k}, {!n}
@@ -344,13 +348,12 @@ combinatorial returns[res = rule_t(Ast.AExpr)]:
 // as in \sqrt .., but not .. ! as this is *not* a command.
 cmd_func
     returns[res = rule_t(Ast.AExpr)]:
-    FRAC num = latex_cmd_arg den = latex_cmd_arg {$res = Ast.DivOp($ctx, $num.res, $den.res)}
-    | BINOM n = latex_cmd_arg k = latex_cmd_arg {$res = Ast.Binom($ctx, $n.res, $k.res)}
-    | SQRT latex_cmd_arg {$res = Ast.Root($ctx, $latex_cmd_arg.res, None) }
-    | SQRT (LBRACKET root_index = a_expr RBRACKET)? latex_cmd_arg {$res = Ast.Root($ctx, $latex_cmd_arg.res, $root_index.res)
+    FRAC ADJ_OP num = latex_cmd_arg ADJ_OP den = latex_cmd_arg {$res = Ast.DivOp($ctx, $num.res, $den.res)}
+    | BINOM ADJ_OP n = latex_cmd_arg ADJ_OP k = latex_cmd_arg {$res = Ast.Binom($ctx, $n.res, $k.res)}
+    | SQRT ADJ_OP (LBRACKET root_index = a_expr RBRACKET ADJ_OP)? latex_cmd_arg {$res = Ast.Root($ctx, $latex_cmd_arg.res, $root_index.res)
         }
-    | CONJUGATE latex_cmd_arg {$res = Ast.Conjugate($ctx, $latex_cmd_arg.res)}
-    | VEC_UNIT latex_cmd_arg {$res = Ast.VecUnit($ctx, $latex_cmd_arg.res)};
+    | CONJUGATE ADJ_OP latex_cmd_arg {$res = Ast.Conjugate($ctx, $latex_cmd_arg.res)}
+    | VEC_UNIT ADJ_OP latex_cmd_arg {$res = Ast.VecUnit($ctx, $latex_cmd_arg.res)};
 
 
 // matches a single row of a matrix (expressions separated by &)

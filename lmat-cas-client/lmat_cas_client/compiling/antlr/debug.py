@@ -1,4 +1,5 @@
 # type: ignore
+from lmat_cas_client.compiling.antlr.parser.AlgExprLexerExt import AlgExprLexerExt
 from lmat_cas_client.compiling.antlr.parser.AlgExprLexer import AlgExprLexer
 from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
 from lmat_cas_client.compiling.antlr.evaluation.Scope import Scope
@@ -25,7 +26,7 @@ IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
 
 Grammar = AlgExprGrammar
-Lexer = AlgExprLexer
+Lexer = AlgExprLexerExt
 
 class ParseTreeDotVisitor(ParseTreeVisitor):
     """

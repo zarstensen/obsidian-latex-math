@@ -48,7 +48,6 @@ def visit_children[TNode: AstNode, TChild: AstNode](
     ) -> object:
         match val:
             case AstNode() as child:
-                child = visit_children(child, visitor)
                 return visitor(cast(TChild, child))
             case (list() | tuple()) as children:
                 return type(children)(

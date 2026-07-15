@@ -2,7 +2,6 @@ lexer grammar DefExprLexer;
 
 options {
     language = Python3;
-	superClass = BaseLexer;
 }
 
 import AlgExprLexer;

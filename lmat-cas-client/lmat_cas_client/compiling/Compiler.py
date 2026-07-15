@@ -1,4 +1,4 @@
-from lmat_cas_client.compiling.antlr.parser.ErrorListener import ParseError
+from lmat_cas_client.compiling.antlr.lexer.StreamFromSrc import stream_from_src
 from abc import ABC, abstractmethod
 from typing import Any, override
 
@@ -11,10 +11,13 @@ from lmat_cas_client.compiling.antlr.evaluation.DefExprTransformer import (
 )
 from lmat_cas_client.compiling.antlr.evaluation.Scope import OptBinding, Scope
 from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
-from lmat_cas_client.compiling.antlr.parser.AlgExprLexer import AlgExprLexer
+from lmat_cas_client.compiling.antlr.parser.AlgExprLexerExt import AlgExprLexerExt
 from lmat_cas_client.compiling.antlr.parser.DefExprGrammar import DefExprGrammar
 from lmat_cas_client.compiling.antlr.parser.DefExprLexer import DefExprLexer
-from lmat_cas_client.compiling.antlr.parser.ErrorListener import ParseErrorListener
+from lmat_cas_client.compiling.antlr.parser.ErrorListener import (
+    ParseError,
+    ParseErrorListener,
+)
 from lmat_cas_client.LmatEnvironment import LmatEnvironment
 
 
@@ -58,7 +61,7 @@ class LatexToCasExprCompiler(CasExprCompiler):
 
         err_listener = ParseErrorListener()
 
-        stream = AlgExprLexer.stream_from_src(latex_str)
+        stream = stream_from_src(AlgExprLexerExt, latex_str)
         stream.tokenSource.removeErrorListeners()
         stream.tokenSource.addErrorListener(err_listener)
 
@@ -109,7 +112,7 @@ class LatexToDefStoreCompiler(BindingsCompiler):
         # TODO: error handling
         err_listener = ParseErrorListener()
 
-        stream = DefExprLexer.stream_from_src(latex_str)
+        stream = stream_from_src(DefExprLexer, latex_str)
         stream.tokenSource.removeErrorListeners()
         stream.tokenSource.addErrorListener(err_listener)
 
