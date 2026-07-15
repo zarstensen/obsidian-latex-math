@@ -66,6 +66,31 @@ class AlgExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by AlgExprGrammar#atom_v2.
+    def visitAtom_v2(self, ctx:AlgExprGrammar.Atom_v2Context):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by AlgExprGrammar#integral.
+    def visitIntegral(self, ctx:AlgExprGrammar.IntegralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by AlgExprGrammar#derivative.
+    def visitDerivative(self, ctx:AlgExprGrammar.DerivativeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by AlgExprGrammar#limit_expr.
+    def visitLimit_expr(self, ctx:AlgExprGrammar.Limit_exprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by AlgExprGrammar#series_expr.
+    def visitSeries_expr(self, ctx:AlgExprGrammar.Series_exprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by AlgExprGrammar#atom.
     def visitAtom(self, ctx:AlgExprGrammar.AtomContext):
         return self.visitChildren(ctx)

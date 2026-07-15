@@ -105,6 +105,51 @@ class AlgExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by AlgExprGrammar#atom_v2.
+    def enterAtom_v2(self, ctx:AlgExprGrammar.Atom_v2Context):
+        pass
+
+    # Exit a parse tree produced by AlgExprGrammar#atom_v2.
+    def exitAtom_v2(self, ctx:AlgExprGrammar.Atom_v2Context):
+        pass
+
+
+    # Enter a parse tree produced by AlgExprGrammar#integral.
+    def enterIntegral(self, ctx:AlgExprGrammar.IntegralContext):
+        pass
+
+    # Exit a parse tree produced by AlgExprGrammar#integral.
+    def exitIntegral(self, ctx:AlgExprGrammar.IntegralContext):
+        pass
+
+
+    # Enter a parse tree produced by AlgExprGrammar#derivative.
+    def enterDerivative(self, ctx:AlgExprGrammar.DerivativeContext):
+        pass
+
+    # Exit a parse tree produced by AlgExprGrammar#derivative.
+    def exitDerivative(self, ctx:AlgExprGrammar.DerivativeContext):
+        pass
+
+
+    # Enter a parse tree produced by AlgExprGrammar#limit_expr.
+    def enterLimit_expr(self, ctx:AlgExprGrammar.Limit_exprContext):
+        pass
+
+    # Exit a parse tree produced by AlgExprGrammar#limit_expr.
+    def exitLimit_expr(self, ctx:AlgExprGrammar.Limit_exprContext):
+        pass
+
+
+    # Enter a parse tree produced by AlgExprGrammar#series_expr.
+    def enterSeries_expr(self, ctx:AlgExprGrammar.Series_exprContext):
+        pass
+
+    # Exit a parse tree produced by AlgExprGrammar#series_expr.
+    def exitSeries_expr(self, ctx:AlgExprGrammar.Series_exprContext):
+        pass
+
+
     # Enter a parse tree produced by AlgExprGrammar#atom.
     def enterAtom(self, ctx:AlgExprGrammar.AtomContext):
         pass

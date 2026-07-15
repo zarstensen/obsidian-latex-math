@@ -342,6 +342,51 @@ class DefExprGrammarListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by DefExprGrammar#atom_v2.
+    def enterAtom_v2(self, ctx:DefExprGrammar.Atom_v2Context):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#atom_v2.
+    def exitAtom_v2(self, ctx:DefExprGrammar.Atom_v2Context):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#integral.
+    def enterIntegral(self, ctx:DefExprGrammar.IntegralContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#integral.
+    def exitIntegral(self, ctx:DefExprGrammar.IntegralContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#derivative.
+    def enterDerivative(self, ctx:DefExprGrammar.DerivativeContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#derivative.
+    def exitDerivative(self, ctx:DefExprGrammar.DerivativeContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#limit_expr.
+    def enterLimit_expr(self, ctx:DefExprGrammar.Limit_exprContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#limit_expr.
+    def exitLimit_expr(self, ctx:DefExprGrammar.Limit_exprContext):
+        pass
+
+
+    # Enter a parse tree produced by DefExprGrammar#series_expr.
+    def enterSeries_expr(self, ctx:DefExprGrammar.Series_exprContext):
+        pass
+
+    # Exit a parse tree produced by DefExprGrammar#series_expr.
+    def exitSeries_expr(self, ctx:DefExprGrammar.Series_exprContext):
+        pass
+
+
     # Enter a parse tree produced by DefExprGrammar#atom.
     def enterAtom(self, ctx:DefExprGrammar.AtomContext):
         pass

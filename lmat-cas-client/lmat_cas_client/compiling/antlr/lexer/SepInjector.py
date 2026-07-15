@@ -27,6 +27,7 @@ class SepInjector:
                         self._illegal_rhs_tokens.add(r)
 
     def next_token(self, lexer: Lexer, sep_token_type: int):
+        return lexer.nextToken()
         if len(self._token_buffer) > 0:
             next_token = self._token_buffer.pop()
         else:

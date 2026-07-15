@@ -199,6 +199,31 @@ class DefExprGrammarVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by DefExprGrammar#atom_v2.
+    def visitAtom_v2(self, ctx:DefExprGrammar.Atom_v2Context):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#integral.
+    def visitIntegral(self, ctx:DefExprGrammar.IntegralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#derivative.
+    def visitDerivative(self, ctx:DefExprGrammar.DerivativeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#limit_expr.
+    def visitLimit_expr(self, ctx:DefExprGrammar.Limit_exprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by DefExprGrammar#series_expr.
+    def visitSeries_expr(self, ctx:DefExprGrammar.Series_exprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by DefExprGrammar#atom.
     def visitAtom(self, ctx:DefExprGrammar.AtomContext):
         return self.visitChildren(ctx)
