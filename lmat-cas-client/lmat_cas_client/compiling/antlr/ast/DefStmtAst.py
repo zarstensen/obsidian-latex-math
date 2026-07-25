@@ -7,20 +7,22 @@ from attrs import frozen
 from lmat_cas_client.compiling.antlr.ast import AlgStmtAst
 from lmat_cas_client.compiling.antlr.ast.AstNode import AstNode
 
-
 @frozen
-class Definition(AstNode):
+class SignatureStmt(AstNode):
     head: AlgStmtAst.Symbol
     subscript: AlgStmtAst.Subscript | None
     func_args: tuple[AlgStmtAst.AExpr] | None
+
+
+@frozen
+class Definition(AstNode):
+    signature: SignatureStmt
     body: AlgStmtAst.AExpr | None
 
 
 @frozen
 class Assumption(AstNode):
-    head: AlgStmtAst.Symbol
-    subscript: AlgStmtAst.Subscript | None
-    func_args: tuple[AlgStmtAst.AExpr] | None
+    signature: SignatureStmt
     set: Set | None
 
 BindingStmt = Definition | Assumption

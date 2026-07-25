@@ -1,19 +1,20 @@
-from lmat_cas_client.compiling.antlr.lexer.StreamFromSrc import stream_from_src
+from lmat_cas_client.compiling.antlr.evaluation.AlgStmtTransformer import a_expr_resolve_ambig_calls
 from abc import ABC, abstractmethod
 from typing import Any, override
 
-from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import (
+from lmat_cas_client.compiling.antlr.evaluation.AlgStmtTransformer import (
     CasExprV2,
     alg_stmt_2_cas_expr,
 )
-from lmat_cas_client.compiling.antlr.evaluation.DefExprTransformer import (
+from lmat_cas_client.compiling.antlr.evaluation.DefStmtTransformer import (
     binding_stmts_2_bindings,
 )
 from lmat_cas_client.compiling.antlr.evaluation.Scope import OptBinding, Scope
-from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
-from lmat_cas_client.compiling.antlr.parser.AlgExprLexerExt import AlgExprLexerExt
-from lmat_cas_client.compiling.antlr.parser.DefExprGrammar import DefExprGrammar
-from lmat_cas_client.compiling.antlr.parser.DefExprLexer import DefExprLexer
+from lmat_cas_client.compiling.antlr.lexer.StreamFromSrc import stream_from_src
+from lmat_cas_client.compiling.antlr.parser.AlgStmtGrammar import AlgStmtGrammar
+from lmat_cas_client.compiling.antlr.parser.AlgStmtLexer import AlgStmtLexer
+from lmat_cas_client.compiling.antlr.parser.DefStmtGrammar import DefStmtGrammar
+from lmat_cas_client.compiling.antlr.parser.DefStmtLexer import DefStmtLexer
 from lmat_cas_client.compiling.antlr.parser.ErrorListener import (
     ParseError,
     ParseErrorListener,
@@ -61,11 +62,11 @@ class LatexToCasExprCompiler(CasExprCompiler):
 
         err_listener = ParseErrorListener()
 
-        stream = stream_from_src(AlgExprLexerExt, latex_str)
+        stream = stream_from_src(AlgStmtLexer, latex_str)
         stream.tokenSource.removeErrorListeners()
         stream.tokenSource.addErrorListener(err_listener)
 
-        parser = AlgExprGrammar(stream)
+        parser = AlgStmtGrammar(stream)
 
         parser.removeErrorListeners()
         parser.addErrorListener(err_listener)
@@ -112,11 +113,11 @@ class LatexToDefStoreCompiler(BindingsCompiler):
         # TODO: error handling
         err_listener = ParseErrorListener()
 
-        stream = stream_from_src(DefExprLexer, latex_str)
+        stream = stream_from_src(DefStmtLexer, latex_str)
         stream.tokenSource.removeErrorListeners()
         stream.tokenSource.addErrorListener(err_listener)
 
-        parser = DefExprGrammar(stream)
+        parser = DefStmtGrammar(stream)
 
         parser.removeErrorListeners()
         parser.addErrorListener(err_listener)

@@ -1,4 +1,5 @@
 # mypy: disable-error-code=operator
+from lmat_cas_client.compiling.antlr.ast.AlgStmtAst import SpVal
 from enum import Enum
 from typing import cast
 
@@ -40,8 +41,6 @@ def literal_sp_comparer(scope: Scope) -> LiteralParam.EqChecker:
     )
 
 
-
-
 class AmbigCallResolution(Enum):
     """
     TEST
@@ -59,8 +58,8 @@ class AmbigCallResolution(Enum):
 
 
 def a_expr_resolve_ambig_calls(
-    expr: Ast.AlgStmt, scope: Scope
-) -> tuple[Ast.AlgStmt, AmbigCallResolution]:
+    expr: Ast.AExpr, scope: Scope
+) -> tuple[Ast.AExpr, AmbigCallResolution]:
     """
     Given an AlgStmt AST and a Scope which it should be transformed in,
     this function recursively resolves all AmbigApplyFunc nodes in the AST.
@@ -118,7 +117,7 @@ def a_expr_resolve_ambig_calls(
 
             # resolve ambiguity and keep the resolution enum
             unambig_val, strat = a_expr_resolve_ambig_calls(val, scope)
-            assert isinstance(unambig_val, Ast.AExpr.__value__)
+            assert isinstance(unambig_val, Ast.AExpr)
 
             # resolve ambiguities in the rest of the expr
             unambig_expr = visit_children(
@@ -167,45 +166,14 @@ def a_expr_sub_bindings(
     Goes through the given expr and substitutes values in the AST, based on bindings in the provided scope.
     """
 
-    # get the signature for the potential substitution target
-    signature = Signature.from_a_expr(expr)
+    # first, substitute all the child AExprs of the current AST Node.
+    # otherwise we would get an incorrect signature later
+    # there are also some special cases where we dont want to
+    # substitute bindigns for specific children, such as in \sum_{x=...},
+    # we dont want to try to substitute 'x' for a potential bound value.
+    def sub(c):
+        return a_expr_sub_bindings(c, scope, lit_eq_checker)
 
-    if signature is not None:
-        resolved_binding_id = scope.resolve(signature, lit_eq_checker)
-
-        if resolved_binding_id is not None:
-            # a binding has been found for the expression at this point
-            # now we need to transform its bound value, and introduce new bindings in the scope,
-            # coming from binding the signature to the resolved binding.
-            binding_signature, bound_val = scope.get_binding(resolved_binding_id)
-
-            bindings = binding_signature.bind(signature, lit_eq_checker)
-
-            # also make sure bindings are resolved in the bindings...
-            bindings = tuple(
-                (sig, a_expr_sub_bindings(val, scope, lit_eq_checker))
-                for (sig, val) in bindings
-            )
-
-            binding_ids = scope.register(bindings)
-
-            # instead of recursively calling a_expr_subs here,
-            # we call a_expr_2_sympy and memoize the result instead.
-            # this greatly improves performance for recursive bindings with multiple recursive variables.
-            sp_expr = a_expr_2_sympy(bound_val, scope)
-
-            scope.unregister(binding_ids)
-
-            sp_const = Ast.SympyConstant(bound_val.ctx, sp_expr)
-
-            scope.reregister_single((binding_signature, sp_const), resolved_binding_id)
-
-            return sp_const
-
-    sub = lambda c: a_expr_sub_bindings(c, scope, lit_eq_checker)
-
-    # expression should not be substituted itself
-    # there are still some special cases where scope must be modified.
     match expr:
         # TODO: also eval at here...
         case (
@@ -237,27 +205,26 @@ def a_expr_sub_bindings(
             var_signature = Signature.from_a_expr(var)
             assert var_signature is not None
 
+            # TODO: comments
             var_binding_id = scope.resolve(var_signature, lit_eq_checker)
 
             if var_binding_id is not None:
-                var_signature, var_bound_value = scope.get_binding(var_binding_id)
+                var_signature, _ = scope.get_binding(var_binding_id)
 
-                # the variable was bound to something, so bind it to None temprorarily whilst evaluating the expr field.
-                scope.reregister_single((var_signature, None), var_binding_id)
+                var_new_binding_id = scope.register_single(
+                    (var_signature, None), var_binding_id
+                )
 
             subbed_expr = attrs.evolve(
                 subbed_expr, expr=a_expr_sub_bindings(sexpr, scope, lit_eq_checker)
             )
 
-            # now reregister the original binding in the scope.
             if var_binding_id is not None:
-                scope.reregister_single(
-                    (var_signature, var_bound_value), var_binding_id
-                )
+                scope.unregister_single(var_new_binding_id)
 
             return subbed_expr
         case _:
-            return visit_children(
+            expr = visit_children(
                 expr,
                 sub,
                 {
@@ -265,6 +232,47 @@ def a_expr_sub_bindings(
                     attrs.fields(Ast.Differential).differentials,
                 },
             )
+
+    # get the signature for the potential substitution target
+    signature = Signature.from_a_expr(expr)
+
+    if signature is not None:
+        resolved_binding_id = scope.resolve(signature, lit_eq_checker)
+
+        if resolved_binding_id is not None:
+            # a binding has been found for the expression at this point
+            # now we need to transform its bound value, and introduce new bindings in the scope,
+            # coming from binding the signature to the resolved binding.
+            binding_signature, bound_val = scope.get_binding(resolved_binding_id)
+
+            bindings = binding_signature.bind(signature, lit_eq_checker)
+
+            # also make sure definitions are substituted in the bindings...
+            bindings = tuple(
+                (sig, a_expr_sub_bindings(val, scope, lit_eq_checker))
+                for (sig, val) in bindings
+            )
+
+            binding_ids = scope.register(bindings)
+
+            # instead of recursively calling a_expr_subs here,
+            # we call a_expr_2_sympy and memoize the result instead.
+            # this greatly improves performance for recursive bindings with multiple recursive variables.
+            sp_expr = a_expr_2_sympy(bound_val, scope)
+
+            scope.unregister(binding_ids)
+
+            sp_const = Ast.SympyConstant(bound_val.ctx, sp_expr)
+
+            if not isinstance(bound_val, Ast.SympyConstant):
+				# register the cached binding, with the original binding as its parent.
+				# this ensures the cached entry is also removed when the original binding is removed.
+                scope.register_single((signature, sp_const), resolved_binding_id)
+
+            return sp_const
+
+    # we were not able to substitute the expr, so just return it instead.
+    return expr
 
 
 # Transform an Ast.AlgStmt into a CasExpr,
@@ -278,6 +286,8 @@ def alg_stmt_2_cas_expr(expr: Ast.AlgStmt, scope: Scope) -> CasExprV2:
             return rel_2_cas_expr(expr, scope)
         case _ if isinstance(expr, Ast.System):
             return system_2_cas_expr(expr, scope)
+
+    assert False, f"unreachable\n{expr}"
 
 
 # Transform an Ast.System into a CasExpr
@@ -348,9 +358,10 @@ def a_expr_2_cas_expr(expr: Ast.AExpr, scope: Scope) -> CasExprV2:
     return ((a_expr_2_sympy(expr, scope), ctx_to_loc(expr.ctx)),)
 
 
-# TODO: there is no point in this, just have them be 2 separate functions
-def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> sp.Basic | sp.MatrixBase:
-    expr = a_expr_sub_bindings(expr, s, literal_sp_comparer(s))
+def a_expr_2_sympy(expr: Ast.AExpr, s: Scope) -> SpVal:
+    expr = a_expr_sub_bindings(
+        a_expr_resolve_ambig_calls(expr, s)[0], s, literal_sp_comparer(s)
+    )
     return _a_expr_2_sympy(expr)
 
 
@@ -370,16 +381,16 @@ def symbol_2_str(symbol: Ast.Symbol, subscript: Ast.Subscript | None):
                     case _:
                         raise ValueError("Range slices is unsupported in this context")
             subscript_str = "".join(
-                slot + sep for slot, sep in zip(slot_strs, form.slot_seps + [""])
+                slot + sep for slot, sep in zip(slot_strs, (*form.slot_seps, ""))
             )
 
-            return f"{head_name}_{{{form.brackets[0] or ""}{subscript_str}{form.brackets[1] or ""}}}"
+            return f"{head_name}_{{{form.brackets[0] or ''}{subscript_str}{form.brackets[1] or ''}}}"
     assert False, "unreachable"
 
 
 # Transform an Ast.AExpr into a sympy expression,
 # Substituting variables defined in the given scope along the way.
-def _a_expr_2_sympy(expr: Ast.AExpr) -> sp.Basic | sp.MatrixBase:
+def _a_expr_2_sympy(expr: Ast.AExpr) -> SpVal:
     ev = _a_expr_2_sympy
     # TODO: scope should not be here, it should be in a_expr_subs
     match expr:
@@ -528,5 +539,6 @@ def _a_expr_2_sympy(expr: Ast.AExpr) -> sp.Basic | sp.MatrixBase:
             return val
 
         case ir if isinstance(ir, Ast.Ir):
-            assert "Cannot evaluate if Ir object is present in AST"
+            assert False, "Cannot evaluate if Ir object is present in AST"
             return None
+    assert False, f"unreachable\n{expr}"

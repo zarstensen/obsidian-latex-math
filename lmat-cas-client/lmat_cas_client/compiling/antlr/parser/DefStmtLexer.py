@@ -1,4 +1,4 @@
-# Generated from DefExprLexer.g4 by ANTLR 4.13.2
+# Generated from DefStmtLexer.g4 by ANTLR 4.13.2
 from antlr4 import *
 from io import StringIO
 import sys
@@ -10,6 +10,11 @@ else:
 
 from ..lexer.AddModes import AddMode
 
+
+if "." in __name__:
+    from .LexerBase import LexerBase
+else:
+    from LexerBase import LexerBase
 
 def serializedATN():
     return [
@@ -826,7 +831,7 @@ def serializedATN():
         1,166,13,7,17,0,7,18,0,1,169,14,7,54,0,2,0,0,1,170,15,7,60,0
     ]
 
-class DefExprLexer(Lexer):
+class DefStmtLexer(LexerBase):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -1020,7 +1025,7 @@ class DefExprLexer(Lexer):
                   "ARG_ID", "ARG_COMM", "ARG_PLUS", "ARG_MINUS", "ARG_LBRACE", 
                   "ARG_LBRACKET", "ARG_WS" ]
 
-    grammarFileName = "DefExprLexer.g4"
+    grammarFileName = "DefStmtLexer.g4"
 
     def __init__(self, input=None, output:TextIO = sys.stdout):
         super().__init__(input, output)

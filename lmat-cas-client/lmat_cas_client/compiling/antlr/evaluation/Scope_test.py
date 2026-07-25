@@ -4,7 +4,7 @@ from typing import Self
 import pytest
 
 from lmat_cas_client.compiling.antlr.ast import AlgStmtAst as Ast
-from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import (
+from lmat_cas_client.compiling.antlr.evaluation.AlgStmtTransformer import (
     a_expr_2_sympy,
     a_expr_resolve_ambig_calls,
     literal_sp_comparer,
@@ -15,12 +15,13 @@ from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     Scope,
     Signature,
 )
-from lmat_cas_client.compiling.antlr.parser import AlgExprLexer
-from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
+from lmat_cas_client.compiling.antlr.lexer.StreamFromSrc import stream_from_src
+from lmat_cas_client.compiling.antlr.parser.AlgStmtGrammar import AlgStmtGrammar
+from lmat_cas_client.compiling.antlr.parser.AlgStmtLexer import AlgStmtLexer
 
 
 def parse(src: str) -> Ast.AExpr:
-    return AlgExprGrammar(AlgExprLexer.stream_from_src(src)).a_expr().res
+    return AlgStmtGrammar(stream_from_src(AlgStmtLexer, src)).a_expr().res
 
 
 def lit_eq(a: LiteralParam, b: LiteralParam) -> bool:
@@ -216,22 +217,88 @@ class TestSignaturePostInit:
 # ============================================================
 
 
-class TestScopeRegister:
-    def test_reregister_replaces_existing(self) -> None:
+class TestScopeParentChild:
+    def test_unregister_parent_removes_children(self) -> None:
         s = Scope()
-        def_id = 0
+        parent_id = s.register_single((Signature(head_id="x"), parse("0")))
+        child1_id = s.register_single((Signature(head_id="y"), parse("1")), parent=parent_id)
+        child2_id = s.register_single((Signature(head_id="z"), parse("2")), parent=parent_id)
 
-        s.reregister_single((Signature(head_id="x"), parse("10")), def_id)
+        s.unregister_single(parent_id)
 
-        sig, body = s.get_binding(def_id)
+        with pytest.raises(KeyError):
+            s.get_binding(parent_id)
+        with pytest.raises(KeyError):
+            s.get_binding(child1_id)
+        with pytest.raises(KeyError):
+            s.get_binding(child2_id)
+
+    def test_unregister_parent_removes_grandchildren(self) -> None:
+        s = Scope()
+        grandparent_id = s.register_single((Signature(head_id="a"), parse("0")))
+        parent_id = s.register_single((Signature(head_id="b"), parse("1")), parent=grandparent_id)
+        child_id = s.register_single((Signature(head_id="c"), parse("2")), parent=parent_id)
+
+        s.unregister_single(grandparent_id)
+
+        with pytest.raises(KeyError):
+            s.get_binding(grandparent_id)
+        with pytest.raises(KeyError):
+            s.get_binding(parent_id)
+        with pytest.raises(KeyError):
+            s.get_binding(child_id)
+
+    def test_unregister_child_does_not_affect_parent(self) -> None:
+        s = Scope()
+        parent_id = s.register_single((Signature(head_id="x"), parse("0")))
+        child_id = s.register_single((Signature(head_id="y"), parse("1")), parent=parent_id)
+
+        s.unregister_single(child_id)
+
+        with pytest.raises(KeyError):
+            s.get_binding(child_id)
+
+        sig, body = s.get_binding(parent_id)
         assert sig.head_id == "x"
-        assert isinstance(body, Ast.Number) and body.number == "10"
 
-        s.reregister_single((Signature(head_id="x"), parse("20")), def_id)
+    def test_unregister_one_child_does_not_affect_siblings(self) -> None:
+        s = Scope()
+        parent_id = s.register_single((Signature(head_id="x"), parse("0")))
+        child1_id = s.register_single((Signature(head_id="y"), parse("1")), parent=parent_id)
+        child2_id = s.register_single((Signature(head_id="z"), parse("2")), parent=parent_id)
 
-        sig, body = s.get_binding(def_id)
-        assert sig.head_id == "x"
-        assert isinstance(body, Ast.Number) and body.number == "20"
+        s.unregister_single(child1_id)
+
+        with pytest.raises(KeyError):
+            s.get_binding(child1_id)
+
+        sig, body = s.get_binding(child2_id)
+        assert sig.head_id == "z"
+
+    def test_register_with_nonexistent_parent_raises(self) -> None:
+        s = Scope()
+        with pytest.raises(AssertionError):
+            s.register_single((Signature(head_id="x"), parse("0")), parent=999)
+
+    def test_unregister_parent_removes_only_subtree(self) -> None:
+        s = Scope()
+        root_id = s.register_single((Signature(head_id="root"), parse("0")))
+        branch_id = s.register_single((Signature(head_id="branch"), parse("1")), parent=root_id)
+        leaf_id = s.register_single((Signature(head_id="leaf"), parse("2")), parent=branch_id)
+        other_id = s.register_single((Signature(head_id="other"), parse("3")))
+
+        s.unregister_single(branch_id)
+
+        with pytest.raises(KeyError):
+            s.get_binding(branch_id)
+        with pytest.raises(KeyError):
+            s.get_binding(leaf_id)
+
+        sig, body = s.get_binding(root_id)
+        assert sig.head_id == "root"
+
+        sig, body = s.get_binding(other_id)
+        assert sig.head_id == "other"
 
 
 class TestScopeUnregister:
@@ -420,11 +487,11 @@ class TestScopeIntegration:
                     head_id="x",
                     index_params=(LiteralParam(parse("i")),),
                 ),
-                AlgExprGrammar(AlgExprLexer.stream_from_src("42")).a_expr().res,
+                parse("42"),
             )
         )
 
-        expr = AlgExprGrammar(AlgExprLexer.stream_from_src("x_i")).a_expr().res
+        expr = parse("x_i")
 
         tsp = a_expr_2_sympy(expr, s)
         assert tsp == 42
@@ -441,23 +508,53 @@ class TestScopeIntegration:
                         head_id="x",
                         index_params=(BoundParam(Signature(head_id="i")),),
                     ),
-                    AlgExprGrammar(
-                        AlgExprLexer.stream_from_src(r"x_{i - 1} + (\sum_{i=0}^{i} i^2)^i")
-                    )
-                    .a_expr()
-                    .res,
+                    parse(r"x_{i - 1} + (\sum_{i=0}^{i} i^2)^i"),
                 ),
                 (
                     Signature(
                         head_id="x",
                         index_params=(LiteralParam(parse("0")),),
                     ),
-                    AlgExprGrammar(AlgExprLexer.stream_from_src("0")).a_expr().res,
+                    parse("0"),
                 ),
             )
         )
 
-        expr = AlgExprGrammar(AlgExprLexer.stream_from_src("x_{10}")).a_expr().res
+        expr = parse("x_{10}")
 
         tsp = a_expr_2_sympy(expr, s)
         assert tsp == sum(range(11))
+
+    def test_fibonacci(self) -> None:
+        s = Scope()
+
+        s.register(
+            (
+                (
+                    Signature(
+                        head_id="F",
+                        arg_params=(BoundParam(Signature(head_id="n")),),
+                    ),
+                    parse(r"F(n - 1) + F(n - 2)"),
+                ),
+                (
+                    Signature(
+                        head_id="F",
+                        arg_params=(LiteralParam(parse("0")),),
+                    ),
+                    parse("0"),
+                ),
+                (
+                    Signature(
+                        head_id="F",
+                        arg_params=(LiteralParam(parse("1")),),
+                    ),
+                    parse("1"),
+                ),
+            )
+        )
+
+        expr = parse("F(10)")
+
+        tsp = a_expr_2_sympy(expr, s)
+        assert tsp == 55

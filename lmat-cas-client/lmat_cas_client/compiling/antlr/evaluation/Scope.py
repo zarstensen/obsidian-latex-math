@@ -251,6 +251,8 @@ class Scope:
         self._next_id = 0
 
         self._bindings: MutableMapping[Scope.BindingId, OptBinding] = dict()
+        self._children: MutableMapping[Scope.BindingId, set[Scope.BindingId]] = defaultdict(set)
+
 
         self._signature_priority_list: MutableMapping[
             Signature.GroupKey, SortedList[Scope._DefEntry]
@@ -266,26 +268,21 @@ class Scope:
 
         return tuple(ids)
 
-    def register_single(self: Self, binding: OptBinding) -> BindingId:
+    def register_single(self: Self, binding: OptBinding, parent: BindingId | None = None) -> BindingId:
         """
         Register the given binding in the scope.
+        Args:
+            parent: Optional id of parent definition. When the parent definition is unregistered,
+            this definition will be unregistered as well.
         Returns:
             BindingId to be used for reregistering or unregistering the binding.
         """
-        def_id = self._next_id
+        binding_id = self._next_id
         self._next_id += 1
 
-        self.reregister_single(binding, def_id)
-
-        return def_id
-
-    def reregister_single(self, binding: OptBinding, binding_id: BindingId):
-        """
-        Registers the given binding with the given binding_id.
-        If a binding already exists with this id, it is replaced with the new binding.
-        """
-        if binding_id in self._bindings:
-            self.unregister_single(binding_id)
+        if parent is not None:
+            assert parent in self._bindings
+            self._children[parent].add(binding_id)
 
         self._bindings[binding_id] = binding
 
@@ -294,17 +291,27 @@ class Scope:
             (signature.override_priority_key(), binding_id)
         )
 
+        return binding_id
+
     def unregister(self: Self, definition_ids: Iterable[BindingId]):
         for def_id in definition_ids:
             self.unregister_single(def_id)
 
     def unregister_single(self: Self, binding_id: BindingId):
         """
-        Removes the binding associated with the given id from the scope.
+        Removes the binding associated with the given id from the scope,
+        along with all of its children.
         """
 
         if binding_id not in self._bindings:
             return
+
+        self.unregister(list(self._children[binding_id]))
+        del self._children[binding_id]
+
+		# make sure we dont have any dead id's as children of other definitions
+        for children in self._children.values():
+            children.discard(binding_id)
 
         signature, _ = self._bindings[binding_id]
 
@@ -336,6 +343,8 @@ class Scope:
                 )
             case sig, bod:
                 return (sig, bod)
+
+        assert False, "unreachable"
 
     def get_opt_binding(self, id: BindingId) -> OptBinding:
         """

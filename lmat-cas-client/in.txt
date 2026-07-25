@@ -1,1 +1,1 @@
-\lim_{x \to 5} x^2 + \lim_{y \to 5} y
+x := \sqrt x y + z \quad a, b_{i}, c \in R

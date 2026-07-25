@@ -1,7 +1,8 @@
-lexer grammar AlgExprLexer;
+lexer grammar AlgStmtLexer;
 
 options {
     language = Python3;
+	superClass = LexerBase;
 }
 
 @header {

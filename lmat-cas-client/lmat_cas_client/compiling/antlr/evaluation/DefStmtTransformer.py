@@ -12,7 +12,7 @@ from lmat_cas_client.compiling.antlr.ast.DefStmtAst import (
     SetBound,
     SetType,
 )
-from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import symbol_2_str
+from lmat_cas_client.compiling.antlr.evaluation.AlgStmtTransformer import symbol_2_str
 from lmat_cas_client.compiling.antlr.evaluation.Scope import (
     BoundParam,
     LiteralParam,
@@ -33,41 +33,53 @@ def binding_stmt_2_binding(stmt: BindingStmt) -> OptBinding:
         case Assumption():
             return assumption_2_binding(stmt)
 
+    assert False, "unreachable"
+
 
 def extract_symbols(expr: AlgStmtAst.AExpr) -> set[AlgStmtAst.AExpr]:
+    symbols: set[AlgStmtAst.AExpr] = set()
+
+    def combine_child(c: AlgStmtAst.AExpr):
+        symbols.update(extract_symbols(c))
+        return c
+
     match expr:
-        case AlgStmtAst.Symbol() | AlgStmtAst.SubscriptOp(_, AlgStmtAst.Symbol(), _):
-            return {expr}
+        case AlgStmtAst.SubscriptOp(_, AlgStmtAst.Symbol(), subscript):
+            symbols.add(expr)
+
+            for slot in subscript.slots:
+                if isinstance(slot, AlgStmtAst.AExpr) and Signature.from_a_expr(slot) is not None:
+                        pass
+                elif isinstance(slot, AlgStmtAst.AExpr):
+                        combine_child(slot)
+                elif isinstance(slot, tuple):
+                    for e in slot:
+                        if e is not None:
+                            combine_child(e)
+        case AlgStmtAst.Symbol():
+            symbols.add(expr)
         case _:
-            symbols: set[AlgStmtAst.AExpr] = set()
-
-            def combine_child(c: AlgStmtAst.AExpr):
-                symbols.update(extract_symbols(c))
-
-                return c
-
             visit_children(expr, combine_child)
 
-            return symbols
+    return symbols
 
 
 def definition_2_binding(definition: Definition) -> OptBinding:
-    print("DEFINITION: ", definition, flush=True)
     subscript_form = SubscriptForm()
     index_params: Params = ()
 
-    if definition.subscript is not None:
+    if definition.signature.subscript is not None:
         symbols_in_body = (
             extract_symbols(definition.body) if definition.body is not None else {}
         )
 
         assert all(
             isinstance(slot, AlgStmtAst.AExpr)
-            for slot in definition.subscript.slots
+            for slot in definition.signature.subscript.slots
         )
-        subscript_form = definition.subscript.form
+        subscript_form = definition.signature.subscript.form
 
-        for slot in definition.subscript.slots:
+        for slot in definition.signature.subscript.slots:
             assert isinstance(slot, AlgStmtAst.AExpr)
             if slot in symbols_in_body:
                 signature = Signature.from_a_expr(slot)
@@ -79,11 +91,18 @@ def definition_2_binding(definition: Definition) -> OptBinding:
 
     arg_params: Params = ()
 
-    if definition.func_args is not None:
-        arg_params = tuple(map(LiteralParam, definition.func_args))
+    if definition.signature.func_args is not None:
+
+        for arg in definition.signature.func_args:
+            arg_sig = Signature.from_a_expr(arg)
+
+            if arg_sig is not None:
+                arg_params = (*arg_params, BoundParam(arg_sig))
+            else:
+                arg_params = (*arg_params, LiteralParam(arg))
 
     signature = Signature(
-        definition.head.name, subscript_form, index_params, arg_params
+        definition.signature.head.name, subscript_form, index_params, arg_params
     )
 
     return (signature, definition.body)
@@ -93,32 +112,32 @@ def assumption_2_binding(assumption: Assumption) -> OptBinding:
     subscript_form = SubscriptForm()
     index_params: Params = ()
 
-    if assumption.subscript is not None:
+    if assumption.signature.subscript is not None:
         assert all(
             isinstance(slot, AlgStmtAst.AExpr)
-            for slot in assumption.subscript.slots
+            for slot in assumption.signature.subscript.slots
         )
-        subscript_form = assumption.subscript.form
-        index_params = tuple(map(LiteralParam, assumption.subscript.slots))  # type: ignore[arg-type]
+        subscript_form = assumption.signature.subscript.form
+        index_params = tuple(map(LiteralParam, assumption.signature.subscript.slots))  # type: ignore[arg-type]
 
     arg_params: Params = ()
 
-    if assumption.func_args is not None:
-        arg_params = tuple(map(LiteralParam, assumption.func_args))
+    if assumption.signature.func_args is not None:
+        arg_params = tuple(map(LiteralParam, assumption.signature.func_args))
 
     signature = Signature(
-        assumption.head.name, subscript_form, index_params, arg_params
+        assumption.signature.head.name, subscript_form, index_params, arg_params
     )
 
     match assumption.set:
         case None:
             return (signature, None)
         case s:
-            if assumption.func_args is None:
+            if assumption.signature.func_args is None:
                 return (
                     signature,
                     sp.Symbol(
-                        symbol_2_str(assumption.head, assumption.subscript),
+                        symbol_2_str(assumption.signature.head, assumption.signature.subscript),
                         **set_2_assumptions(s),
                     ),
                 )
@@ -126,7 +145,7 @@ def assumption_2_binding(assumption: Assumption) -> OptBinding:
                 return (
                     signature,
                     sp.Function(
-                        symbol_2_str(assumption.head, assumption.subscript),
+                        symbol_2_str(assumption.signature.head, assumption.signature.subscript),
                         **set_2_assumptions(s),
                     ),
                 )

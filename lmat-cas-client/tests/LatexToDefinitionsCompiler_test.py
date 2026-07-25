@@ -162,7 +162,6 @@ class TestLatexToDefinitionCompiler:
         result = self.compiler.compile(
             r"x := 2 y \cdot 5 \quad z \in \mathbbm{R} \land z (x) := C"
         )
-        print(result)
 
         assert len(result) == 2
         assert isinstance(result["x"], SymbolDefinition)

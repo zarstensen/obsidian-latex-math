@@ -1,9 +1,4 @@
 # type: ignore
-from lmat_cas_client.compiling.antlr.parser.AlgExprLexerExt import AlgExprLexerExt
-from lmat_cas_client.compiling.antlr.parser.AlgExprLexer import AlgExprLexer
-from lmat_cas_client.compiling.antlr.parser.AlgExprGrammar import AlgExprGrammar
-from lmat_cas_client.compiling.antlr.evaluation.Scope import Scope
-from lmat_cas_client.compiling.antlr.evaluation.CasExprTransformer import a_expr_2_sympy
 import html
 import sys
 from time import time
@@ -17,16 +12,23 @@ from antlr4 import (
     ParseTreeVisitor,
 )
 from antlr4.tree.Tree import ErrorNodeImpl, TerminalNodeImpl, Tree
-from antlr4.error.ErrorListener import ConsoleErrorListener
 
-from .parser.DefExprGrammar import DefExprGrammar
-from .parser.DefExprLexer import DefExprLexer
+from lmat_cas_client.compiling.antlr.evaluation.AlgStmtTransformer import a_expr_2_sympy
+from lmat_cas_client.compiling.antlr.evaluation.DefStmtTransformer import (
+    binding_stmts_2_bindings,
+)
+from lmat_cas_client.compiling.antlr.evaluation.Scope import Scope
+from lmat_cas_client.compiling.antlr.parser.AlgStmtGrammar import AlgStmtGrammar
+from lmat_cas_client.compiling.antlr.parser.AlgStmtLexer import AlgStmtLexer
+
+from .parser.DefStmtGrammar import DefStmtGrammar
+from .parser.DefStmtLexer import DefStmtLexer
 
 IN_FILE = "in.txt"
 OUT_FILE = "out.dot"
 
-Grammar = AlgExprGrammar
-Lexer = AlgExprLexerExt
+Grammar = DefStmtGrammar
+Lexer = DefStmtLexer
 
 class ParseTreeDotVisitor(ParseTreeVisitor):
     """
@@ -189,7 +191,7 @@ with open(OUT_FILE, "w") as f:
 print(f"======== AST ========\n{tree.res}")
 print(f"Parse Time: {end - start} s")
 start = time()
-print(f"======== EVAL ========\n{a_expr_2_sympy(tree.res, Scope())}")
+print(f"======== EVAL ========\n{binding_stmts_2_bindings(tree.res)}")
 end = time()
 print(f"Eval Time: {end - start} s")
 

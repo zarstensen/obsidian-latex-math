@@ -1,6 +1,6 @@
-parser grammar AlgExprGrammar;
+parser grammar AlgStmtGrammar;
 options {
-	tokenVocab = AlgExprLexer;
+	tokenVocab = AlgStmtLexer;
 	language = Python3;
 }
 
@@ -70,68 +70,64 @@ relation returns[res = rule_t(Ast.Rel)]:
 	| lhs=a_expr rel_op rhs=a_expr {$res = $rel_op.op ($ctx, $lhs.res, $rhs.res)};
 
 
-// TODO: should probably begin implementing the visitor / transformer now that way tests can be set
-// up and stuff like that, and also seems to not really have any reamining glaring problems which
-// have not been covered.
 a_expr
     returns[res = rule_t(Ast.AExpr)]
     locals[node_t = rule_t(type)]:
 
+	// matches addition and subtraction operators
+	// e.g. a + b, a - b
+	lhs = a_expr (PLUS {$node_t = Ast.AddOp} | MINUS {$node_t = Ast.SubOp}) rhs = a_expr
+		{$res = $node_t($ctx, $lhs.res, $rhs.res)}
+	// matches unary plus and minus
+	// e.g. -a, +5
+	| (PLUS {$node_t = Ast.UPlusOp} | MINUS {$node_t = Ast.UMinusOp}) a_expr
+		{$res = $node_t($ctx, $a_expr.res)}
+	// special left recursive variant of evaluate_at
+	| expr=a_expr PIPE eval_at_arg 
+		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
+
+	| mult_expr {$res = $mult_expr.res}
+	;
+
+mult_expr returns[res = rule_t(Ast.AExpr)]
+	locals[node_t = rule_t(type)]:
 	// matches expr(args) — ambiguous between function application and implicit multiplication
 	// resolved at evaluation time: if expr is a known function, becomes ApplyFunc; otherwise, MultOp
 	// e.g. f(x, y)  or  (1+1)(x)
-	lhs = a_expr LPAREN func_args RPAREN
+	lhs = mult_expr LPAREN func_args RPAREN
 		{$res = Ast.AmbigApplyFunc($ctx, Ast.ApplyFunc($ctx, $lhs.res, $func_args.res))}
 	// matches division operator
 	// e.g. a / b
-	| lhs = a_expr DIV rhs = a_expr {$res = Ast.DivOp($ctx, $lhs.res, $rhs.res)}
+	| lhs = mult_expr DIV rhs = mult_expr {$res = Ast.DivOp($ctx, $lhs.res, $rhs.res)}
 	// matches explicit multiplication, dot product, modulo, and cross product operators
 	// e.g. a * b, a \cdot b, a \bmod b, a \times b
-	| lhs = a_expr 
+	| lhs = mult_expr 
 		(
 		MULT {$node_t = Ast.MultOp}
 		| DOT_PROD {$node_t = Ast.MultOp}
 		| MOD {$node_t = Ast.ModOp}
 		| TIMES {$node_t = Ast.XProdOp}
 		| XPROD {$node_t = Ast.XProdOp}
-		) rhs = a_expr
+		) rhs = mult_expr
 		{$res = $node_t($ctx, $lhs.res, $rhs.res)}
 	// matches implicit multiplication (juxtaposition without an explicit operator)
 	// e.g. 2x, a b
-	| lhs = a_expr atom_v2 {$res = Ast.MultOp($ctx, $lhs.res, $atom_v2.res)}
-
-	// matches addition and subtraction operators
-	// e.g. a + b, a - b
-	| lhs = a_expr (PLUS {$node_t = Ast.AddOp} | MINUS {$node_t = Ast.SubOp}) rhs = a_expr
-		{$res = $node_t($ctx, $lhs.res, $rhs.res)}
-	// matches unary plus and minus
-	// e.g. -a, +5
-	| (PLUS {$node_t = Ast.UPlusOp} | MINUS {$node_t = Ast.UMinusOp}) a_expr
-		{$res = $node_t($ctx, $a_expr.res)}
-	// matches an "evaluate at" expression with variable substitution
-	// e.g. \left. x^2 \right|_{x=1}
-	| expr=a_expr PIPE eval_at_arg 
-		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
-
-	| atom_v2 {$res = $atom_v2.res}
+	| lhs = mult_expr primary_a_expr {$res = Ast.MultOp($ctx, $lhs.res, $primary_a_expr.res)}
+	| primary_a_expr {$res = $primary_a_expr.res}
 	;
 
-atom_v2 returns[res = rule_t(Ast.AExpr)]:
+// matches parts of an arithmetic expression which are not part of binary operators.
+// e.g. \sqrt 4 is a primary expression whilst 1 + 1 is not.
+primary_a_expr returns[res = rule_t(Ast.AExpr)]:
 	// matches postfix operators: power/subscript/factorial/etc.
 	// e.g. a^2, a_i, n!
 	<assoc=right> base=atom postfix_op {$res = $postfix_op.op ($ctx, $base.res)}
 
 	| integral {$res = $integral.res}
 	| derivative {$res = $derivative.res}
-	| limit_expr {$res = $limit_expr.res}
-	| series_expr {$res = $series_expr.res}
-
-	| LPAREN expr=a_expr RPAREN PIPE eval_at_arg
-		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
-	| LBLANK expr=a_expr PIPE eval_at_arg
-		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
-	| LBRACKET expr=a_expr RBRACKET eval_at_arg 
-		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
+	| limit {$res = $limit.res}
+	| series {$res = $series.res}
+	| eval_at {$res = $eval_at.res}
 
 	| combinatorial {$res = $combinatorial.res}
 	| delim_expr {$res = $delim_expr.res}
@@ -167,26 +163,37 @@ derivative returns[res = rule_t(Ast.AExpr)]:
 		{$res = Ast.Differential($ctx, $a_expr.res, $diff_vars.res)}
 	;
 
-limit_expr returns[res = rule_t(Ast.AExpr)]:
+limit returns[res = rule_t(Ast.AExpr)]:
 	// matches a limit expression
 	// e.g. \lim_{x \to 0} x
 	LIMIT UNDERSCORE LBRACE lim_var=symbol LIMIT_ARROW lim_poa=a_expr limit_dir RBRACE LPAREN a_expr RPAREN
 		{$res = Ast.Limit($ctx, $a_expr.res, $lim_var.res, $lim_poa.res, $limit_dir.res)}
-	| LIMIT UNDERSCORE LBRACE lim_var=symbol LIMIT_ARROW lim_poa=a_expr limit_dir RBRACE atom_v2
-		{$res = Ast.Limit($ctx, $a_expr.res, $lim_var.res, $lim_poa.res, $limit_dir.res)}
+	| LIMIT UNDERSCORE LBRACE lim_var=symbol LIMIT_ARROW lim_poa=a_expr limit_dir RBRACE mult_expr
+		{$res = Ast.Limit($ctx, $mult_expr.res, $lim_var.res, $lim_poa.res, $limit_dir.res)}
 	;
 
-series_expr returns[res = rule_t(Ast.AExpr)] locals[node_t = rule_t(type)]:
+series returns[res = rule_t(Ast.AExpr)] locals[node_t = rule_t(type)]:
 	// matches a sum (\sum) or product (\prod) with range arguments
 	// e.g. \sum_{i=1}^n i^2
 	(SUM {$node_t = Ast.Sum} | PRODUCT {$node_t = Ast.Product}) series_range_args LPAREN a_expr RPAREN
 		{$res = $node_t($ctx, $a_expr.res, $series_range_args.symb, ($series_range_args.start, $series_range_args.end))}
-	| (SUM {$node_t = Ast.Sum} | PRODUCT {$node_t = Ast.Product}) series_range_args a_expr
-		{$res = $node_t($ctx, $a_expr.res, $series_range_args.symb, ($series_range_args.start, $series_range_args.end))}
+	| (SUM {$node_t = Ast.Sum} | PRODUCT {$node_t = Ast.Product}) series_range_args mult_expr
+		{$res = $node_t($ctx, $mult_expr.res, $series_range_args.symb, ($series_range_args.start, $series_range_args.end))}
+	;
+
+// matches an "evaluate at" expression with variable substitution
+// e.g. \left. x^2 \right|_{x=1}
+eval_at returns[res = rule_t(Ast.AExpr)]:
+	LPAREN expr=a_expr RPAREN PIPE eval_at_arg
+		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
+	| LBLANK expr=a_expr PIPE eval_at_arg
+		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
+	| LBRACKET expr=a_expr RBRACKET eval_at_arg 
+		{$res = Ast.EvalAt($ctx, $expr.res, $eval_at_arg.subs_start, $eval_at_arg.subs_end)}
 	;
 // matches an atom value, provided the preceeding token,
 // pushed the COMM_ARG lexer mode.
-// an atom is either a singular letter, or a singular digit.
+// an atom is either a singular letter, a command, or a singular digit.
 atom
     returns[res = rule_t(Ast.AExpr)]:
 	// TODO: if symbol is in func_set, return function instead.
@@ -236,7 +243,7 @@ all_slot: MULT | STAR;
 
 // matches a single slot entry in a subscript: an index, a range, a wildcard, or empty
 // e.g. 3, 1:10, *, (empty)
-slot_entry returns[res = rule_t(Ast.IndexEntry)]:
+slot_entry returns[res = rule_t(Ast.SubscriptSlot)]:
     a_expr {$res = $a_expr.res}
     | range_slot {$res = $range_slot.res}
     | all_slot {$res = None}
@@ -255,7 +262,7 @@ subscript_arg
 	(
 		(sep=COMMA | sep=SEMICOLON) slot_entry
 {
-$res.append($slot_entry.res)
+$slots.append($slot_entry.res)
 $seps.append($sep.text)
 }
 	)*
@@ -368,8 +375,8 @@ cmd_func
     returns[res = rule_t(Ast.AExpr)]:
     FRAC num = latex_cmd_arg den = latex_cmd_arg {$res = Ast.DivOp($ctx, $num.res, $den.res)}
     | BINOM n = latex_cmd_arg k = latex_cmd_arg {$res = Ast.Binom($ctx, $n.res, $k.res)}
-    | SQRT (LBRACKET root_index = a_expr RBRACKET)? latex_cmd_arg {$res = Ast.Root($ctx, $latex_cmd_arg.res, $root_index.res)
-        }
+    | SQRT latex_cmd_arg {$res = Ast.Root($ctx, $latex_cmd_arg.res, None)}
+    | SQRT LBRACKET root_index = a_expr RBRACKET latex_cmd_arg {$res = Ast.Root($ctx, $latex_cmd_arg.res, $root_index.res)}
     | CONJUGATE latex_cmd_arg {$res = Ast.Conjugate($ctx, $latex_cmd_arg.res)}
     | VEC_UNIT  latex_cmd_arg {$res = Ast.VecUnit($ctx, $latex_cmd_arg.res)};
 

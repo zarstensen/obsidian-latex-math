@@ -1,10 +1,11 @@
-lexer grammar DefExprLexer;
+lexer grammar DefStmtLexer;
 
 options {
     language = Python3;
+	superClass = LexerBase;
 }
 
-import AlgExprLexer;
+import AlgStmtLexer;
 
 // TODO: this should go out of set mode
 fragment F_DEF_SEP: '\\' 'q'? 'quad' | '\\enspace';
